@@ -605,12 +605,27 @@
         }
 
         .card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.06);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                        0 0 24px rgba(74, 222, 128, 0.2);
+            transform: scale(0.97) translateY(-2px);
+            opacity: 0.9;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        0 0 20px rgba(74, 222, 128, 0.15);
+        }
+
+        .card-featured:hover {
+            transform: scale(1.08) translateY(-4px);
+            border-color: rgba(74, 222, 128, 0.5);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                        0 0 40px rgba(74, 222, 128, 0.35);
+        }
+
+        .card-featured:hover .card-emoji {
+            transform: scale(1.1);
+            filter: drop-shadow(0 6px 12px rgba(74, 222, 128, 0.5));
         }
 
         .card-emoji {
@@ -619,6 +634,12 @@
             margin-bottom: 1rem;
             text-align: center;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .card-featured .card-emoji {
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 8px rgba(74, 222, 128, 0.4));
         }
 
         .card-title {
@@ -630,6 +651,12 @@
             text-align: center;
         }
 
+        .card-featured .card-title {
+            font-size: 1.5rem;
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+        }
+
         .card-description {
             font-size: 0.95rem;
             color: #b0b0b0;
@@ -637,6 +664,11 @@
             margin-bottom: 1rem;
             text-align: center;
             font-weight: 400;
+        }
+
+        .card-featured .card-description {
+            font-size: 1.05rem;
+            color: #d0d0d0;
         }
 
         .card-badge {
@@ -849,13 +881,38 @@
                 margin-bottom: 0.75rem;
             }
 
+            .card-featured .card-emoji {
+                font-size: 2.5rem;
+            }
+
             .card-title {
                 font-size: 1.1rem;
+            }
+
+            .card-featured .card-title {
+                font-size: 1.3rem;
             }
 
             .card-description {
                 font-size: 0.9rem;
                 margin-bottom: 0.75rem;
+            }
+
+            .card-featured .card-description {
+                font-size: 1rem;
+            }
+
+            .card {
+                transform: scale(1) !important;
+                opacity: 1 !important;
+            }
+
+            .card-featured {
+                transform: scale(1) !important;
+            }
+
+            .card-featured .card-description {
+                font-size: 1rem;
             }
 
             .main-content {
@@ -940,7 +997,7 @@
                     <div class="card-title">Market Cap Scenarios (manual)</div>
                     <span class="card-badge">Coming soon</span>
                 </div>
-                <div class="card">
+                <div class="card card-featured">
                     <div class="card-emoji">🧠</div>
                     <div class="card-title">Ape Lore</div>
                     <div class="card-description">Meme wall. Community stories. Diamond hands legends.</div>
