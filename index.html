@@ -421,12 +421,35 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
+        .what-is-this::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, 
+                    rgba(0, 0, 0, 0.5) 0%, 
+                    rgba(0, 0, 0, 0.55) 100%);
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
 
         .what-is-this:hover {
             transform: translateY(-2px);
             border-color: rgba(255, 255, 255, 0.15);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
                         0 0 12px rgba(74, 222, 128, 0.08);
+        }
+
+        .what-is-this > * {
+            position: relative;
+            z-index: 1;
         }
 
         .what-is-this h2 {
@@ -478,6 +501,29 @@
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             position: relative;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .whats-coming::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, 
+                    rgba(0, 0, 0, 0.5) 0%, 
+                    rgba(0, 0, 0, 0.55) 100%);
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .whats-coming > * {
+            position: relative;
+            z-index: 1;
         }
 
         .whats-coming::before {
