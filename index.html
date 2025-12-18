@@ -151,10 +151,12 @@
             text-align: center;
             margin: 0 0 3rem 0;
             padding: 2.5rem 3rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
             position: relative;
             overflow: hidden;
         }
@@ -177,9 +179,24 @@
             filter: blur(40px);
         }
 
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                transparent);
+            border-radius: 16px 16px 0 0;
+            z-index: 1;
+        }
+
         .hero > * {
             position: relative;
-            z-index: 1;
+            z-index: 2;
         }
 
         .hero-title {
@@ -232,10 +249,35 @@
             margin: 0 0 3rem 0;
             padding: 3rem;
             text-align: center;
-            background: rgba(255, 255, 255, 0.015);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .what-is-this::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .what-is-this:hover {
+            border-color: rgba(74, 222, 128, 0.4);
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        0 0 20px rgba(74, 222, 128, 0.15);
         }
 
         .what-is-this h2 {
@@ -276,10 +318,35 @@
             margin: 0 0 3rem 0;
             padding: 3rem;
             text-align: center;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .whats-coming::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .whats-coming:hover {
+            border-color: rgba(74, 222, 128, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        0 0 20px rgba(74, 222, 128, 0.15);
         }
 
         .whats-coming h2 {
@@ -300,10 +367,39 @@
 
         .card {
             padding: 2rem 1.5rem;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 12px;
             text-align: left;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+                        0 2px 8px rgba(0, 0, 0, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                transparent);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(74, 222, 128, 0.5);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25),
+                        0 4px 12px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                        0 0 24px rgba(74, 222, 128, 0.2);
         }
 
         .card-title {
