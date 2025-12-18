@@ -13,11 +13,12 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #0f0f0f;
+            background-color: #1a1a1a;
             background-image: 
-                radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%),
-                radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
+                radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at center, rgba(26, 26, 26, 0.4) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.75) 100%),
+                radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.015) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.015) 0%, transparent 50%);
             color: #e0e0e0;
             line-height: 1.7;
             min-height: 100vh;
@@ -32,9 +33,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
             pointer-events: none;
             z-index: 0;
+            opacity: 0.4;
         }
 
         body::after {
@@ -49,21 +51,21 @@
                     0deg,
                     transparent,
                     transparent 99px,
-                    rgba(74, 222, 128, 0.08) 99px,
-                    rgba(74, 222, 128, 0.08) 100px
+                    rgba(74, 222, 128, 0.06) 99px,
+                    rgba(74, 222, 128, 0.06) 100px
                 ),
                 repeating-linear-gradient(
                     90deg,
                     transparent,
                     transparent 99px,
-                    rgba(74, 222, 128, 0.08) 99px,
-                    rgba(74, 222, 128, 0.08) 100px
+                    rgba(74, 222, 128, 0.06) 99px,
+                    rgba(74, 222, 128, 0.06) 100px
                 );
             pointer-events: none;
             z-index: 0;
-            opacity: 0.15;
-            mask-image: radial-gradient(ellipse at center, transparent 20%, black 60%);
-            -webkit-mask-image: radial-gradient(ellipse at center, transparent 20%, black 60%);
+            opacity: 0.12;
+            mask-image: radial-gradient(ellipse at center, transparent 25%, black 65%);
+            -webkit-mask-image: radial-gradient(ellipse at center, transparent 25%, black 65%);
         }
 
         body > * {
@@ -221,16 +223,17 @@
             top: -50%;
             left: 50%;
             transform: translateX(-50%);
-            width: 120%;
-            height: 200%;
+            width: 150%;
+            height: 250%;
             background: radial-gradient(ellipse at center, 
-                rgba(74, 222, 128, 0.2) 0%, 
-                rgba(255, 215, 0, 0.12) 25%, 
-                rgba(74, 222, 128, 0.08) 50%,
-                transparent 75%);
+                rgba(74, 222, 128, 0.15) 0%, 
+                rgba(255, 215, 0, 0.08) 30%, 
+                rgba(74, 222, 128, 0.05) 55%,
+                transparent 80%);
             pointer-events: none;
             z-index: 0;
-            filter: blur(40px);
+            filter: blur(60px);
+            opacity: 0.8;
         }
 
         .hero::after {
