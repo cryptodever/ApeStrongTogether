@@ -68,8 +68,27 @@
         }
 
         .nav-links a.soon {
+            color: #555555;
+            cursor: not-allowed;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .nav-links a.soon:hover {
+            color: #555555;
+        }
+
+        .soon-pill {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            background: rgba(136, 136, 136, 0.2);
+            border: 1px solid rgba(136, 136, 136, 0.3);
+            border-radius: 4px;
+            font-size: 0.7rem;
             color: #888888;
-            cursor: default;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            vertical-align: middle;
         }
 
         .container {
@@ -402,7 +421,7 @@
             <a href="/" class="nav-brand">Ape Together Stronger</a>
             <div class="nav-links">
                 <a href="/">Home</a>
-                <a href="#" class="soon">Roadmap (Soon)</a>
+                <a href="#" class="soon">Roadmap<span class="soon-pill">Soon</span></a>
             </div>
         </div>
     </nav>
