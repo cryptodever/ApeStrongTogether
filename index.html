@@ -19,13 +19,64 @@
             color: #e0e0e0;
             line-height: 1.7;
             min-height: 100vh;
-            padding: 3rem 1.5rem;
+            padding: 0;
+        }
+
+        nav {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #b0b0b0;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        .nav-links a.soon {
+            color: #888888;
+            cursor: default;
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
             width: 100%;
+            padding: 3rem 1.5rem;
         }
 
         .hero {
@@ -119,12 +170,25 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 2rem 1rem;
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-brand {
+                font-size: 0.95rem;
+            }
+
+            .nav-links {
+                gap: 1.5rem;
+            }
+
+            .nav-links a {
+                font-size: 0.9rem;
             }
 
             .container {
                 max-width: 100%;
+                padding: 2rem 1rem;
             }
 
             .hero {
@@ -163,6 +227,16 @@
     </style>
 </head>
 <body>
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Ape Together Stronger</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="#" class="soon">Roadmap (Soon)</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         <div class="hero">
             <h1 class="hero-title">APES TOGETHER STRONG 🦍</h1>
