@@ -365,19 +365,45 @@
 
         .thesis-statement {
             width: 100%;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            padding: 2rem 2.5rem;
             text-align: center;
-            padding: 2rem 2rem 1.5rem;
-            margin: 0 0 3rem 0;
+            background: rgba(255, 255, 255, 0.03);
+            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            position: relative;
+        }
+
+        .thesis-statement::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, 
+                    rgba(0, 0, 0, 0.2) 0%, 
+                    rgba(0, 0, 0, 0.4) 100%);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .thesis-statement p {
-            font-size: 1.25rem;
-            color: #c0c0c0;
-            font-weight: 400;
-            line-height: 1.6;
+            font-size: 1.4rem;
+            color: #b0b0b0;
+            font-weight: 500;
+            line-height: 1.75;
             letter-spacing: 0.01em;
-            max-width: 700px;
-            margin: 0 auto;
+            margin: 0;
+            position: relative;
+            z-index: 1;
         }
 
         .what-is-this {
@@ -719,12 +745,12 @@
             }
 
             .thesis-statement {
-                padding: 1.5rem 1.5rem 1rem;
+                padding: 1.75rem 1.5rem;
                 margin-bottom: 2rem;
             }
 
             .thesis-statement p {
-                font-size: 1.1rem;
+                font-size: 1.2rem;
             }
 
             .cards-grid {
