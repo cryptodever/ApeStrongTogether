@@ -463,28 +463,34 @@
             line-height: 1.3;
         }
 
-        .what-is-this ul {
-            list-style: none;
-            text-align: left;
-            max-width: 650px;
+        .manifesto-statements {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 700px;
             margin: 0 auto;
         }
 
-        .what-is-this li {
-            font-size: 1.2rem;
-            color: #d0d0d0;
-            margin-bottom: 1.25rem;
-            padding-left: 2rem;
-            position: relative;
-            line-height: 1.8;
+        .manifesto-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.5;
+            text-align: center;
         }
 
-        .what-is-this li::before {
-            content: "•";
-            color: #ffd700;
-            font-size: 1.5rem;
-            position: absolute;
-            left: 0.5rem;
+        .manifesto-emoji {
+            font-size: 2rem;
+            line-height: 1;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .manifesto-text {
+            letter-spacing: 0.01em;
         }
 
         .whats-coming {
@@ -794,10 +800,18 @@
                 line-height: 1.3;
             }
 
-            .what-is-this li {
-                font-size: 1.1rem;
-                margin-bottom: 1rem;
-                line-height: 1.75;
+            .manifesto-statements {
+                gap: 1.25rem;
+            }
+
+            .manifesto-item {
+                font-size: 1.2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .manifesto-emoji {
+                font-size: 1.75rem;
             }
 
             .whats-coming {
@@ -899,12 +913,24 @@
 
         <section class="what-is-this">
             <h2>What is this?</h2>
-            <ul>
-                <li>Meme-first community site</li>
-                <li>Simple market-cap awareness (no live data)</li>
-                <li>Built for fun, learning, and vibes</li>
-                <li>No wallets, no transactions</li>
-            </ul>
+            <div class="manifesto-statements">
+                <div class="manifesto-item">
+                    <span class="manifesto-emoji">🦍</span>
+                    <span class="manifesto-text">Meme-first. Community-driven.</span>
+                </div>
+                <div class="manifesto-item">
+                    <span class="manifesto-emoji">📊</span>
+                    <span class="manifesto-text">Simple math. No promises.</span>
+                </div>
+                <div class="manifesto-item">
+                    <span class="manifesto-emoji">💎</span>
+                    <span class="manifesto-text">Built for vibes, not wallets.</span>
+                </div>
+                <div class="manifesto-item">
+                    <span class="manifesto-emoji">🚫</span>
+                    <span class="manifesto-text">No transactions. Pure energy.</span>
+                </div>
+            </div>
         </section>
 
         <section class="whats-coming">
