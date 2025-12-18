@@ -207,11 +207,11 @@
             text-align: center;
             margin: 0 0 3rem 0;
             padding: 2.5rem 3rem 2rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 0.5px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             position: relative;
@@ -359,37 +359,22 @@
             margin: 0 0 3rem 0;
             padding: 3rem;
             text-align: center;
-            background: rgba(255, 255, 255, 0.025);
-            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.015);
+            border: 0.5px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             position: relative;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
-        .what-is-this::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.15) 50%, 
-                transparent);
-            border-radius: 16px 16px 0 0;
-        }
 
         .what-is-this:hover {
             transform: translateY(-2px);
-            border-color: rgba(74, 222, 128, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                        0 0 16px rgba(74, 222, 128, 0.12);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+                        0 0 12px rgba(74, 222, 128, 0.08);
         }
 
         .what-is-this h2 {
@@ -430,11 +415,11 @@
             margin: 0 0 3rem 0;
             padding: 3rem;
             text-align: center;
-            background: rgba(255, 255, 255, 0.025);
-            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.035);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             position: relative;
@@ -457,10 +442,10 @@
 
         .whats-coming:hover {
             transform: translateY(-2px);
-            border-color: rgba(74, 222, 128, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                        0 0 16px rgba(74, 222, 128, 0.12);
+            border-color: rgba(74, 222, 128, 0.35);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        0 0 20px rgba(74, 222, 128, 0.15);
         }
 
         .whats-coming h2 {
