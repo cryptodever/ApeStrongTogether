@@ -148,10 +148,26 @@
             font-size: 0.95rem;
             font-weight: 500;
             transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #4ade80;
+            transition: width 0.3s ease;
         }
 
         .nav-links a:hover {
             color: #ffffff;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
         .nav-links a.soon {
@@ -329,7 +345,7 @@
                         inset 0 1px 0 rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             position: relative;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .what-is-this::before {
@@ -347,10 +363,11 @@
         }
 
         .what-is-this:hover {
+            transform: translateY(-2px);
             border-color: rgba(74, 222, 128, 0.4);
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2),
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
                         inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                        0 0 20px rgba(74, 222, 128, 0.15);
+                        0 0 24px rgba(74, 222, 128, 0.2);
         }
 
         .what-is-this h2 {
@@ -398,7 +415,7 @@
                         inset 0 1px 0 rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             position: relative;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .whats-coming::before {
@@ -416,10 +433,11 @@
         }
 
         .whats-coming:hover {
+            transform: translateY(-2px);
             border-color: rgba(74, 222, 128, 0.4);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35),
                         inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                        0 0 20px rgba(74, 222, 128, 0.15);
+                        0 0 24px rgba(74, 222, 128, 0.2);
         }
 
         .whats-coming h2 {
@@ -449,7 +467,7 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
                         0 2px 8px rgba(0, 0, 0, 0.15),
                         inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .card::before {
@@ -534,6 +552,27 @@
             font-size: 0.75rem;
             color: #666666;
             margin-top: 1rem;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .ticker-content {
+                animation: none !important;
+            }
+
+            .hero-cta:hover,
+            .card:hover,
+            .what-is-this:hover,
+            .whats-coming:hover {
+                transform: none !important;
+            }
         }
 
         @media (max-width: 768px) {
