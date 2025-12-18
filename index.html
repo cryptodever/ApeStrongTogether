@@ -40,7 +40,51 @@
             font-size: 1.25rem;
             color: #b0b0b0;
             max-width: 600px;
+            margin: 0 auto 1rem;
+        }
+
+        .meme-line {
+            font-size: 1rem;
+            color: #888888;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .what-is-this {
+            width: 100%;
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .what-is-this h2 {
+            font-size: 2rem;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+        }
+
+        .what-is-this ul {
+            list-style: none;
+            text-align: left;
+            max-width: 600px;
             margin: 0 auto;
+        }
+
+        .what-is-this li {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .what-is-this li::before {
+            content: "•";
+            color: #888888;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
         }
 
         .main-content {
@@ -64,8 +108,19 @@
 <body>
     <div class="hero">
         <h1 class="hero-title">APES TOGETHER STRONG 🦍</h1>
-        <p class="subtitle">A meme and education site dedicated to the strength of the ape community</p>
+        <p class="subtitle">Meme education. Community strength.</p>
+        <p class="meme-line">💎🙌 No dates. No promises.</p>
     </div>
+
+    <section class="what-is-this">
+        <h2>What is this?</h2>
+        <ul>
+            <li>Meme-first community site</li>
+            <li>Simple market-cap awareness (no live data)</li>
+            <li>Built for fun, learning, and vibes</li>
+            <li>No wallets, no transactions</li>
+        </ul>
+    </section>
 
     <main class="main-content">
         <!-- Content placeholder -->
