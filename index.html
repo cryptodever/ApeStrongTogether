@@ -201,6 +201,61 @@
             left: 0.5rem;
         }
 
+        .whats-coming {
+            width: 100%;
+            margin: 0 0 3rem 0;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .whats-coming h2 {
+            font-size: 2.25rem;
+            color: #4ade80;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            padding: 2rem 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #ffd700;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
         .main-content {
             width: 100%;
             margin: 0;
@@ -268,6 +323,29 @@
                 margin-bottom: 1rem;
             }
 
+            .whats-coming {
+                padding: 2.5rem 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .whats-coming h2 {
+                font-size: 1.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+
+            .card {
+                padding: 1.75rem 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.05rem;
+            }
+
             .main-content {
                 padding: 2rem 1.5rem;
             }
@@ -303,6 +381,24 @@
                 <li>Built for fun, learning, and vibes</li>
                 <li>No wallets, no transactions</li>
             </ul>
+        </section>
+
+        <section class="whats-coming">
+            <h2>What's coming</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-title">Market Cap Scenarios (manual)</div>
+                    <span class="card-badge">Coming soon</span>
+                </div>
+                <div class="card">
+                    <div class="card-title">Ape Lore + Meme Wall</div>
+                    <span class="card-badge">Coming soon</span>
+                </div>
+                <div class="card">
+                    <div class="card-title">Simple Calculators (no live data)</div>
+                    <span class="card-badge">Coming soon</span>
+                </div>
+            </div>
         </section>
 
         <main class="main-content">
