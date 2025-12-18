@@ -522,17 +522,20 @@
 
         .card {
             padding: 2rem 1.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 0.5px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.04);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
-            text-align: left;
+            text-align: center;
             position: relative;
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .card::before {
@@ -551,18 +554,37 @@
 
         .card:hover {
             transform: translateY(-3px);
-            border-color: rgba(74, 222, 128, 0.4);
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                        0 0 20px rgba(74, 222, 128, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                        0 0 24px rgba(74, 222, 128, 0.2);
+        }
+
+        .card-emoji {
+            font-size: 2.5rem;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-align: center;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .card-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: #ffffff;
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .card-description {
+            font-size: 0.95rem;
+            color: #b0b0b0;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 400;
         }
 
         .card-badge {
@@ -574,7 +596,7 @@
             font-size: 0.75rem;
             color: #ffd700;
             font-weight: 500;
-            margin-top: 0.5rem;
+            margin-top: auto;
             transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
         }
 
@@ -762,8 +784,18 @@
                 padding: 1.75rem 1.5rem;
             }
 
+            .card-emoji {
+                font-size: 2rem;
+                margin-bottom: 0.75rem;
+            }
+
             .card-title {
-                font-size: 1.05rem;
+                font-size: 1.1rem;
+            }
+
+            .card-description {
+                font-size: 0.9rem;
+                margin-bottom: 0.75rem;
             }
 
             .main-content {
@@ -837,11 +869,15 @@
                     <span class="card-badge">Coming soon</span>
                 </div>
                 <div class="card">
-                    <div class="card-title">Ape Lore + Meme Wall</div>
+                    <div class="card-emoji">🧠</div>
+                    <div class="card-title">Ape Lore</div>
+                    <div class="card-description">Meme wall. Community stories. Diamond hands legends.</div>
                     <span class="card-badge">Coming soon</span>
                 </div>
                 <div class="card">
-                    <div class="card-title">Simple Calculators (no live data)</div>
+                    <div class="card-emoji">📊</div>
+                    <div class="card-title">Simple Tools</div>
+                    <div class="card-description">Quick math. No live data. Pure vibes.</div>
                     <span class="card-badge">Coming soon</span>
                 </div>
             </div>
