@@ -205,20 +205,16 @@
         .hero::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 150%;
-            height: 250%;
-            background: radial-gradient(ellipse at center, 
-                rgba(74, 222, 128, 0.15) 0%, 
-                rgba(255, 215, 0, 0.08) 30%, 
-                rgba(74, 222, 128, 0.05) 55%,
-                transparent 80%);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('hero_banner.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             pointer-events: none;
             z-index: 0;
-            filter: blur(60px);
-            opacity: 0.8;
         }
 
         .hero::after {
@@ -227,13 +223,16 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.2) 50%, 
-                transparent);
-            border-radius: 16px 16px 0 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, 
+                    rgba(0, 0, 0, 0.4) 0%, 
+                    rgba(0, 0, 0, 0.6) 50%,
+                    rgba(0, 0, 0, 0.75) 100%),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5));
+            pointer-events: none;
             z-index: 1;
+            border-radius: 16px;
         }
 
         .hero > * {
@@ -249,7 +248,7 @@
             font-stretch: 95%;
             margin-bottom: 1rem;
             color: #ffffff;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.5);
             line-height: 1;
         }
 
