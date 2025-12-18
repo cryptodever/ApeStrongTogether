@@ -17,73 +17,87 @@
             background-image: radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.03) 0%, transparent 50%),
                               radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
             color: #e0e0e0;
-            line-height: 1.6;
+            line-height: 1.7;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 2rem;
+            padding: 3rem 1.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .hero {
             text-align: center;
-            margin: 4rem 0;
+            margin: 0 0 3rem 0;
+            padding: 4rem 3rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 900;
-            letter-spacing: -0.02em;
-            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
             color: #ffffff;
             text-shadow: 0 0 20px rgba(255, 255, 0, 0.1);
+            line-height: 1.1;
         }
 
         .subtitle {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             color: #b0b0b0;
-            max-width: 600px;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.25rem;
             font-weight: 500;
+            line-height: 1.5;
         }
 
         .meme-line {
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: #ffd700;
             font-style: italic;
-            margin-top: 0.5rem;
-            opacity: 0.8;
+            margin-top: 0.75rem;
+            opacity: 0.85;
         }
 
         .what-is-this {
             width: 100%;
-            max-width: 800px;
-            margin: 3rem auto;
-            padding: 2rem;
+            margin: 0 0 3rem 0;
+            padding: 3rem;
             text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .what-is-this h2 {
-            font-size: 2rem;
+            font-size: 2.25rem;
             color: #4ade80;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
         }
 
         .what-is-this ul {
             list-style: none;
             text-align: left;
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
         }
 
         .what-is-this li {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             color: #d0d0d0;
-            margin-bottom: 1rem;
-            padding-left: 1.5rem;
+            margin-bottom: 1.25rem;
+            padding-left: 2rem;
             position: relative;
+            line-height: 1.6;
         }
 
         .what-is-this li::before {
@@ -91,46 +105,84 @@
             color: #ffd700;
             font-size: 1.5rem;
             position: absolute;
-            left: 0;
+            left: 0.5rem;
         }
 
         .main-content {
             width: 100%;
-            max-width: 1200px;
-            margin-top: 3rem;
-            padding: 2rem;
+            margin: 0;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 2rem 1rem;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            .hero {
+                padding: 3rem 2rem;
+                margin-bottom: 2rem;
+            }
+
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 2.75rem;
+                margin-bottom: 1.25rem;
             }
 
             .subtitle {
-                font-size: 1rem;
+                font-size: 1.15rem;
+            }
+
+            .what-is-this {
+                padding: 2.5rem 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .what-is-this h2 {
+                font-size: 1.75rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .what-is-this li {
+                font-size: 1.05rem;
+                margin-bottom: 1rem;
+            }
+
+            .main-content {
+                padding: 2rem 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <h1 class="hero-title">APES TOGETHER STRONG 🦍</h1>
-        <p class="subtitle">Meme education. Community strength.</p>
-        <p class="meme-line">💎🙌 No dates. No promises.</p>
+    <div class="container">
+        <div class="hero">
+            <h1 class="hero-title">APES TOGETHER STRONG 🦍</h1>
+            <p class="subtitle">Meme education. Community strength.</p>
+            <p class="meme-line">💎🙌 No dates. No promises.</p>
+        </div>
+
+        <section class="what-is-this">
+            <h2>What is this?</h2>
+            <ul>
+                <li>Meme-first community site</li>
+                <li>Simple market-cap awareness (no live data)</li>
+                <li>Built for fun, learning, and vibes</li>
+                <li>No wallets, no transactions</li>
+            </ul>
+        </section>
+
+        <main class="main-content">
+            <!-- Content placeholder -->
+        </main>
     </div>
-
-    <section class="what-is-this">
-        <h2>What is this?</h2>
-        <ul>
-            <li>Meme-first community site</li>
-            <li>Simple market-cap awareness (no live data)</li>
-            <li>Built for fun, learning, and vibes</li>
-            <li>No wallets, no transactions</li>
-        </ul>
-    </section>
-
-    <main class="main-content">
-        <!-- Content placeholder -->
-    </main>
 </body>
 </html>
