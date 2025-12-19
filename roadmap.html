@@ -358,11 +358,25 @@
                         0 0 20px rgba(255, 215, 0, 0.6);
         }
 
-        .status-unknown {
-            background: linear-gradient(135deg, rgba(156, 39, 176, 0.9), rgba(103, 58, 183, 0.9));
+        .status-arcade {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.9), rgba(63, 81, 181, 0.9));
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(33, 150, 243, 0.6);
+        }
+
+        .status-index {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.9), rgba(123, 31, 162, 0.9));
             color: #ffffff;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
                         0 0 20px rgba(156, 39, 176, 0.6);
+        }
+
+        .status-unknown {
+            background: linear-gradient(135deg, rgba(97, 97, 97, 0.9), rgba(66, 66, 66, 0.9));
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(158, 158, 158, 0.6);
         }
 
         .phase-vibe {
@@ -381,13 +395,13 @@
         .phase-details {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, margin-top 0.4s ease;
             opacity: 0;
             margin-top: 0;
         }
 
         .phase-details.expanded {
-            max-height: 1000px;
+            max-height: 2000px;
             opacity: 1;
             margin-top: 1.5rem;
         }
@@ -451,10 +465,11 @@
             margin-top: 6rem;
             padding-top: 3rem;
             border-top: 1px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.9rem;
-            color: #999999;
+            font-size: 0.95rem;
+            color: #b0b0b0;
             font-style: italic;
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.02em;
         }
 
         footer {
@@ -637,18 +652,19 @@
                 <div class="timeline-content">
                     <div class="phase-header" onclick="togglePhase(1)">
                         <div class="phase-title-wrapper">
-                            <h2 class="phase-title">Phase 1 — The Awakening 🦍</h2>
-                            <span class="phase-status-chip status-live">LIVE ✅</span>
+                            <h2 class="phase-title">Phase 1 — Boot Up the Troop 🦍</h2>
+                            <span class="phase-status-chip status-live">NOW ✅</span>
                         </div>
-                        <p class="phase-vibe">Booting up the troop.</p>
+                        <p class="phase-vibe">Troop is assembling. Vibes are building.</p>
                     </div>
                     <div class="phase-details expanded" id="phase-1">
                         <div class="phase-details-panel">
                             <ul class="phase-list">
                                 <li>Launch the Ape Together Strong site</li>
-                                <li>Establish meme identity & thesis</li>
-                                <li>Token address visibility</li>
-                                <li>Community starts forming</li>
+                                <li>Official token address card with copy button + scam warning</li>
+                                <li>Ape Thesis (what this is, why it exists — meme language)</li>
+                                <li>Social links live (X + community hub)</li>
+                                <li>Meme starter pack (PFPs, banners, shareables)</li>
                             </ul>
                         </div>
                     </div>
@@ -660,17 +676,19 @@
                 <div class="timeline-content">
                     <div class="phase-header" onclick="togglePhase(2)">
                         <div class="phase-title-wrapper">
-                            <h2 class="phase-title">Phase 2 — Lore & Logic 🧠</h2>
+                            <h2 class="phase-title">Phase 2 — Lore & Tools Drop 🔥</h2>
                             <span class="phase-status-chip status-cooking">COOKING 🔥</span>
                         </div>
-                        <p class="phase-vibe">Lore deepens. Math stays simple.</p>
+                        <p class="phase-vibe">Tools drop. Lore deepens. Troop gets smarter.</p>
                     </div>
                     <div class="phase-details" id="phase-2">
                         <div class="phase-details-panel">
                             <ul class="phase-list">
-                                <li>Ape Lore (meme wall + stories)</li>
-                                <li>Market cap "what if" scenarios (manual)</li>
-                                <li>Simple tools for smooth brains</li>
+                                <li>Market Cap "What If" simulator (manual, educational, shareable)</li>
+                                <li>Simple math tools for smooth brains</li>
+                                <li>Ape Lore Wall (community memes + stories)</li>
+                                <li>Weekly lore updates to keep people returning</li>
+                                <li>One-click share buttons for X</li>
                             </ul>
                         </div>
                     </div>
@@ -682,18 +700,19 @@
                 <div class="timeline-content">
                     <div class="phase-header" onclick="togglePhase(3)">
                         <div class="phase-title-wrapper">
-                            <h2 class="phase-title">Phase 3 — Community Chaos 🍌</h2>
+                            <h2 class="phase-title">Phase 3 — Community Chaos Mode 🍌</h2>
                             <span class="phase-status-chip status-chaos">CHAOS 🍌</span>
                         </div>
-                        <p class="phase-vibe">Community runs wild.</p>
+                        <p class="phase-vibe">Community runs wild. Memes take over.</p>
                     </div>
                     <div class="phase-details" id="phase-3">
                         <div class="phase-details-panel">
                             <ul class="phase-list">
-                                <li>Community-submitted memes</li>
-                                <li>Lore expansion</li>
-                                <li>Social experiments</li>
-                                <li>Fun, unexpected drops (non-financial)</li>
+                                <li>Weekly meme battles with themes + voting</li>
+                                <li>Community leaderboard (clout only, no rewards)</li>
+                                <li>Meme roles & badges (Diamond Hands, Tendie Chef, Smooth Brain, etc.)</li>
+                                <li>Polls to vote on features, lore, and site expansions</li>
+                                <li>Raid toolkit (copyable tweets, images, reply prompts)</li>
                             </ul>
                         </div>
                     </div>
@@ -705,17 +724,64 @@
                 <div class="timeline-content">
                     <div class="phase-header" onclick="togglePhase(4)">
                         <div class="phase-title-wrapper">
-                            <h2 class="phase-title">Phase 4 — ??? 🌀</h2>
-                            <span class="phase-status-chip status-unknown">??? 🌀</span>
+                            <h2 class="phase-title">Phase 4 — The Ape Arcade 🎮</h2>
+                            <span class="phase-status-chip status-arcade">ARCADE 🎮</span>
                         </div>
-                        <p class="phase-vibe">Unknown territory.</p>
+                        <p class="phase-vibe">Games drop. Streaks begin. Fun unlocked.</p>
                     </div>
                     <div class="phase-details" id="phase-4">
                         <div class="phase-details-panel">
                             <ul class="phase-list">
-                                <li>Undefined</li>
-                                <li>Driven by community</li>
-                                <li>"If we get there, we get there" energy</li>
+                                <li>Simple browser mini-games (clickers, meme games, luck-based fun)</li>
+                                <li>Daily streaks and engagement mechanics</li>
+                                <li>Unlockable badges and profile cosmetics</li>
+                                <li>Meme generator with bananas/diamonds overlays</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-node"></div>
+                <div class="timeline-content">
+                    <div class="phase-header" onclick="togglePhase(5)">
+                        <div class="phase-title-wrapper">
+                            <h2 class="phase-title">Phase 5 — The Ape Index 🧠</h2>
+                            <span class="phase-status-chip status-index">INDEX 🧠</span>
+                        </div>
+                        <p class="phase-vibe">Brains get bigger. Knowledge spreads.</p>
+                    </div>
+                    <div class="phase-details" id="phase-5">
+                        <div class="phase-details-panel">
+                            <ul class="phase-list">
+                                <li>Community-driven meme sentiment board</li>
+                                <li>"Vibe tracker" powered by polls and memes</li>
+                                <li>Educational glossary for meme coins & culture</li>
+                                <li>Curated links hub (no signals, no predictions)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-node"></div>
+                <div class="timeline-content">
+                    <div class="phase-header" onclick="togglePhase(6)">
+                        <div class="phase-title-wrapper">
+                            <h2 class="phase-title">Phase 6 — If We Get There 🌀</h2>
+                            <span class="phase-status-chip status-unknown">??? 🌀</span>
+                        </div>
+                        <p class="phase-vibe">Unknown territory. Troop decides.</p>
+                    </div>
+                    <div class="phase-details" id="phase-6">
+                        <div class="phase-details-panel">
+                            <ul class="phase-list">
+                                <li>Fully community-driven expansion phase</li>
+                                <li>Collaborations, events, experiments</li>
+                                <li>Ape Museum for legendary memes</li>
+                                <li>Whatever the troop decides next</li>
                             </ul>
                         </div>
                     </div>
@@ -724,7 +790,7 @@
         </div>
 
         <div class="roadmap-footer-disclaimer">
-            This roadmap is vibes, not promises.
+            This roadmap is vibes, not promises. No dates. No predictions.
         </div>
     </div>
 
@@ -753,7 +819,10 @@
 
         // Initialize: Phase 1 expanded by default
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('phase-1').classList.add('expanded');
+            const phase1 = document.getElementById('phase-1');
+            if (phase1) {
+                phase1.classList.add('expanded');
+            }
         });
     </script>
 </body>
