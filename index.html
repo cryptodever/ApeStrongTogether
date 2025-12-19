@@ -883,6 +883,131 @@
             letter-spacing: 0.02em;
         }
 
+        .roadmap-section {
+            width: 100%;
+            margin: 0 0 3rem 0;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.035);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            position: relative;
+        }
+
+        .roadmap-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at center, 
+                    rgba(0, 0, 0, 0.5) 0%, 
+                    rgba(0, 0, 0, 0.55) 100%);
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: 0;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .roadmap-section > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .roadmap-section h2 {
+            font-family: 'Space Grotesk', 'Inter Tight', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            font-size: 2.25rem;
+            color: #f0f0f0;
+            margin-bottom: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            font-stretch: 96%;
+            line-height: 1.3;
+            text-shadow: 0 0 20px rgba(74, 222, 128, 0.2),
+                         0 2px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6)) 
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .roadmap-card {
+            padding: 2rem 1.75rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            text-align: left;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .roadmap-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        0 0 20px rgba(74, 222, 128, 0.1);
+        }
+
+        .roadmap-phase {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .roadmap-list li {
+            font-size: 1rem;
+            color: #d0d0d0;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .roadmap-list li::before {
+            content: "•";
+            color: #ffd700;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0.5rem;
+        }
+
+        .roadmap-disclaimer {
+            font-size: 0.85rem;
+            color: #999999;
+            font-style: italic;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
         .main-content {
             width: 100%;
             margin: 0;
@@ -951,7 +1076,8 @@
             .hero-cta:hover,
             .card:hover,
             .what-is-this:hover,
-            .whats-coming:hover {
+            .whats-coming:hover,
+            .roadmap-card:hover {
                 transform: none !important;
             }
         }
@@ -1142,6 +1268,35 @@
                 padding: 0.875rem 1.5rem;
             }
 
+            .roadmap-section {
+                padding: 2.5rem 2rem;
+                margin-bottom: 2rem;
+            }
+
+            .roadmap-section h2 {
+                font-size: 1.75rem;
+                margin-bottom: 2rem;
+            }
+
+            .roadmap-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+
+            .roadmap-card {
+                padding: 1.75rem 1.5rem;
+            }
+
+            .roadmap-phase {
+                font-size: 1.15rem;
+                margin-bottom: 1rem;
+            }
+
+            .roadmap-list li {
+                font-size: 0.95rem;
+                margin-bottom: 0.65rem;
+            }
+
             .main-content {
                 padding: 2rem 1.5rem;
             }
@@ -1193,9 +1348,9 @@
 
         <section class="token-address-section">
             <div class="token-address-card">
-                <div class="token-address-title">💎 Token Address (Copy/Paste)</div>
+                <div class="token-address-title">💎 Token Address </div>
                 <div class="token-address-wrapper">
-                    <div class="token-address-box" id="tokenAddress">PASTE_TOKEN_ADDRESS_HERE</div>
+                    <div class="token-address-box" id="tokenAddress">  COMING SOON  </div>
                     <button class="copy-button" id="copyButton" onclick="copyTokenAddress()">Copy</button>
                 </div>
                 <div class="token-address-warning"><strong>Always verify the address.</strong> Scammers post fake contracts.</div>
@@ -1250,6 +1405,47 @@
                     <span class="card-badge">Coming soon</span>
                 </div>
             </div>
+        </section>
+
+        <section class="roadmap-section">
+            <h2>The Ape Roadmap 🗺️</h2>
+            <div class="roadmap-grid">
+                <div class="roadmap-card">
+                    <div class="roadmap-phase">Phase 1 — The Awakening 🦍</div>
+                    <ul class="roadmap-list">
+                        <li>Launch the Ape Together Strong site</li>
+                        <li>Establish meme identity & thesis</li>
+                        <li>Token address visibility</li>
+                        <li>Community starts forming</li>
+                    </ul>
+                </div>
+                <div class="roadmap-card">
+                    <div class="roadmap-phase">Phase 2 — Lore & Logic 🧠</div>
+                    <ul class="roadmap-list">
+                        <li>Ape Lore (meme wall + stories)</li>
+                        <li>Market cap "what if" scenarios (manual)</li>
+                        <li>Simple tools for smooth brains</li>
+                    </ul>
+                </div>
+                <div class="roadmap-card">
+                    <div class="roadmap-phase">Phase 3 — Community Chaos 🍌</div>
+                    <ul class="roadmap-list">
+                        <li>Community-submitted memes</li>
+                        <li>Lore expansion</li>
+                        <li>Social experiments</li>
+                        <li>Fun, unexpected drops (non-financial)</li>
+                    </ul>
+                </div>
+                <div class="roadmap-card">
+                    <div class="roadmap-phase">Phase 4 — ??? 🌀</div>
+                    <ul class="roadmap-list">
+                        <li>Undefined</li>
+                        <li>Driven by community</li>
+                        <li>"If we get there, we get there" energy</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="roadmap-disclaimer">This roadmap is vibes, not promises.</div>
         </section>
 
         <main class="main-content">
