@@ -614,9 +614,9 @@
         .card-featured {
             padding: 2.75rem 2.25rem;
             background: rgba(255, 255, 255, 0.06);
-            border: 0.5px solid rgba(74, 222, 128, 0.5);
+            border: 0.5px solid rgba(255, 152, 0, 0.5);
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-                        0 0 36px rgba(74, 222, 128, 0.3),
+                        0 0 36px rgba(255, 152, 0, 0.3),
                         inset 0 1px 0 rgba(255, 255, 255, 0.15),
                         inset 0 -1px 0 rgba(255, 215, 0, 0.12);
             transform: scale(1.05);
@@ -627,13 +627,13 @@
         @keyframes subtlePulse {
             0%, 100% {
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-                            0 0 36px rgba(74, 222, 128, 0.3),
+                            0 0 36px rgba(255, 152, 0, 0.3),
                             inset 0 1px 0 rgba(255, 255, 255, 0.15),
                             inset 0 -1px 0 rgba(255, 215, 0, 0.12);
             }
             50% {
                 box-shadow: 0 5px 20px rgba(0, 0, 0, 0.18),
-                            0 0 42px rgba(74, 222, 128, 0.35),
+                            0 0 42px rgba(255, 152, 0, 0.35),
                             inset 0 1px 0 rgba(255, 255, 255, 0.18),
                             inset 0 -1px 0 rgba(255, 215, 0, 0.15);
             }
@@ -664,34 +664,34 @@
 
         .card-featured:hover {
             transform: scale(1.12) translateY(-5px);
-            border-color: rgba(74, 222, 128, 0.6);
+            border-color: rgba(255, 152, 0, 0.6);
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25),
                         inset 0 1px 0 rgba(255, 255, 255, 0.25),
-                        0 0 50px rgba(74, 222, 128, 0.4),
+                        0 0 50px rgba(255, 152, 0, 0.4),
                         0 0 30px rgba(255, 215, 0, 0.2);
             animation: none;
         }
 
         .card-featured:hover .card-emoji {
             transform: scale(1.15) translateY(-2px);
-            filter: drop-shadow(0 8px 16px rgba(255, 215, 0, 0.6))
-                    drop-shadow(0 4px 8px rgba(74, 222, 128, 0.5));
+            filter: drop-shadow(0 8px 16px rgba(255, 152, 0, 0.6))
+                    drop-shadow(0 4px 8px rgba(255, 87, 34, 0.5));
         }
 
         .card-emoji {
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             line-height: 1;
             margin-bottom: 1rem;
             text-align: center;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3));
             transition: transform 0.3s ease, filter 0.3s ease;
         }
 
         .card-featured .card-emoji {
-            font-size: 3.5rem;
-            filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.5))
-                    drop-shadow(0 2px 6px rgba(74, 222, 128, 0.4));
+            font-size: 3.75rem;
+            filter: drop-shadow(0 4px 12px rgba(255, 152, 0, 0.5))
+                    drop-shadow(0 2px 6px rgba(255, 87, 34, 0.4));
             animation: emojiFloat 2.5s ease-in-out infinite;
         }
 
@@ -707,33 +707,37 @@
         .card-title {
             font-size: 1.3rem;
             font-weight: 700;
-            color: #ffffff;
+            color: #f0f0f0;
             margin-bottom: 0.5rem;
             line-height: 1.4;
             text-align: center;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            letter-spacing: -0.01em;
         }
 
         .card-featured .card-title {
-            font-size: 1.65rem;
+            font-size: 1.7rem;
             color: #ffffff;
-            text-shadow: 0 0 16px rgba(255, 215, 0, 0.4),
-                         0 2px 8px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 0 18px rgba(255, 152, 0, 0.4),
+                         0 2px 10px rgba(0, 0, 0, 0.5);
             font-weight: 800;
         }
 
         .card-description {
             font-size: 0.95rem;
-            color: #b0b0b0;
-            line-height: 1.6;
+            color: #d0d0d0;
+            line-height: 1.7;
             margin-bottom: 1rem;
             text-align: center;
             font-weight: 400;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
         }
 
         .card-featured .card-description {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: #e8e8e8;
             font-weight: 500;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
         }
 
         .card-badge {
@@ -753,6 +757,48 @@
             background: rgba(255, 215, 0, 0.15);
             border-color: rgba(255, 215, 0, 0.3);
             color: #ffed4e;
+            transform: scale(1.05);
+        }
+
+        .card-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-top: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 12px currentColor;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-status-badge.status-live {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.9), rgba(74, 222, 128, 0.7));
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .card-status-badge.status-cooking {
+            background: linear-gradient(135deg, rgba(255, 87, 34, 0.9), rgba(255, 152, 0, 0.9));
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 152, 0, 0.5);
+        }
+
+        .card-status-badge.status-soon {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 193, 7, 0.9));
+            color: #000000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .card:hover .card-status-badge {
             transform: scale(1.05);
         }
 
@@ -1233,21 +1279,22 @@
             <h2>What we're cooking 🍌</h2>
             <div class="cards-grid">
                 <div class="card">
-                    <div class="card-title">Market Cap Scenarios</div>
-                    <div class="card-description">Manual 'what if' scenarios. No charts. No hopium.</div>
-                    <span class="card-badge">Coming soon</span>
+                    <div class="card-emoji">🦍</div>
+                    <div class="card-title">Booting the Troop 🦍</div>
+                    <div class="card-description">Launching the Ape Together Strong hub, locking the meme identity, and gathering the first apes.</div>
+                    <span class="card-status-badge status-live">LIVE ✅</span>
                 </div>
                 <div class="card card-featured">
-                    <div class="card-emoji">🧠</div>
-                    <div class="card-title">Ape Lore</div>
-                    <div class="card-description">Meme wall. Community stories. Diamond hands legends.</div>
-                    <span class="card-badge">Coming soon</span>
+                    <div class="card-emoji">🔥</div>
+                    <div class="card-title">Lore & Tools 🔥</div>
+                    <div class="card-description">Ape Lore, meme walls, and simple "what if" tools for smooth brains.</div>
+                    <span class="card-status-badge status-cooking">COOKING 🔥</span>
                 </div>
                 <div class="card">
-                    <div class="card-emoji">📊</div>
-                    <div class="card-title">Simple Tools</div>
-                    <div class="card-description">Quick math. No live data. Pure vibes.</div>
-                    <span class="card-badge">Coming soon</span>
+                    <div class="card-emoji">🍌</div>
+                    <div class="card-title">Community Chaos 🍌</div>
+                    <div class="card-description">Meme battles, raids, badges, leaderboards, and pure community energy.</div>
+                    <span class="card-status-badge status-soon">SOON 🍌</span>
                 </div>
             </div>
         </section>
