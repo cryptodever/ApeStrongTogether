@@ -510,8 +510,8 @@
             border-radius: 16px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12),
                         inset 0 1px 0 rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
             position: relative;
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
@@ -530,27 +530,13 @@
             border-radius: 16px;
             pointer-events: none;
             z-index: 0;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .whats-coming > * {
             position: relative;
             z-index: 1;
-        }
-
-        .whats-coming::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.15) 50%, 
-                transparent);
-            border-radius: 16px 16px 0 0;
         }
 
         .whats-coming:hover {
@@ -576,6 +562,8 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6)) 
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .cards-grid {
@@ -587,47 +575,47 @@
 
         .card {
             padding: 2rem 1.5rem;
-            background: rgba(255, 255, 255, 0.04);
-            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             text-align: center;
             position: relative;
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease, opacity 0.3s ease;
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transform: scale(0.95);
-            opacity: 0.85;
+            transform: scale(0.98);
+            opacity: 1;
         }
 
         .card-featured {
             padding: 2.75rem 2.25rem;
             background: rgba(255, 255, 255, 0.06);
-            border: 0.5px solid rgba(74, 222, 128, 0.4);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2),
-                        0 0 40px rgba(74, 222, 128, 0.25),
+            border: 0.5px solid rgba(74, 222, 128, 0.5);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
+                        0 0 36px rgba(74, 222, 128, 0.3),
                         inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                        inset 0 -1px 0 rgba(255, 215, 0, 0.1);
-            transform: scale(1.08);
+                        inset 0 -1px 0 rgba(255, 215, 0, 0.12);
+            transform: scale(1.05);
             opacity: 1;
             animation: subtlePulse 3s ease-in-out infinite;
         }
 
         @keyframes subtlePulse {
             0%, 100% {
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2),
-                            0 0 40px rgba(74, 222, 128, 0.25),
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
+                            0 0 36px rgba(74, 222, 128, 0.3),
                             inset 0 1px 0 rgba(255, 255, 255, 0.15),
-                            inset 0 -1px 0 rgba(255, 215, 0, 0.1);
+                            inset 0 -1px 0 rgba(255, 215, 0, 0.12);
             }
             50% {
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
-                            0 0 48px rgba(74, 222, 128, 0.3),
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.18),
+                            0 0 42px rgba(74, 222, 128, 0.35),
                             inset 0 1px 0 rgba(255, 255, 255, 0.18),
                             inset 0 -1px 0 rgba(255, 215, 0, 0.15);
             }
@@ -648,12 +636,11 @@
         }
 
         .card:hover {
-            transform: scale(0.97) translateY(-2px);
-            opacity: 0.9;
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
+            transform: scale(0.99) translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.07);
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.12),
                         0 0 20px rgba(74, 222, 128, 0.15);
         }
 
@@ -1063,6 +1050,7 @@
             <div class="cards-grid">
                 <div class="card">
                     <div class="card-title">Market Cap Scenarios</div>
+                    <div class="card-description">Manual 'what if' scenarios. No charts. No hopium.</div>
                     <span class="card-badge">Coming soon</span>
                 </div>
                 <div class="card card-featured">
