@@ -88,19 +88,31 @@
         nav {
             width: 100%;
             padding: 1.25rem 2rem;
-            background: rgba(15, 15, 15, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
+        nav::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
+            pointer-events: none;
+            z-index: -1;
+        }
+
         .ticker-bar {
             width: 100%;
-            background: rgba(15, 15, 15, 0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             padding: 0.5rem 0;
             overflow: hidden;
             position: relative;
@@ -119,10 +131,12 @@
 
         .ticker-text {
             font-size: 0.75rem;
-            color: rgba(200, 200, 200, 0.55);
+            color: rgba(220, 220, 220, 0.75);
             font-weight: 500;
             letter-spacing: 0.05em;
             padding: 0 2rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+                         0 0 4px rgba(255, 255, 255, 0.1);
         }
 
         @keyframes scroll {
@@ -149,12 +163,14 @@
         }
 
         .nav-links a {
-            color: #b0b0b0;
+            color: #e8e8e8;
             text-decoration: none;
             font-size: 0.95rem;
             font-weight: 500;
             transition: color 0.2s ease;
             position: relative;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5),
+                         0 0 8px rgba(255, 255, 255, 0.1);
         }
 
         .nav-links a::after {
@@ -170,6 +186,8 @@
 
         .nav-links a:hover {
             color: #ffffff;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6),
+                         0 0 12px rgba(255, 255, 255, 0.15);
         }
 
         .nav-links a:hover::after {
