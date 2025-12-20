@@ -639,6 +639,7 @@
                             <div class="trait-option selected" data-ape="ape1">Ape 1</div>
                             <div class="trait-option" data-ape="ape2">Ape 2</div>
                             <div class="trait-option" data-ape="ape3">Ape 3</div>
+                            <div class="trait-option" data-ape="ape4">Ape 4</div>
                         </div>
                     </div>
                     <div class="control-group">
@@ -785,16 +786,16 @@
                 ctx.fillRect(0, 0, size, size);
             }
             
-            // Layer 2: Ape (enlarged and positioned lower)
+            // Layer 2: Ape (enlarged and positioned)
             const apeType = state.ape.type;
             const expression = state.ape.expression;
             const key = `${apeType}_${expression}`;
             if (apeImages[key]) {
-                const apeScale = 1.35; // Enlarge by 35% (25% + 10%)
+                const apeScale = 1.35; // Enlarge by 35%
                 const apeWidth = size * apeScale;
                 const apeHeight = size * apeScale;
                 const apeX = (size - apeWidth) / 2; // Center horizontally
-                const apeY = size * 0.25; // Position lower (25% from top, 10% lower than before)
+                const apeY = size * 0.15; // Position at 15% from top (10% higher than before)
                 ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
             }
             
@@ -883,11 +884,11 @@
             
             // Check if image is already loaded - draw it immediately
             if (apeImages[key]) {
-                const apeScale = 1.35; // Enlarge by 35% (25% + 10%)
+                const apeScale = 1.35; // Enlarge by 35%
                 const apeWidth = size * apeScale;
                 const apeHeight = size * apeScale;
                 const apeX = (size - apeWidth) / 2; // Center horizontally
-                const apeY = size * 0.25; // Position lower (25% from top, 10% lower than before)
+                const apeY = size * 0.15; // Position at 15% from top (10% higher than before)
                 ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
                 return;
             }
