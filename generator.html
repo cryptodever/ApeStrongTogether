@@ -17,20 +17,11 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background-color: #1a1a1a;
-            background-image: 
-                url('background_homepage.png'),
-                radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.04) 0%, transparent 60%),
-                radial-gradient(ellipse at center, rgba(26, 26, 26, 0.4) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.75) 100%);
-            background-size: 
-                auto,
-                cover,
-                cover;
-            background-repeat: repeat;
+            background-image: url('background_homepage.png');
+            background-size: cover;
+            background-repeat: no-repeat;
             background-attachment: fixed;
-            background-position: 
-                0 0,
-                center,
-                center;
+            background-position: center;
             color: #e0e0e0;
             line-height: 1.8;
             min-height: 100vh;
@@ -39,6 +30,22 @@
         }
 
         body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.8) 100%),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 20%, rgba(0, 0, 0, 0.5) 80%, rgba(0, 0, 0, 0.7) 100%),
+                radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at center 70%, rgba(255, 215, 0, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
             content: '';
             position: fixed;
             top: 0;
@@ -178,7 +185,8 @@
         .generator-page {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 3rem 2rem;
+            padding: 4rem 2rem 6rem;
+            position: relative;
         }
 
         .generator-header {
@@ -411,6 +419,36 @@
                         0 0 12px rgba(74, 222, 128, 0.5);
         }
 
+        .background-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .bg-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .bg-option:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .bg-option.selected {
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.3),
+                        0 0 12px rgba(74, 222, 128, 0.5);
+        }
+
         .trait-options {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -526,6 +564,10 @@
             .color-options {
                 grid-template-columns: repeat(3, 1fr);
             }
+
+            .background-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
     </style>
 </head>
@@ -574,32 +616,17 @@
                 <div class="control-panel">
                     <h3>Background</h3>
                     <div class="control-group">
-                        <label class="control-label">Type</label>
-                        <select class="control-select" id="bgType">
-                            <option value="solid">Solid Color</option>
-                            <option value="gradient">Gradient</option>
-                            <option value="pattern">Pattern</option>
-                        </select>
-                    </div>
-                    <div class="control-group" id="solidColorGroup">
-                        <label class="control-label">Color</label>
-                        <div class="color-options" id="solidColors">
-                            <div class="color-option selected" data-color="#1a1a1a" style="background: #1a1a1a;"></div>
-                            <div class="color-option" data-color="#2a2a2a" style="background: #2a2a2a;"></div>
-                            <div class="color-option" data-color="#0f5132" style="background: #0f5132;"></div>
-                            <div class="color-option" data-color="#166534" style="background: #166534;"></div>
-                            <div class="color-option" data-color="#854d0e" style="background: #854d0e;"></div>
-                            <div class="color-option" data-color="#a16207" style="background: #a16207;"></div>
-                            <div class="color-option" data-color="#1e3a8a" style="background: #1e3a8a;"></div>
-                            <div class="color-option" data-color="#7c2d12" style="background: #7c2d12;"></div>
+                        <label class="control-label">Background Image</label>
+                        <div class="background-options" id="backgroundOptions">
+                            <div class="bg-option selected" data-bg="pfp_generator_images/pfp_bg1.png" style="background-image: url('pfp_generator_images/pfp_bg1.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg2.png" style="background-image: url('pfp_generator_images/pfp_bg2.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg3.png" style="background-image: url('pfp_generator_images/pfp_bg3.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg4.png" style="background-image: url('pfp_generator_images/pfp_bg4.png');"></div>
+                            <div class="bg-option" data-bg="placeholder1" style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);"></div>
+                            <div class="bg-option" data-bg="placeholder2" style="background: linear-gradient(135deg, #0f5132 0%, #166534 100%);"></div>
+                            <div class="bg-option" data-bg="placeholder3" style="background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);"></div>
+                            <div class="bg-option" data-bg="placeholder4" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);"></div>
                         </div>
-                    </div>
-                    <div class="control-group" id="gradientTypeGroup" style="display: none;">
-                        <label class="control-label">Gradient Type</label>
-                        <select class="control-select" id="gradientType">
-                            <option value="radial">Radial</option>
-                            <option value="linear">Linear</option>
-                        </select>
                     </div>
                 </div>
 
@@ -705,9 +732,7 @@
         // State management
         const state = {
             background: {
-                type: 'solid',
-                color: '#1a1a1a',
-                gradientType: 'radial'
+                image: 'pfp_generator_images/pfp_bg1.png'
             },
             ape: {
                 furColor: '#8B4513',
@@ -748,40 +773,68 @@
             drawText();
         }
 
+        const backgroundImages = {};
+
+        function loadBackgroundImage(src, callback) {
+            if (backgroundImages[src]) {
+                callback(backgroundImages[src]);
+                return;
+            }
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                backgroundImages[src] = img;
+                callback(img);
+            };
+            img.onerror = () => {
+                // Fallback to solid color if image fails to load
+                const size = 512;
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, size, size);
+            };
+            img.src = src;
+        }
+
         function drawBackground() {
             const size = 512;
-            if (state.background.type === 'solid') {
-                ctx.fillStyle = state.background.color;
-                ctx.fillRect(0, 0, size, size);
-            } else if (state.background.type === 'gradient') {
+            const bg = state.background.image;
+            
+            // Handle placeholder backgrounds
+            if (bg.startsWith('placeholder')) {
                 let gradient;
-                if (state.background.gradientType === 'radial') {
-                    gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-                    gradient.addColorStop(0, state.background.color);
-                    gradient.addColorStop(1, darkenColor(state.background.color, 0.5));
-                } else {
+                if (bg === 'placeholder1') {
                     gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, state.background.color);
-                    gradient.addColorStop(1, darkenColor(state.background.color, 0.3));
+                    gradient.addColorStop(0, '#1a1a1a');
+                    gradient.addColorStop(1, '#2a2a2a');
+                } else if (bg === 'placeholder2') {
+                    gradient = ctx.createLinearGradient(0, 0, size, size);
+                    gradient.addColorStop(0, '#0f5132');
+                    gradient.addColorStop(1, '#166534');
+                } else if (bg === 'placeholder3') {
+                    gradient = ctx.createLinearGradient(0, 0, size, size);
+                    gradient.addColorStop(0, '#854d0e');
+                    gradient.addColorStop(1, '#a16207');
+                } else if (bg === 'placeholder4') {
+                    gradient = ctx.createLinearGradient(0, 0, size, size);
+                    gradient.addColorStop(0, '#1e3a8a');
+                    gradient.addColorStop(1, '#3b82f6');
                 }
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, size, size);
-            } else if (state.background.type === 'pattern') {
-                // Pattern background
-                ctx.fillStyle = state.background.color;
-                ctx.fillRect(0, 0, size, size);
-                
-                // Draw noise pattern
-                const imageData = ctx.createImageData(size, size);
-                const data = imageData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const noise = Math.random() * 30;
-                    data[i] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(1, 3), 16) + noise));
-                    data[i + 1] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(3, 5), 16) + noise));
-                    data[i + 2] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(5, 7), 16) + noise));
-                    data[i + 3] = 255;
+            } else {
+                // Draw image if already loaded, otherwise load it
+                if (backgroundImages[bg]) {
+                    ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
+                } else {
+                    // Draw placeholder while loading
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.fillRect(0, 0, size, size);
+                    // Load image asynchronously
+                    loadBackgroundImage(bg, (img) => {
+                        // Re-render everything after image loads
+                        renderCanvas();
+                    });
                 }
-                ctx.putImageData(imageData, 0, 0);
             }
         }
 
@@ -988,24 +1041,12 @@
         }
 
         // Event listeners
-        document.getElementById('bgType').addEventListener('change', (e) => {
-            state.background.type = e.target.value;
-            document.getElementById('solidColorGroup').style.display = e.target.value === 'solid' ? 'block' : 'none';
-            document.getElementById('gradientTypeGroup').style.display = e.target.value === 'gradient' ? 'block' : 'none';
-            renderCanvas();
-        });
-
-        document.getElementById('gradientType').addEventListener('change', (e) => {
-            state.background.gradientType = e.target.value;
-            renderCanvas();
-        });
-
-        // Solid color options
-        document.querySelectorAll('#solidColors .color-option').forEach(option => {
+        // Background image options
+        document.querySelectorAll('#backgroundOptions .bg-option').forEach(option => {
             option.addEventListener('click', () => {
-                document.querySelectorAll('#solidColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
-                state.background.color = option.dataset.color;
+                state.background.image = option.dataset.bg;
                 renderCanvas();
             });
         });
@@ -1093,16 +1134,13 @@
 
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => {
-            state.background = { type: 'solid', color: '#1a1a1a', gradientType: 'radial' };
+            state.background = { image: 'pfp_generator_images/pfp_bg1.png' };
             state.ape = { furColor: '#8B4513', expression: 'default' };
             state.accessories = { hat: 'none', glasses: 'none', jewelry: 'none' };
             state.text = { content: '', font: 'Inter', color: '#ffffff', position: 'top', size: 40 };
 
             // Reset UI
-            document.getElementById('bgType').value = 'solid';
-            document.getElementById('solidColorGroup').style.display = 'block';
-            document.getElementById('gradientTypeGroup').style.display = 'none';
-            document.querySelectorAll('#solidColors .color-option').forEach((opt, i) => {
+            document.querySelectorAll('#backgroundOptions .bg-option').forEach((opt, i) => {
                 opt.classList.toggle('selected', i === 0);
             });
             document.querySelectorAll('#furColors .color-option').forEach((opt, i) => {
