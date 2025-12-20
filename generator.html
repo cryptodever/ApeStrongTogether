@@ -639,7 +639,6 @@
                             <div class="trait-option selected" data-ape="ape1">Ape 1</div>
                             <div class="trait-option" data-ape="ape2">Ape 2</div>
                             <div class="trait-option" data-ape="ape3">Ape 3</div>
-                            <div class="trait-option" data-ape="ape4">Ape 4</div>
                         </div>
                     </div>
                     <div class="control-group">
@@ -762,13 +761,11 @@
             // Draw background
             drawBackground();
 
-            // Draw ape base
+            // Draw ape base (will handle async loading internally)
             drawApe();
 
-            // Draw accessories
+            // Draw accessories and text (will be redrawn if ape loads async)
             drawAccessories();
-
-            // Draw text overlay
             drawText();
         }
 
@@ -815,72 +812,38 @@
 
         function drawApe() {
             const size = 512;
-            const centerX = size / 2;
-            const centerY = size / 2;
-            const radius = 180;
-
-            // Determine ape color based on type (placeholder)
-            let apeColor;
-            switch(state.ape.type) {
-                case 'ape1':
-                    apeColor = '#8B4513'; // Brown
-                    break;
-                case 'ape2':
-                    apeColor = '#654321'; // Dark brown
-                    break;
-                case 'ape3':
-                    apeColor = '#2F1B14'; // Very dark brown
-                    break;
-                case 'ape4':
-                    apeColor = '#A0522D'; // Sienna
-                    break;
-                default:
-                    apeColor = '#8B4513';
+            const apeType = state.ape.type;
+            const expression = state.ape.expression;
+            const key = `${apeType}_${expression}`;
+            
+            // Check if image is already loaded
+            if (apeImages[key]) {
+                ctx.drawImage(apeImages[key], 0, 0, size, size);
+                return;
             }
-
-            // Draw ape head (circle)
-            ctx.fillStyle = apeColor;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Draw face features based on expression
-            ctx.fillStyle = '#000000';
-            const eyeY = centerY - 40;
-            const eyeSpacing = 50;
-
-            if (state.ape.expression === 'happy') {
-                // Happy eyes (smaller, upward)
-                drawEye(centerX - eyeSpacing, eyeY - 10, 15);
-                drawEye(centerX + eyeSpacing, eyeY - 10, 15);
-                // Smile
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 20, 60, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-            } else if (state.ape.expression === 'sad') {
-                // Sad eyes (downward)
-                drawEye(centerX - eyeSpacing, eyeY + 5, 15);
-                drawEye(centerX + eyeSpacing, eyeY + 5, 15);
-                // Frown
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 50, 60, Math.PI + 0.2, 2 * Math.PI - 0.2);
-                ctx.stroke();
-            } else if (state.ape.expression === 'serious') {
-                // Serious eyes (smaller, straight)
-                drawEye(centerX - eyeSpacing, eyeY, 12);
-                drawEye(centerX + eyeSpacing, eyeY, 12);
-                // Straight mouth
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 6;
-                ctx.beginPath();
-                ctx.moveTo(centerX - 40, centerY + 30);
-                ctx.lineTo(centerX + 40, centerY + 30);
-                ctx.stroke();
-            }
+            
+            // Load and draw ape image asynchronously
+            loadApeImage(apeType, expression, (img) => {
+                if (img) {
+                    // Clear and redraw everything when image loads
+                    ctx.clearRect(0, 0, size, size);
+                    drawBackground();
+                    ctx.drawImage(img, 0, 0, size, size);
+                    drawAccessories();
+                    drawText();
+                } else {
+                    // Fallback placeholder if image fails to load
+                    const centerX = size / 2;
+                    const centerY = size / 2;
+                    const radius = 180;
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    drawAccessories();
+                    drawText();
+                }
+            });
         }
 
         function drawEye(x, y, size) {
