@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Pic Generator 🦍 | Apes Together Strong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background-color: #1a1a1a;
+            background-image: 
+                url('background_homepage.png'),
+                radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at center, rgba(26, 26, 26, 0.4) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.75) 100%);
+            background-size: 
+                auto,
+                cover,
+                cover;
+            background-repeat: repeat;
+            background-attachment: fixed;
+            background-position: 
+                0 0,
+                center,
+                center;
+            color: #e0e0e0;
+            line-height: 1.8;
+            min-height: 100vh;
+            padding: 0;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        body > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #e8e8e8;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            position: relative;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5),
+                         0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #4ade80;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6),
+                         0 0 12px rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-socials {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            color: #d0d0d0;
+            text-decoration: none;
+            transition: transform 0.2s ease, color 0.2s ease, filter 0.2s ease;
+            border-radius: 6px;
+        }
+
+        .nav-social-icon svg {
+            width: 20px;
+            height: 20px;
+            transition: filter 0.2s ease;
+        }
+
+        .nav-social-icon:hover {
+            transform: scale(1.1);
+            color: #ffffff;
+        }
+
+        .nav-social-x:hover {
+            color: #ffffff;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+        }
+
+        .nav-social-x:hover svg {
+            filter: drop-shadow(0 0 6px rgba(29, 155, 240, 0.8));
+        }
+
+        .nav-social-telegram:hover {
+            color: #0088cc;
+            filter: drop-shadow(0 0 8px rgba(0, 136, 204, 0.6));
+        }
+
+        .nav-social-telegram:hover svg {
+            filter: drop-shadow(0 0 6px rgba(0, 136, 204, 0.8));
+        }
+
+        .generator-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .generator-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .generator-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6),
+                         0 0 20px rgba(74, 222, 128, 0.3);
+        }
+
+        .generator-header p {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .generator-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .preview-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        #profileCanvas {
+            width: 512px;
+            height: 512px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            background: #2a2a2a;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #000;
+            box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(74, 222, 128, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .control-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+        }
+
+        .control-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+        }
+
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .color-option.selected {
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.3),
+                        0 0 12px rgba(74, 222, 128, 0.5);
+        }
+
+        .trait-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .trait-option {
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+            transition: all 0.3s ease;
+        }
+
+        .trait-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .trait-option.selected {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: #4ade80;
+            color: #ffffff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4ade80;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4ade80;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+        }
+
+        .slider-value {
+            min-width: 50px;
+            text-align: right;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+        }
+
+        @media (max-width: 1024px) {
+            .generator-container {
+                grid-template-columns: 1fr;
+            }
+
+            #profileCanvas {
+                width: 100%;
+                max-width: 512px;
+                height: auto;
+                aspect-ratio: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .generator-page {
+                padding: 2rem 1rem;
+            }
+
+            .generator-header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-socials {
+                margin-left: 1rem;
+                padding-left: 1rem;
+                gap: 0.75rem;
+            }
+
+            .nav-social-icon {
+                width: 28px;
+                height: 28px;
+            }
+
+            .nav-social-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .color-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="nav-links">
+                <a href="/">APE HUB</a>
+                <a href="roadmap.html">ROADMAP</a>
+                <a href="generator.html">GENERATOR</a>
+                <div class="nav-socials">
+                    <a href="https://x.com/ApeCurrency" target="_blank" rel="noopener noreferrer" class="nav-social-icon nav-social-x" aria-label="Follow on X">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/>
+                        </svg>
+                    </a>
+                    <a href="https://t.me/+P-ve2kGSQ0tkNzBh" target="_blank" rel="noopener noreferrer" class="nav-social-icon nav-social-telegram" aria-label="Join Telegram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.169 1.858-.896 6.728-.896 6.728s-.131.778-.583.897c-.452.119-1.186-.396-1.186-.396s-2.936-2.011-3.968-2.964c-.784-.624-.131-.968.482-1.529.988-.901 2.011-1.841 3.079-2.834.371-.345.742-.725.074-1.16-.668-.435-1.841-.132-2.552-.081-.712.051-1.348.299-1.348.299s-.334.132-.741.079c-.407-.053-.741-.371-.896-.597-.155-.226-.298-.782-.298-.782s-1.274-4.226-1.629-5.256c-.355-1.03-.759-1.03-1.529-.949-.77.081-1.841.132-1.841.132s-.725.054-.947.241c-.222.187-.299.482-.299.482s-.027.622.668 1.629c.695 1.007 2.067 3.18 3.329 5.127 1.638 2.501 2.909 4.354 3.929 5.52.828.951 1.474 1.507 1.767 1.841.371.429.26.638.05.856-.21.218-.334.299-.696.542-.362.243-1.529 1.03-2.457 1.674-.927.644-1.381 1.096-.668 1.914.713.818 2.774 2.352 4.216 3.503 2.824 2.294 5.08 3.503 5.667 3.841.587.338 1.03.371 1.454.218.424-.153 1.841-.757 2.101-1.489.26-.732.26-1.36.181-1.489-.079-.129-.558-.406-1.186-.787z" fill="currentColor"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="generator-page">
+        <div class="generator-header">
+            <h1>🦍 Profile Pic Generator</h1>
+            <p>Create your custom ape avatar with backgrounds, traits, accessories, and text overlays</p>
+        </div>
+
+        <div class="generator-container">
+            <div class="preview-section">
+                <div class="canvas-wrapper">
+                    <canvas id="profileCanvas" width="512" height="512"></canvas>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="downloadBtn">Download PNG</button>
+                    <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <!-- Background Panel -->
+                <div class="control-panel">
+                    <h3>Background</h3>
+                    <div class="control-group">
+                        <label class="control-label">Type</label>
+                        <select class="control-select" id="bgType">
+                            <option value="solid">Solid Color</option>
+                            <option value="gradient">Gradient</option>
+                            <option value="pattern">Pattern</option>
+                        </select>
+                    </div>
+                    <div class="control-group" id="solidColorGroup">
+                        <label class="control-label">Color</label>
+                        <div class="color-options" id="solidColors">
+                            <div class="color-option selected" data-color="#1a1a1a" style="background: #1a1a1a;"></div>
+                            <div class="color-option" data-color="#2a2a2a" style="background: #2a2a2a;"></div>
+                            <div class="color-option" data-color="#0f5132" style="background: #0f5132;"></div>
+                            <div class="color-option" data-color="#166534" style="background: #166534;"></div>
+                            <div class="color-option" data-color="#854d0e" style="background: #854d0e;"></div>
+                            <div class="color-option" data-color="#a16207" style="background: #a16207;"></div>
+                            <div class="color-option" data-color="#1e3a8a" style="background: #1e3a8a;"></div>
+                            <div class="color-option" data-color="#7c2d12" style="background: #7c2d12;"></div>
+                        </div>
+                    </div>
+                    <div class="control-group" id="gradientTypeGroup" style="display: none;">
+                        <label class="control-label">Gradient Type</label>
+                        <select class="control-select" id="gradientType">
+                            <option value="radial">Radial</option>
+                            <option value="linear">Linear</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ape Traits Panel -->
+                <div class="control-panel">
+                    <h3>Ape Traits</h3>
+                    <div class="control-group">
+                        <label class="control-label">Fur Color</label>
+                        <div class="color-options" id="furColors">
+                            <div class="color-option selected" data-color="#8B4513" style="background: #8B4513;"></div>
+                            <div class="color-option" data-color="#654321" style="background: #654321;"></div>
+                            <div class="color-option" data-color="#2F1B14" style="background: #2F1B14;"></div>
+                            <div class="color-option" data-color="#A0522D" style="background: #A0522D;"></div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Expression</label>
+                        <div class="trait-options" id="expressions">
+                            <div class="trait-option selected" data-expression="default">Default</div>
+                            <div class="trait-option" data-expression="happy">Happy</div>
+                            <div class="trait-option" data-expression="serious">Serious</div>
+                            <div class="trait-option" data-expression="cool">Cool</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accessories Panel -->
+                <div class="control-panel">
+                    <h3>Accessories</h3>
+                    <div class="control-group">
+                        <label class="control-label">Hat</label>
+                        <select class="control-select" id="hatSelect">
+                            <option value="none">None</option>
+                            <option value="cap">Baseball Cap</option>
+                            <option value="beanie">Beanie</option>
+                            <option value="crown">Crown</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Glasses</label>
+                        <select class="control-select" id="glassesSelect">
+                            <option value="none">None</option>
+                            <option value="sunglasses">Sunglasses</option>
+                            <option value="glasses">Glasses</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Jewelry</label>
+                        <select class="control-select" id="jewelrySelect">
+                            <option value="none">None</option>
+                            <option value="chain">Chain</option>
+                            <option value="necklace">Necklace</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Text Overlay Panel -->
+                <div class="control-panel">
+                    <h3>Text Overlay</h3>
+                    <div class="control-group">
+                        <label class="control-label">Text</label>
+                        <input type="text" class="control-input" id="textInput" placeholder="Enter text..." maxlength="20">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Font</label>
+                        <select class="control-select" id="fontSelect">
+                            <option value="Inter">Inter</option>
+                            <option value="Space Grotesk">Space Grotesk</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Impact">Impact</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Text Color</label>
+                        <div class="color-options" id="textColors">
+                            <div class="color-option selected" data-color="#ffffff" style="background: #ffffff;"></div>
+                            <div class="color-option" data-color="#4ade80" style="background: #4ade80;"></div>
+                            <div class="color-option" data-color="#ffd700" style="background: #ffd700;"></div>
+                            <div class="color-option" data-color="#000000" style="background: #000000;"></div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Position</label>
+                        <select class="control-select" id="textPosition">
+                            <option value="top">Top</option>
+                            <option value="center">Center</option>
+                            <option value="bottom">Bottom</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Size</label>
+                        <div class="slider-container">
+                            <input type="range" class="slider" id="textSize" min="20" max="80" value="40">
+                            <span class="slider-value" id="textSizeValue">40</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        const state = {
+            background: {
+                type: 'solid',
+                color: '#1a1a1a',
+                gradientType: 'radial'
+            },
+            ape: {
+                furColor: '#8B4513',
+                expression: 'default'
+            },
+            accessories: {
+                hat: 'none',
+                glasses: 'none',
+                jewelry: 'none'
+            },
+            text: {
+                content: '',
+                font: 'Inter',
+                color: '#ffffff',
+                position: 'top',
+                size: 40
+            }
+        };
+
+        const canvas = document.getElementById('profileCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialize canvas
+        function renderCanvas() {
+            const size = 512;
+            ctx.clearRect(0, 0, size, size);
+
+            // Draw background
+            drawBackground();
+
+            // Draw ape base
+            drawApe();
+
+            // Draw accessories
+            drawAccessories();
+
+            // Draw text overlay
+            drawText();
+        }
+
+        function drawBackground() {
+            const size = 512;
+            if (state.background.type === 'solid') {
+                ctx.fillStyle = state.background.color;
+                ctx.fillRect(0, 0, size, size);
+            } else if (state.background.type === 'gradient') {
+                let gradient;
+                if (state.background.gradientType === 'radial') {
+                    gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+                    gradient.addColorStop(0, state.background.color);
+                    gradient.addColorStop(1, darkenColor(state.background.color, 0.5));
+                } else {
+                    gradient = ctx.createLinearGradient(0, 0, size, size);
+                    gradient.addColorStop(0, state.background.color);
+                    gradient.addColorStop(1, darkenColor(state.background.color, 0.3));
+                }
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+            } else if (state.background.type === 'pattern') {
+                // Pattern background
+                ctx.fillStyle = state.background.color;
+                ctx.fillRect(0, 0, size, size);
+                
+                // Draw noise pattern
+                const imageData = ctx.createImageData(size, size);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const noise = Math.random() * 30;
+                    data[i] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(1, 3), 16) + noise));
+                    data[i + 1] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(3, 5), 16) + noise));
+                    data[i + 2] = Math.max(0, Math.min(255, parseInt(state.background.color.slice(5, 7), 16) + noise));
+                    data[i + 3] = 255;
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+        }
+
+        function drawApe() {
+            const size = 512;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = 180;
+
+            // Draw ape head (circle)
+            ctx.fillStyle = state.ape.furColor;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw face features based on expression
+            ctx.fillStyle = '#000000';
+            const eyeY = centerY - 40;
+            const eyeSpacing = 50;
+
+            if (state.ape.expression === 'happy') {
+                // Happy eyes (smaller, upward)
+                drawEye(centerX - eyeSpacing, eyeY - 10, 15);
+                drawEye(centerX + eyeSpacing, eyeY - 10, 15);
+                // Smile
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 20, 60, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+            } else if (state.ape.expression === 'serious') {
+                // Serious eyes (smaller, straight)
+                drawEye(centerX - eyeSpacing, eyeY, 12);
+                drawEye(centerX + eyeSpacing, eyeY, 12);
+                // Straight mouth
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(centerX - 40, centerY + 30);
+                ctx.lineTo(centerX + 40, centerY + 30);
+                ctx.stroke();
+            } else if (state.ape.expression === 'cool') {
+                // Cool eyes (sunglasses shape)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(centerX - eyeSpacing - 30, eyeY - 20, 60, 30);
+                ctx.fillRect(centerX + eyeSpacing - 30, eyeY - 20, 60, 30);
+                // Bridge
+                ctx.fillRect(centerX - 5, eyeY - 15, 10, 20);
+                // Small smile
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 20, 40, 0.1, Math.PI - 0.1);
+                ctx.stroke();
+            } else {
+                // Default eyes
+                drawEye(centerX - eyeSpacing, eyeY, 18);
+                drawEye(centerX + eyeSpacing, eyeY, 18);
+                // Default mouth
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 30, 30, 0, Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function drawEye(x, y, size) {
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawAccessories() {
+            const size = 512;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = 180;
+
+            // Draw hat
+            if (state.accessories.hat === 'cap') {
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY - radius + 40, 160, Math.PI, 0);
+                ctx.fill();
+                ctx.fillRect(centerX - 160, centerY - radius + 40, 320, 50);
+                // Brim
+                ctx.fillStyle = '#2a2a2a';
+                ctx.fillRect(centerX - 180, centerY - radius + 90, 360, 15);
+            } else if (state.accessories.hat === 'beanie') {
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY - radius + 30, 150, Math.PI, 0);
+                ctx.fill();
+                ctx.fillRect(centerX - 150, centerY - radius + 30, 300, 80);
+            } else if (state.accessories.hat === 'crown') {
+                ctx.fillStyle = '#ffd700';
+                const crownHeight = 60;
+                const crownWidth = 200;
+                ctx.fillRect(centerX - crownWidth/2, centerY - radius - crownHeight + 50, crownWidth, crownHeight);
+                // Crown points
+                for (let i = 0; i < 5; i++) {
+                    const x = centerX - crownWidth/2 + (crownWidth / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, centerY - radius - crownHeight + 50);
+                    ctx.lineTo(x + 20, centerY - radius - crownHeight + 20);
+                    ctx.lineTo(x + 40, centerY - radius - crownHeight + 50);
+                    ctx.fill();
+                }
+            }
+
+            // Draw glasses (if not wearing hat that covers them)
+            if (state.accessories.glasses === 'sunglasses' && state.accessories.hat === 'none') {
+                ctx.fillStyle = '#000000';
+                // Left lens
+                ctx.fillRect(centerX - 100, centerY - 60, 70, 40);
+                // Right lens
+                ctx.fillRect(centerX + 30, centerY - 60, 70, 40);
+                // Bridge
+                ctx.fillRect(centerX - 30, centerY - 50, 60, 10);
+            } else if (state.accessories.glasses === 'glasses' && state.accessories.hat === 'none') {
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 4;
+                // Left frame
+                ctx.beginPath();
+                ctx.arc(centerX - 65, centerY - 40, 35, 0, Math.PI * 2);
+                ctx.stroke();
+                // Right frame
+                ctx.beginPath();
+                ctx.arc(centerX + 65, centerY - 40, 35, 0, Math.PI * 2);
+                ctx.stroke();
+                // Bridge
+                ctx.beginPath();
+                ctx.moveTo(centerX - 30, centerY - 40);
+                ctx.lineTo(centerX + 30, centerY - 40);
+                ctx.stroke();
+            }
+
+            // Draw jewelry
+            if (state.accessories.jewelry === 'chain') {
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 80, 120, 0.3, Math.PI - 0.3);
+                ctx.stroke();
+                // Chain links
+                for (let i = 0; i < 8; i++) {
+                    const angle = 0.3 + (Math.PI - 0.6) * (i / 7);
+                    const x = centerX + Math.cos(angle) * 120;
+                    const y = centerY + 80 + Math.sin(angle) * 120;
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (state.accessories.jewelry === 'necklace') {
+                ctx.strokeStyle = '#c0c0c0';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 80, 100, 0.4, Math.PI - 0.4);
+                ctx.stroke();
+            }
+        }
+
+        function drawText() {
+            if (!state.text.content) return;
+
+            const size = 512;
+            ctx.font = `bold ${state.text.size}px "${state.text.font}", sans-serif`;
+            ctx.fillStyle = state.text.color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let y;
+            if (state.text.position === 'top') {
+                y = 80;
+            } else if (state.text.position === 'center') {
+                y = size / 2;
+            } else {
+                y = size - 80;
+            }
+
+            // Add text shadow for visibility
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            ctx.fillText(state.text.content, size / 2, y);
+
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        function darkenColor(color, factor) {
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            return `rgb(${Math.floor(r * factor)}, ${Math.floor(g * factor)}, ${Math.floor(b * factor)})`;
+        }
+
+        // Event listeners
+        document.getElementById('bgType').addEventListener('change', (e) => {
+            state.background.type = e.target.value;
+            document.getElementById('solidColorGroup').style.display = e.target.value === 'solid' ? 'block' : 'none';
+            document.getElementById('gradientTypeGroup').style.display = e.target.value === 'gradient' ? 'block' : 'none';
+            renderCanvas();
+        });
+
+        document.getElementById('gradientType').addEventListener('change', (e) => {
+            state.background.gradientType = e.target.value;
+            renderCanvas();
+        });
+
+        // Solid color options
+        document.querySelectorAll('#solidColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#solidColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.background.color = option.dataset.color;
+                renderCanvas();
+            });
+        });
+
+        // Fur color options
+        document.querySelectorAll('#furColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#furColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.ape.furColor = option.dataset.color;
+                renderCanvas();
+            });
+        });
+
+        // Expression options
+        document.querySelectorAll('#expressions .trait-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#expressions .trait-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.ape.expression = option.dataset.expression;
+                renderCanvas();
+            });
+        });
+
+        // Accessories
+        document.getElementById('hatSelect').addEventListener('change', (e) => {
+            state.accessories.hat = e.target.value;
+            renderCanvas();
+        });
+
+        document.getElementById('glassesSelect').addEventListener('change', (e) => {
+            state.accessories.glasses = e.target.value;
+            renderCanvas();
+        });
+
+        document.getElementById('jewelrySelect').addEventListener('change', (e) => {
+            state.accessories.jewelry = e.target.value;
+            renderCanvas();
+        });
+
+        // Text controls
+        document.getElementById('textInput').addEventListener('input', (e) => {
+            state.text.content = e.target.value;
+            renderCanvas();
+        });
+
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            state.text.font = e.target.value;
+            renderCanvas();
+        });
+
+        document.querySelectorAll('#textColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#textColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.text.color = option.dataset.color;
+                renderCanvas();
+            });
+        });
+
+        document.getElementById('textPosition').addEventListener('change', (e) => {
+            state.text.position = e.target.value;
+            renderCanvas();
+        });
+
+        document.getElementById('textSize').addEventListener('input', (e) => {
+            state.text.size = parseInt(e.target.value);
+            document.getElementById('textSizeValue').textContent = state.text.size;
+            renderCanvas();
+        });
+
+        // Download button
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ape-profile-pic-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        // Reset button
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            state.background = { type: 'solid', color: '#1a1a1a', gradientType: 'radial' };
+            state.ape = { furColor: '#8B4513', expression: 'default' };
+            state.accessories = { hat: 'none', glasses: 'none', jewelry: 'none' };
+            state.text = { content: '', font: 'Inter', color: '#ffffff', position: 'top', size: 40 };
+
+            // Reset UI
+            document.getElementById('bgType').value = 'solid';
+            document.getElementById('solidColorGroup').style.display = 'block';
+            document.getElementById('gradientTypeGroup').style.display = 'none';
+            document.querySelectorAll('#solidColors .color-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === 0);
+            });
+            document.querySelectorAll('#furColors .color-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === 0);
+            });
+            document.querySelectorAll('#expressions .trait-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === 0);
+            });
+            document.getElementById('hatSelect').value = 'none';
+            document.getElementById('glassesSelect').value = 'none';
+            document.getElementById('jewelrySelect').value = 'none';
+            document.getElementById('textInput').value = '';
+            document.getElementById('fontSelect').value = 'Inter';
+            document.querySelectorAll('#textColors .color-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === 0);
+            });
+            document.getElementById('textPosition').value = 'top';
+            document.getElementById('textSize').value = 40;
+            document.getElementById('textSizeValue').textContent = 40;
+
+            renderCanvas();
+        });
+
+        // Initial render
+        renderCanvas();
+    </script>
+</body>
+</html>
+
