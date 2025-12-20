@@ -634,21 +634,20 @@
                 <div class="control-panel">
                     <h3>Ape Traits</h3>
                     <div class="control-group">
-                        <label class="control-label">Fur Color</label>
-                        <div class="color-options" id="furColors">
-                            <div class="color-option selected" data-color="#8B4513" style="background: #8B4513;"></div>
-                            <div class="color-option" data-color="#654321" style="background: #654321;"></div>
-                            <div class="color-option" data-color="#2F1B14" style="background: #2F1B14;"></div>
-                            <div class="color-option" data-color="#A0522D" style="background: #A0522D;"></div>
+                        <label class="control-label">Choose Ape</label>
+                        <div class="trait-options" id="apeOptions">
+                            <div class="trait-option selected" data-ape="ape1">Ape 1</div>
+                            <div class="trait-option" data-ape="ape2">Ape 2</div>
+                            <div class="trait-option" data-ape="ape3">Ape 3</div>
+                            <div class="trait-option" data-ape="ape4">Ape 4</div>
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label">Expression</label>
                         <div class="trait-options" id="expressions">
-                            <div class="trait-option selected" data-expression="default">Default</div>
-                            <div class="trait-option" data-expression="happy">Happy</div>
+                            <div class="trait-option selected" data-expression="happy">Happy</div>
+                            <div class="trait-option" data-expression="sad">Sad</div>
                             <div class="trait-option" data-expression="serious">Serious</div>
-                            <div class="trait-option" data-expression="cool">Cool</div>
                         </div>
                     </div>
                 </div>
@@ -735,8 +734,8 @@
                 image: 'pfp_generator_images/pfp_bg1.png'
             },
             ape: {
-                furColor: '#8B4513',
-                expression: 'default'
+                type: 'ape1',
+                expression: 'happy'
             },
             accessories: {
                 hat: 'none',
@@ -820,8 +819,27 @@
             const centerY = size / 2;
             const radius = 180;
 
+            // Determine ape color based on type (placeholder)
+            let apeColor;
+            switch(state.ape.type) {
+                case 'ape1':
+                    apeColor = '#8B4513'; // Brown
+                    break;
+                case 'ape2':
+                    apeColor = '#654321'; // Dark brown
+                    break;
+                case 'ape3':
+                    apeColor = '#2F1B14'; // Very dark brown
+                    break;
+                case 'ape4':
+                    apeColor = '#A0522D'; // Sienna
+                    break;
+                default:
+                    apeColor = '#8B4513';
+            }
+
             // Draw ape head (circle)
-            ctx.fillStyle = state.ape.furColor;
+            ctx.fillStyle = apeColor;
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             ctx.fill();
@@ -841,6 +859,16 @@
                 ctx.beginPath();
                 ctx.arc(centerX, centerY + 20, 60, 0.2, Math.PI - 0.2);
                 ctx.stroke();
+            } else if (state.ape.expression === 'sad') {
+                // Sad eyes (downward)
+                drawEye(centerX - eyeSpacing, eyeY + 5, 15);
+                drawEye(centerX + eyeSpacing, eyeY + 5, 15);
+                // Frown
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 50, 60, Math.PI + 0.2, 2 * Math.PI - 0.2);
+                ctx.stroke();
             } else if (state.ape.expression === 'serious') {
                 // Serious eyes (smaller, straight)
                 drawEye(centerX - eyeSpacing, eyeY, 12);
@@ -852,28 +880,6 @@
                 ctx.moveTo(centerX - 40, centerY + 30);
                 ctx.lineTo(centerX + 40, centerY + 30);
                 ctx.stroke();
-            } else if (state.ape.expression === 'cool') {
-                // Cool eyes (sunglasses shape)
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(centerX - eyeSpacing - 30, eyeY - 20, 60, 30);
-                ctx.fillRect(centerX + eyeSpacing - 30, eyeY - 20, 60, 30);
-                // Bridge
-                ctx.fillRect(centerX - 5, eyeY - 15, 10, 20);
-                // Small smile
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 6;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 20, 40, 0.1, Math.PI - 0.1);
-                ctx.stroke();
-            } else {
-                // Default eyes
-                drawEye(centerX - eyeSpacing, eyeY, 18);
-                drawEye(centerX + eyeSpacing, eyeY, 18);
-                // Default mouth
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 30, 30, 0, Math.PI);
-                ctx.fill();
             }
         }
 
@@ -1027,12 +1033,12 @@
             });
         });
 
-        // Fur color options
-        document.querySelectorAll('#furColors .color-option').forEach(option => {
+        // Ape type options
+        document.querySelectorAll('#apeOptions .trait-option').forEach(option => {
             option.addEventListener('click', () => {
-                document.querySelectorAll('#furColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                document.querySelectorAll('#apeOptions .trait-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
-                state.ape.furColor = option.dataset.color;
+                state.ape.type = option.dataset.ape;
                 renderCanvas();
             });
         });
@@ -1111,7 +1117,7 @@
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', () => {
             state.background = { image: 'pfp_generator_images/pfp_bg1.png' };
-            state.ape = { furColor: '#8B4513', expression: 'default' };
+            state.ape = { type: 'ape1', expression: 'happy' };
             state.accessories = { hat: 'none', glasses: 'none', jewelry: 'none' };
             state.text = { content: '', font: 'Inter', color: '#ffffff', position: 'top', size: 40 };
 
@@ -1119,7 +1125,7 @@
             document.querySelectorAll('#backgroundOptions .bg-option').forEach((opt, i) => {
                 opt.classList.toggle('selected', i === 0);
             });
-            document.querySelectorAll('#furColors .color-option').forEach((opt, i) => {
+            document.querySelectorAll('#apeOptions .trait-option').forEach((opt, i) => {
                 opt.classList.toggle('selected', i === 0);
             });
             document.querySelectorAll('#expressions .trait-option').forEach((opt, i) => {
