@@ -622,10 +622,10 @@
                             <div class="bg-option" data-bg="pfp_generator_images/pfp_bg2.png" style="background-image: url('pfp_generator_images/pfp_bg2.png');"></div>
                             <div class="bg-option" data-bg="pfp_generator_images/pfp_bg3.png" style="background-image: url('pfp_generator_images/pfp_bg3.png');"></div>
                             <div class="bg-option" data-bg="pfp_generator_images/pfp_bg4.png" style="background-image: url('pfp_generator_images/pfp_bg4.png');"></div>
-                            <div class="bg-option" data-bg="placeholder1" style="background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);"></div>
-                            <div class="bg-option" data-bg="placeholder2" style="background: linear-gradient(135deg, #0f5132 0%, #166534 100%);"></div>
-                            <div class="bg-option" data-bg="placeholder3" style="background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);"></div>
-                            <div class="bg-option" data-bg="placeholder4" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg5.png" style="background-image: url('pfp_generator_images/pfp_bg5.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg6.png" style="background-image: url('pfp_generator_images/pfp_bg6.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg7.png" style="background-image: url('pfp_generator_images/pfp_bg7.png');"></div>
+                            <div class="bg-option" data-bg="pfp_generator_images/pfp_bg8.png" style="background-image: url('pfp_generator_images/pfp_bg8.png');"></div>
                         </div>
                     </div>
                 </div>
@@ -799,42 +799,18 @@
             const size = 512;
             const bg = state.background.image;
             
-            // Handle placeholder backgrounds
-            if (bg.startsWith('placeholder')) {
-                let gradient;
-                if (bg === 'placeholder1') {
-                    gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, '#1a1a1a');
-                    gradient.addColorStop(1, '#2a2a2a');
-                } else if (bg === 'placeholder2') {
-                    gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, '#0f5132');
-                    gradient.addColorStop(1, '#166534');
-                } else if (bg === 'placeholder3') {
-                    gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, '#854d0e');
-                    gradient.addColorStop(1, '#a16207');
-                } else if (bg === 'placeholder4') {
-                    gradient = ctx.createLinearGradient(0, 0, size, size);
-                    gradient.addColorStop(0, '#1e3a8a');
-                    gradient.addColorStop(1, '#3b82f6');
-                }
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, size, size);
+            // Draw image if already loaded, otherwise load it
+            if (backgroundImages[bg]) {
+                ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
             } else {
-                // Draw image if already loaded, otherwise load it
-                if (backgroundImages[bg]) {
-                    ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
-                } else {
-                    // Draw placeholder while loading
-                    ctx.fillStyle = '#1a1a1a';
-                    ctx.fillRect(0, 0, size, size);
-                    // Load image asynchronously
-                    loadBackgroundImage(bg, (img) => {
-                        // Re-render everything after image loads
-                        renderCanvas();
-                    });
-                }
+                // Draw placeholder while loading
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, size, size);
+                // Load image asynchronously
+                loadBackgroundImage(bg, (img) => {
+                    // Re-render everything after image loads
+                    renderCanvas();
+                });
             }
         }
 
