@@ -785,12 +785,17 @@
                 ctx.fillRect(0, 0, size, size);
             }
             
-            // Layer 2: Ape
+            // Layer 2: Ape (enlarged and positioned lower)
             const apeType = state.ape.type;
             const expression = state.ape.expression;
             const key = `${apeType}_${expression}`;
             if (apeImages[key]) {
-                ctx.drawImage(apeImages[key], 0, 0, size, size);
+                const apeScale = 1.25; // Enlarge by 25%
+                const apeWidth = size * apeScale;
+                const apeHeight = size * apeScale;
+                const apeX = (size - apeWidth) / 2; // Center horizontally
+                const apeY = size * 0.15; // Position lower (15% from top instead of 0)
+                ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
             }
             
             // Layer 3: Accessories
@@ -878,7 +883,12 @@
             
             // Check if image is already loaded - draw it immediately
             if (apeImages[key]) {
-                ctx.drawImage(apeImages[key], 0, 0, size, size);
+                const apeScale = 1.25; // Enlarge by 25%
+                const apeWidth = size * apeScale;
+                const apeHeight = size * apeScale;
+                const apeX = (size - apeWidth) / 2; // Center horizontally
+                const apeY = size * 0.15; // Position lower (15% from top instead of 0)
+                ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
                 return;
             }
             
