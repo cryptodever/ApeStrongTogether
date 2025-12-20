@@ -758,18 +758,50 @@
             const size = 512;
             ctx.clearRect(0, 0, size, size);
 
-            // Draw background
+            // Layer 1: Draw background (bottom layer)
             drawBackground();
 
-            // Draw ape base (will handle async loading internally)
+            // Layer 2: Draw ape (middle layer, on top of background)
             drawApe();
 
-            // Draw accessories and text (will be redrawn if ape loads async)
+            // Layer 3: Draw accessories (on top of ape)
             drawAccessories();
+
+            // Layer 4: Draw text (top layer)
+            drawText();
+        }
+        
+        // Helper function to redraw all layers in correct order
+        function redrawAllLayers() {
+            const size = 512;
+            ctx.clearRect(0, 0, size, size);
+            
+            // Layer 1: Background
+            const bg = state.background.image;
+            if (backgroundImages[bg]) {
+                ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
+            } else {
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, size, size);
+            }
+            
+            // Layer 2: Ape
+            const apeType = state.ape.type;
+            const expression = state.ape.expression;
+            const key = `${apeType}_${expression}`;
+            if (apeImages[key]) {
+                ctx.drawImage(apeImages[key], 0, 0, size, size);
+            }
+            
+            // Layer 3: Accessories
+            drawAccessories();
+            
+            // Layer 4: Text
             drawText();
         }
 
         const backgroundImages = {};
+        const apeImages = {};
 
         function loadBackgroundImage(src, callback) {
             if (backgroundImages[src]) {
@@ -791,6 +823,34 @@
             img.src = src;
         }
 
+        function loadApeImage(apeType, expression, callback) {
+            // Handle typo in filename (pvp_ape3_sad.png)
+            let filename = `pfp_ape${apeType.slice(-1)}_${expression}.png`;
+            if (apeType === 'ape3' && expression === 'sad') {
+                filename = 'pvp_ape3_sad.png'; // Handle typo
+            }
+            const src = `pfp_generator_apes/${filename}`;
+            const key = `${apeType}_${expression}`;
+            
+            if (apeImages[key]) {
+                callback(apeImages[key]);
+                return;
+            }
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                apeImages[key] = img;
+                callback(img);
+            };
+            img.onerror = () => {
+                // Fallback if image fails to load
+                console.error(`Failed to load ape image: ${src}`);
+                callback(null);
+            };
+            img.src = src;
+        }
+
         function drawBackground() {
             const size = 512;
             const bg = state.background.image;
@@ -804,8 +864,8 @@
                 ctx.fillRect(0, 0, size, size);
                 // Load image asynchronously
                 loadBackgroundImage(bg, (img) => {
-                    // Re-render everything after image loads
-                    renderCanvas();
+                    // Redraw all layers in correct order after background loads
+                    redrawAllLayers();
                 });
             }
         }
@@ -816,7 +876,7 @@
             const expression = state.ape.expression;
             const key = `${apeType}_${expression}`;
             
-            // Check if image is already loaded
+            // Check if image is already loaded - draw it immediately
             if (apeImages[key]) {
                 ctx.drawImage(apeImages[key], 0, 0, size, size);
                 return;
@@ -825,12 +885,8 @@
             // Load and draw ape image asynchronously
             loadApeImage(apeType, expression, (img) => {
                 if (img) {
-                    // Clear and redraw everything when image loads
-                    ctx.clearRect(0, 0, size, size);
-                    drawBackground();
-                    ctx.drawImage(img, 0, 0, size, size);
-                    drawAccessories();
-                    drawText();
+                    // Redraw all layers in correct order when image loads
+                    redrawAllLayers();
                 } else {
                     // Fallback placeholder if image fails to load
                     const centerX = size / 2;
@@ -840,6 +896,7 @@
                     ctx.beginPath();
                     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                     ctx.fill();
+                    // Redraw accessories and text on top
                     drawAccessories();
                     drawText();
                 }
