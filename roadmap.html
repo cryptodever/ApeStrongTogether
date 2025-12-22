@@ -63,130 +63,9 @@
             z-index: 1;
         }
 
-        nav {
-            width: 100%;
-            padding: 1.25rem 2rem;
-            background: rgba(5, 5, 5, 0.95);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        }
+        /* Navigation styles are now in /partials/header.html */
 
-        nav::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5));
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: #f5f5f5;
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
-            position: relative;
-            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6),
-                         0 0 10px rgba(255, 255, 255, 0.15);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(74, 222, 128, 0.9), rgba(255, 215, 0, 0.9));
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
-        }
-
-        .nav-links a:hover {
-            color: #ffffff;
-            text-shadow: 0 0 15px rgba(74, 222, 128, 0.7),
-                         0 2px 8px rgba(0, 0, 0, 0.6);
-            transform: translateY(-1px);
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .nav-socials {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-left: 1.5rem;
-            padding-left: 1.5rem;
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .nav-social-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            color: #d0d0d0;
-            text-decoration: none;
-            transition: transform 0.2s ease, color 0.2s ease, filter 0.2s ease;
-            border-radius: 6px;
-        }
-
-        .nav-social-icon svg {
-            width: 20px;
-            height: 20px;
-            transition: filter 0.2s ease;
-        }
-
-        .nav-social-icon:hover {
-            transform: scale(1.1);
-            color: #ffffff;
-        }
-
-        .nav-social-x:hover {
-            color: #ffffff;
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-        }
-
-        .nav-social-x:hover svg {
-            filter: drop-shadow(0 0 6px rgba(29, 155, 240, 0.8));
-        }
-
-        .nav-social-telegram:hover {
-            color: #0088cc;
-            filter: drop-shadow(0 0 8px rgba(0, 136, 204, 0.6));
-        }
-
-        .nav-social-telegram:hover svg {
-            filter: drop-shadow(0 0 6px rgba(0, 136, 204, 0.8));
-        }
+        /* Navigation styles are now in /partials/header.html */
 
         .roadmap-page {
             max-width: 1200px;
@@ -695,27 +574,11 @@
     </style>
 </head>
 <body>
-    <nav>
-        <div class="nav-container">
-            <div class="nav-links">
-                <a href="/">APE HUB</a>
-                <a href="roadmap.html">ROADMAP</a>
-                <a href="generator.html">GENERATOR</a>
-                <div class="nav-socials">
-                    <a href="https://x.com/ApeCurrency" target="_blank" rel="noopener noreferrer" class="nav-social-icon nav-social-x" aria-label="Follow on X">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/>
-                        </svg>
-                    </a>
-                    <a href="https://t.me/+P-ve2kGSQ0tkNzBh" target="_blank" rel="noopener noreferrer" class="nav-social-icon nav-social-telegram" aria-label="Join Telegram">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.169 1.858-.896 6.728-.896 6.728s-.131.778-.583.897c-.452.119-1.186-.396-1.186-.396s-2.936-2.011-3.968-2.964c-.784-.624-.131-.968.482-1.529.988-.901 2.011-1.841 3.079-2.834.371-.345.742-.725.074-1.16-.668-.435-1.841-.132-2.552-.081-.712.051-1.348.299-1.348.299s-.334.132-.741.079c-.407-.053-.741-.371-.896-.597-.155-.226-.298-.782-.298-.782s-1.274-4.226-1.629-5.256c-.355-1.03-.759-1.03-1.529-.949-.77.081-1.841.132-1.841.132s-.725.054-.947.241c-.222.187-.299.482-.299.482s-.027.622.668 1.629c.695 1.007 2.067 3.18 3.329 5.127 1.638 2.501 2.909 4.354 3.929 5.52.828.951 1.474 1.507 1.767 1.841.371.429.26.638.05.856-.21.218-.334.299-.696.542-.362.243-1.529 1.03-2.457 1.674-.927.644-1.381 1.096-.668 1.914.713.818 2.774 2.352 4.216 3.503 2.824 2.294 5.08 3.503 5.667 3.841.587.338 1.03.371 1.454.218.424-.153 1.841-.757 2.101-1.489.26-.732.26-1.36.181-1.489-.079-.129-.558-.406-1.186-.787z" fill="currentColor"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="./js/header.js"></script>
 
     <div class="roadmap-page">
         <div class="roadmap-header">

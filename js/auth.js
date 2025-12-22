@@ -1,6 +1,7 @@
 /**
  * Authentication Module
  * Handles header-based authentication with modal UI
+ * Works with header partial (modal HTML already in DOM)
  */
 
 import { auth } from './firebase.js';
@@ -11,100 +12,78 @@ import {
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 
-// Modal elements
-let authModal = null;
-let modalBackdrop = null;
-let modalInitialized = false;
+let authStateListener = null;
+let eventsSetup = false;
 
-// Initialize auth UI
-export function initAuth() {
-    // Create modal HTML if it doesn't exist
-    if (!document.getElementById('authModal')) {
-        createModal();
-    }
-    
-    modalInitialized = true;
-    
-    // Set up auth state listener
-    onAuthStateChanged(auth, (user) => {
-        updateHeaderUI(user);
+/**
+ * Initialize auth UI (works with header partial)
+ * @param {Object} options - Configuration options
+ * @param {HTMLElement} options.rootElement - Root element (optional, for backwards compatibility)
+ */
+export function initAuthUI(options = {}) {
+    // Wait for header to be loaded if needed
+    waitForHeader().then(() => {
+        setupModalEvents();
+        setupHeaderButtons();
     });
     
-    // Wire up header buttons
-    setupHeaderButtons();
+    // Set up auth state listener (only once)
+    if (!authStateListener) {
+        authStateListener = onAuthStateChanged(auth, (user) => {
+            updateHeaderUI(user);
+        });
+    }
 }
 
-function createModal() {
-    // Create backdrop
-    modalBackdrop = document.createElement('div');
-    modalBackdrop.id = 'authModalBackdrop';
-    modalBackdrop.className = 'auth-modal-backdrop';
-    
-    // Create modal
-    authModal = document.createElement('div');
-    authModal.id = 'authModal';
-    authModal.className = 'auth-modal';
-    authModal.innerHTML = `
-        <button class="auth-modal-close" id="authModalClose" aria-label="Close">&times;</button>
-        <div class="auth-modal-header">
-            <h2 id="authModalTitle">Log In</h2>
-        </div>
+/**
+ * Initialize auth (legacy API - for backwards compatibility)
+ * @deprecated Use initAuthUI() instead
+ */
+export function initAuth() {
+    initAuthUI();
+}
+
+/**
+ * Wait for header to be loaded
+ */
+function waitForHeader() {
+    return new Promise((resolve) => {
+        // Check if modal already exists
+        if (document.getElementById('authModal') && document.getElementById('authModalBackdrop')) {
+            resolve();
+            return;
+        }
         
-        <div class="auth-modal-tabs">
-            <button class="auth-modal-tab active" data-mode="login">Log In</button>
-            <button class="auth-modal-tab" data-mode="signup">Sign Up</button>
-        </div>
+        // Wait for headerLoaded event
+        const handler = () => {
+            if (document.getElementById('authModal') && document.getElementById('authModalBackdrop')) {
+                window.removeEventListener('headerLoaded', handler);
+                resolve();
+            }
+        };
+        window.addEventListener('headerLoaded', handler);
         
-        <div class="auth-modal-content">
-            <!-- Login Form -->
-            <form id="authLoginForm" class="auth-form active">
-                <div class="auth-message error" id="authLoginError"></div>
-                
-                <div class="auth-form-group">
-                    <label for="authEmail">Email</label>
-                    <input type="email" id="authEmail" required autocomplete="email" placeholder="your@email.com">
-                </div>
-                
-                <div class="auth-form-group">
-                    <label for="authPassword">Password</label>
-                    <input type="password" id="authPassword" required autocomplete="current-password" placeholder="••••••••">
-                </div>
-                
-                <button type="submit" class="btn btn-primary" id="authLoginBtn">Log In</button>
-            </form>
-            
-            <!-- Signup Form -->
-            <form id="authSignupForm" class="auth-form">
-                <div class="auth-message error" id="authSignupError"></div>
-                
-                <div class="auth-form-group">
-                    <label for="authSignupEmail">Email</label>
-                    <input type="email" id="authSignupEmail" required autocomplete="email" placeholder="your@email.com">
-                </div>
-                
-                <div class="auth-form-group">
-                    <label for="authSignupPassword">Password</label>
-                    <input type="password" id="authSignupPassword" required autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6">
-                </div>
-                
-                <div class="auth-form-group">
-                    <label for="authConfirmPassword">Confirm Password</label>
-                    <input type="password" id="authConfirmPassword" required autocomplete="new-password" placeholder="Confirm your password">
-                </div>
-                
-                <button type="submit" class="btn btn-primary" id="authSignupBtn">Create Account</button>
-            </form>
-        </div>
-    `;
-    
-    modalBackdrop.appendChild(authModal);
-    document.body.appendChild(modalBackdrop);
-    
-    // Wire up modal events
-    setupModalEvents();
+        // Also check periodically as fallback
+        let attempts = 0;
+        const interval = setInterval(() => {
+            attempts++;
+            if (document.getElementById('authModal') && document.getElementById('authModalBackdrop')) {
+                clearInterval(interval);
+                window.removeEventListener('headerLoaded', handler);
+                resolve();
+            } else if (attempts > 50) { // 5 seconds max wait
+                clearInterval(interval);
+                window.removeEventListener('headerLoaded', handler);
+                console.warn('Auth: Header modal not found after waiting');
+                resolve(); // Resolve anyway to not block
+            }
+        }, 100);
+    });
 }
 
 function setupModalEvents() {
+    if (eventsSetup) return;
+    
     const closeBtn = document.getElementById('authModalClose');
     const backdrop = document.getElementById('authModalBackdrop');
     const tabs = document.querySelectorAll('.auth-modal-tab');
@@ -114,11 +93,18 @@ function setupModalEvents() {
     const signupBtn = document.getElementById('authSignupBtn');
     const modalTitle = document.getElementById('authModalTitle');
     
+    if (!closeBtn || !backdrop || !tabs.length || !loginForm || !signupForm) {
+        console.warn('Auth: Modal elements not found, retrying...');
+        setTimeout(() => setupModalEvents(), 100);
+        return;
+    }
+    
+    eventsSetup = true;
+    
     // Close modal
     function closeModal() {
-        modalBackdrop.classList.remove('show');
+        backdrop.classList.remove('show');
         clearMessages();
-        // Clear forms after animation
         setTimeout(() => {
             loginForm.reset();
             signupForm.reset();
@@ -134,7 +120,7 @@ function setupModalEvents() {
     
     // ESC key to close
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalBackdrop.classList.contains('show')) {
+        if (e.key === 'Escape' && backdrop.classList.contains('show')) {
             closeModal();
         }
     });
@@ -144,18 +130,16 @@ function setupModalEvents() {
         tab.addEventListener('click', () => {
             const mode = tab.dataset.mode;
             
-            // Update tabs
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             
-            // Update forms
             loginForm.classList.toggle('active', mode === 'login');
             signupForm.classList.toggle('active', mode === 'signup');
             
-            // Update title
-            modalTitle.textContent = mode === 'login' ? 'Log In' : 'Sign Up';
+            if (modalTitle) {
+                modalTitle.textContent = mode === 'login' ? 'Log In' : 'Sign Up';
+            }
             
-            // Clear messages
             clearMessages();
         });
     });
@@ -173,17 +157,20 @@ function setupModalEvents() {
             return;
         }
         
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Loading...';
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Loading...';
+        }
         
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // Success - modal will close via auth state change
             closeModal();
         } catch (error) {
             showMessage('authLoginError', formatAuthError(error));
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Log In';
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Log In';
+            }
         }
     });
     
@@ -211,17 +198,20 @@ function setupModalEvents() {
             return;
         }
         
-        signupBtn.disabled = true;
-        signupBtn.textContent = 'Loading...';
+        if (signupBtn) {
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Loading...';
+        }
         
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            // Success - modal will close via auth state change
             closeModal();
         } catch (error) {
             showMessage('authSignupError', formatAuthError(error));
-            signupBtn.disabled = false;
-            signupBtn.textContent = 'Create Account';
+            if (signupBtn) {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+            }
         }
     });
 }
@@ -231,19 +221,22 @@ function setupHeaderButtons() {
     const signupBtn = document.getElementById('headerSignupBtn');
     const logoutBtn = document.getElementById('headerLogoutBtn');
     
-    if (loginBtn) {
+    if (loginBtn && !loginBtn.dataset.listenerAdded) {
+        loginBtn.dataset.listenerAdded = 'true';
         loginBtn.addEventListener('click', () => {
             openModal('login');
         });
     }
     
-    if (signupBtn) {
+    if (signupBtn && !signupBtn.dataset.listenerAdded) {
+        signupBtn.dataset.listenerAdded = 'true';
         signupBtn.addEventListener('click', () => {
             openModal('signup');
         });
     }
     
-    if (logoutBtn) {
+    if (logoutBtn && !logoutBtn.dataset.listenerAdded) {
+        logoutBtn.dataset.listenerAdded = 'true';
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
@@ -256,24 +249,50 @@ function setupHeaderButtons() {
 }
 
 function openModal(mode = 'login') {
-    // Ensure modal exists
-    if (!modalBackdrop || !document.getElementById('authModal')) {
-        createModal();
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
+    const backdrop = document.getElementById('authModalBackdrop');
+    const authModal = document.getElementById('authModal');
+    
+    if (!backdrop || !authModal) {
+        // Wait for header to load
+        waitForHeader().then(() => {
+            setupModalEvents();
             openModal(mode);
-        }, 10);
+        });
         return;
     }
     
-    // Switch to requested mode
-    const tab = document.querySelector(`[data-mode="${mode}"]`);
-    if (tab) {
-        tab.click();
+    // Ensure events are setup
+    if (!eventsSetup) {
+        setupModalEvents();
     }
     
-    // Show modal
-    modalBackdrop.classList.add('show');
+    // Switch to requested mode
+    const tab = document.querySelector(`.auth-modal-tab[data-mode="${mode}"]`);
+    if (tab) {
+        tab.click();
+    } else {
+        // Fallback: manually switch
+        const loginForm = document.getElementById('authLoginForm');
+        const signupForm = document.getElementById('authSignupForm');
+        const modalTitle = document.getElementById('authModalTitle');
+        const tabs = document.querySelectorAll('.auth-modal-tab');
+        
+        tabs.forEach(t => {
+            t.classList.toggle('active', t.dataset.mode === mode);
+        });
+        
+        if (mode === 'login') {
+            if (loginForm) loginForm.classList.add('active');
+            if (signupForm) signupForm.classList.remove('active');
+            if (modalTitle) modalTitle.textContent = 'Log In';
+        } else {
+            if (loginForm) loginForm.classList.remove('active');
+            if (signupForm) signupForm.classList.add('active');
+            if (modalTitle) modalTitle.textContent = 'Sign Up';
+        }
+    }
+    
+    backdrop.classList.add('show');
 }
 
 // Export function for external use (e.g., auth-gate.js)
@@ -290,14 +309,12 @@ function updateHeaderUI(user) {
     const userEmailEl = document.getElementById('userEmailDisplay');
     
     if (user) {
-        // User is logged in
         if (authLoggedOut) authLoggedOut.style.display = 'none';
         if (authLoggedIn) {
             authLoggedIn.style.display = 'flex';
             if (userEmailEl) userEmailEl.textContent = user.email;
         }
     } else {
-        // User is logged out
         if (authLoggedIn) authLoggedIn.style.display = 'none';
         if (authLoggedOut) authLoggedOut.style.display = 'flex';
     }
@@ -332,4 +349,3 @@ function formatAuthError(error) {
     };
     return errorMessages[error.code] || error.message || 'An error occurred. Please try again.';
 }
-
