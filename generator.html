@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <!-- iOS optimizations -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>Profile Pic Generator 🦍 | Apes Together Strong</title>
     <!--
     ============================================
@@ -279,12 +283,18 @@
 
         .preview-section {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px) saturate(180%);
+            /* iOS optimization: reduce backdrop-filter intensity for better performance */
+            backdrop-filter: blur(15px) saturate(150%);
+            -webkit-backdrop-filter: blur(15px) saturate(150%);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 20px;
             padding: 2rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
                         inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            /* iOS performance */
+            will-change: transform;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
         }
 
         .canvas-wrapper {
@@ -304,11 +314,22 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             background: #2a2a2a;
             transition: transform 0.2s ease, opacity 0.15s ease;
+            /* iOS performance optimizations */
+            will-change: transform, opacity;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            /* Prevent iOS text selection during interaction */
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
         }
 
         #profileCanvas.updating {
             opacity: 0.8;
-            transform: scale(0.98);
+            transform: scale(0.98) translateZ(0);
+            -webkit-transform: scale(0.98) translateZ(0);
         }
 
         .action-buttons {
@@ -663,6 +684,41 @@
             .background-options {
                 grid-template-columns: repeat(3, 1fr);
             }
+
+            /* iOS mobile optimizations */
+            #profileCanvas {
+                width: 100%;
+                max-width: 512px;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            .preview-section {
+                backdrop-filter: blur(10px) saturate(120%);
+                -webkit-backdrop-filter: blur(10px) saturate(120%);
+            }
+
+            /* Prevent iOS text selection on interactive elements */
+            .trait-option, .bg-option, .color-option, .lock-toggle, .btn {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none;
+                touch-action: manipulation;
+            }
+        }
+
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            /* Reduce animations on iOS for better performance */
+            .loading-spinner {
+                animation: spin 1s linear infinite;
+            }
+
+            /* Optimize backdrop filters on iOS */
+            .control-panel, .preview-section {
+                backdrop-filter: blur(12px) saturate(140%);
+                -webkit-backdrop-filter: blur(12px) saturate(140%);
+            }
         }
     </style>
 </head>
@@ -902,11 +958,36 @@
         const canvas = document.getElementById('profileCanvas');
         const ctx = canvas.getContext('2d');
         
-        // High-resolution render canvas (hidden, used for exports)
-        const renderCanvas = document.createElement('canvas');
-        renderCanvas.width = CONFIG.EXPORT_SIZE;
-        renderCanvas.height = CONFIG.EXPORT_SIZE;
-        const renderCtx = renderCanvas.getContext('2d');
+        // Optimize canvas rendering for iOS
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // High-resolution render canvas (lazy-loaded to save memory on iOS)
+        let renderCanvas = null;
+        let renderCtx = null;
+        
+        function getRenderCanvas() {
+            // Only create high-res canvas when needed (iOS memory optimization)
+            if (!renderCanvas) {
+                renderCanvas = document.createElement('canvas');
+                renderCanvas.width = CONFIG.EXPORT_SIZE;
+                renderCanvas.height = CONFIG.EXPORT_SIZE;
+                renderCtx = renderCanvas.getContext('2d');
+                renderCtx.imageSmoothingEnabled = true;
+                renderCtx.imageSmoothingQuality = 'high';
+            }
+            return { canvas: renderCanvas, ctx: renderCtx };
+        }
+        
+        function cleanupRenderCanvas() {
+            // Clean up render canvas after export to free memory (iOS optimization)
+            if (renderCanvas) {
+                renderCtx = null;
+                renderCanvas.width = 0;
+                renderCanvas.height = 0;
+                renderCanvas = null;
+            }
+        }
 
         // ============================================
         // IMAGE LOADING & PRELOADING
@@ -920,13 +1001,36 @@
                 }
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
+                
+                // iOS optimization: decode image asynchronously
                 img.onload = () => {
-                    if (src.includes('pfp_bg')) {
-                        imageCache.backgrounds[src] = img;
+                    // Use decode() API for better iOS performance if available
+                    if (img.decode) {
+                        img.decode().then(() => {
+                            if (src.includes('pfp_bg')) {
+                                imageCache.backgrounds[src] = img;
+                            } else {
+                                imageCache.apes[src] = img;
+                            }
+                            resolve(img);
+                        }).catch(() => {
+                            // Fallback if decode fails
+                            if (src.includes('pfp_bg')) {
+                                imageCache.backgrounds[src] = img;
+                            } else {
+                                imageCache.apes[src] = img;
+                            }
+                            resolve(img);
+                        });
                     } else {
-                        imageCache.apes[src] = img;
+                        // Fallback for browsers without decode() support
+                        if (src.includes('pfp_bg')) {
+                            imageCache.backgrounds[src] = img;
+                        } else {
+                            imageCache.apes[src] = img;
+                        }
+                        resolve(img);
                     }
-                    resolve(img);
                 };
                 img.onerror = () => {
                     console.error(`Failed to load image: ${src}`);
@@ -967,7 +1071,16 @@
             }
             
             try {
-                await Promise.all(imagesToLoad);
+                // iOS optimization: Load in batches to prevent memory spikes
+                const batchSize = 4;
+                for (let i = 0; i < imagesToLoad.length; i += batchSize) {
+                    const batch = imagesToLoad.slice(i, i + batchSize);
+                    await Promise.all(batch);
+                    // Small delay between batches to allow iOS to process
+                    if (i + batchSize < imagesToLoad.length) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                }
                 loadingIndicator.style.display = 'none';
                 render();
             } catch (error) {
@@ -981,13 +1094,42 @@
         // DETERMINISTIC RENDERING PIPELINE
         // ============================================
 
+        // Debounce render calls for iOS performance
+        let renderFrameId = null;
+        let pendingRender = false;
+
         function render(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, animate = true) {
-            // Subtle animation on preview canvas
+            // If this is a high-res render (export), render immediately
+            if (targetSize !== CONFIG.PREVIEW_SIZE) {
+                renderImmediate(targetCtx, targetSize, animate);
+                return;
+            }
+            
+            // For preview renders, debounce using requestAnimationFrame
+            if (renderFrameId !== null) {
+                pendingRender = true;
+                return;
+            }
+            
+            renderFrameId = requestAnimationFrame(() => {
+                renderImmediate(targetCtx, targetSize, animate);
+                renderFrameId = null;
+                if (pendingRender) {
+                    pendingRender = false;
+                    render(targetCtx, targetSize, animate);
+                }
+            });
+        }
+
+        function renderImmediate(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, animate = true) {
+            // Subtle animation on preview canvas (using RAF for iOS)
             if (animate && targetCtx === ctx) {
                 canvas.classList.add('updating');
-                setTimeout(() => {
-                    canvas.classList.remove('updating');
-                }, 200);
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        canvas.classList.remove('updating');
+                    }, 150);
+                });
             }
             
             // Clear canvas
@@ -1254,11 +1396,20 @@
         // ============================================
 
         function downloadPNG() {
-            // Render to high-resolution canvas (no animation)
-            render(renderCtx, CONFIG.EXPORT_SIZE, false);
+            // Get or create render canvas
+            const { canvas: exportCanvas, ctx: exportCtx } = getRenderCanvas();
             
-            // Export as PNG
-            renderCanvas.toBlob((blob) => {
+            // Render to high-resolution canvas (no animation, immediate render)
+            renderImmediate(exportCtx, CONFIG.EXPORT_SIZE, false);
+            
+            // Export as PNG with iOS-optimized quality settings
+            exportCanvas.toBlob((blob) => {
+                if (!blob) {
+                    console.error('Failed to generate PNG blob');
+                    alert('Export failed. Please try again.');
+                    return;
+                }
+                
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1266,17 +1417,26 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 'image/png');
+                
+                // Clean up after a delay to allow download to start
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                    // Clean up render canvas to free memory (iOS optimization)
+                    cleanupRenderCanvas();
+                }, 1000);
+            }, 'image/png', 1.0);
         }
 
         // ============================================
         // EVENT LISTENERS
         // ============================================
 
+        // iOS optimization: Use passive event listeners where possible
+        const passiveOptions = { passive: true };
+
         // Background image options
         document.querySelectorAll('#backgroundOptions .bg-option').forEach(option => {
-            option.addEventListener('click', () => {
+            addIOSFriendlyClickListener(option, () => {
                 if (state.locks.background) return;
                 document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
@@ -1285,9 +1445,33 @@
             });
         });
 
+        // Helper function for iOS-friendly touch handling
+        function addIOSFriendlyClickListener(element, handler) {
+            let touchStartTime = 0;
+            let touchMoved = false;
+            
+            element.addEventListener('touchstart', () => {
+                touchStartTime = Date.now();
+                touchMoved = false;
+            }, passiveOptions);
+            
+            element.addEventListener('touchmove', () => {
+                touchMoved = true;
+            }, passiveOptions);
+            
+            element.addEventListener('touchend', (e) => {
+                if (!touchMoved && Date.now() - touchStartTime < 300) {
+                    e.preventDefault();
+                    handler(e);
+                }
+            });
+            
+            element.addEventListener('click', handler);
+        }
+
         // Ape type options
         document.querySelectorAll('#apeOptions .trait-option').forEach(option => {
-            option.addEventListener('click', () => {
+            addIOSFriendlyClickListener(option, () => {
                 if (state.locks.ape) return;
                 document.querySelectorAll('#apeOptions .trait-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
@@ -1298,7 +1482,7 @@
 
         // Expression options
         document.querySelectorAll('#expressions .trait-option').forEach(option => {
-            option.addEventListener('click', () => {
+            addIOSFriendlyClickListener(option, () => {
                 if (state.locks.ape) return;
                 document.querySelectorAll('#expressions .trait-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
@@ -1340,7 +1524,7 @@
         });
 
         document.querySelectorAll('#textColors .color-option').forEach(option => {
-            option.addEventListener('click', () => {
+            addIOSFriendlyClickListener(option, () => {
                 if (state.locks.text) return;
                 document.querySelectorAll('#textColors .color-option').forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
@@ -1364,7 +1548,7 @@
 
         // Layer lock toggles
         document.querySelectorAll('.lock-toggle').forEach(toggle => {
-            toggle.addEventListener('click', () => {
+            addIOSFriendlyClickListener(toggle, (e) => {
                 const layer = toggle.dataset.layer;
                 toggleLayerLock(layer);
             });
