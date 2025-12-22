@@ -766,6 +766,7 @@
                     <button class="btn btn-primary" id="downloadBtn">Download PNG (2048×2048)</button>
                     <button class="btn btn-secondary" id="randomizeBtn">🎲 Randomize</button>
                     <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                    <button class="btn btn-secondary" id="debugBtn" title="Toggle debug overlay">🔍 Debug</button>
                 </div>
                 <div id="loadingIndicator" class="loading-indicator" style="display: none;">
                     <div class="loading-spinner"></div>
@@ -915,10 +916,63 @@
         // Configuration
         const CONFIG = {
             PREVIEW_SIZE: 512,      // Display canvas size
-            EXPORT_SIZE: 2048,      // High-res export size
-            APE_SCALE: 1.35,        // Ape size multiplier
-            APE_Y_OFFSET: 0.15      // Ape vertical position (15% from top)
+            EXPORT_SIZE: 2048,      // High-res export size (always 2048x2048)
+            
+            // Safe Area System (percentage-based, relative to canvas)
+            SAFE_AREA_SIZE: 0.82,   // Safe area occupies 82% of canvas height (centered square)
+            EYE_CENTER_OFFSET: -0.05, // Eyes positioned 5% above vertical center (negative = up)
+            
+            // Debug mode
+            DEBUG_OVERLAY: false    // Toggle to show safe area boundaries
         };
+        
+        // Safe Area Calculator
+        function getSafeArea(canvasSize) {
+            const safeAreaSize = canvasSize * CONFIG.SAFE_AREA_SIZE;
+            const safeAreaX = (canvasSize - safeAreaSize) / 2;  // Centered horizontally
+            const safeAreaY = (canvasSize - safeAreaSize) / 2;  // Centered vertically
+            const safeAreaCenterX = canvasSize / 2;
+            const safeAreaCenterY = canvasSize / 2 + (canvasSize * CONFIG.EYE_CENTER_OFFSET);
+            
+            return {
+                x: safeAreaX,
+                y: safeAreaY,
+                width: safeAreaSize,
+                height: safeAreaSize,
+                centerX: safeAreaCenterX,
+                centerY: safeAreaCenterY,
+                size: safeAreaSize
+            };
+        }
+        
+        // Scale image to fit within safe area while preserving aspect ratio (contain behavior)
+        function scaleImageToSafeArea(img, safeArea) {
+            const imgAspect = img.width / img.height;
+            const safeAspect = safeArea.width / safeArea.height;
+            
+            let drawWidth, drawHeight;
+            
+            if (imgAspect > safeAspect) {
+                // Image is wider - fit to width
+                drawWidth = safeArea.width;
+                drawHeight = safeArea.width / imgAspect;
+            } else {
+                // Image is taller - fit to height
+                drawHeight = safeArea.height;
+                drawWidth = safeArea.height * imgAspect;
+            }
+            
+            // Center within safe area
+            const drawX = safeArea.centerX - (drawWidth / 2);
+            const drawY = safeArea.centerY - (drawHeight / 2);
+            
+            return {
+                x: drawX,
+                y: drawY,
+                width: drawWidth,
+                height: drawHeight
+            };
+        }
 
         // State management with layer locking
         const state = {
@@ -945,7 +999,8 @@
                 color: '#ffffff',
                 position: 'top',
                 size: 40
-            }
+            },
+            debug: false  // Debug overlay toggle
         };
 
         // Image cache
@@ -1129,125 +1184,245 @@
             // Clear canvas
             targetCtx.clearRect(0, 0, targetSize, targetSize);
             
-            // Layer 1: Background
+            // Calculate safe area for this canvas size
+            const safeArea = getSafeArea(targetSize);
+            
+            // Layer 1: Background (static, centered, fills entire canvas)
             const bgPath = state.background.image;
             const bgImg = imageCache.backgrounds[bgPath];
             if (bgImg) {
-                targetCtx.drawImage(bgImg, 0, 0, targetSize, targetSize);
+                // Scale background to cover entire canvas while maintaining aspect ratio
+                const bgAspect = bgImg.width / bgImg.height;
+                const canvasAspect = targetSize / targetSize;
+                
+                let bgDrawWidth, bgDrawHeight, bgDrawX, bgDrawY;
+                
+                if (bgAspect > canvasAspect) {
+                    // Background is wider - fit to height, center horizontally
+                    bgDrawHeight = targetSize;
+                    bgDrawWidth = targetSize * bgAspect;
+                    bgDrawX = (targetSize - bgDrawWidth) / 2;
+                    bgDrawY = 0;
+                } else {
+                    // Background is taller - fit to width, center vertically
+                    bgDrawWidth = targetSize;
+                    bgDrawHeight = targetSize / bgAspect;
+                    bgDrawX = 0;
+                    bgDrawY = (targetSize - bgDrawHeight) / 2;
+                }
+                
+                targetCtx.drawImage(bgImg, bgDrawX, bgDrawY, bgDrawWidth, bgDrawHeight);
             } else {
                 targetCtx.fillStyle = '#1a1a1a';
                 targetCtx.fillRect(0, 0, targetSize, targetSize);
             }
             
-            // Layer 2: Ape
+            // Layer 2: Ape (scaled to fit safe area, preserving aspect ratio)
             const apeType = state.ape.type;
             const apePath = getApeImagePath(apeType);
             const apeImg = imageCache.apes[apePath];
+            let apeBounds = null;
+            
             if (apeImg) {
-                const apeScale = CONFIG.APE_SCALE;
-                const apeWidth = targetSize * apeScale;
-                const apeHeight = targetSize * apeScale;
-                const apeX = (targetSize - apeWidth) / 2;
-                const apeY = targetSize * CONFIG.APE_Y_OFFSET;
-                targetCtx.drawImage(apeImg, apeX, apeY, apeWidth, apeHeight);
+                apeBounds = scaleImageToSafeArea(apeImg, safeArea);
+                targetCtx.drawImage(
+                    apeImg,
+                    apeBounds.x,
+                    apeBounds.y,
+                    apeBounds.width,
+                    apeBounds.height
+                );
             }
             
-            // Layer 3: Accessories
-            drawAccessories(targetCtx, targetSize);
+            // Layer 3: Accessories (anchored to ape bounds)
+            if (apeBounds) {
+                drawAccessories(targetCtx, targetSize, safeArea, apeBounds);
+            }
             
             // Layer 4: Text
             drawText(targetCtx, targetSize);
+            
+            // Debug overlay (if enabled)
+            if (state.debug || CONFIG.DEBUG_OVERLAY) {
+                drawDebugOverlay(targetCtx, targetSize, safeArea, apeBounds);
+            }
         }
 
-        function drawAccessories(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE) {
-            const scale = targetSize / CONFIG.PREVIEW_SIZE;
-            const centerX = targetSize / 2;
-            const centerY = targetSize / 2;
-            const radius = 180 * scale;
+        function drawAccessories(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, safeArea = null, apeBounds = null) {
+            if (!apeBounds || !safeArea) {
+                // Fallback to old system if bounds not provided
+                const scale = targetSize / CONFIG.PREVIEW_SIZE;
+                const centerX = targetSize / 2;
+                const centerY = targetSize / 2;
+                const radius = 180 * scale;
+                return;
+            }
+            
+            // Use relative positioning based on ape bounds and safe area
+            const apeCenterX = apeBounds.x + apeBounds.width / 2;
+            const apeCenterY = apeBounds.y + apeBounds.height / 2;
+            const apeTop = apeBounds.y;
+            const apeHeight = apeBounds.height;
+            const apeWidth = apeBounds.width;
+            
+            // Calculate accessory positions relative to ape
+            // Head is approximately in the top 40% of the ape image
+            const headTop = apeTop;
+            const headBottom = apeTop + (apeHeight * 0.4);
+            const headCenterY = headTop + (headBottom - headTop) / 2;
+            const headRadius = (headBottom - headTop) / 2;
+            
+            // Neck/jewelry area is approximately at 60% down from top
+            const neckY = apeTop + (apeHeight * 0.6);
+            const neckRadius = apeWidth * 0.25; // 25% of ape width for neck radius
+            
+            // Eye level is approximately at 25% from top of head
+            const eyeY = headTop + (headBottom - headTop) * 0.25;
+            const eyeSpacing = apeWidth * 0.15; // 15% of ape width between eyes
 
-            // Draw hat
+            // Draw hat (positioned at top of head)
             if (state.accessories.hat === 'cap') {
+                const hatWidth = apeWidth * 0.9; // 90% of ape width
+                const hatHeight = headRadius * 0.3; // 30% of head radius
+                const hatTop = headTop - hatHeight * 0.5;
+                
                 targetCtx.fillStyle = '#1a1a1a';
                 targetCtx.beginPath();
-                targetCtx.arc(centerX, centerY - radius + 40 * scale, 160 * scale, Math.PI, 0);
+                targetCtx.arc(apeCenterX, headTop, hatWidth * 0.5, Math.PI, 0);
                 targetCtx.fill();
-                targetCtx.fillRect(centerX - 160 * scale, centerY - radius + 40 * scale, 320 * scale, 50 * scale);
+                targetCtx.fillRect(apeCenterX - hatWidth * 0.5, headTop, hatWidth, hatHeight);
                 // Brim
                 targetCtx.fillStyle = '#2a2a2a';
-                targetCtx.fillRect(centerX - 180 * scale, centerY - radius + 90 * scale, 360 * scale, 15 * scale);
+                const brimWidth = hatWidth * 1.1;
+                const brimHeight = hatHeight * 0.3;
+                targetCtx.fillRect(apeCenterX - brimWidth * 0.5, headTop + hatHeight, brimWidth, brimHeight);
             } else if (state.accessories.hat === 'beanie') {
+                const beanieWidth = apeWidth * 0.85;
+                const beanieHeight = headRadius * 0.5;
+                const beanieTop = headTop - beanieHeight * 0.3;
+                
                 targetCtx.fillStyle = '#ff0000';
                 targetCtx.beginPath();
-                targetCtx.arc(centerX, centerY - radius + 30 * scale, 150 * scale, Math.PI, 0);
+                targetCtx.arc(apeCenterX, headTop, beanieWidth * 0.5, Math.PI, 0);
                 targetCtx.fill();
-                targetCtx.fillRect(centerX - 150 * scale, centerY - radius + 30 * scale, 300 * scale, 80 * scale);
+                targetCtx.fillRect(apeCenterX - beanieWidth * 0.5, beanieTop, beanieWidth, beanieHeight);
             } else if (state.accessories.hat === 'crown') {
+                const crownWidth = apeWidth * 0.6;
+                const crownHeight = headRadius * 0.4;
+                const crownTop = headTop - crownHeight;
+                
                 targetCtx.fillStyle = '#ffd700';
-                const crownHeight = 60 * scale;
-                const crownWidth = 200 * scale;
-                targetCtx.fillRect(centerX - crownWidth/2, centerY - radius - crownHeight + 50 * scale, crownWidth, crownHeight);
+                targetCtx.fillRect(apeCenterX - crownWidth * 0.5, crownTop, crownWidth, crownHeight);
                 // Crown points
-                for (let i = 0; i < 5; i++) {
-                    const x = centerX - crownWidth/2 + (crownWidth / 4) * i;
+                const pointCount = 5;
+                const pointWidth = crownWidth / (pointCount - 1);
+                for (let i = 0; i < pointCount; i++) {
+                    const x = apeCenterX - crownWidth * 0.5 + pointWidth * i;
                     targetCtx.beginPath();
-                    targetCtx.moveTo(x, centerY - radius - crownHeight + 50 * scale);
-                    targetCtx.lineTo(x + 20 * scale, centerY - radius - crownHeight + 20 * scale);
-                    targetCtx.lineTo(x + 40 * scale, centerY - radius - crownHeight + 50 * scale);
+                    targetCtx.moveTo(x, crownTop);
+                    targetCtx.lineTo(x + pointWidth * 0.3, crownTop - crownHeight * 0.5);
+                    targetCtx.lineTo(x + pointWidth * 0.6, crownTop);
                     targetCtx.fill();
                 }
             }
 
-            // Draw glasses (if not wearing hat that covers them)
+            // Draw glasses (positioned at eye level, if not wearing hat)
             if (state.accessories.glasses === 'sunglasses' && state.accessories.hat === 'none') {
+                const lensWidth = apeWidth * 0.15;
+                const lensHeight = headRadius * 0.2;
+                const lensSpacing = apeWidth * 0.1;
+                
                 targetCtx.fillStyle = '#000000';
                 // Left lens
-                targetCtx.fillRect(centerX - 100 * scale, centerY - 60 * scale, 70 * scale, 40 * scale);
+                targetCtx.fillRect(apeCenterX - lensSpacing - lensWidth, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
                 // Right lens
-                targetCtx.fillRect(centerX + 30 * scale, centerY - 60 * scale, 70 * scale, 40 * scale);
+                targetCtx.fillRect(apeCenterX + lensSpacing, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
                 // Bridge
-                targetCtx.fillRect(centerX - 30 * scale, centerY - 50 * scale, 60 * scale, 10 * scale);
+                targetCtx.fillRect(apeCenterX - lensSpacing * 0.5, eyeY - lensHeight * 0.3, lensSpacing, lensHeight * 0.25);
             } else if (state.accessories.glasses === 'glasses' && state.accessories.hat === 'none') {
+                const frameRadius = headRadius * 0.2;
+                const frameSpacing = apeWidth * 0.12;
+                
                 targetCtx.strokeStyle = '#333333';
-                targetCtx.lineWidth = 4 * scale;
+                targetCtx.lineWidth = Math.max(2, apeWidth * 0.008);
                 // Left frame
                 targetCtx.beginPath();
-                targetCtx.arc(centerX - 65 * scale, centerY - 40 * scale, 35 * scale, 0, Math.PI * 2);
+                targetCtx.arc(apeCenterX - frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
                 targetCtx.stroke();
                 // Right frame
                 targetCtx.beginPath();
-                targetCtx.arc(centerX + 65 * scale, centerY - 40 * scale, 35 * scale, 0, Math.PI * 2);
+                targetCtx.arc(apeCenterX + frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
                 targetCtx.stroke();
                 // Bridge
                 targetCtx.beginPath();
-                targetCtx.moveTo(centerX - 30 * scale, centerY - 40 * scale);
-                targetCtx.lineTo(centerX + 30 * scale, centerY - 40 * scale);
+                targetCtx.moveTo(apeCenterX - frameSpacing * 0.5, eyeY);
+                targetCtx.lineTo(apeCenterX + frameSpacing * 0.5, eyeY);
                 targetCtx.stroke();
             }
 
-            // Draw jewelry
+            // Draw jewelry (positioned at neck level)
             if (state.accessories.jewelry === 'chain') {
                 targetCtx.strokeStyle = '#ffd700';
-                targetCtx.lineWidth = 8 * scale;
+                targetCtx.lineWidth = Math.max(4, apeWidth * 0.015);
                 targetCtx.beginPath();
-                targetCtx.arc(centerX, centerY + 80 * scale, 120 * scale, 0.3, Math.PI - 0.3);
+                targetCtx.arc(apeCenterX, neckY, neckRadius, 0.3, Math.PI - 0.3);
                 targetCtx.stroke();
                 // Chain links
-                for (let i = 0; i < 8; i++) {
-                    const angle = 0.3 + (Math.PI - 0.6) * (i / 7);
-                    const x = centerX + Math.cos(angle) * 120 * scale;
-                    const y = centerY + 80 * scale + Math.sin(angle) * 120 * scale;
+                const linkCount = 8;
+                for (let i = 0; i < linkCount; i++) {
+                    const angle = 0.3 + (Math.PI - 0.6) * (i / (linkCount - 1));
+                    const x = apeCenterX + Math.cos(angle) * neckRadius;
+                    const y = neckY + Math.sin(angle) * neckRadius;
                     targetCtx.fillStyle = '#ffd700';
                     targetCtx.beginPath();
-                    targetCtx.arc(x, y, 6 * scale, 0, Math.PI * 2);
+                    targetCtx.arc(x, y, Math.max(3, apeWidth * 0.012), 0, Math.PI * 2);
                     targetCtx.fill();
                 }
             } else if (state.accessories.jewelry === 'necklace') {
                 targetCtx.strokeStyle = '#c0c0c0';
-                targetCtx.lineWidth = 6 * scale;
+                targetCtx.lineWidth = Math.max(3, apeWidth * 0.012);
                 targetCtx.beginPath();
-                targetCtx.arc(centerX, centerY + 80 * scale, 100 * scale, 0.4, Math.PI - 0.4);
+                targetCtx.arc(apeCenterX, neckY, neckRadius * 0.85, 0.4, Math.PI - 0.4);
                 targetCtx.stroke();
             }
+        }
+        
+        // Debug overlay to visualize safe area and ape bounds
+        function drawDebugOverlay(targetCtx, targetSize, safeArea, apeBounds) {
+            // Save context state
+            targetCtx.save();
+            
+            // Draw safe area boundary
+            targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+            targetCtx.setLineDash([10, 5]);
+            targetCtx.strokeRect(safeArea.x, safeArea.y, safeArea.width, safeArea.height);
+            
+            // Draw safe area center (eye position target)
+            targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
+            targetCtx.setLineDash([]);
+            // Horizontal line (eye level)
+            targetCtx.beginPath();
+            targetCtx.moveTo(safeArea.x, safeArea.centerY);
+            targetCtx.lineTo(safeArea.x + safeArea.width, safeArea.centerY);
+            targetCtx.stroke();
+            // Vertical center line
+            targetCtx.beginPath();
+            targetCtx.moveTo(safeArea.centerX, safeArea.y);
+            targetCtx.lineTo(safeArea.centerX, safeArea.y + safeArea.height);
+            targetCtx.stroke();
+            
+            // Draw ape bounds if available
+            if (apeBounds) {
+                targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                targetCtx.setLineDash([5, 5]);
+                targetCtx.strokeRect(apeBounds.x, apeBounds.y, apeBounds.width, apeBounds.height);
+            }
+            
+            // Restore context state
+            targetCtx.restore();
         }
 
         function drawText(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE) {
@@ -1379,13 +1554,27 @@
         // ============================================
 
         function downloadPNG() {
+            // Always export at exactly 2048x2048
+            const exportSize = 2048;
+            
             // Get or create render canvas
             const { canvas: exportCanvas, ctx: exportCtx } = getRenderCanvas();
             
-            // Render to high-resolution canvas (no animation, immediate render)
-            renderImmediate(exportCtx, CONFIG.EXPORT_SIZE, false);
+            // Ensure canvas is exactly 2048x2048
+            if (exportCanvas.width !== exportSize || exportCanvas.height !== exportSize) {
+                exportCanvas.width = exportSize;
+                exportCanvas.height = exportSize;
+                exportCtx.imageSmoothingEnabled = true;
+                exportCtx.imageSmoothingQuality = 'high';
+            }
             
-            // Export as PNG with iOS-optimized quality settings
+            // Render to high-resolution canvas (no animation, no debug overlay for export)
+            const originalDebug = state.debug;
+            state.debug = false; // Disable debug for export
+            renderImmediate(exportCtx, exportSize, false);
+            state.debug = originalDebug; // Restore debug state
+            
+            // Export as PNG with maximum quality
             exportCanvas.toBlob((blob) => {
                 if (!blob) {
                     console.error('Failed to generate PNG blob');
@@ -1533,6 +1722,19 @@
         document.getElementById('randomizeBtn').addEventListener('click', () => {
             randomize();
         });
+        
+        document.getElementById('debugBtn').addEventListener('click', () => {
+            state.debug = !state.debug;
+            const btn = document.getElementById('debugBtn');
+            if (state.debug) {
+                btn.classList.add('active');
+                btn.style.background = 'rgba(74, 222, 128, 0.3)';
+            } else {
+                btn.classList.remove('active');
+                btn.style.background = '';
+            }
+            render();
+        });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             // Reset state
@@ -1546,6 +1748,7 @@
             state.text.color = '#ffffff';
             state.text.position = 'top';
             state.text.size = 40;
+            state.debug = false;
 
             // Reset locks
             Object.keys(state.locks).forEach(layer => {
@@ -1575,6 +1778,11 @@
             document.getElementById('textPosition').value = 'top';
             document.getElementById('textSize').value = 40;
             document.getElementById('textSizeValue').textContent = 40;
+            
+            // Reset debug button
+            const debugBtn = document.getElementById('debugBtn');
+            debugBtn.classList.remove('active');
+            debugBtn.style.background = '';
 
             render();
         });
