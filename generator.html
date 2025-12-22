@@ -215,6 +215,254 @@
             filter: drop-shadow(0 0 6px rgba(0, 136, 204, 0.8));
         }
 
+        /* Auth Header Styles */
+        .nav-auth {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-auth-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-auth-btn-primary {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+        }
+
+        .nav-auth-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+        }
+
+        .nav-auth-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-auth-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .nav-auth-user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+        }
+
+        .nav-auth-user span {
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        /* Auth Modal Styles */
+        .auth-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            padding: 2rem;
+        }
+
+        .auth-modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auth-modal {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .auth-modal-backdrop.show .auth-modal {
+            transform: scale(1);
+        }
+
+        .auth-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: #d0d0d0;
+            font-size: 1.5rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+
+        .auth-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .auth-modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-modal-header h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .auth-modal-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.25rem;
+            border-radius: 10px;
+        }
+
+        .auth-modal-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: #d0d0d0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-modal-tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .auth-modal-tab:hover:not(.active) {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .auth-form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .auth-form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .auth-form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-form-group input:focus {
+            outline: none;
+            border-color: #4ade80;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+        }
+
+        .auth-message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .auth-message.show {
+            display: block;
+        }
+
+        .auth-message.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        @media (max-width: 768px) {
+            .nav-auth {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+                margin-left: 1rem;
+                padding-left: 1rem;
+            }
+
+            .nav-auth-btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .auth-modal {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+        }
+
         .generator-page {
             max-width: 1400px;
             margin: 0 auto;
@@ -747,6 +995,19 @@
                         </svg>
                     </a>
                 </div>
+                
+                <!-- Auth Controls -->
+                <div class="nav-auth" id="authLoggedOut" style="display: none;">
+                    <button class="nav-auth-btn nav-auth-btn-primary" id="headerLoginBtn">Log In</button>
+                    <button class="nav-auth-btn nav-auth-btn-secondary" id="headerSignupBtn">Sign Up</button>
+                </div>
+                
+                <div class="nav-auth" id="authLoggedIn" style="display: none;">
+                    <div class="nav-auth-user">
+                        Logged in as: <span id="userEmailDisplay"></span>
+                    </div>
+                    <button class="nav-auth-btn nav-auth-btn-secondary" id="headerLogoutBtn">Log Out</button>
+                </div>
             </div>
         </div>
     </nav>
@@ -775,32 +1036,6 @@
             </div>
 
             <div class="controls-section">
-                <!-- Auth Status Panel -->
-                <div class="control-panel" id="authStatusPanel" style="display: none;">
-                    <div class="control-panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
-                        <h3 style="margin: 0;">Account</h3>
-                    </div>
-                    <div class="control-group" style="margin-top: 1rem;">
-                        <div style="font-size: 0.9rem; color: #d0d0d0; margin-bottom: 0.75rem;">
-                            Logged in as: <span id="userEmail" style="color: #4ade80; font-weight: 600;"></span>
-                        </div>
-                        <button class="btn btn-secondary" id="logoutBtn" style="margin-bottom: 0;">Log Out</button>
-                    </div>
-                </div>
-
-                <!-- Login Prompt Panel -->
-                <div class="control-panel" id="loginPromptPanel">
-                    <div class="control-panel-header">
-                        <h3>Account</h3>
-                    </div>
-                    <div class="control-group" style="margin-top: 1rem;">
-                        <p style="font-size: 0.9rem; color: #d0d0d0; margin-bottom: 0.75rem;">
-                            Sign in to save your avatars
-                        </p>
-                        <a href="login.html" class="btn btn-primary" style="text-decoration: none; text-align: center; display: block; margin-bottom: 0;">Log In / Sign Up</a>
-                    </div>
-                </div>
-
                 <!-- Background Panel -->
                 <div class="control-panel">
                     <div class="control-panel-header">
@@ -2246,45 +2481,14 @@
         // ============================================
 
         // ============================================
-        // AUTHENTICATION STATE
+        // AUTHENTICATION
         // ============================================
         
+        // Initialize authentication system
         (async () => {
             try {
-                const { auth } = await import('./js/firebase.js');
-                const { onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
-                
-                const authStatusPanel = document.getElementById('authStatusPanel');
-                const loginPromptPanel = document.getElementById('loginPromptPanel');
-                const userEmailEl = document.getElementById('userEmail');
-                const logoutBtn = document.getElementById('logoutBtn');
-                
-                // Update UI based on auth state
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        // User is logged in
-                        authStatusPanel.style.display = 'block';
-                        loginPromptPanel.style.display = 'none';
-                        userEmailEl.textContent = user.email;
-                    } else {
-                        // User is not logged in
-                        authStatusPanel.style.display = 'none';
-                        loginPromptPanel.style.display = 'block';
-                    }
-                });
-                
-                // Logout handler
-                if (logoutBtn) {
-                    logoutBtn.addEventListener('click', async () => {
-                        try {
-                            await signOut(auth);
-                            // UI will update automatically via onAuthStateChanged
-                        } catch (error) {
-                            console.error('Error signing out:', error);
-                            alert('Error signing out. Please try again.');
-                        }
-                    });
-                }
+                const { initAuth } = await import('./js/auth.js');
+                initAuth();
             } catch (error) {
                 console.error('Auth initialization error:', error);
                 // Continue without auth if there's an error
