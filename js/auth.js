@@ -281,6 +281,9 @@ export function openAuthModal(mode = 'login') {
     openModal(mode);
 }
 
+// Also expose globally for easy access from overlay buttons
+window.openAuthModal = openAuthModal;
+
 function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
