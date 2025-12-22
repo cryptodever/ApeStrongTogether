@@ -784,6 +784,16 @@
                         </button>
                     </div>
                     <div class="control-group">
+                        <label class="control-label">Rendering Mode</label>
+                        <select class="control-select" id="renderMode">
+                            <option value="layered">Layered Mode (Recommended)</option>
+                            <option value="baked">Baked Mode (Single Image)</option>
+                        </select>
+                        <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                            Layered: Background + transparent ape. Baked: Single image with background included.
+                        </small>
+                    </div>
+                    <div class="control-group" id="backgroundImageGroup">
                         <label class="control-label">Background Image</label>
                         <div class="background-options" id="backgroundOptions">
                             <div class="bg-option selected" data-bg="pfp_generator_images/pfp_bg1.png" style="background-image: url('pfp_generator_images/pfp_bg1.png');"></div>
@@ -1014,7 +1024,7 @@
             return bbox;
         }
         
-        // Scale and position ape using bbox normalization
+        // Scale and position ape using bbox normalization (LAYERED MODE)
         function scaleAndPositionApe(img, safeArea, anchor, canvasSize) {
             // Compute bounding box
             const bbox = computeBoundingBox(img);
@@ -1059,6 +1069,45 @@
                 originalBbox: bbox
             };
         }
+        
+        // Scale and position ape using COVER behavior (BAKED MODE)
+        function scaleAndPositionApeBaked(img, canvasSize, anchorOffset) {
+            const canvasW = canvasSize;
+            const canvasH = canvasSize;
+            const imgW = img.width;
+            const imgH = img.height;
+            
+            // Cover behavior: scale = max(canvasW/imgW, canvasH/imgH)
+            const scale = Math.max(canvasW / imgW, canvasH / imgH);
+            
+            // Scaled image dimensions
+            const scaledW = imgW * scale;
+            const scaledH = imgH * scale;
+            
+            // Center the scaled image
+            let dx = (canvasW - scaledW) / 2;
+            let dy = (canvasH - scaledH) / 2;
+            
+            // Apply anchor offsets (scaled for current canvas size)
+            const offsetScale = canvasSize / CONFIG.EXPORT_SIZE;
+            dx += anchorOffset.x * offsetScale;
+            dy += anchorOffset.y * offsetScale;
+            
+            return {
+                x: dx,
+                y: dy,
+                width: scaledW,
+                height: scaledH,
+                scale: scale,
+                // Crop bounds (what's visible on canvas)
+                cropBounds: {
+                    x: Math.max(0, -dx / scale),
+                    y: Math.max(0, -dy / scale),
+                    width: Math.min(imgW, canvasW / scale),
+                    height: Math.min(imgH, canvasH / scale)
+                }
+            };
+        }
 
         // State management with layer locking
         const state = {
@@ -1068,11 +1117,25 @@
                 accessories: false,
                 text: false
             },
+            renderMode: 'layered', // 'layered' or 'baked'
             background: {
                 image: 'pfp_generator_images/pfp_bg1.png'
             },
             ape: {
                 type: 'ape1'
+            },
+            // Per-ape anchor offsets for baked mode (in pixels, relative to 2048x2048)
+            // Adjust these values to shift the cover crop position for each ape
+            // Positive X = shift right, Positive Y = shift down
+            // Example: { x: 50, y: -30 } shifts 50px right, 30px up
+            apeAnchorOffsets: {
+                ape1: { x: 0, y: 0 },
+                ape2: { x: 0, y: 0 },
+                ape3: { x: 0, y: 0 },
+                ape4: { x: 0, y: 0 },
+                ape5: { x: 0, y: 0 },
+                ape6: { x: 0, y: 0 },
+                ape7: { x: 0, y: 0 }
             },
             accessories: {
                 hat: 'none',
@@ -1266,80 +1329,108 @@
             // Clear canvas
             targetCtx.clearRect(0, 0, targetSize, targetSize);
             
-            // Calculate safe area for this canvas size
-            const safeArea = getSafeArea(targetSize);
-            
-            // Layer 1: Background (static, centered, fills entire canvas)
-            const bgPath = state.background.image;
-            const bgImg = imageCache.backgrounds[bgPath];
-            if (bgImg) {
-                // Scale background to cover entire canvas while maintaining aspect ratio
-                const bgAspect = bgImg.width / bgImg.height;
-                const canvasAspect = targetSize / targetSize;
+            // MODE 1: Layered Mode (background + transparent ape)
+            if (state.renderMode === 'layered') {
+                // Calculate safe area for this canvas size
+                const safeArea = getSafeArea(targetSize);
                 
-                let bgDrawWidth, bgDrawHeight, bgDrawX, bgDrawY;
-                
-                if (bgAspect > canvasAspect) {
-                    // Background is wider - fit to height, center horizontally
-                    bgDrawHeight = targetSize;
-                    bgDrawWidth = targetSize * bgAspect;
-                    bgDrawX = (targetSize - bgDrawWidth) / 2;
-                    bgDrawY = 0;
+                // Layer 1: Background (COVER - fills entire canvas)
+                const bgPath = state.background.image;
+                const bgImg = imageCache.backgrounds[bgPath];
+                if (bgImg) {
+                    // Cover behavior: scale to fill canvas
+                    const bgScale = Math.max(targetSize / bgImg.width, targetSize / bgImg.height);
+                    const bgDrawWidth = bgImg.width * bgScale;
+                    const bgDrawHeight = bgImg.height * bgScale;
+                    const bgDrawX = (targetSize - bgDrawWidth) / 2;
+                    const bgDrawY = (targetSize - bgDrawHeight) / 2;
+                    
+                    targetCtx.drawImage(bgImg, bgDrawX, bgDrawY, bgDrawWidth, bgDrawHeight);
                 } else {
-                    // Background is taller - fit to width, center vertically
-                    bgDrawWidth = targetSize;
-                    bgDrawHeight = targetSize / bgAspect;
-                    bgDrawX = 0;
-                    bgDrawY = (targetSize - bgDrawHeight) / 2;
+                    targetCtx.fillStyle = '#1a1a1a';
+                    targetCtx.fillRect(0, 0, targetSize, targetSize);
                 }
                 
-                targetCtx.drawImage(bgImg, bgDrawX, bgDrawY, bgDrawWidth, bgDrawHeight);
-            } else {
-                targetCtx.fillStyle = '#1a1a1a';
-                targetCtx.fillRect(0, 0, targetSize, targetSize);
-            }
-            
-            // Layer 2: Ape (normalized using bbox, anchored to anchor point)
-            const apeType = state.ape.type;
-            const apePath = getApeImagePath(apeType);
-            const apeImg = imageCache.apes[apePath];
-            let apeBounds = null;
-            let apeBbox = null;
-            
-            if (apeImg) {
-                const anchor = getAnchor(targetSize);
-                const normalized = scaleAndPositionApe(apeImg, safeArea, anchor, targetSize);
+                // Layer 2: Ape (normalized using bbox, anchored to anchor point)
+                const apeType = state.ape.type;
+                const apePath = getApeImagePath(apeType);
+                const apeImg = imageCache.apes[apePath];
+                let apeBounds = null;
+                let apeBbox = null;
                 
-                apeBounds = {
-                    x: normalized.x,
-                    y: normalized.y,
-                    width: normalized.width,
-                    height: normalized.height
-                };
+                if (apeImg) {
+                    const anchor = getAnchor(targetSize);
+                    const normalized = scaleAndPositionApe(apeImg, safeArea, anchor, targetSize);
+                    
+                    apeBounds = {
+                        x: normalized.x,
+                        y: normalized.y,
+                        width: normalized.width,
+                        height: normalized.height
+                    };
+                    
+                    apeBbox = normalized.bbox;
+                    
+                    // Draw the ape image
+                    targetCtx.drawImage(
+                        apeImg,
+                        normalized.x,
+                        normalized.y,
+                        normalized.width,
+                        normalized.height
+                    );
+                }
                 
-                apeBbox = normalized.bbox;
+                // Layer 3: Accessories (anchored to bbox)
+                if (apeBounds && apeBbox) {
+                    drawAccessories(targetCtx, targetSize, safeArea, apeBounds, apeBbox);
+                }
                 
-                // Draw the ape image
-                targetCtx.drawImage(
-                    apeImg,
-                    normalized.x,
-                    normalized.y,
-                    normalized.width,
-                    normalized.height
-                );
+                // Layer 4: Text
+                drawText(targetCtx, targetSize);
+                
+                // Debug overlay (if enabled)
+                if (state.debug || CONFIG.DEBUG_OVERLAY) {
+                    drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, getAnchor(targetSize), null, 'layered');
+                }
             }
-            
-            // Layer 3: Accessories (anchored to bbox)
-            if (apeBounds && apeBbox) {
-                drawAccessories(targetCtx, targetSize, safeArea, apeBounds, apeBbox);
-            }
-            
-            // Layer 4: Text
-            drawText(targetCtx, targetSize);
-            
-            // Debug overlay (if enabled)
-            if (state.debug || CONFIG.DEBUG_OVERLAY) {
-                drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, getAnchor(targetSize));
+            // MODE 2: Baked Mode (single image with background included)
+            else {
+                const apeType = state.ape.type;
+                const apePath = getApeImagePath(apeType);
+                const apeImg = imageCache.apes[apePath];
+                let bakedBounds = null;
+                
+                if (apeImg) {
+                    // Get anchor offset for this ape
+                    const anchorOffset = state.apeAnchorOffsets[apeType] || { x: 0, y: 0 };
+                    bakedBounds = scaleAndPositionApeBaked(apeImg, targetSize, anchorOffset);
+                    
+                    // Draw the baked ape image (includes background)
+                    targetCtx.drawImage(
+                        apeImg,
+                        bakedBounds.x,
+                        bakedBounds.y,
+                        bakedBounds.width,
+                        bakedBounds.height
+                    );
+                } else {
+                    // Fallback: solid color
+                    targetCtx.fillStyle = '#1a1a1a';
+                    targetCtx.fillRect(0, 0, targetSize, targetSize);
+                }
+                
+                // Layer 3: Accessories (disabled in baked mode - image already includes them)
+                // Note: If you want accessories in baked mode, you'd need to draw them here
+                // but typically baked images already include accessories
+                
+                // Layer 4: Text
+                drawText(targetCtx, targetSize);
+                
+                // Debug overlay (if enabled)
+                if (state.debug || CONFIG.DEBUG_OVERLAY) {
+                    drawDebugOverlay(targetCtx, targetSize, null, null, null, bakedBounds, 'baked');
+                }
             }
         }
 
@@ -1479,67 +1570,112 @@
             }
         }
         
-        // Debug overlay to visualize safe area, anchor point, and detected bbox
-        function drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, anchor) {
+        // Debug overlay to visualize safe area, anchor point, and detected bbox (LAYERED) or cover bounds (BAKED)
+        function drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, anchor, bakedBounds, mode) {
             // Save context state
             targetCtx.save();
             
-            // Draw safe area rectangle (green)
-            targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
-            targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
-            targetCtx.setLineDash([10, 5]);
-            targetCtx.strokeRect(safeArea.x, safeArea.y, safeArea.width, safeArea.height);
-            
-            // Draw anchor point crosshair (red)
-            targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-            targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
-            targetCtx.setLineDash([]);
-            const crosshairSize = Math.max(20, targetSize * 0.02);
-            // Horizontal line
-            targetCtx.beginPath();
-            targetCtx.moveTo(anchor.x - crosshairSize, anchor.y);
-            targetCtx.lineTo(anchor.x + crosshairSize, anchor.y);
-            targetCtx.stroke();
-            // Vertical line
-            targetCtx.beginPath();
-            targetCtx.moveTo(anchor.x, anchor.y - crosshairSize);
-            targetCtx.lineTo(anchor.x, anchor.y + crosshairSize);
-            targetCtx.stroke();
-            // Anchor point circle
-            targetCtx.beginPath();
-            targetCtx.arc(anchor.x, anchor.y, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
-            targetCtx.fillStyle = 'rgba(255, 0, 0, 0.8)';
-            targetCtx.fill();
-            
-            // Draw detected bbox rectangle (blue)
-            if (apeBbox) {
-                targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
-                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
-                targetCtx.setLineDash([5, 5]);
-                targetCtx.strokeRect(apeBbox.x, apeBbox.y, apeBbox.width, apeBbox.height);
+            if (mode === 'layered' && safeArea && anchor) {
+                // LAYERED MODE: Draw safe area, anchor, and bbox
                 
-                // Draw bbox center point
-                targetCtx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                // Draw safe area rectangle (green)
+                targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
+                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                targetCtx.setLineDash([10, 5]);
+                targetCtx.strokeRect(safeArea.x, safeArea.y, safeArea.width, safeArea.height);
+                
+                // Draw anchor point crosshair (red)
+                targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                targetCtx.setLineDash([]);
+                const crosshairSize = Math.max(20, targetSize * 0.02);
+                // Horizontal line
                 targetCtx.beginPath();
-                targetCtx.arc(apeBbox.centerX, apeBbox.centerY, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
+                targetCtx.moveTo(anchor.x - crosshairSize, anchor.y);
+                targetCtx.lineTo(anchor.x + crosshairSize, anchor.y);
+                targetCtx.stroke();
+                // Vertical line
+                targetCtx.beginPath();
+                targetCtx.moveTo(anchor.x, anchor.y - crosshairSize);
+                targetCtx.lineTo(anchor.x, anchor.y + crosshairSize);
+                targetCtx.stroke();
+                // Anchor point circle
+                targetCtx.beginPath();
+                targetCtx.arc(anchor.x, anchor.y, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
+                targetCtx.fillStyle = 'rgba(255, 0, 0, 0.8)';
                 targetCtx.fill();
                 
-                // Draw eye-line (bboxY + 0.38 * bboxH)
-                const eyeY = apeBbox.y + (apeBbox.height * 0.38);
-                targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-                targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
-                targetCtx.setLineDash([3, 3]);
-                targetCtx.beginPath();
-                targetCtx.moveTo(apeBbox.x, eyeY);
-                targetCtx.lineTo(apeBbox.x + apeBbox.width, eyeY);
-                targetCtx.stroke();
+                // Draw detected bbox rectangle (blue)
+                if (apeBbox) {
+                    targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
+                    targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                    targetCtx.setLineDash([5, 5]);
+                    targetCtx.strokeRect(apeBbox.x, apeBbox.y, apeBbox.width, apeBbox.height);
+                    
+                    // Draw bbox center point
+                    targetCtx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                    targetCtx.beginPath();
+                    targetCtx.arc(apeBbox.centerX, apeBbox.centerY, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
+                    targetCtx.fill();
+                    
+                    // Draw eye-line (bboxY + 0.38 * bboxH)
+                    const eyeY = apeBbox.y + (apeBbox.height * 0.38);
+                    targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                    targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
+                    targetCtx.setLineDash([3, 3]);
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(apeBbox.x, eyeY);
+                    targetCtx.lineTo(apeBbox.x + apeBbox.width, eyeY);
+                    targetCtx.stroke();
+                    
+                    // Draw mask line (bboxY + 0.52 * bboxH)
+                    const maskY = apeBbox.y + (apeBbox.height * 0.52);
+                    targetCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(apeBbox.x, maskY);
+                    targetCtx.lineTo(apeBbox.x + apeBbox.width, maskY);
+                    targetCtx.stroke();
+                }
+            } else if (mode === 'baked' && bakedBounds) {
+                // BAKED MODE: Draw cover rect and final crop bounds
                 
-                // Draw mask line (bboxY + 0.52 * bboxH)
-                const maskY = apeBbox.y + (apeBbox.height * 0.52);
-                targetCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+                // Draw full cover rectangle (green - shows where image is drawn)
+                targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
+                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                targetCtx.setLineDash([10, 5]);
+                targetCtx.strokeRect(bakedBounds.x, bakedBounds.y, bakedBounds.width, bakedBounds.height);
+                
+                // Draw canvas bounds (red - what's actually visible)
+                targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                targetCtx.setLineDash([]);
+                targetCtx.strokeRect(0, 0, targetSize, targetSize);
+                
+                // Draw crop bounds on source image (blue - what part of source is visible)
+                if (bakedBounds.cropBounds) {
+                    const crop = bakedBounds.cropBounds;
+                    const cropX = bakedBounds.x + (crop.x * bakedBounds.scale);
+                    const cropY = bakedBounds.y + (crop.y * bakedBounds.scale);
+                    const cropW = crop.width * bakedBounds.scale;
+                    const cropH = crop.height * bakedBounds.scale;
+                    
+                    targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
+                    targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+                    targetCtx.setLineDash([5, 5]);
+                    targetCtx.strokeRect(cropX, cropY, cropW, cropH);
+                }
+                
+                // Draw center crosshair
+                const centerX = targetSize / 2;
+                const centerY = targetSize / 2;
+                const crosshairSize = Math.max(20, targetSize * 0.02);
+                targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
                 targetCtx.beginPath();
-                targetCtx.moveTo(apeBbox.x, maskY);
-                targetCtx.lineTo(apeBbox.x + apeBbox.width, maskY);
+                targetCtx.moveTo(centerX - crosshairSize, centerY);
+                targetCtx.lineTo(centerX + crosshairSize, centerY);
+                targetCtx.moveTo(centerX, centerY - crosshairSize);
+                targetCtx.lineTo(centerX, centerY + crosshairSize);
                 targetCtx.stroke();
             }
             
@@ -1775,6 +1911,25 @@
         });
 
 
+        // Render mode toggle
+        document.getElementById('renderMode').addEventListener('change', (e) => {
+            state.renderMode = e.target.value;
+            // Show/hide background panel based on mode
+            const bgGroup = document.getElementById('backgroundImageGroup');
+            if (state.renderMode === 'baked') {
+                bgGroup.style.display = 'none';
+            } else {
+                bgGroup.style.display = 'block';
+            }
+            render();
+        });
+        
+        // Initialize background panel visibility
+        const bgGroup = document.getElementById('backgroundImageGroup');
+        if (state.renderMode === 'baked') {
+            bgGroup.style.display = 'none';
+        }
+
         // Accessories
         document.getElementById('hatSelect').addEventListener('change', (e) => {
             if (state.locks.accessories) return;
@@ -1860,6 +2015,7 @@
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             // Reset state
+            state.renderMode = 'layered';
             state.background.image = 'pfp_generator_images/pfp_bg1.png';
             state.ape.type = 'ape1';
             state.accessories.hat = 'none';
@@ -1871,6 +2027,11 @@
             state.text.position = 'top';
             state.text.size = 40;
             state.debug = false;
+            
+            // Reset render mode selector
+            document.getElementById('renderMode').value = 'layered';
+            const bgGroup = document.getElementById('backgroundImageGroup');
+            bgGroup.style.display = 'block';
 
             // Reset locks
             Object.keys(state.locks).forEach(layer => {
