@@ -463,6 +463,102 @@
             }
         }
 
+        /* Auth Gate Overlay Styles */
+        .auth-gate-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            padding: 2rem;
+        }
+
+        .auth-gate-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auth-gate-content {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .auth-gate-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 20px rgba(74, 222, 128, 0.5));
+        }
+
+        .auth-gate-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.5),
+                0 0 40px rgba(74, 222, 128, 0.3),
+                0 4px 15px rgba(0, 0, 0, 0.7);
+        }
+
+        .auth-gate-message {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .auth-gate-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .auth-gate-buttons .btn {
+            min-width: 140px;
+        }
+
+        @media (max-width: 768px) {
+            .auth-gate-content {
+                padding: 2rem;
+            }
+
+            .auth-gate-title {
+                font-size: 2rem;
+            }
+
+            .auth-gate-icon {
+                font-size: 3rem;
+            }
+
+            .auth-gate-buttons {
+                flex-direction: column;
+            }
+
+            .auth-gate-buttons .btn {
+                width: 100%;
+            }
+        }
+
         .generator-page {
             max-width: 1400px;
             margin: 0 auto;
@@ -2492,6 +2588,25 @@
             } catch (error) {
                 console.error('Auth initialization error:', error);
                 // Continue without auth if there's an error
+            }
+        })();
+
+        // ============================================
+        // AUTHENTICATION GATE
+        // ============================================
+        
+        // Block access to generator unless authenticated
+        (async () => {
+            try {
+                const { initAuthGate } = await import('./js/auth-gate.js');
+                initAuthGate();
+            } catch (error) {
+                console.error('Auth gate initialization error:', error);
+                // If auth gate fails, show overlay as fallback
+                const overlay = document.getElementById('authGateOverlay');
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
             }
         })();
 

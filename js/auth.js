@@ -14,6 +14,7 @@ import {
 // Modal elements
 let authModal = null;
 let modalBackdrop = null;
+let modalInitialized = false;
 
 // Initialize auth UI
 export function initAuth() {
@@ -21,6 +22,8 @@ export function initAuth() {
     if (!document.getElementById('authModal')) {
         createModal();
     }
+    
+    modalInitialized = true;
     
     // Set up auth state listener
     onAuthStateChanged(auth, (user) => {
@@ -253,22 +256,29 @@ function setupHeaderButtons() {
 }
 
 function openModal(mode = 'login') {
-    if (!modalBackdrop) {
+    // Ensure modal exists
+    if (!modalBackdrop || !document.getElementById('authModal')) {
         createModal();
-        // Re-setup events after creation
+        // Small delay to ensure DOM is ready
         setTimeout(() => {
-            setupModalEvents();
-            // Switch to requested mode
-            const tab = document.querySelector(`[data-mode="${mode}"]`);
-            if (tab) tab.click();
+            openModal(mode);
         }, 10);
-    } else {
-        // Switch to requested mode
-        const tab = document.querySelector(`[data-mode="${mode}"]`);
-        if (tab) tab.click();
+        return;
     }
     
+    // Switch to requested mode
+    const tab = document.querySelector(`[data-mode="${mode}"]`);
+    if (tab) {
+        tab.click();
+    }
+    
+    // Show modal
     modalBackdrop.classList.add('show');
+}
+
+// Export function for external use (e.g., auth-gate.js)
+export function openAuthModal(mode = 'login') {
+    openModal(mode);
 }
 
 function updateHeaderUI(user) {
