@@ -793,6 +793,16 @@
                             Layered: Background + transparent ape. Baked: Single image with background included.
                         </small>
                     </div>
+                    <div class="control-group" id="bakedBackgroundGroup" style="display: none;">
+                        <label class="control-label">Background Option</label>
+                        <select class="control-select" id="useBakedBackground">
+                            <option value="false">Use Selected Background</option>
+                            <option value="true">Use Baked Background (if present)</option>
+                        </select>
+                        <small style="color: #888; font-size: 0.85rem; display: block; margin-top: 0.5rem;">
+                            Choose whether to use the selected background or the background included in the baked image.
+                        </small>
+                    </div>
                     <div class="control-group" id="backgroundImageGroup">
                         <label class="control-label">Background Image</label>
                         <div class="background-options" id="backgroundOptions">
@@ -1118,6 +1128,7 @@
                 text: false
             },
             renderMode: 'layered', // 'layered' or 'baked'
+            useBakedBackground: false, // In baked mode: true = use baked bg, false = use selected bg
             background: {
                 image: 'pfp_generator_images/pfp_bg1.png'
             },
@@ -1161,6 +1172,10 @@
         // Canvas setup
         const canvas = document.getElementById('profileCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Set preview canvas to 2048x2048 bitmap (CSS will scale it down for display)
+        canvas.width = 2048;
+        canvas.height = 2048;
         
         // Optimize canvas rendering for iOS
         ctx.imageSmoothingEnabled = true;
@@ -1288,17 +1303,129 @@
         // DETERMINISTIC RENDERING PIPELINE
         // ============================================
 
-        // Debounce render calls for iOS performance
+        // Helper: Draw image with CSS cover behavior
+        function drawCover(ctx, img, x, y, w, h) {
+            if (!img) return false;
+            
+            // Cover behavior: scale = max(canvasW/imgW, canvasH/imgH)
+            const scale = Math.max(w / img.width, h / img.height);
+            const dw = img.width * scale;
+            const dh = img.height * scale;
+            
+            // Center the scaled image
+            const dx = x + (w - dw) / 2;
+            const dy = y + (h - dh) / 2;
+            
+            ctx.drawImage(img, dx, dy, dw, dh);
+            return true;
+        }
+
+        // Single deterministic render pipeline - always renders at 2048x2048 internally
+        function renderFinal(targetCanvas, targetCtx, state) {
+            const CANVAS_SIZE = 2048; // Always use 2048x2048 internally
+            
+            // Ensure canvas is exactly 2048x2048 (actual bitmap size, not CSS)
+            if (targetCanvas.width !== CANVAS_SIZE || targetCanvas.height !== CANVAS_SIZE) {
+                targetCanvas.width = CANVAS_SIZE;
+                targetCanvas.height = CANVAS_SIZE;
+                targetCtx.imageSmoothingEnabled = true;
+                targetCtx.imageSmoothingQuality = 'high';
+            }
+            
+            // Clear canvas to transparent
+            targetCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            // Calculate safe area
+            const safeArea = getSafeArea(CANVAS_SIZE);
+            const anchor = getAnchor(CANVAS_SIZE);
+            
+            // LAYER 1: Background (always drawn if selected, or fallback if no baked background)
+            if (state.renderMode === 'layered' || !state.useBakedBackground) {
+                const bgPath = state.background.image;
+                const bgImg = imageCache.backgrounds[bgPath];
+                if (!drawCover(targetCtx, bgImg, 0, 0, CANVAS_SIZE, CANVAS_SIZE)) {
+                    // Fallback: solid color
+                    targetCtx.fillStyle = '#1a1a1a';
+                    targetCtx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                }
+            }
+            
+            // LAYER 2: Ape layer
+            const apeType = state.ape.type;
+            const apePath = getApeImagePath(apeType);
+            const apeImg = imageCache.apes[apePath];
+            let apeBounds = null;
+            let apeBbox = null;
+            let bakedBounds = null;
+            
+            if (apeImg) {
+                if (state.renderMode === 'layered') {
+                    // Layered Mode: transparent ape with bbox normalization
+                    const normalized = scaleAndPositionApe(apeImg, safeArea, anchor, CANVAS_SIZE);
+                    
+                    apeBounds = {
+                        x: normalized.x,
+                        y: normalized.y,
+                        width: normalized.width,
+                        height: normalized.height
+                    };
+                    
+                    apeBbox = normalized.bbox;
+                    
+                    // Draw the transparent ape image
+                    targetCtx.drawImage(
+                        apeImg,
+                        normalized.x,
+                        normalized.y,
+                        normalized.width,
+                        normalized.height
+                    );
+                } else {
+                    // Baked Mode: full image with cover behavior
+                    const anchorOffset = state.apeAnchorOffsets[apeType] || { x: 0, y: 0 };
+                    bakedBounds = scaleAndPositionApeBaked(apeImg, CANVAS_SIZE, anchorOffset);
+                    
+                    apeBounds = {
+                        x: bakedBounds.x,
+                        y: bakedBounds.y,
+                        width: bakedBounds.width,
+                        height: bakedBounds.height
+                    };
+                    
+                    // Draw the baked ape image (may include background)
+                    targetCtx.drawImage(
+                        apeImg,
+                        bakedBounds.x,
+                        bakedBounds.y,
+                        bakedBounds.width,
+                        bakedBounds.height
+                    );
+                }
+            }
+            
+            // LAYER 3: Accessories (only in layered mode)
+            if (state.renderMode === 'layered' && apeBounds && apeBbox) {
+                drawAccessories(targetCtx, CANVAS_SIZE, safeArea, apeBounds, apeBbox);
+            }
+            
+            // LAYER 4: Text overlay
+            drawText(targetCtx, CANVAS_SIZE);
+            
+            // LAYER 5: Debug overlay (if enabled)
+            if (state.debug || CONFIG.DEBUG_OVERLAY) {
+                if (state.renderMode === 'layered') {
+                    drawDebugOverlay(targetCtx, CANVAS_SIZE, safeArea, apeBbox, anchor, null, 'layered');
+                } else {
+                    drawDebugOverlay(targetCtx, CANVAS_SIZE, null, null, null, bakedBounds, 'baked');
+                }
+            }
+        }
+
+        // Debounce render calls for iOS performance (preview only)
         let renderFrameId = null;
         let pendingRender = false;
 
-        function render(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, animate = true) {
-            // If this is a high-res render (export), render immediately
-            if (targetSize !== CONFIG.PREVIEW_SIZE) {
-                renderImmediate(targetCtx, targetSize, animate);
-                return;
-            }
-            
+        function render() {
             // For preview renders, debounce using requestAnimationFrame
             if (renderFrameId !== null) {
                 pendingRender = true;
@@ -1306,15 +1433,24 @@
             }
             
             renderFrameId = requestAnimationFrame(() => {
-                renderImmediate(targetCtx, targetSize, animate);
+                // Update preview canvas using same render function
+                renderFinal(canvas, ctx, state);
+                
+                // Apply subtle animation effect
+                canvas.classList.add('updating');
+                setTimeout(() => {
+                    canvas.classList.remove('updating');
+                }, 150);
+                
                 renderFrameId = null;
                 if (pendingRender) {
                     pendingRender = false;
-                    render(targetCtx, targetSize, animate);
+                    render();
                 }
             });
         }
 
+        // Legacy function for compatibility (now uses renderFinal)
         function renderImmediate(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, animate = true) {
             // Subtle animation on preview canvas (using RAF for iOS)
             if (animate && targetCtx === ctx) {
@@ -1575,6 +1711,25 @@
             // Save context state
             targetCtx.save();
             
+            // Always draw 2048x2048 canvas boundary (red)
+            targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+            targetCtx.lineWidth = Math.max(3, targetSize * 0.003);
+            targetCtx.setLineDash([]);
+            targetCtx.strokeRect(0, 0, targetSize, targetSize);
+            
+            // Draw center crosshair (yellow)
+            const centerX = targetSize / 2;
+            const centerY = targetSize / 2;
+            const crosshairSize = Math.max(30, targetSize * 0.03);
+            targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+            targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
+            targetCtx.beginPath();
+            targetCtx.moveTo(centerX - crosshairSize, centerY);
+            targetCtx.lineTo(centerX + crosshairSize, centerY);
+            targetCtx.moveTo(centerX, centerY - crosshairSize);
+            targetCtx.lineTo(centerX, centerY + crosshairSize);
+            targetCtx.stroke();
+            
             if (mode === 'layered' && safeArea && anchor) {
                 // LAYERED MODE: Draw safe area, anchor, and bbox
                 
@@ -1584,25 +1739,25 @@
                 targetCtx.setLineDash([10, 5]);
                 targetCtx.strokeRect(safeArea.x, safeArea.y, safeArea.width, safeArea.height);
                 
-                // Draw anchor point crosshair (red)
-                targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                // Draw anchor point crosshair (red, different from canvas boundary)
+                targetCtx.strokeStyle = 'rgba(255, 0, 255, 0.8)';
                 targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
                 targetCtx.setLineDash([]);
-                const crosshairSize = Math.max(20, targetSize * 0.02);
+                const anchorCrosshairSize = Math.max(20, targetSize * 0.02);
                 // Horizontal line
                 targetCtx.beginPath();
-                targetCtx.moveTo(anchor.x - crosshairSize, anchor.y);
-                targetCtx.lineTo(anchor.x + crosshairSize, anchor.y);
+                targetCtx.moveTo(anchor.x - anchorCrosshairSize, anchor.y);
+                targetCtx.lineTo(anchor.x + anchorCrosshairSize, anchor.y);
                 targetCtx.stroke();
                 // Vertical line
                 targetCtx.beginPath();
-                targetCtx.moveTo(anchor.x, anchor.y - crosshairSize);
-                targetCtx.lineTo(anchor.x, anchor.y + crosshairSize);
+                targetCtx.moveTo(anchor.x, anchor.y - anchorCrosshairSize);
+                targetCtx.lineTo(anchor.x, anchor.y + anchorCrosshairSize);
                 targetCtx.stroke();
                 // Anchor point circle
                 targetCtx.beginPath();
-                targetCtx.arc(anchor.x, anchor.y, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
-                targetCtx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                targetCtx.arc(anchor.x, anchor.y, Math.max(4, targetSize * 0.006), 0, Math.PI * 2);
+                targetCtx.fillStyle = 'rgba(255, 0, 255, 0.8)';
                 targetCtx.fill();
                 
                 // Draw detected bbox rectangle (blue)
@@ -1645,12 +1800,6 @@
                 targetCtx.setLineDash([10, 5]);
                 targetCtx.strokeRect(bakedBounds.x, bakedBounds.y, bakedBounds.width, bakedBounds.height);
                 
-                // Draw canvas bounds (red - what's actually visible)
-                targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
-                targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
-                targetCtx.setLineDash([]);
-                targetCtx.strokeRect(0, 0, targetSize, targetSize);
-                
                 // Draw crop bounds on source image (blue - what part of source is visible)
                 if (bakedBounds.cropBounds) {
                     const crop = bakedBounds.cropBounds;
@@ -1664,19 +1813,6 @@
                     targetCtx.setLineDash([5, 5]);
                     targetCtx.strokeRect(cropX, cropY, cropW, cropH);
                 }
-                
-                // Draw center crosshair
-                const centerX = targetSize / 2;
-                const centerY = targetSize / 2;
-                const crosshairSize = Math.max(20, targetSize * 0.02);
-                targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
-                targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
-                targetCtx.beginPath();
-                targetCtx.moveTo(centerX - crosshairSize, centerY);
-                targetCtx.lineTo(centerX + crosshairSize, centerY);
-                targetCtx.moveTo(centerX, centerY - crosshairSize);
-                targetCtx.lineTo(centerX, centerY + crosshairSize);
-                targetCtx.stroke();
             }
             
             // Restore context state
@@ -1812,25 +1948,18 @@
         // ============================================
 
         function downloadPNG() {
-            // Always export at exactly 2048x2048
-            const exportSize = 2048;
-            
             // Get or create render canvas
             const { canvas: exportCanvas, ctx: exportCtx } = getRenderCanvas();
             
-            // Ensure canvas is exactly 2048x2048
-            if (exportCanvas.width !== exportSize || exportCanvas.height !== exportSize) {
-                exportCanvas.width = exportSize;
-                exportCanvas.height = exportSize;
-                exportCtx.imageSmoothingEnabled = true;
-                exportCtx.imageSmoothingQuality = 'high';
-            }
-            
-            // Render to high-resolution canvas (no animation, no debug overlay for export)
+            // Disable debug for export
             const originalDebug = state.debug;
-            state.debug = false; // Disable debug for export
-            renderImmediate(exportCtx, exportSize, false);
-            state.debug = originalDebug; // Restore debug state
+            state.debug = false;
+            
+            // Use same render function as preview (always 2048x2048)
+            renderFinal(exportCanvas, exportCtx, state);
+            
+            // Restore debug state
+            state.debug = originalDebug;
             
             // Export as PNG with maximum quality
             exportCanvas.toBlob((blob) => {
@@ -1914,20 +2043,33 @@
         // Render mode toggle
         document.getElementById('renderMode').addEventListener('change', (e) => {
             state.renderMode = e.target.value;
-            // Show/hide background panel based on mode
+            // Show/hide panels based on mode
             const bgGroup = document.getElementById('backgroundImageGroup');
+            const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
             if (state.renderMode === 'baked') {
-                bgGroup.style.display = 'none';
+                bgGroup.style.display = 'block'; // Show background selection
+                bakedBgGroup.style.display = 'block'; // Show baked background toggle
             } else {
                 bgGroup.style.display = 'block';
+                bakedBgGroup.style.display = 'none';
             }
             render();
         });
         
-        // Initialize background panel visibility
+        // Baked background toggle
+        document.getElementById('useBakedBackground').addEventListener('change', (e) => {
+            state.useBakedBackground = e.target.value === 'true';
+            render();
+        });
+        
+        // Initialize panel visibility
         const bgGroup = document.getElementById('backgroundImageGroup');
+        const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
         if (state.renderMode === 'baked') {
-            bgGroup.style.display = 'none';
+            bgGroup.style.display = 'block';
+            bakedBgGroup.style.display = 'block';
+        } else {
+            bakedBgGroup.style.display = 'none';
         }
 
         // Accessories
@@ -2031,7 +2173,10 @@
             // Reset render mode selector
             document.getElementById('renderMode').value = 'layered';
             const bgGroup = document.getElementById('backgroundImageGroup');
-            bgGroup.style.display = 'block';
+            const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
+            if (bgGroup) bgGroup.style.display = 'block';
+            if (bakedBgGroup) bakedBgGroup.style.display = 'none';
+            if (useBakedBgSelect) useBakedBgSelect.value = 'false';
 
             // Reset locks
             Object.keys(state.locks).forEach(layer => {
