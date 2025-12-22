@@ -775,6 +775,32 @@
             </div>
 
             <div class="controls-section">
+                <!-- Auth Status Panel -->
+                <div class="control-panel" id="authStatusPanel" style="display: none;">
+                    <div class="control-panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                        <h3 style="margin: 0;">Account</h3>
+                    </div>
+                    <div class="control-group" style="margin-top: 1rem;">
+                        <div style="font-size: 0.9rem; color: #d0d0d0; margin-bottom: 0.75rem;">
+                            Logged in as: <span id="userEmail" style="color: #4ade80; font-weight: 600;"></span>
+                        </div>
+                        <button class="btn btn-secondary" id="logoutBtn" style="margin-bottom: 0;">Log Out</button>
+                    </div>
+                </div>
+
+                <!-- Login Prompt Panel -->
+                <div class="control-panel" id="loginPromptPanel">
+                    <div class="control-panel-header">
+                        <h3>Account</h3>
+                    </div>
+                    <div class="control-group" style="margin-top: 1rem;">
+                        <p style="font-size: 0.9rem; color: #d0d0d0; margin-bottom: 0.75rem;">
+                            Sign in to save your avatars
+                        </p>
+                        <a href="login.html" class="btn btn-primary" style="text-decoration: none; text-align: center; display: block; margin-bottom: 0;">Log In / Sign Up</a>
+                    </div>
+                </div>
+
                 <!-- Background Panel -->
                 <div class="control-panel">
                     <div class="control-panel-header">
@@ -2218,6 +2244,52 @@
         // ============================================
         // INITIALIZATION
         // ============================================
+
+        // ============================================
+        // AUTHENTICATION STATE
+        // ============================================
+        
+        (async () => {
+            try {
+                const { auth } = await import('./js/firebase.js');
+                const { onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js');
+                
+                const authStatusPanel = document.getElementById('authStatusPanel');
+                const loginPromptPanel = document.getElementById('loginPromptPanel');
+                const userEmailEl = document.getElementById('userEmail');
+                const logoutBtn = document.getElementById('logoutBtn');
+                
+                // Update UI based on auth state
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // User is logged in
+                        authStatusPanel.style.display = 'block';
+                        loginPromptPanel.style.display = 'none';
+                        userEmailEl.textContent = user.email;
+                    } else {
+                        // User is not logged in
+                        authStatusPanel.style.display = 'none';
+                        loginPromptPanel.style.display = 'block';
+                    }
+                });
+                
+                // Logout handler
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async () => {
+                        try {
+                            await signOut(auth);
+                            // UI will update automatically via onAuthStateChanged
+                        } catch (error) {
+                            console.error('Error signing out:', error);
+                            alert('Error signing out. Please try again.');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+                // Continue without auth if there's an error
+            }
+        })();
 
         // Preload all images and then render
         preloadAllImages();
