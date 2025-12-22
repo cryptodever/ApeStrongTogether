@@ -918,59 +918,145 @@
             PREVIEW_SIZE: 512,      // Display canvas size
             EXPORT_SIZE: 2048,      // High-res export size (always 2048x2048)
             
-            // Safe Area System (percentage-based, relative to canvas)
-            SAFE_AREA_SIZE: 0.82,   // Safe area occupies 82% of canvas height (centered square)
-            EYE_CENTER_OFFSET: -0.05, // Eyes positioned 5% above vertical center (negative = up)
+            // Fixed Safe Area (for 2048x2048 canvas)
+            SAFE_W: 0.82 * 2048,    // Safe area width: 1679.36
+            SAFE_H: 0.82 * 2048,    // Safe area height: 1679.36
+            SAFE_X: (2048 - (0.82 * 2048)) / 2,  // Safe area X: 184.32
+            SAFE_Y: (2048 - (0.82 * 2048)) / 2,  // Safe area Y: 184.32
             
-            // Debug mode
-            DEBUG_OVERLAY: false    // Toggle to show safe area boundaries
+            // Anchor point (bbox center target)
+            ANCHOR_X: 1024,         // Center X
+            ANCHOR_Y: 900,          // Slightly above center for avatar framing
+            
+            // Alpha threshold for bbox detection
+            ALPHA_THRESHOLD: 10,    // Pixels with alpha > 10 are considered non-transparent
         };
         
-        // Safe Area Calculator
+        // Bounding box cache
+        const bboxCache = {};
+        
+        // Safe Area Calculator (scales for preview/export)
         function getSafeArea(canvasSize) {
-            const safeAreaSize = canvasSize * CONFIG.SAFE_AREA_SIZE;
-            const safeAreaX = (canvasSize - safeAreaSize) / 2;  // Centered horizontally
-            const safeAreaY = (canvasSize - safeAreaSize) / 2;  // Centered vertically
-            const safeAreaCenterX = canvasSize / 2;
-            const safeAreaCenterY = canvasSize / 2 + (canvasSize * CONFIG.EYE_CENTER_OFFSET);
-            
+            const scale = canvasSize / CONFIG.EXPORT_SIZE;
             return {
-                x: safeAreaX,
-                y: safeAreaY,
-                width: safeAreaSize,
-                height: safeAreaSize,
-                centerX: safeAreaCenterX,
-                centerY: safeAreaCenterY,
-                size: safeAreaSize
+                x: CONFIG.SAFE_X * scale,
+                y: CONFIG.SAFE_Y * scale,
+                width: CONFIG.SAFE_W * scale,
+                height: CONFIG.SAFE_H * scale
             };
         }
         
-        // Scale image to fit within safe area while preserving aspect ratio (contain behavior)
-        function scaleImageToSafeArea(img, safeArea) {
-            const imgAspect = img.width / img.height;
-            const safeAspect = safeArea.width / safeArea.height;
-            
-            let drawWidth, drawHeight;
-            
-            if (imgAspect > safeAspect) {
-                // Image is wider - fit to width
-                drawWidth = safeArea.width;
-                drawHeight = safeArea.width / imgAspect;
-            } else {
-                // Image is taller - fit to height
-                drawHeight = safeArea.height;
-                drawWidth = safeArea.height * imgAspect;
+        // Get anchor point (scales for preview/export)
+        function getAnchor(canvasSize) {
+            const scale = canvasSize / CONFIG.EXPORT_SIZE;
+            return {
+                x: CONFIG.ANCHOR_X * scale,
+                y: CONFIG.ANCHOR_Y * scale
+            };
+        }
+        
+        // Compute bounding box of non-transparent pixels
+        function computeBoundingBox(img) {
+            // Check cache first
+            if (bboxCache[img.src]) {
+                return bboxCache[img.src];
             }
             
-            // Center within safe area
-            const drawX = safeArea.centerX - (drawWidth / 2);
-            const drawY = safeArea.centerY - (drawHeight / 2);
+            // Create temporary canvas to scan pixels
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(img, 0, 0);
+            
+            // Get image data
+            const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+            const data = imageData.data;
+            
+            // Find bounding box
+            let minX = img.width;
+            let minY = img.height;
+            let maxX = 0;
+            let maxY = 0;
+            
+            for (let y = 0; y < img.height; y++) {
+                for (let x = 0; x < img.width; x++) {
+                    const alpha = data[(y * img.width + x) * 4 + 3];
+                    if (alpha > CONFIG.ALPHA_THRESHOLD) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+            
+            // If no non-transparent pixels found, use full image
+            if (minX > maxX || minY > maxY) {
+                minX = 0;
+                minY = 0;
+                maxX = img.width;
+                maxY = img.height;
+            }
+            
+            const bbox = {
+                x: minX,
+                y: minY,
+                width: maxX - minX,
+                height: maxY - minY,
+                centerX: (minX + maxX) / 2,
+                centerY: (minY + maxY) / 2
+            };
+            
+            // Cache the result
+            bboxCache[img.src] = bbox;
+            
+            return bbox;
+        }
+        
+        // Scale and position ape using bbox normalization
+        function scaleAndPositionApe(img, safeArea, anchor, canvasSize) {
+            // Compute bounding box
+            const bbox = computeBoundingBox(img);
+            
+            // Scale factor to fit bbox within safe area (contain behavior)
+            const scale = Math.min(safeArea.width / bbox.width, safeArea.height / bbox.height);
+            
+            // Scaled bbox dimensions
+            const scaledBboxW = bbox.width * scale;
+            const scaledBboxH = bbox.height * scale;
+            
+            // Position so bbox center aligns to anchor point
+            const drawX = anchor.x - (bbox.centerX * scale);
+            const drawY = anchor.y - (bbox.centerY * scale);
+            
+            // Full image scale
+            const fullScale = scale;
+            const drawWidth = img.width * fullScale;
+            const drawHeight = img.height * fullScale;
+            
+            // Calculate the offset from image top-left to bbox center
+            const bboxOffsetX = bbox.centerX;
+            const bboxOffsetY = bbox.centerY;
+            
+            // Final draw position (anchor - scaled bbox center offset)
+            const finalX = anchor.x - (bboxOffsetX * scale);
+            const finalY = anchor.y - (bboxOffsetY * scale);
             
             return {
-                x: drawX,
-                y: drawY,
+                x: finalX,
+                y: finalY,
                 width: drawWidth,
-                height: drawHeight
+                height: drawHeight,
+                bbox: {
+                    x: anchor.x - scaledBboxW / 2,
+                    y: anchor.y - scaledBboxH / 2,
+                    width: scaledBboxW,
+                    height: scaledBboxH,
+                    centerX: anchor.x,
+                    centerY: anchor.y
+                },
+                originalBbox: bbox
             };
         }
 
@@ -1060,31 +1146,27 @@
                 // iOS optimization: decode image asynchronously
                 img.onload = () => {
                     // Use decode() API for better iOS performance if available
-                    if (img.decode) {
-                        img.decode().then(() => {
-                            if (src.includes('pfp_bg')) {
-                                imageCache.backgrounds[src] = img;
-                            } else {
-                                imageCache.apes[src] = img;
-                            }
-                            resolve(img);
-                        }).catch(() => {
-                            // Fallback if decode fails
-                            if (src.includes('pfp_bg')) {
-                                imageCache.backgrounds[src] = img;
-                            } else {
-                                imageCache.apes[src] = img;
-                            }
-                            resolve(img);
-                        });
-                    } else {
-                        // Fallback for browsers without decode() support
+                    const processImage = () => {
                         if (src.includes('pfp_bg')) {
                             imageCache.backgrounds[src] = img;
                         } else {
                             imageCache.apes[src] = img;
+                            // Pre-compute and cache bbox for ape images
+                            computeBoundingBox(img);
                         }
                         resolve(img);
+                    };
+                    
+                    if (img.decode) {
+                        img.decode().then(() => {
+                            processImage();
+                        }).catch(() => {
+                            // Fallback if decode fails
+                            processImage();
+                        });
+                    } else {
+                        // Fallback for browsers without decode() support
+                        processImage();
                     }
                 };
                 img.onerror = () => {
@@ -1217,26 +1299,39 @@
                 targetCtx.fillRect(0, 0, targetSize, targetSize);
             }
             
-            // Layer 2: Ape (scaled to fit safe area, preserving aspect ratio)
+            // Layer 2: Ape (normalized using bbox, anchored to anchor point)
             const apeType = state.ape.type;
             const apePath = getApeImagePath(apeType);
             const apeImg = imageCache.apes[apePath];
             let apeBounds = null;
+            let apeBbox = null;
             
             if (apeImg) {
-                apeBounds = scaleImageToSafeArea(apeImg, safeArea);
+                const anchor = getAnchor(targetSize);
+                const normalized = scaleAndPositionApe(apeImg, safeArea, anchor, targetSize);
+                
+                apeBounds = {
+                    x: normalized.x,
+                    y: normalized.y,
+                    width: normalized.width,
+                    height: normalized.height
+                };
+                
+                apeBbox = normalized.bbox;
+                
+                // Draw the ape image
                 targetCtx.drawImage(
                     apeImg,
-                    apeBounds.x,
-                    apeBounds.y,
-                    apeBounds.width,
-                    apeBounds.height
+                    normalized.x,
+                    normalized.y,
+                    normalized.width,
+                    normalized.height
                 );
             }
             
-            // Layer 3: Accessories (anchored to ape bounds)
-            if (apeBounds) {
-                drawAccessories(targetCtx, targetSize, safeArea, apeBounds);
+            // Layer 3: Accessories (anchored to bbox)
+            if (apeBounds && apeBbox) {
+                drawAccessories(targetCtx, targetSize, safeArea, apeBounds, apeBbox);
             }
             
             // Layer 4: Text
@@ -1244,80 +1339,77 @@
             
             // Debug overlay (if enabled)
             if (state.debug || CONFIG.DEBUG_OVERLAY) {
-                drawDebugOverlay(targetCtx, targetSize, safeArea, apeBounds);
+                drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, getAnchor(targetSize));
             }
         }
 
-        function drawAccessories(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, safeArea = null, apeBounds = null) {
-            if (!apeBounds || !safeArea) {
-                // Fallback to old system if bounds not provided
-                const scale = targetSize / CONFIG.PREVIEW_SIZE;
-                const centerX = targetSize / 2;
-                const centerY = targetSize / 2;
-                const radius = 180 * scale;
+        function drawAccessories(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, safeArea = null, apeBounds = null, apeBbox = null) {
+            if (!apeBounds || !safeArea || !apeBbox) {
                 return;
             }
             
-            // Use relative positioning based on ape bounds and safe area
-            const apeCenterX = apeBounds.x + apeBounds.width / 2;
-            const apeCenterY = apeBounds.y + apeBounds.height / 2;
-            const apeTop = apeBounds.y;
-            const apeHeight = apeBounds.height;
-            const apeWidth = apeBounds.width;
+            // Use bbox-based positioning (no hard-coded offsets)
+            const bboxTop = apeBbox.y;
+            const bboxBottom = apeBbox.y + apeBbox.height;
+            const bboxCenterX = apeBbox.centerX;
+            const bboxHeight = apeBbox.height;
+            const bboxWidth = apeBbox.width;
             
-            // Calculate accessory positions relative to ape
-            // Head is approximately in the top 40% of the ape image
-            const headTop = apeTop;
-            const headBottom = apeTop + (apeHeight * 0.4);
-            const headCenterY = headTop + (headBottom - headTop) / 2;
-            const headRadius = (headBottom - headTop) / 2;
+            // Accessory anchor points (relative to bbox, as specified)
+            // Hats anchor to top of bbox
+            const hatY = bboxTop;
             
-            // Neck/jewelry area is approximately at 60% down from top
-            const neckY = apeTop + (apeHeight * 0.6);
-            const neckRadius = apeWidth * 0.25; // 25% of ape width for neck radius
+            // Eye-line estimated as bboxY + 0.38 * bboxH
+            const eyeY = apeBbox.y + (bboxHeight * 0.38);
             
-            // Eye level is approximately at 25% from top of head
-            const eyeY = headTop + (headBottom - headTop) * 0.25;
-            const eyeSpacing = apeWidth * 0.15; // 15% of ape width between eyes
+            // Mask/chin area estimated as bboxY + 0.52 * bboxH
+            const maskY = apeBbox.y + (bboxHeight * 0.52);
+            
+            // Neck/jewelry area (lower on bbox)
+            const neckY = apeBbox.y + (bboxHeight * 0.65);
+            const neckRadius = bboxWidth * 0.25; // 25% of bbox width
+            
+            // Eye spacing (15% of bbox width between eyes)
+            const eyeSpacing = bboxWidth * 0.15;
 
-            // Draw hat (positioned at top of head)
+            // Draw hat (anchored to top of bbox)
             if (state.accessories.hat === 'cap') {
-                const hatWidth = apeWidth * 0.9; // 90% of ape width
-                const hatHeight = headRadius * 0.3; // 30% of head radius
-                const hatTop = headTop - hatHeight * 0.5;
+                const hatWidth = bboxWidth * 0.9;
+                const hatHeight = bboxHeight * 0.08;
+                const hatTop = hatY - hatHeight * 0.5;
                 
                 targetCtx.fillStyle = '#1a1a1a';
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX, headTop, hatWidth * 0.5, Math.PI, 0);
+                targetCtx.arc(bboxCenterX, hatY, hatWidth * 0.5, Math.PI, 0);
                 targetCtx.fill();
-                targetCtx.fillRect(apeCenterX - hatWidth * 0.5, headTop, hatWidth, hatHeight);
+                targetCtx.fillRect(bboxCenterX - hatWidth * 0.5, hatY, hatWidth, hatHeight);
                 // Brim
                 targetCtx.fillStyle = '#2a2a2a';
                 const brimWidth = hatWidth * 1.1;
                 const brimHeight = hatHeight * 0.3;
-                targetCtx.fillRect(apeCenterX - brimWidth * 0.5, headTop + hatHeight, brimWidth, brimHeight);
+                targetCtx.fillRect(bboxCenterX - brimWidth * 0.5, hatY + hatHeight, brimWidth, brimHeight);
             } else if (state.accessories.hat === 'beanie') {
-                const beanieWidth = apeWidth * 0.85;
-                const beanieHeight = headRadius * 0.5;
-                const beanieTop = headTop - beanieHeight * 0.3;
+                const beanieWidth = bboxWidth * 0.85;
+                const beanieHeight = bboxHeight * 0.12;
+                const beanieTop = hatY - beanieHeight * 0.3;
                 
                 targetCtx.fillStyle = '#ff0000';
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX, headTop, beanieWidth * 0.5, Math.PI, 0);
+                targetCtx.arc(bboxCenterX, hatY, beanieWidth * 0.5, Math.PI, 0);
                 targetCtx.fill();
-                targetCtx.fillRect(apeCenterX - beanieWidth * 0.5, beanieTop, beanieWidth, beanieHeight);
+                targetCtx.fillRect(bboxCenterX - beanieWidth * 0.5, beanieTop, beanieWidth, beanieHeight);
             } else if (state.accessories.hat === 'crown') {
-                const crownWidth = apeWidth * 0.6;
-                const crownHeight = headRadius * 0.4;
-                const crownTop = headTop - crownHeight;
+                const crownWidth = bboxWidth * 0.6;
+                const crownHeight = bboxHeight * 0.1;
+                const crownTop = hatY - crownHeight;
                 
                 targetCtx.fillStyle = '#ffd700';
-                targetCtx.fillRect(apeCenterX - crownWidth * 0.5, crownTop, crownWidth, crownHeight);
+                targetCtx.fillRect(bboxCenterX - crownWidth * 0.5, crownTop, crownWidth, crownHeight);
                 // Crown points
                 const pointCount = 5;
                 const pointWidth = crownWidth / (pointCount - 1);
                 for (let i = 0; i < pointCount; i++) {
-                    const x = apeCenterX - crownWidth * 0.5 + pointWidth * i;
+                    const x = bboxCenterX - crownWidth * 0.5 + pointWidth * i;
                     targetCtx.beginPath();
                     targetCtx.moveTo(x, crownTop);
                     targetCtx.lineTo(x + pointWidth * 0.3, crownTop - crownHeight * 0.5);
@@ -1326,99 +1418,129 @@
                 }
             }
 
-            // Draw glasses (positioned at eye level, if not wearing hat)
+            // Draw glasses (anchored to eye-line: bboxY + 0.38 * bboxH)
             if (state.accessories.glasses === 'sunglasses' && state.accessories.hat === 'none') {
-                const lensWidth = apeWidth * 0.15;
-                const lensHeight = headRadius * 0.2;
-                const lensSpacing = apeWidth * 0.1;
+                const lensWidth = bboxWidth * 0.15;
+                const lensHeight = bboxHeight * 0.08;
+                const lensSpacing = bboxWidth * 0.1;
                 
                 targetCtx.fillStyle = '#000000';
                 // Left lens
-                targetCtx.fillRect(apeCenterX - lensSpacing - lensWidth, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
+                targetCtx.fillRect(bboxCenterX - lensSpacing - lensWidth, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
                 // Right lens
-                targetCtx.fillRect(apeCenterX + lensSpacing, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
+                targetCtx.fillRect(bboxCenterX + lensSpacing, eyeY - lensHeight * 0.5, lensWidth, lensHeight);
                 // Bridge
-                targetCtx.fillRect(apeCenterX - lensSpacing * 0.5, eyeY - lensHeight * 0.3, lensSpacing, lensHeight * 0.25);
+                targetCtx.fillRect(bboxCenterX - lensSpacing * 0.5, eyeY - lensHeight * 0.3, lensSpacing, lensHeight * 0.25);
             } else if (state.accessories.glasses === 'glasses' && state.accessories.hat === 'none') {
-                const frameRadius = headRadius * 0.2;
-                const frameSpacing = apeWidth * 0.12;
+                const frameRadius = bboxHeight * 0.08;
+                const frameSpacing = bboxWidth * 0.12;
                 
                 targetCtx.strokeStyle = '#333333';
-                targetCtx.lineWidth = Math.max(2, apeWidth * 0.008);
+                targetCtx.lineWidth = Math.max(2, bboxWidth * 0.008);
                 // Left frame
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX - frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
+                targetCtx.arc(bboxCenterX - frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
                 targetCtx.stroke();
                 // Right frame
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX + frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
+                targetCtx.arc(bboxCenterX + frameSpacing, eyeY, frameRadius, 0, Math.PI * 2);
                 targetCtx.stroke();
                 // Bridge
                 targetCtx.beginPath();
-                targetCtx.moveTo(apeCenterX - frameSpacing * 0.5, eyeY);
-                targetCtx.lineTo(apeCenterX + frameSpacing * 0.5, eyeY);
+                targetCtx.moveTo(bboxCenterX - frameSpacing * 0.5, eyeY);
+                targetCtx.lineTo(bboxCenterX + frameSpacing * 0.5, eyeY);
                 targetCtx.stroke();
             }
 
             // Draw jewelry (positioned at neck level)
             if (state.accessories.jewelry === 'chain') {
                 targetCtx.strokeStyle = '#ffd700';
-                targetCtx.lineWidth = Math.max(4, apeWidth * 0.015);
+                targetCtx.lineWidth = Math.max(4, bboxWidth * 0.015);
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX, neckY, neckRadius, 0.3, Math.PI - 0.3);
+                targetCtx.arc(bboxCenterX, neckY, neckRadius, 0.3, Math.PI - 0.3);
                 targetCtx.stroke();
                 // Chain links
                 const linkCount = 8;
                 for (let i = 0; i < linkCount; i++) {
                     const angle = 0.3 + (Math.PI - 0.6) * (i / (linkCount - 1));
-                    const x = apeCenterX + Math.cos(angle) * neckRadius;
+                    const x = bboxCenterX + Math.cos(angle) * neckRadius;
                     const y = neckY + Math.sin(angle) * neckRadius;
                     targetCtx.fillStyle = '#ffd700';
                     targetCtx.beginPath();
-                    targetCtx.arc(x, y, Math.max(3, apeWidth * 0.012), 0, Math.PI * 2);
+                    targetCtx.arc(x, y, Math.max(3, bboxWidth * 0.012), 0, Math.PI * 2);
                     targetCtx.fill();
                 }
             } else if (state.accessories.jewelry === 'necklace') {
                 targetCtx.strokeStyle = '#c0c0c0';
-                targetCtx.lineWidth = Math.max(3, apeWidth * 0.012);
+                targetCtx.lineWidth = Math.max(3, bboxWidth * 0.012);
                 targetCtx.beginPath();
-                targetCtx.arc(apeCenterX, neckY, neckRadius * 0.85, 0.4, Math.PI - 0.4);
+                targetCtx.arc(bboxCenterX, neckY, neckRadius * 0.85, 0.4, Math.PI - 0.4);
                 targetCtx.stroke();
             }
         }
         
-        // Debug overlay to visualize safe area and ape bounds
-        function drawDebugOverlay(targetCtx, targetSize, safeArea, apeBounds) {
+        // Debug overlay to visualize safe area, anchor point, and detected bbox
+        function drawDebugOverlay(targetCtx, targetSize, safeArea, apeBbox, anchor) {
             // Save context state
             targetCtx.save();
             
-            // Draw safe area boundary
-            targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+            // Draw safe area rectangle (green)
+            targetCtx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
             targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
             targetCtx.setLineDash([10, 5]);
             targetCtx.strokeRect(safeArea.x, safeArea.y, safeArea.width, safeArea.height);
             
-            // Draw safe area center (eye position target)
-            targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-            targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
+            // Draw anchor point crosshair (red)
+            targetCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
             targetCtx.setLineDash([]);
-            // Horizontal line (eye level)
+            const crosshairSize = Math.max(20, targetSize * 0.02);
+            // Horizontal line
             targetCtx.beginPath();
-            targetCtx.moveTo(safeArea.x, safeArea.centerY);
-            targetCtx.lineTo(safeArea.x + safeArea.width, safeArea.centerY);
+            targetCtx.moveTo(anchor.x - crosshairSize, anchor.y);
+            targetCtx.lineTo(anchor.x + crosshairSize, anchor.y);
             targetCtx.stroke();
-            // Vertical center line
+            // Vertical line
             targetCtx.beginPath();
-            targetCtx.moveTo(safeArea.centerX, safeArea.y);
-            targetCtx.lineTo(safeArea.centerX, safeArea.y + safeArea.height);
+            targetCtx.moveTo(anchor.x, anchor.y - crosshairSize);
+            targetCtx.lineTo(anchor.x, anchor.y + crosshairSize);
             targetCtx.stroke();
+            // Anchor point circle
+            targetCtx.beginPath();
+            targetCtx.arc(anchor.x, anchor.y, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
+            targetCtx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+            targetCtx.fill();
             
-            // Draw ape bounds if available
-            if (apeBounds) {
-                targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+            // Draw detected bbox rectangle (blue)
+            if (apeBbox) {
+                targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
                 targetCtx.lineWidth = Math.max(2, targetSize * 0.002);
                 targetCtx.setLineDash([5, 5]);
-                targetCtx.strokeRect(apeBounds.x, apeBounds.y, apeBounds.width, apeBounds.height);
+                targetCtx.strokeRect(apeBbox.x, apeBbox.y, apeBbox.width, apeBbox.height);
+                
+                // Draw bbox center point
+                targetCtx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                targetCtx.beginPath();
+                targetCtx.arc(apeBbox.centerX, apeBbox.centerY, Math.max(3, targetSize * 0.005), 0, Math.PI * 2);
+                targetCtx.fill();
+                
+                // Draw eye-line (bboxY + 0.38 * bboxH)
+                const eyeY = apeBbox.y + (apeBbox.height * 0.38);
+                targetCtx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+                targetCtx.lineWidth = Math.max(1, targetSize * 0.001);
+                targetCtx.setLineDash([3, 3]);
+                targetCtx.beginPath();
+                targetCtx.moveTo(apeBbox.x, eyeY);
+                targetCtx.lineTo(apeBbox.x + apeBbox.width, eyeY);
+                targetCtx.stroke();
+                
+                // Draw mask line (bboxY + 0.52 * bboxH)
+                const maskY = apeBbox.y + (apeBbox.height * 0.52);
+                targetCtx.strokeStyle = 'rgba(255, 165, 0, 0.5)';
+                targetCtx.beginPath();
+                targetCtx.moveTo(apeBbox.x, maskY);
+                targetCtx.lineTo(apeBbox.x + apeBbox.width, maskY);
+                targetCtx.stroke();
             }
             
             // Restore context state
