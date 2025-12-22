@@ -19,11 +19,7 @@
         - pfp_bg1.png through pfp_bg8.png (background images, 1024×1024 recommended)
     
     /pfp_generator_apes/
-        - pfp_ape1_happy.png, pfp_ape1_sad.png, pfp_ape1_serious.png
-        - pfp_ape2_happy.png, pfp_ape2_sad.png, pfp_ape2_serious.png
-        - pfp_ape3_happy.png, pfp_ape3_sad.png, pfp_ape3_serious.png
-        - pfp_ape4_happy.png, pfp_ape4_sad.png, pfp_ape4_serious.png
-        - (Note: pvp_ape3_sad.png is a legacy typo, still supported)
+        - ape_pfp_1.png through ape_pfp_7.png (7 different ape variations)
     
     Image Requirements:
     - All images should be PNG with transparency where needed
@@ -567,8 +563,13 @@
 
         .trait-options {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
             gap: 0.75rem;
+        }
+
+        /* Ensure ape options display well with 7 items */
+        #apeOptions.trait-options {
+            grid-template-columns: repeat(4, 1fr);
         }
 
         .trait-option {
@@ -682,6 +683,11 @@
             }
 
             .background-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* Adjust ape options grid for mobile */
+            #apeOptions.trait-options {
                 grid-template-columns: repeat(3, 1fr);
             }
 
@@ -806,14 +812,9 @@
                             <div class="trait-option" data-ape="ape2">Ape 2</div>
                             <div class="trait-option" data-ape="ape3">Ape 3</div>
                             <div class="trait-option" data-ape="ape4">Ape 4</div>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Expression</label>
-                        <div class="trait-options" id="expressions">
-                            <div class="trait-option selected" data-expression="happy">Happy</div>
-                            <div class="trait-option" data-expression="sad">Sad</div>
-                            <div class="trait-option" data-expression="serious">Serious</div>
+                            <div class="trait-option" data-ape="ape5">Ape 5</div>
+                            <div class="trait-option" data-ape="ape6">Ape 6</div>
+                            <div class="trait-option" data-ape="ape7">Ape 7</div>
                         </div>
                     </div>
                 </div>
@@ -931,8 +932,7 @@
                 image: 'pfp_generator_images/pfp_bg1.png'
             },
             ape: {
-                type: 'ape1',
-                expression: 'happy'
+                type: 'ape1'
             },
             accessories: {
                 hat: 'none',
@@ -1040,13 +1040,10 @@
             });
         }
 
-        function getApeImagePath(apeType, expression) {
-            // Handle typo in filename (pvp_ape3_sad.png)
-            let filename = `pfp_ape${apeType.slice(-1)}_${expression}.png`;
-            if (apeType === 'ape3' && expression === 'sad') {
-                filename = 'pvp_ape3_sad.png';
-            }
-            return `pfp_generator_apes/${filename}`;
+        function getApeImagePath(apeType) {
+            // New naming convention: ape_pfp_1.png, ape_pfp_2.png, etc.
+            const apeNumber = apeType.slice(-1); // Extract number from 'ape1', 'ape2', etc.
+            return `pfp_generator_apes/ape_pfp_${apeNumber}.png`;
         }
 
         async function preloadAllImages() {
@@ -1060,14 +1057,11 @@
                 imagesToLoad.push(loadImage(`pfp_generator_images/pfp_bg${i}.png`));
             }
             
-            // Preload all ape combinations
-            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4'];
-            const expressions = ['happy', 'sad', 'serious'];
+            // Preload all ape images (7 apes)
+            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4', 'ape5', 'ape6', 'ape7'];
             for (const apeType of apeTypes) {
-                for (const expression of expressions) {
-                    const path = getApeImagePath(apeType, expression);
-                    imagesToLoad.push(loadImage(path));
-                }
+                const path = getApeImagePath(apeType);
+                imagesToLoad.push(loadImage(path));
             }
             
             try {
@@ -1147,8 +1141,7 @@
             
             // Layer 2: Ape
             const apeType = state.ape.type;
-            const expression = state.ape.expression;
-            const apePath = getApeImagePath(apeType, expression);
+            const apePath = getApeImagePath(apeType);
             const apeImg = imageCache.apes[apePath];
             if (apeImg) {
                 const apeScale = CONFIG.APE_SCALE;
@@ -1303,13 +1296,8 @@
         }
 
         function getRandomApeType() {
-            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4'];
+            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4', 'ape5', 'ape6', 'ape7'];
             return apeTypes[Math.floor(Math.random() * apeTypes.length)];
-        }
-
-        function getRandomExpression() {
-            const expressions = ['happy', 'sad', 'serious'];
-            return expressions[Math.floor(Math.random() * expressions.length)];
         }
 
         function getRandomAccessory(options) {
@@ -1328,15 +1316,10 @@
                 });
             } else if (layer === 'ape') {
                 const newApeType = getRandomApeType();
-                const newExpression = getRandomExpression();
                 state.ape.type = newApeType;
-                state.ape.expression = newExpression;
                 
                 document.querySelectorAll('#apeOptions .trait-option').forEach(opt => {
                     opt.classList.toggle('selected', opt.dataset.ape === newApeType);
-                });
-                document.querySelectorAll('#expressions .trait-option').forEach(opt => {
-                    opt.classList.toggle('selected', opt.dataset.expression === newExpression);
                 });
             } else if (layer === 'accessories') {
                 state.accessories.hat = getRandomAccessory(['cap', 'beanie', 'crown']);
@@ -1480,16 +1463,6 @@
             });
         });
 
-        // Expression options
-        document.querySelectorAll('#expressions .trait-option').forEach(option => {
-            addIOSFriendlyClickListener(option, () => {
-                if (state.locks.ape) return;
-                document.querySelectorAll('#expressions .trait-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                state.ape.expression = option.dataset.expression;
-                render();
-            });
-        });
 
         // Accessories
         document.getElementById('hatSelect').addEventListener('change', (e) => {
@@ -1565,7 +1538,6 @@
             // Reset state
             state.background.image = 'pfp_generator_images/pfp_bg1.png';
             state.ape.type = 'ape1';
-            state.ape.expression = 'happy';
             state.accessories.hat = 'none';
             state.accessories.glasses = 'none';
             state.accessories.jewelry = 'none';
@@ -1590,9 +1562,6 @@
                 opt.classList.toggle('selected', i === 0);
             });
             document.querySelectorAll('#apeOptions .trait-option').forEach((opt, i) => {
-                opt.classList.toggle('selected', i === 0);
-            });
-            document.querySelectorAll('#expressions .trait-option').forEach((opt, i) => {
                 opt.classList.toggle('selected', i === 0);
             });
             document.getElementById('hatSelect').value = 'none';
