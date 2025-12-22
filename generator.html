@@ -4,6 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Pic Generator 🦍 | Apes Together Strong</title>
+    <!--
+    ============================================
+    TRAIT FOLDER STRUCTURE DOCUMENTATION
+    ============================================
+    
+    All trait images should be organized as follows:
+    
+    /pfp_generator_images/
+        - pfp_bg1.png through pfp_bg8.png (background images, 1024×1024 recommended)
+    
+    /pfp_generator_apes/
+        - pfp_ape1_happy.png, pfp_ape1_sad.png, pfp_ape1_serious.png
+        - pfp_ape2_happy.png, pfp_ape2_sad.png, pfp_ape2_serious.png
+        - pfp_ape3_happy.png, pfp_ape3_sad.png, pfp_ape3_serious.png
+        - pfp_ape4_happy.png, pfp_ape4_sad.png, pfp_ape4_serious.png
+        - (Note: pvp_ape3_sad.png is a legacy typo, still supported)
+    
+    Image Requirements:
+    - All images should be PNG with transparency where needed
+    - Recommended size: 1024×1024 or larger for best quality
+    - Export resolution: 2048×2048 (4x the display preview)
+    - Ape images should have transparent backgrounds
+    - Background images should fill the entire canvas
+    
+    Future layered trait support:
+    /traits/backgrounds/ - Background layers
+    /traits/bodies/      - Base ape bodies
+    /traits/eyes/        - Eye variations
+    /traits/mouths/      - Mouth/expression variations
+    /traits/accessories/ - Hats, glasses, jewelry
+    /traits/effects/     - Overlay effects
+    ============================================
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -270,12 +303,74 @@
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             background: #2a2a2a;
+            transition: transform 0.2s ease, opacity 0.15s ease;
+        }
+
+        #profileCanvas.updating {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
 
         .action-buttons {
             display: flex;
             gap: 1rem;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 1rem;
+            border: 3px solid rgba(74, 222, 128, 0.3);
+            border-top-color: #4ade80;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .lock-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #d0d0d0;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+
+        .lock-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .lock-toggle.locked {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .control-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
         }
 
         .btn {
@@ -334,7 +429,7 @@
             font-size: 1.2rem;
             font-weight: 600;
             color: #ffffff;
-            margin-bottom: 1rem;
+            margin: 0;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -606,15 +701,25 @@
                     <canvas id="profileCanvas" width="512" height="512"></canvas>
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" id="downloadBtn">Download PNG</button>
+                    <button class="btn btn-primary" id="downloadBtn">Download PNG (2048×2048)</button>
+                    <button class="btn btn-secondary" id="randomizeBtn">🎲 Randomize</button>
                     <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                </div>
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Loading assets...</p>
                 </div>
             </div>
 
             <div class="controls-section">
                 <!-- Background Panel -->
                 <div class="control-panel">
-                    <h3>Background</h3>
+                    <div class="control-panel-header">
+                        <h3>Background</h3>
+                        <button class="lock-toggle" data-layer="background" title="Lock/Unlock layer">
+                            <span class="lock-icon">🔓</span>
+                        </button>
+                    </div>
                     <div class="control-group">
                         <label class="control-label">Background Image</label>
                         <div class="background-options" id="backgroundOptions">
@@ -632,7 +737,12 @@
 
                 <!-- Ape Traits Panel -->
                 <div class="control-panel">
-                    <h3>Ape Traits</h3>
+                    <div class="control-panel-header">
+                        <h3>Ape Traits</h3>
+                        <button class="lock-toggle" data-layer="ape" title="Lock/Unlock layer">
+                            <span class="lock-icon">🔓</span>
+                        </button>
+                    </div>
                     <div class="control-group">
                         <label class="control-label">Choose Ape</label>
                         <div class="trait-options" id="apeOptions">
@@ -654,7 +764,12 @@
 
                 <!-- Accessories Panel -->
                 <div class="control-panel">
-                    <h3>Accessories</h3>
+                    <div class="control-panel-header">
+                        <h3>Accessories</h3>
+                        <button class="lock-toggle" data-layer="accessories" title="Lock/Unlock layer">
+                            <span class="lock-icon">🔓</span>
+                        </button>
+                    </div>
                     <div class="control-group">
                         <label class="control-label">Hat</label>
                         <select class="control-select" id="hatSelect">
@@ -684,7 +799,12 @@
 
                 <!-- Text Overlay Panel -->
                 <div class="control-panel">
-                    <h3>Text Overlay</h3>
+                    <div class="control-panel-header">
+                        <h3>Text Overlay</h3>
+                        <button class="lock-toggle" data-layer="text" title="Lock/Unlock layer">
+                            <span class="lock-icon">🔓</span>
+                        </button>
+                    </div>
                     <div class="control-group">
                         <label class="control-label">Text</label>
                         <input type="text" class="control-input" id="textInput" placeholder="Enter text..." maxlength="20">
@@ -728,8 +848,29 @@
     </div>
 
     <script>
-        // State management
+        // ============================================
+        // PROFILE PICTURE GENERATOR - PREMIUM VERSION
+        // ============================================
+        // High-resolution export: 2048×2048 PNG
+        // Preloaded assets, layer locking, randomization
+        // ============================================
+
+        // Configuration
+        const CONFIG = {
+            PREVIEW_SIZE: 512,      // Display canvas size
+            EXPORT_SIZE: 2048,      // High-res export size
+            APE_SCALE: 1.35,        // Ape size multiplier
+            APE_Y_OFFSET: 0.15      // Ape vertical position (15% from top)
+        };
+
+        // State management with layer locking
         const state = {
+            locks: {
+                background: false,
+                ape: false,
+                accessories: false,
+                text: false
+            },
             background: {
                 image: 'pfp_generator_images/pfp_bg1.png'
             },
@@ -751,389 +892,373 @@
             }
         };
 
+        // Image cache
+        const imageCache = {
+            backgrounds: {},
+            apes: {}
+        };
+
+        // Canvas setup
         const canvas = document.getElementById('profileCanvas');
         const ctx = canvas.getContext('2d');
-
-        // Initialize canvas
-        function renderCanvas() {
-            const size = 512;
-            ctx.clearRect(0, 0, size, size);
-
-            // Layer 1: Draw background (bottom layer)
-            drawBackground();
-
-            // Layer 2: Draw ape (middle layer, on top of background)
-            drawApe();
-
-            // Layer 3: Draw accessories (on top of ape)
-            drawAccessories();
-
-            // Layer 4: Draw text (top layer)
-            drawText();
-        }
         
-        // Helper function to redraw all layers in correct order
-        function redrawAllLayers() {
-            const size = 512;
-            ctx.clearRect(0, 0, size, size);
-            
-            // Layer 1: Background
-            const bg = state.background.image;
-            if (backgroundImages[bg]) {
-                ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
-            } else {
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(0, 0, size, size);
-            }
-            
-            // Layer 2: Ape (enlarged and positioned)
-            const apeType = state.ape.type;
-            const expression = state.ape.expression;
-            const key = `${apeType}_${expression}`;
-            if (apeImages[key]) {
-                const apeScale = 1.35; // Enlarge by 35%
-                const apeWidth = size * apeScale;
-                const apeHeight = size * apeScale;
-                const apeX = (size - apeWidth) / 2; // Center horizontally
-                const apeY = size * 0.15; // Position at 15% from top (10% higher than before)
-                ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
-            }
-            
-            // Layer 3: Accessories
-            drawAccessories();
-            
-            // Layer 4: Text
-            drawText();
-        }
+        // High-resolution render canvas (hidden, used for exports)
+        const renderCanvas = document.createElement('canvas');
+        renderCanvas.width = CONFIG.EXPORT_SIZE;
+        renderCanvas.height = CONFIG.EXPORT_SIZE;
+        const renderCtx = renderCanvas.getContext('2d');
 
-        const backgroundImages = {};
-        const apeImages = {};
+        // ============================================
+        // IMAGE LOADING & PRELOADING
+        // ============================================
 
-        function loadBackgroundImage(src, callback) {
-            if (backgroundImages[src]) {
-                callback(backgroundImages[src]);
-                return;
-            }
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                backgroundImages[src] = img;
-                callback(img);
-            };
-            img.onerror = () => {
-                // Fallback to solid color if image fails to load
-                const size = 512;
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(0, 0, size, size);
-            };
-            img.src = src;
-        }
-
-        function loadApeImage(apeType, expression, callback) {
-            // Handle typo in filename (pvp_ape3_sad.png)
-            let filename = `pfp_ape${apeType.slice(-1)}_${expression}.png`;
-            if (apeType === 'ape3' && expression === 'sad') {
-                filename = 'pvp_ape3_sad.png'; // Handle typo
-            }
-            const src = `pfp_generator_apes/${filename}`;
-            const key = `${apeType}_${expression}`;
-            
-            if (apeImages[key]) {
-                callback(apeImages[key]);
-                return;
-            }
-            
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                apeImages[key] = img;
-                callback(img);
-            };
-            img.onerror = () => {
-                // Fallback if image fails to load
-                console.error(`Failed to load ape image: ${src}`);
-                callback(null);
-            };
-            img.src = src;
-        }
-
-        function drawBackground() {
-            const size = 512;
-            const bg = state.background.image;
-            
-            // Draw image if already loaded, otherwise load it
-            if (backgroundImages[bg]) {
-                ctx.drawImage(backgroundImages[bg], 0, 0, size, size);
-            } else {
-                // Draw placeholder while loading
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(0, 0, size, size);
-                // Load image asynchronously
-                loadBackgroundImage(bg, (img) => {
-                    // Redraw all layers in correct order after background loads
-                    redrawAllLayers();
-                });
-            }
-        }
-
-        function drawApe() {
-            const size = 512;
-            const apeType = state.ape.type;
-            const expression = state.ape.expression;
-            const key = `${apeType}_${expression}`;
-            
-            // Check if image is already loaded - draw it immediately
-            if (apeImages[key]) {
-                const apeScale = 1.35; // Enlarge by 35%
-                const apeWidth = size * apeScale;
-                const apeHeight = size * apeScale;
-                const apeX = (size - apeWidth) / 2; // Center horizontally
-                const apeY = size * 0.15; // Position at 15% from top (10% higher than before)
-                ctx.drawImage(apeImages[key], apeX, apeY, apeWidth, apeHeight);
-                return;
-            }
-            
-            // Load and draw ape image asynchronously
-            loadApeImage(apeType, expression, (img) => {
-                if (img) {
-                    // Redraw all layers in correct order when image loads
-                    redrawAllLayers();
-                } else {
-                    // Fallback placeholder if image fails to load
-                    const centerX = size / 2;
-                    const centerY = size / 2;
-                    const radius = 180;
-                    ctx.fillStyle = '#8B4513';
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    // Redraw accessories and text on top
-                    drawAccessories();
-                    drawText();
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                if (imageCache.backgrounds[src] || imageCache.apes[src]) {
+                    resolve(imageCache.backgrounds[src] || imageCache.apes[src]);
+                    return;
                 }
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    if (src.includes('pfp_bg')) {
+                        imageCache.backgrounds[src] = img;
+                    } else {
+                        imageCache.apes[src] = img;
+                    }
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load image: ${src}`);
+                    reject(new Error(`Failed to load: ${src}`));
+                };
+                img.src = src;
             });
         }
 
-        function drawEye(x, y, size) {
-            ctx.fillStyle = '#000000';
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
+        function getApeImagePath(apeType, expression) {
+            // Handle typo in filename (pvp_ape3_sad.png)
+            let filename = `pfp_ape${apeType.slice(-1)}_${expression}.png`;
+            if (apeType === 'ape3' && expression === 'sad') {
+                filename = 'pvp_ape3_sad.png';
+            }
+            return `pfp_generator_apes/${filename}`;
         }
 
-        function drawAccessories() {
-            const size = 512;
-            const centerX = size / 2;
-            const centerY = size / 2;
-            const radius = 180;
+        async function preloadAllImages() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
+            
+            const imagesToLoad = [];
+            
+            // Preload backgrounds
+            for (let i = 1; i <= 8; i++) {
+                imagesToLoad.push(loadImage(`pfp_generator_images/pfp_bg${i}.png`));
+            }
+            
+            // Preload all ape combinations
+            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4'];
+            const expressions = ['happy', 'sad', 'serious'];
+            for (const apeType of apeTypes) {
+                for (const expression of expressions) {
+                    const path = getApeImagePath(apeType, expression);
+                    imagesToLoad.push(loadImage(path));
+                }
+            }
+            
+            try {
+                await Promise.all(imagesToLoad);
+                loadingIndicator.style.display = 'none';
+                render();
+            } catch (error) {
+                console.error('Some images failed to load:', error);
+                loadingIndicator.style.display = 'none';
+                render();
+            }
+        }
+
+        // ============================================
+        // DETERMINISTIC RENDERING PIPELINE
+        // ============================================
+
+        function render(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE, animate = true) {
+            // Subtle animation on preview canvas
+            if (animate && targetCtx === ctx) {
+                canvas.classList.add('updating');
+                setTimeout(() => {
+                    canvas.classList.remove('updating');
+                }, 200);
+            }
+            
+            // Clear canvas
+            targetCtx.clearRect(0, 0, targetSize, targetSize);
+            
+            // Layer 1: Background
+            const bgPath = state.background.image;
+            const bgImg = imageCache.backgrounds[bgPath];
+            if (bgImg) {
+                targetCtx.drawImage(bgImg, 0, 0, targetSize, targetSize);
+            } else {
+                targetCtx.fillStyle = '#1a1a1a';
+                targetCtx.fillRect(0, 0, targetSize, targetSize);
+            }
+            
+            // Layer 2: Ape
+            const apeType = state.ape.type;
+            const expression = state.ape.expression;
+            const apePath = getApeImagePath(apeType, expression);
+            const apeImg = imageCache.apes[apePath];
+            if (apeImg) {
+                const apeScale = CONFIG.APE_SCALE;
+                const apeWidth = targetSize * apeScale;
+                const apeHeight = targetSize * apeScale;
+                const apeX = (targetSize - apeWidth) / 2;
+                const apeY = targetSize * CONFIG.APE_Y_OFFSET;
+                targetCtx.drawImage(apeImg, apeX, apeY, apeWidth, apeHeight);
+            }
+            
+            // Layer 3: Accessories
+            drawAccessories(targetCtx, targetSize);
+            
+            // Layer 4: Text
+            drawText(targetCtx, targetSize);
+        }
+
+        function drawAccessories(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE) {
+            const scale = targetSize / CONFIG.PREVIEW_SIZE;
+            const centerX = targetSize / 2;
+            const centerY = targetSize / 2;
+            const radius = 180 * scale;
 
             // Draw hat
             if (state.accessories.hat === 'cap') {
-                ctx.fillStyle = '#1a1a1a';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY - radius + 40, 160, Math.PI, 0);
-                ctx.fill();
-                ctx.fillRect(centerX - 160, centerY - radius + 40, 320, 50);
+                targetCtx.fillStyle = '#1a1a1a';
+                targetCtx.beginPath();
+                targetCtx.arc(centerX, centerY - radius + 40 * scale, 160 * scale, Math.PI, 0);
+                targetCtx.fill();
+                targetCtx.fillRect(centerX - 160 * scale, centerY - radius + 40 * scale, 320 * scale, 50 * scale);
                 // Brim
-                ctx.fillStyle = '#2a2a2a';
-                ctx.fillRect(centerX - 180, centerY - radius + 90, 360, 15);
+                targetCtx.fillStyle = '#2a2a2a';
+                targetCtx.fillRect(centerX - 180 * scale, centerY - radius + 90 * scale, 360 * scale, 15 * scale);
             } else if (state.accessories.hat === 'beanie') {
-                ctx.fillStyle = '#ff0000';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY - radius + 30, 150, Math.PI, 0);
-                ctx.fill();
-                ctx.fillRect(centerX - 150, centerY - radius + 30, 300, 80);
+                targetCtx.fillStyle = '#ff0000';
+                targetCtx.beginPath();
+                targetCtx.arc(centerX, centerY - radius + 30 * scale, 150 * scale, Math.PI, 0);
+                targetCtx.fill();
+                targetCtx.fillRect(centerX - 150 * scale, centerY - radius + 30 * scale, 300 * scale, 80 * scale);
             } else if (state.accessories.hat === 'crown') {
-                ctx.fillStyle = '#ffd700';
-                const crownHeight = 60;
-                const crownWidth = 200;
-                ctx.fillRect(centerX - crownWidth/2, centerY - radius - crownHeight + 50, crownWidth, crownHeight);
+                targetCtx.fillStyle = '#ffd700';
+                const crownHeight = 60 * scale;
+                const crownWidth = 200 * scale;
+                targetCtx.fillRect(centerX - crownWidth/2, centerY - radius - crownHeight + 50 * scale, crownWidth, crownHeight);
                 // Crown points
                 for (let i = 0; i < 5; i++) {
                     const x = centerX - crownWidth/2 + (crownWidth / 4) * i;
-                    ctx.beginPath();
-                    ctx.moveTo(x, centerY - radius - crownHeight + 50);
-                    ctx.lineTo(x + 20, centerY - radius - crownHeight + 20);
-                    ctx.lineTo(x + 40, centerY - radius - crownHeight + 50);
-                    ctx.fill();
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(x, centerY - radius - crownHeight + 50 * scale);
+                    targetCtx.lineTo(x + 20 * scale, centerY - radius - crownHeight + 20 * scale);
+                    targetCtx.lineTo(x + 40 * scale, centerY - radius - crownHeight + 50 * scale);
+                    targetCtx.fill();
                 }
             }
 
             // Draw glasses (if not wearing hat that covers them)
             if (state.accessories.glasses === 'sunglasses' && state.accessories.hat === 'none') {
-                ctx.fillStyle = '#000000';
+                targetCtx.fillStyle = '#000000';
                 // Left lens
-                ctx.fillRect(centerX - 100, centerY - 60, 70, 40);
+                targetCtx.fillRect(centerX - 100 * scale, centerY - 60 * scale, 70 * scale, 40 * scale);
                 // Right lens
-                ctx.fillRect(centerX + 30, centerY - 60, 70, 40);
+                targetCtx.fillRect(centerX + 30 * scale, centerY - 60 * scale, 70 * scale, 40 * scale);
                 // Bridge
-                ctx.fillRect(centerX - 30, centerY - 50, 60, 10);
+                targetCtx.fillRect(centerX - 30 * scale, centerY - 50 * scale, 60 * scale, 10 * scale);
             } else if (state.accessories.glasses === 'glasses' && state.accessories.hat === 'none') {
-                ctx.strokeStyle = '#333333';
-                ctx.lineWidth = 4;
+                targetCtx.strokeStyle = '#333333';
+                targetCtx.lineWidth = 4 * scale;
                 // Left frame
-                ctx.beginPath();
-                ctx.arc(centerX - 65, centerY - 40, 35, 0, Math.PI * 2);
-                ctx.stroke();
+                targetCtx.beginPath();
+                targetCtx.arc(centerX - 65 * scale, centerY - 40 * scale, 35 * scale, 0, Math.PI * 2);
+                targetCtx.stroke();
                 // Right frame
-                ctx.beginPath();
-                ctx.arc(centerX + 65, centerY - 40, 35, 0, Math.PI * 2);
-                ctx.stroke();
+                targetCtx.beginPath();
+                targetCtx.arc(centerX + 65 * scale, centerY - 40 * scale, 35 * scale, 0, Math.PI * 2);
+                targetCtx.stroke();
                 // Bridge
-                ctx.beginPath();
-                ctx.moveTo(centerX - 30, centerY - 40);
-                ctx.lineTo(centerX + 30, centerY - 40);
-                ctx.stroke();
+                targetCtx.beginPath();
+                targetCtx.moveTo(centerX - 30 * scale, centerY - 40 * scale);
+                targetCtx.lineTo(centerX + 30 * scale, centerY - 40 * scale);
+                targetCtx.stroke();
             }
 
             // Draw jewelry
             if (state.accessories.jewelry === 'chain') {
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 80, 120, 0.3, Math.PI - 0.3);
-                ctx.stroke();
+                targetCtx.strokeStyle = '#ffd700';
+                targetCtx.lineWidth = 8 * scale;
+                targetCtx.beginPath();
+                targetCtx.arc(centerX, centerY + 80 * scale, 120 * scale, 0.3, Math.PI - 0.3);
+                targetCtx.stroke();
                 // Chain links
                 for (let i = 0; i < 8; i++) {
                     const angle = 0.3 + (Math.PI - 0.6) * (i / 7);
-                    const x = centerX + Math.cos(angle) * 120;
-                    const y = centerY + 80 + Math.sin(angle) * 120;
-                    ctx.fillStyle = '#ffd700';
-                    ctx.beginPath();
-                    ctx.arc(x, y, 6, 0, Math.PI * 2);
-                    ctx.fill();
+                    const x = centerX + Math.cos(angle) * 120 * scale;
+                    const y = centerY + 80 * scale + Math.sin(angle) * 120 * scale;
+                    targetCtx.fillStyle = '#ffd700';
+                    targetCtx.beginPath();
+                    targetCtx.arc(x, y, 6 * scale, 0, Math.PI * 2);
+                    targetCtx.fill();
                 }
             } else if (state.accessories.jewelry === 'necklace') {
-                ctx.strokeStyle = '#c0c0c0';
-                ctx.lineWidth = 6;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 80, 100, 0.4, Math.PI - 0.4);
-                ctx.stroke();
+                targetCtx.strokeStyle = '#c0c0c0';
+                targetCtx.lineWidth = 6 * scale;
+                targetCtx.beginPath();
+                targetCtx.arc(centerX, centerY + 80 * scale, 100 * scale, 0.4, Math.PI - 0.4);
+                targetCtx.stroke();
             }
         }
 
-        function drawText() {
+        function drawText(targetCtx = ctx, targetSize = CONFIG.PREVIEW_SIZE) {
             if (!state.text.content) return;
 
-            const size = 512;
-            ctx.font = `bold ${state.text.size}px "${state.text.font}", sans-serif`;
-            ctx.fillStyle = state.text.color;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            const scale = targetSize / CONFIG.PREVIEW_SIZE;
+            targetCtx.font = `bold ${state.text.size * scale}px "${state.text.font}", sans-serif`;
+            targetCtx.fillStyle = state.text.color;
+            targetCtx.textAlign = 'center';
+            targetCtx.textBaseline = 'middle';
 
             let y;
             if (state.text.position === 'top') {
-                y = 80;
+                y = 80 * scale;
             } else if (state.text.position === 'center') {
-                y = size / 2;
+                y = targetSize / 2;
             } else {
-                y = size - 80;
+                y = targetSize - 80 * scale;
             }
 
             // Add text shadow for visibility
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
+            targetCtx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            targetCtx.shadowBlur = 10 * scale;
+            targetCtx.shadowOffsetX = 2 * scale;
+            targetCtx.shadowOffsetY = 2 * scale;
 
-            ctx.fillText(state.text.content, size / 2, y);
+            targetCtx.fillText(state.text.content, targetSize / 2, y);
 
             // Reset shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            targetCtx.shadowColor = 'transparent';
+            targetCtx.shadowBlur = 0;
+            targetCtx.shadowOffsetX = 0;
+            targetCtx.shadowOffsetY = 0;
         }
 
-        function darkenColor(color, factor) {
-            const hex = color.replace('#', '');
-            const r = parseInt(hex.substr(0, 2), 16);
-            const g = parseInt(hex.substr(2, 2), 16);
-            const b = parseInt(hex.substr(4, 2), 16);
-            return `rgb(${Math.floor(r * factor)}, ${Math.floor(g * factor)}, ${Math.floor(b * factor)})`;
+        // ============================================
+        // RANDOMIZATION
+        // ============================================
+
+        function getRandomBackground() {
+            const backgrounds = [];
+            document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => {
+                backgrounds.push(opt.dataset.bg);
+            });
+            return backgrounds[Math.floor(Math.random() * backgrounds.length)];
         }
 
-        // Event listeners
-        // Background image options
-        document.querySelectorAll('#backgroundOptions .bg-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                state.background.image = option.dataset.bg;
-                renderCanvas();
-            });
-        });
+        function getRandomApeType() {
+            const apeTypes = ['ape1', 'ape2', 'ape3', 'ape4'];
+            return apeTypes[Math.floor(Math.random() * apeTypes.length)];
+        }
 
-        // Ape type options
-        document.querySelectorAll('#apeOptions .trait-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#apeOptions .trait-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                state.ape.type = option.dataset.ape;
-                renderCanvas();
-            });
-        });
+        function getRandomExpression() {
+            const expressions = ['happy', 'sad', 'serious'];
+            return expressions[Math.floor(Math.random() * expressions.length)];
+        }
 
-        // Expression options
-        document.querySelectorAll('#expressions .trait-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#expressions .trait-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                state.ape.expression = option.dataset.expression;
-                renderCanvas();
-            });
-        });
+        function getRandomAccessory(options) {
+            const values = ['none', ...options];
+            return values[Math.floor(Math.random() * values.length)];
+        }
 
-        // Accessories
-        document.getElementById('hatSelect').addEventListener('change', (e) => {
-            state.accessories.hat = e.target.value;
-            renderCanvas();
-        });
+        function randomizeLayer(layer) {
+            if (state.locks[layer]) return; // Skip if locked
 
-        document.getElementById('glassesSelect').addEventListener('change', (e) => {
-            state.accessories.glasses = e.target.value;
-            renderCanvas();
-        });
+            if (layer === 'background') {
+                const newBg = getRandomBackground();
+                state.background.image = newBg;
+                document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.bg === newBg);
+                });
+            } else if (layer === 'ape') {
+                const newApeType = getRandomApeType();
+                const newExpression = getRandomExpression();
+                state.ape.type = newApeType;
+                state.ape.expression = newExpression;
+                
+                document.querySelectorAll('#apeOptions .trait-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.ape === newApeType);
+                });
+                document.querySelectorAll('#expressions .trait-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.expression === newExpression);
+                });
+            } else if (layer === 'accessories') {
+                state.accessories.hat = getRandomAccessory(['cap', 'beanie', 'crown']);
+                state.accessories.glasses = getRandomAccessory(['sunglasses', 'glasses']);
+                state.accessories.jewelry = getRandomAccessory(['chain', 'necklace']);
+                
+                document.getElementById('hatSelect').value = state.accessories.hat;
+                document.getElementById('glassesSelect').value = state.accessories.glasses;
+                document.getElementById('jewelrySelect').value = state.accessories.jewelry;
+            } else if (layer === 'text') {
+                const colors = ['#ffffff', '#4ade80', '#ffd700', '#000000'];
+                const positions = ['top', 'center', 'bottom'];
+                const fonts = ['Inter', 'Space Grotesk', 'Arial', 'Impact'];
+                
+                state.text.color = colors[Math.floor(Math.random() * colors.length)];
+                state.text.position = positions[Math.floor(Math.random() * positions.length)];
+                state.text.font = fonts[Math.floor(Math.random() * fonts.length)];
+                state.text.size = 30 + Math.floor(Math.random() * 40); // 30-70
+                
+                document.querySelectorAll('#textColors .color-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.color === state.text.color);
+                });
+                document.getElementById('textPosition').value = state.text.position;
+                document.getElementById('fontSelect').value = state.text.font;
+                document.getElementById('textSize').value = state.text.size;
+                document.getElementById('textSizeValue').textContent = state.text.size;
+            }
+        }
 
-        document.getElementById('jewelrySelect').addEventListener('change', (e) => {
-            state.accessories.jewelry = e.target.value;
-            renderCanvas();
-        });
+        function randomize() {
+            randomizeLayer('background');
+            randomizeLayer('ape');
+            randomizeLayer('accessories');
+            randomizeLayer('text');
+            render();
+        }
 
-        // Text controls
-        document.getElementById('textInput').addEventListener('input', (e) => {
-            state.text.content = e.target.value;
-            renderCanvas();
-        });
+        // ============================================
+        // LAYER LOCKING
+        // ============================================
 
-        document.getElementById('fontSelect').addEventListener('change', (e) => {
-            state.text.font = e.target.value;
-            renderCanvas();
-        });
+        function toggleLayerLock(layer) {
+            state.locks[layer] = !state.locks[layer];
+            const toggle = document.querySelector(`[data-layer="${layer}"]`);
+            const icon = toggle.querySelector('.lock-icon');
+            if (state.locks[layer]) {
+                toggle.classList.add('locked');
+                icon.textContent = '🔒';
+            } else {
+                toggle.classList.remove('locked');
+                icon.textContent = '🔓';
+            }
+        }
 
-        document.querySelectorAll('#textColors .color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#textColors .color-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                state.text.color = option.dataset.color;
-                renderCanvas();
-            });
-        });
+        // ============================================
+        // HIGH-RESOLUTION EXPORT
+        // ============================================
 
-        document.getElementById('textPosition').addEventListener('change', (e) => {
-            state.text.position = e.target.value;
-            renderCanvas();
-        });
-
-        document.getElementById('textSize').addEventListener('input', (e) => {
-            state.text.size = parseInt(e.target.value);
-            document.getElementById('textSizeValue').textContent = state.text.size;
-            renderCanvas();
-        });
-
-        // Download button
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            canvas.toBlob((blob) => {
+        function downloadPNG() {
+            // Render to high-resolution canvas (no animation)
+            render(renderCtx, CONFIG.EXPORT_SIZE, false);
+            
+            // Export as PNG
+            renderCanvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1142,15 +1267,139 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        // Background image options
+        document.querySelectorAll('#backgroundOptions .bg-option').forEach(option => {
+            option.addEventListener('click', () => {
+                if (state.locks.background) return;
+                document.querySelectorAll('#backgroundOptions .bg-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.background.image = option.dataset.bg;
+                render();
             });
         });
 
-        // Reset button
+        // Ape type options
+        document.querySelectorAll('#apeOptions .trait-option').forEach(option => {
+            option.addEventListener('click', () => {
+                if (state.locks.ape) return;
+                document.querySelectorAll('#apeOptions .trait-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.ape.type = option.dataset.ape;
+                render();
+            });
+        });
+
+        // Expression options
+        document.querySelectorAll('#expressions .trait-option').forEach(option => {
+            option.addEventListener('click', () => {
+                if (state.locks.ape) return;
+                document.querySelectorAll('#expressions .trait-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.ape.expression = option.dataset.expression;
+                render();
+            });
+        });
+
+        // Accessories
+        document.getElementById('hatSelect').addEventListener('change', (e) => {
+            if (state.locks.accessories) return;
+            state.accessories.hat = e.target.value;
+            render();
+        });
+
+        document.getElementById('glassesSelect').addEventListener('change', (e) => {
+            if (state.locks.accessories) return;
+            state.accessories.glasses = e.target.value;
+            render();
+        });
+
+        document.getElementById('jewelrySelect').addEventListener('change', (e) => {
+            if (state.locks.accessories) return;
+            state.accessories.jewelry = e.target.value;
+            render();
+        });
+
+        // Text controls
+        document.getElementById('textInput').addEventListener('input', (e) => {
+            if (state.locks.text) return;
+            state.text.content = e.target.value;
+            render();
+        });
+
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            if (state.locks.text) return;
+            state.text.font = e.target.value;
+            render();
+        });
+
+        document.querySelectorAll('#textColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                if (state.locks.text) return;
+                document.querySelectorAll('#textColors .color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                state.text.color = option.dataset.color;
+                render();
+            });
+        });
+
+        document.getElementById('textPosition').addEventListener('change', (e) => {
+            if (state.locks.text) return;
+            state.text.position = e.target.value;
+            render();
+        });
+
+        document.getElementById('textSize').addEventListener('input', (e) => {
+            if (state.locks.text) return;
+            state.text.size = parseInt(e.target.value);
+            document.getElementById('textSizeValue').textContent = state.text.size;
+            render();
+        });
+
+        // Layer lock toggles
+        document.querySelectorAll('.lock-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const layer = toggle.dataset.layer;
+                toggleLayerLock(layer);
+            });
+        });
+
+        // Buttons
+        document.getElementById('downloadBtn').addEventListener('click', downloadPNG);
+        
+        document.getElementById('randomizeBtn').addEventListener('click', () => {
+            randomize();
+        });
+
         document.getElementById('resetBtn').addEventListener('click', () => {
-            state.background = { image: 'pfp_generator_images/pfp_bg1.png' };
-            state.ape = { type: 'ape1', expression: 'happy' };
-            state.accessories = { hat: 'none', glasses: 'none', jewelry: 'none' };
-            state.text = { content: '', font: 'Inter', color: '#ffffff', position: 'top', size: 40 };
+            // Reset state
+            state.background.image = 'pfp_generator_images/pfp_bg1.png';
+            state.ape.type = 'ape1';
+            state.ape.expression = 'happy';
+            state.accessories.hat = 'none';
+            state.accessories.glasses = 'none';
+            state.accessories.jewelry = 'none';
+            state.text.content = '';
+            state.text.font = 'Inter';
+            state.text.color = '#ffffff';
+            state.text.position = 'top';
+            state.text.size = 40;
+
+            // Reset locks
+            Object.keys(state.locks).forEach(layer => {
+                state.locks[layer] = false;
+                const toggle = document.querySelector(`[data-layer="${layer}"]`);
+                if (toggle) {
+                    toggle.classList.remove('locked');
+                    toggle.querySelector('.lock-icon').textContent = '🔓';
+                }
+            });
 
             // Reset UI
             document.querySelectorAll('#backgroundOptions .bg-option').forEach((opt, i) => {
@@ -1174,12 +1423,17 @@
             document.getElementById('textSize').value = 40;
             document.getElementById('textSizeValue').textContent = 40;
 
-            renderCanvas();
+            render();
         });
 
-        // Initial render
-        renderCanvas();
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        // Preload all images and then render
+        preloadAllImages();
     </script>
 </body>
 </html>
+
 
