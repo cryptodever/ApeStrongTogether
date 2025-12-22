@@ -464,15 +464,19 @@
         }
 
         /* Auth Gate Overlay Styles */
+        .generator-container {
+            position: relative; /* Ensure overlay can be positioned absolutely */
+        }
+
         .auth-gate-overlay {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(8px);
-            z-index: 9999;
+            z-index: 1000; /* High but below header (header is z-index: 100) */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -480,6 +484,7 @@
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
             padding: 2rem;
+            border-radius: 16px; /* Match generator container border radius */
         }
 
         .auth-gate-overlay.show {

@@ -32,6 +32,16 @@ export function initAuthGate() {
 }
 
 function createOverlay() {
+    // Find the generator container
+    const generatorContainer = document.querySelector('.generator-container');
+    if (!generatorContainer) {
+        console.error('AuthGate: Could not find .generator-container');
+        return;
+    }
+    
+    // Ensure generator container is positioned relative
+    generatorContainer.style.position = 'relative';
+    
     authGateOverlay = document.createElement('div');
     authGateOverlay.id = 'authGateOverlay';
     authGateOverlay.className = 'auth-gate-overlay';
@@ -47,7 +57,8 @@ function createOverlay() {
         </div>
     `;
     
-    document.body.appendChild(authGateOverlay);
+    // Append overlay to generator container (not body)
+    generatorContainer.appendChild(authGateOverlay);
     
     // Wire up buttons to open auth modal
     setupOverlayButtons();
@@ -58,34 +69,40 @@ function setupOverlayButtons() {
     const signupBtn = document.getElementById('authGateSignupBtn');
     
     if (loginBtn) {
-        loginBtn.addEventListener('click', async () => {
-            try {
-                // Import and open auth modal
-                const { openAuthModal } = await import('./auth.js');
-                openAuthModal('login');
-            } catch (error) {
-                console.error('Error opening login modal:', error);
-                // Fallback: try to trigger header button
+        loginBtn.addEventListener('click', () => {
+            // Use global function or trigger header button
+            if (window.openAuthModal) {
+                window.openAuthModal('login');
+            } else {
+                // Fallback: trigger header button click
                 const headerLoginBtn = document.getElementById('headerLoginBtn');
                 if (headerLoginBtn) {
                     headerLoginBtn.click();
+                } else {
+                    // Last resort: import and call
+                    import('./auth.js').then(({ openAuthModal }) => {
+                        openAuthModal('login');
+                    }).catch(console.error);
                 }
             }
         });
     }
     
     if (signupBtn) {
-        signupBtn.addEventListener('click', async () => {
-            try {
-                // Import and open auth modal
-                const { openAuthModal } = await import('./auth.js');
-                openAuthModal('signup');
-            } catch (error) {
-                console.error('Error opening signup modal:', error);
-                // Fallback: try to trigger header button
+        signupBtn.addEventListener('click', () => {
+            // Use global function or trigger header button
+            if (window.openAuthModal) {
+                window.openAuthModal('signup');
+            } else {
+                // Fallback: trigger header button click
                 const headerSignupBtn = document.getElementById('headerSignupBtn');
                 if (headerSignupBtn) {
                     headerSignupBtn.click();
+                } else {
+                    // Last resort: import and call
+                    import('./auth.js').then(({ openAuthModal }) => {
+                        openAuthModal('signup');
+                    }).catch(console.error);
                 }
             }
         });
@@ -95,10 +112,15 @@ function setupOverlayButtons() {
 function showOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.add('show');
-        // Disable pointer events on generator content
-        const generatorContent = document.querySelector('.generator-page');
-        if (generatorContent) {
-            generatorContent.style.pointerEvents = 'none';
+        // Disable pointer events on generator container content (but not header)
+        const generatorContainer = document.querySelector('.generator-container');
+        if (generatorContainer) {
+            // Disable pointer events on all children except the overlay
+            Array.from(generatorContainer.children).forEach(child => {
+                if (child.id !== 'authGateOverlay') {
+                    child.style.pointerEvents = 'none';
+                }
+            });
         }
     }
 }
@@ -106,10 +128,12 @@ function showOverlay() {
 function hideOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.remove('show');
-        // Re-enable pointer events on generator content
-        const generatorContent = document.querySelector('.generator-page');
-        if (generatorContent) {
-            generatorContent.style.pointerEvents = 'auto';
+        // Re-enable pointer events on generator container content
+        const generatorContainer = document.querySelector('.generator-container');
+        if (generatorContainer) {
+            Array.from(generatorContainer.children).forEach(child => {
+                child.style.pointerEvents = 'auto';
+            });
         }
     }
 }
