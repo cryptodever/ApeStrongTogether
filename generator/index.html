@@ -1180,8 +1180,23 @@
         // IMAGE LOADING & PRELOADING
         // ============================================
 
+        /**
+         * Resolve a relative path to an absolute URL, ensuring route safety
+         * @param {string} relativePath - Relative path like '../pfp_generator_images/pfp_bg1.png'
+         * @returns {string} - Absolute URL
+         */
+        function resolveAssetPath(relativePath) {
+            return new URL(relativePath, window.location.href).href;
+        }
+
         function loadImage(src) {
             return new Promise((resolve, reject) => {
+                // Resolve relative paths to absolute URLs for route safety
+                // Use original src as cache key, but resolve for actual loading
+                const resolvedSrc = src.startsWith('http') || src.startsWith('data:') 
+                    ? src 
+                    : resolveAssetPath(src);
+                
                 if (imageCache.backgrounds[src] || imageCache.apes[src]) {
                     resolve(imageCache.backgrounds[src] || imageCache.apes[src]);
                     return;
@@ -1216,15 +1231,17 @@
                     }
                 };
                 img.onerror = () => {
-                    console.error(`Failed to load image: ${src}`);
-                    reject(new Error(`Failed to load: ${src}`));
+                    console.error(`Failed to load image: ${resolvedSrc}`);
+                    reject(new Error(`Failed to load: ${resolvedSrc}`));
                 };
-                img.src = src;
+                // Use resolved path for actual image loading
+                img.src = resolvedSrc;
             });
         }
 
         function getApeImagePath(apeType) {
             // New naming convention: ape_pfp_1.png, ape_pfp_2.png, etc.
+            // Return relative path - will be resolved in loadImage() for route safety
             const apeNumber = apeType.slice(-1); // Extract number from 'ape1', 'ape2', etc.
             return `../pfp_generator_apes/ape_pfp_${apeNumber}.png`;
         }
@@ -1236,6 +1253,7 @@
             const imagesToLoad = [];
             
             // Preload backgrounds
+            // Paths will be resolved in loadImage() for route safety
             for (let i = 1; i <= 8; i++) {
                 imagesToLoad.push(loadImage(`../pfp_generator_images/pfp_bg${i}.png`));
             }
