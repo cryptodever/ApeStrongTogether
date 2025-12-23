@@ -136,6 +136,12 @@ function isOfflineError(e) {
     return e?.code === "unavailable" || /offline/i.test(e?.message || "");
 }
 
+// Helper to detect Firestore database missing errors
+function isDatabaseMissingError(e) {
+    const message = e?.message || "";
+    return /database.*\(default\).*does not exist/i.test(message);
+}
+
 // Check if username is already taken (using getDoc only, no watch streams)
 // Returns: { ok: true, available: boolean } or { ok: false, available: false, reason: "offline" }
 async function checkUsernameAvailability(usernameLower) {
@@ -145,6 +151,12 @@ async function checkUsernameAvailability(usernameLower) {
         console.log(`Username check result for "${usernameLower}": ${isTaken ? 'taken' : 'available'}`);
         return { ok: true, available: !isTaken };
     } catch (error) {
+        // Handle Firestore database missing error - block signup and stop retries
+        if (isDatabaseMissingError(error)) {
+            console.error('Firestore database missing error:', error);
+            return { ok: false, available: false, reason: "database_missing" };
+        }
+        
         // Handle offline/network blocked errors gracefully - do NOT throw
         if (isOfflineError(error)) {
             console.log('Username check failed: offline/network blocked');
@@ -155,7 +167,7 @@ async function checkUsernameAvailability(usernameLower) {
         // For other errors, log and return error state
         console.error('Error checking username:', error);
         console.error('Username check failed with unknown error:', error);
-        return { available: null, error: 'unknown' };
+        return { ok: false, available: null, error: 'unknown' };
     }
 }
 
@@ -288,13 +300,17 @@ if (signupFormEl && signupBtn) {
             
             // Block signup if check failed (ok:false) or username not available
             if (availabilityCheck.ok !== true || availabilityCheck.available !== true) {
-                if (availabilityCheck.reason === 'offline') {
+                if (availabilityCheck.reason === 'database_missing') {
+                    showMessage('signup', 'error', 'Firestore database isn\'t created for this Firebase project. Enable Cloud Firestore in Firebase Console.');
+                } else if (availabilityCheck.reason === 'offline') {
                     showMessage('signup', 'error', 'Offline / Network blocked. Check internet connection or disable adblock for this site.');
                 } else if (availabilityCheck.available === false) {
                     showMessage('signup', 'error', 'Username is already taken.');
                 } else {
                     showMessage('signup', 'error', 'Username verification failed. Please check your connection and try again.');
                 }
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
                 return;
             }
 
@@ -423,6 +439,8 @@ function initUsernameChecking() {
                     updateUsernameStatus('available', '✅ Available', true);
                 } else if (result.available === false) {
                     updateUsernameStatus('taken', '❌ Taken', false);
+                } else if (result.reason === 'database_missing') {
+                    updateUsernameStatus('error', '❌ Firestore database not created - Enable in Firebase Console', false);
                 } else if (result.reason === 'offline' || result.ok === false) {
                     updateUsernameStatus('error', '⚠️ Offline / Network blocked - Check internet or disable adblock', false);
                 } else {

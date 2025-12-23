@@ -42,6 +42,15 @@ async function checkRestPing() {
 }
 
 /**
+ * Check if error indicates Firestore database is missing
+ */
+function isDatabaseMissingError(error) {
+    const code = error?.code || '';
+    const message = error?.message || String(error) || '';
+    return code === 'not-found' && /database.*\(default\).*does not exist/i.test(message);
+}
+
+/**
  * Check Firestore SDK reachability
  */
 async function checkSdkPing() {
@@ -62,6 +71,13 @@ async function checkSdkPing() {
     } catch (error) {
         const errorCode = error?.code || 'unknown';
         const errorMessage = error?.message || String(error) || 'Unknown error';
+        
+        // Check for database missing error
+        if (isDatabaseMissingError(error)) {
+            console.error('❌ Firestore database not enabled');
+            return { success: false, message: 'Firestore NOT enabled for this project (create database in Firebase Console)', code: errorCode, error: errorMessage, isDatabaseMissing: true };
+        }
+        
         console.error('❌ SDK reachable: no');
         console.error('SDK error:', { code: errorCode, message: errorMessage });
         return { success: false, message: 'SDK reachable: no', code: errorCode, error: errorMessage };
@@ -85,17 +101,26 @@ async function checkFirestoreHealth() {
     const restStatus = restResult.success ? 'yes' : 'no';
     const sdkStatus = sdkResult.success ? 'yes' : 'no';
     
-    const statusMsg = `REST reachable: ${restStatus} | SDK reachable: ${sdkStatus}`;
-    
-    if (statusEl) {
-        if (restResult.success && sdkResult.success) {
-            statusEl.textContent = `✅ ${statusMsg}`;
-            statusEl.style.color = '#4ade80';
-            statusEl.className = 'firestore-status success';
-        } else {
-            statusEl.textContent = `⚠️ ${statusMsg}`;
+    // Check if database is missing (special case)
+    if (sdkResult.isDatabaseMissing) {
+        const statusMsg = 'Firestore NOT enabled for this project (create database in Firebase Console)';
+        if (statusEl) {
+            statusEl.textContent = `❌ ${statusMsg}`;
             statusEl.style.color = '#f87171';
             statusEl.className = 'firestore-status error';
+        }
+    } else {
+        const statusMsg = `REST reachable: ${restStatus} | SDK reachable: ${sdkStatus}`;
+        if (statusEl) {
+            if (restResult.success && sdkResult.success) {
+                statusEl.textContent = `✅ ${statusMsg}`;
+                statusEl.style.color = '#4ade80';
+                statusEl.className = 'firestore-status success';
+            } else {
+                statusEl.textContent = `⚠️ ${statusMsg}`;
+                statusEl.style.color = '#f87171';
+                statusEl.className = 'firestore-status error';
+            }
         }
     }
     

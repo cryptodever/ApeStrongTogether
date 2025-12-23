@@ -35,6 +35,13 @@ const firebaseConfig = {
   measurementId: "G-24YSXGT2TB"
 };
 
+// Log Firebase config at startup (safe, no secrets)
+console.log('🔥 Firebase initialized with config:', {
+  projectId: firebaseConfig.projectId,
+  appId: firebaseConfig.appId,
+  authDomain: firebaseConfig.authDomain
+});
+
 // ============================================
 // EMULATOR SAFETY GUARD
 // ============================================
