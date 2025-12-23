@@ -336,6 +336,28 @@
             transform: translateY(-2px);
         }
 
+        /* Firestore status indicator */
+        .firestore-status {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.2);
+            min-height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .firestore-status.success {
+            color: #4ade80;
+        }
+
+        .firestore-status.error {
+            color: #f87171;
+        }
+
         /* Username status indicator */
         .username-status {
             margin-top: 0.5rem;
@@ -396,6 +418,8 @@
             <div class="auth-header">
                 <h1>🦍 Login</h1>
             </div>
+            
+            <div id="firestoreStatus" class="firestore-status"></div>
 
             <div class="auth-tabs">
                 <button class="auth-tab active" data-tab="login">Log In</button>
@@ -457,6 +481,7 @@
     </div>
 
     <script type="module" src="../js/auth-ui.js"></script>
+    <script type="module" src="../js/firestore-health.js"></script>
 </body>
 </html>
 
