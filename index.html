@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
     <title>Apes Together Strong</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1148,6 +1148,10 @@
     
     <!-- Header Script -->
     <script type="module" src="/js/header.js?v=1"></script>
+    <script type="module">
+        import { initHome } from '/js/home.js?v=1';
+        initHome();
+    </script>
 
     <div class="ticker-bar">
         <div class="ticker-content">
@@ -1241,29 +1245,6 @@
         </div>
     </footer>
 
-    <script>
-        function copyTokenAddress() {
-            const addressElement = document.getElementById('tokenAddress');
-            const button = document.getElementById('copyButton');
-            const address = addressElement.textContent;
-            
-            navigator.clipboard.writeText(address).then(function() {
-                const originalText = button.textContent;
-                button.textContent = 'Copied ✅';
-                button.classList.add('copied');
-                
-                setTimeout(function() {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy:', err);
-                button.textContent = 'Error';
-                setTimeout(function() {
-                    button.textContent = 'Copy';
-                }, 2000);
-            });
-        }
-    </script>
+    <script type="module" src="/js/home.js?v=1"></script>
 </body>
 </html>

@@ -295,14 +295,24 @@ function updateHeaderUI(user) {
     const userEmailEl = document.getElementById('userEmailDisplay');
     
     if (user) {
-        if (authLoggedOut) authLoggedOut.style.display = 'none';
+        if (authLoggedOut) {
+            authLoggedOut.classList.add('hide');
+            authLoggedOut.classList.remove('show-flex');
+        }
         if (authLoggedIn) {
-            authLoggedIn.style.display = 'flex';
+            authLoggedIn.classList.remove('hide');
+            authLoggedIn.classList.add('show-flex');
             if (userEmailEl) userEmailEl.textContent = user.email;
         }
     } else {
-        if (authLoggedIn) authLoggedIn.style.display = 'none';
-        if (authLoggedOut) authLoggedOut.style.display = 'flex';
+        if (authLoggedIn) {
+            authLoggedIn.classList.add('hide');
+            authLoggedIn.classList.remove('show-flex');
+        }
+        if (authLoggedOut) {
+            authLoggedOut.classList.remove('hide');
+            authLoggedOut.classList.add('show-flex');
+        }
     }
 }
 

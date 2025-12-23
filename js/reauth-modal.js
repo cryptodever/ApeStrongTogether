@@ -221,7 +221,7 @@ function createReauthModal() {
     injectReauthStyles();
 
     const modalHTML = `
-        <div id="reauthModalBackdrop" class="reauth-modal-backdrop" style="display: none;">
+        <div id="reauthModalBackdrop" class="reauth-modal-backdrop hide">
             <div id="reauthModal" class="reauth-modal">
                 <div class="reauth-modal-content">
                     <div class="reauth-modal-header">
@@ -232,7 +232,7 @@ function createReauthModal() {
                         <p class="reauth-modal-message" id="reauthModalMessage">
                             Please enter your password to continue with this action.
                         </p>
-                        <div id="reauthError" class="reauth-message reauth-error" style="display: none;"></div>
+                        <div id="reauthError" class="reauth-message reauth-error hide"></div>
                         <div class="reauth-form-group">
                             <label for="reauthPassword">Password</label>
                             <input 
@@ -330,8 +330,10 @@ export function showReauthModal(message = null) {
         reauthReject = reject;
 
         // Show modal
-        reauthModal.backdrop.style.display = 'flex';
-        reauthModal.modal.style.display = 'block';
+        reauthModal.backdrop.classList.remove('hide');
+        reauthModal.backdrop.classList.add('show-flex');
+        reauthModal.modal.classList.remove('hide');
+        reauthModal.modal.classList.add('show');
         
         // Focus password input
         setTimeout(() => {
@@ -349,8 +351,10 @@ export function showReauthModal(message = null) {
 function closeReauthModal(success) {
     if (!reauthModal) return;
 
-    reauthModal.backdrop.style.display = 'none';
-    reauthModal.modal.style.display = 'none';
+    reauthModal.backdrop.classList.add('hide');
+    reauthModal.backdrop.classList.remove('show-flex');
+    reauthModal.modal.classList.add('hide');
+    reauthModal.modal.classList.remove('show');
     
     // Clear password
     if (reauthModal.passwordInput) {
@@ -372,7 +376,8 @@ function closeReauthModal(success) {
 function showError(message) {
     if (reauthModal && reauthModal.errorMsg) {
         reauthModal.errorMsg.textContent = message;
-        reauthModal.errorMsg.style.display = 'block';
+        reauthModal.errorMsg.classList.remove('hide');
+        reauthModal.errorMsg.classList.add('show');
     }
 }
 
@@ -381,7 +386,8 @@ function showError(message) {
  */
 function hideError() {
     if (reauthModal && reauthModal.errorMsg) {
-        reauthModal.errorMsg.style.display = 'none';
+        reauthModal.errorMsg.classList.add('hide');
+        reauthModal.errorMsg.classList.remove('show');
         reauthModal.errorMsg.textContent = '';
     }
 }
