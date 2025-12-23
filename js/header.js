@@ -17,7 +17,10 @@ async function loadHeader() {
     }
 
     try {
-        const response = await fetch('/partials/header.html');
+        // Use import.meta.url to resolve path relative to this module, ensuring it works from any route depth
+        // header.js is in /js/, so we need to go up one level to root, then into /partials/
+        const headerUrl = new URL('../partials/header.html', import.meta.url);
+        const response = await fetch(headerUrl.href);
         if (!response.ok) {
             throw new Error(`Failed to load header: ${response.status}`);
         }
