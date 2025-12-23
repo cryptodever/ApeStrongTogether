@@ -2219,9 +2219,113 @@ nav {
             display: none;
             isolation: isolate;
         }
+        
+        /* Mobile Menu Overlay - Body-attached overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2147483647;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 70px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        
+        .mobile-menu-overlay.is-open {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .mobile-menu-panel {
+            position: relative;
+            width: calc(100% - 24px);
+            max-width: 500px;
+            background: rgba(15, 15, 15, 0.99);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            padding: 1rem 0;
+            margin: 0 12px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+        }
+        
+        .mobile-menu-panel a,
+        .mobile-menu-panel button,
+        .mobile-menu-panel .nav-auth-btn {
+            padding: 1rem 1.5rem;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            color: #e8e8e8;
+            text-decoration: none;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        
+        .mobile-menu-panel a:hover,
+        .mobile-menu-panel button:hover,
+        .mobile-menu-panel .nav-auth-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #4ade80;
+        }
+        
+        .mobile-menu-panel a:last-child,
+        .mobile-menu-panel button:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-menu-panel .nav-socials {
+            flex-direction: row;
+            margin: 1rem 1.5rem 0;
+            padding: 1rem 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .mobile-menu-panel .nav-auth {
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: stretch;
+            margin: 1rem 1.5rem 0;
+            padding: 1rem 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .mobile-menu-panel .nav-auth-btn {
+            width: 100%;
+            text-align: center;
+            min-height: 44px;
+        }
 
         /* Menu visibility: .is-open class is the single source of truth */
-        /* Use higher specificity to override body-class-specific rules */
+        /* Note: Mobile menu now uses .mobile-menu-overlay attached to body */
         nav .nav-links.is-open,
         .nav-container .nav-links.is-open,
         .nav-links.is-open,
@@ -2229,23 +2333,8 @@ nav {
         body.generator-body .nav-links.is-open,
         body.roadmap-body .nav-links.is-open,
         body.verify-body .nav-links.is-open {
+            /* Keep for desktop compatibility, but mobile uses overlay */
             display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: fixed !important;
-            top: 80px !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: calc(100vh - 80px) !important;
-            max-height: calc(100vh - 80px) !important;
-            z-index: 2147483647 !important;
-            pointer-events: auto !important;
-            margin: 0 !important;
-            padding-top: 1rem !important;
-            transform: none !important;
-            will-change: auto !important;
         }
 
         /* Prevent body scroll when menu is open */
