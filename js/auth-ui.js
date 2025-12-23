@@ -41,6 +41,23 @@ if (mode === 'signup' && signupTab && signupForm) {
     switchTab('signup');
 }
 
+// Password toggle functionality for signup password field
+const signupPasswordInput = document.getElementById('signupPassword');
+const signupPasswordToggle = document.getElementById('signupPasswordToggle');
+const signupPasswordToggleIcon = document.getElementById('signupPasswordToggleIcon');
+
+if (signupPasswordInput && signupPasswordToggle && signupPasswordToggleIcon) {
+    signupPasswordToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isPassword = signupPasswordInput.type === 'password';
+        signupPasswordInput.type = isPassword ? 'text' : 'password';
+        signupPasswordToggleIcon.textContent = isPassword ? '👁️‍🗨️' : '👁️';
+        signupPasswordToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+}
+
 // Message helpers
 function showMessage(formType, type, message) {
     const messageEl = document.getElementById(`${formType}${type.charAt(0).toUpperCase() + type.slice(1)}`);
