@@ -639,6 +639,23 @@ nav {
             position: relative;
             z-index: 1;
         }
+        
+        /* Ensure page content doesn't sit above mobile menu on mobile */
+        @media (max-width: 768px) {
+            body > *:not(nav):not(#site-header) {
+                z-index: 1 !important;
+            }
+            
+            .container,
+            .page-container,
+            .hero,
+            .card,
+            section,
+            main {
+                z-index: 1 !important;
+                position: relative;
+            }
+        }
 
         /* Navigation styles are now in /partials/header.html */
 
@@ -2149,7 +2166,7 @@ nav {
             padding: 1rem;
             overflow: visible !important;
             position: relative;
-            z-index: 10000;
+            z-index: 99998;
             pointer-events: auto;
         }
 
@@ -2158,12 +2175,12 @@ nav {
             position: relative;
             overflow: visible !important;
             pointer-events: auto;
-            z-index: 10000;
+            z-index: 99998;
         }
 
         .nav-menu-toggle {
             display: flex;
-            z-index: 10002;
+            z-index: 100000;
             position: relative;
             pointer-events: auto;
             -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
@@ -2185,7 +2202,7 @@ nav {
             margin: 0;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
             border-radius: 0 0 12px 12px;
-            z-index: 10001;
+            z-index: 99999;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
@@ -2207,12 +2224,18 @@ nav {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
-            position: absolute !important;
-            top: 100% !important;
+            position: fixed !important;
+            top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            z-index: 10001 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            z-index: 99999 !important;
             pointer-events: auto !important;
+            margin-top: 80px !important;
+            padding-top: 1rem !important;
         }
 
         /* Prevent body scroll when menu is open */
