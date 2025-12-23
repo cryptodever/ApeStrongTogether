@@ -2192,12 +2192,11 @@ nav {
             max-height: calc(100vh - 80px);
         }
 
-        .nav-links[aria-expanded="false"],
-        .nav-links:not(.is-open):not([aria-expanded="true"]) {
+        /* Menu visibility: .is-open class is the single source of truth */
+        .nav-links:not(.is-open) {
             display: none;
         }
 
-        .nav-links[aria-expanded="true"],
         .nav-links.is-open {
             display: flex;
         }
