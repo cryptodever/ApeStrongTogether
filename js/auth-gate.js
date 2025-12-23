@@ -18,11 +18,34 @@ export function initAuthGate() {
     }
     
     // Listen for auth state changes
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // User is logged in - hide overlay
-            hideOverlay();
-            console.log(`AuthGate: logged in as ${user.uid}`);
+            // User is logged in - check email verification
+            try {
+                // Reload user to get latest verification status
+                await user.reload();
+                const currentUser = auth.currentUser;
+                
+                if (currentUser && !currentUser.emailVerified) {
+                    // Email not verified - redirect to verify page
+                    console.log('AuthGate: email not verified, redirecting to /verify/');
+                    window.location.href = '/verify/';
+                } else {
+                    // User is verified - hide overlay
+                    hideOverlay();
+                    console.log(`AuthGate: logged in and verified as ${user.uid}`);
+                }
+            } catch (error) {
+                console.error('AuthGate: error checking verification status:', error);
+                // On error, still check the user object directly
+                if (user.emailVerified) {
+                    hideOverlay();
+                    console.log(`AuthGate: logged in as ${user.uid}`);
+                } else {
+                    console.log('AuthGate: email not verified, redirecting to /verify/');
+                    window.location.href = '/verify/';
+                }
+            }
         } else {
             // User is not logged in - show overlay
             showOverlay();

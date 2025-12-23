@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    // Disallow listing all users (no browsing)
+    // Using 'get' instead of 'read' prevents list queries
+    match /users/{uid} {
+      // Users can only read/write their own document
+      // 'get' allows individual document reads, but list queries are implicitly disallowed
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid;
+      
+      // Validate schema on write
+      allow create, update: if request.auth != null 
+        && request.auth.uid == uid
+        && validateUserDocument(request.resource.data);
+    }
+    
+    // ============================================
+    // USERNAMES COLLECTION
+    // ============================================
+    match /usernames/{username} {
+      // Public read for availability checks
+      allow read: if true;
+      
+      // Allow create only if:
+      // 1. User is authenticated
+      // 2. Document doesn't already exist
+      // 3. Stored uid equals request.auth.uid
+      // 4. Username matches regex: ^[a-z0-9_]{3,20}$
+      allow create: if request.auth != null
+        && !exists(/databases/$(database)/documents/usernames/$(username))
+        && request.resource.data.uid == request.auth.uid
+        && username.matches('^[a-z0-9_]{3,20}$')
+        && validateUsernameDocument(request.resource.data);
+      
+      // Disallow update and delete
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // VALIDATION FUNCTIONS
+    // ============================================
+    
+    // Validate user document schema
+    function validateUserDocument(data) {
+      return data.keys().hasAll(['username', 'email', 'createdAt', 'avatarCount'])
+        && data.username is string
+        && data.email is string
+        && data.createdAt is timestamp
+        && data.avatarCount is int
+        && data.avatarCount >= 0
+        && data.username.matches('^[a-z0-9_]{3,20}$')
+        && data.email.matches('^[^@]+@[^@]+\\.[^@]+$'); // Basic email validation
+    }
+    
+    // Validate username document schema
+    function validateUsernameDocument(data) {
+      return data.keys().hasAll(['uid', 'createdAt'])
+        && data.uid is string
+        && data.createdAt is timestamp;
+    }
+    
+    // ============================================
+    // DENY ALL OTHER ACCESS
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
