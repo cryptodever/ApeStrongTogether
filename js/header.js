@@ -36,6 +36,14 @@ async function loadHeader() {
         // Bind login/signup links after header is injected
         bindHeaderAuthLinks();
         
+        // Initialize mobile menu toggle
+        try {
+            const { initMobileMenu } = await import('./header-menu.js');
+            initMobileMenu();
+        } catch (error) {
+            console.error('Error initializing mobile menu:', error);
+        }
+        
         // Initialize auth UI
         await initializeAuth();
     } catch (error) {
