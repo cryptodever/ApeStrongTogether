@@ -145,7 +145,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         // User is logged in - redirect to generator after a brief delay
         setTimeout(() => {
-            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/generator';
+            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/generator/';
             window.location.href = redirectUrl;
         }, 1500);
     }

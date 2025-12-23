@@ -43,7 +43,7 @@ async function loadHeader() {
                 <div style="max-width: 1200px; margin: 0 auto; display: flex; gap: 2rem; align-items: center;">
                     <a href="/" style="color: #e8e8e8; text-decoration: none;">APE HUB</a>
                     <a href="/roadmap.html" style="color: #e8e8e8; text-decoration: none;">ROADMAP</a>
-                    <a href="/generator" style="color: #e8e8e8; text-decoration: none;">GENERATOR</a>
+                    <a href="/generator/" style="color: #e8e8e8; text-decoration: none;">GENERATOR</a>
                 </div>
             </nav>
         `;
