@@ -4,6 +4,8 @@
  * Initializes authentication UI after injection
  */
 
+console.log('Header.js: Script loaded');
+
 import { withBase } from './base-url.js';
 
 let headerLoaded = false;
@@ -37,6 +39,23 @@ async function loadHeader() {
         headerLoaded = true;
         return;
     }
+    
+    // Check for duplicate headers/hamburgers
+    const allHeaders = document.querySelectorAll('#site-header');
+    if (allHeaders.length > 1) {
+        console.warn(`Header: Found ${allHeaders.length} #site-header elements, removing duplicates`);
+        for (let i = 1; i < allHeaders.length; i++) {
+            allHeaders[i].remove();
+        }
+    }
+    
+    const allHamburgers = document.querySelectorAll('#navMenuToggle');
+    if (allHamburgers.length > 1) {
+        console.warn(`Header: Found ${allHamburgers.length} hamburger buttons, removing duplicates`);
+        for (let i = 1; i < allHamburgers.length; i++) {
+            allHamburgers[i].remove();
+        }
+    }
 
     try {
         // Use withBase() to ensure path works from any route depth
@@ -50,21 +69,38 @@ async function loadHeader() {
         headerPlaceholder.innerHTML = html;
         headerLoaded = true;
         
+        console.log('Header: Header HTML injected successfully');
+        
+        // Verify only one hamburger exists after injection
+        const hamburgersAfter = document.querySelectorAll('#navMenuToggle');
+        if (hamburgersAfter.length > 1) {
+            console.warn(`Header: Found ${hamburgersAfter.length} hamburgers after injection, removing duplicates`);
+            for (let i = 1; i < hamburgersAfter.length; i++) {
+                hamburgersAfter[i].remove();
+            }
+        } else if (hamburgersAfter.length === 1) {
+            console.log('Header: Hamburger button verified (single instance)');
+        } else {
+            console.warn('Header: No hamburger button found after injection');
+        }
+        
         // Set global flag for asset-selftest to check
         window.headerLoaded = true;
         
         // Dispatch custom event to signal header is loaded
         window.dispatchEvent(new CustomEvent('headerLoaded'));
+        console.log('Header: headerLoaded event dispatched');
         
         // Bind login/signup links after header is injected
         bindHeaderAuthLinks();
         
-        // Initialize mobile menu toggle
+        // Mobile menu will initialize via headerLoaded event listener in header-menu.js
+        // Import it to ensure the module loads and registers the event listener
         try {
-            const { initMobileMenu } = await import('./header-menu.js');
-            initMobileMenu();
+            await import('./header-menu.js');
+            console.log('Header: Mobile menu module loaded, will initialize on headerLoaded event');
         } catch (error) {
-            console.error('Error initializing mobile menu:', error);
+            console.error('Header: Error loading mobile menu module:', error);
         }
         
         // Initialize auth UI
