@@ -79,7 +79,7 @@ let appCheckInitialized = false;
 async function initializeAppCheck() {
     // Skip App Check on localhost for development
     if (isLocalhost()) {
-        console.log('App Check: Skipped on localhost (development mode)');
+        // Silent skip on localhost (no console output to reduce spam)
         return;
     }
 
@@ -88,8 +88,8 @@ async function initializeAppCheck() {
         // NOTE: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 site key
         const RECAPTCHA_SITE_KEY = 'YOUR_RECAPTCHA_SITE_KEY'; // TODO: Replace with actual site key
         
-        if (RECAPTCHA_SITE_KEY === 'YOUR_RECAPTCHA_SITE_KEY') {
-            console.warn('App Check: reCAPTCHA site key not configured. App Check will be skipped.');
+        if (RECAPTCHA_SITE_KEY === 'YOUR_RECAPTCHA_SITE_KEY' || !RECAPTCHA_SITE_KEY) {
+            // Silent skip if not configured (no console warning to reduce spam)
             return;
         }
 
@@ -102,7 +102,7 @@ async function initializeAppCheck() {
         }
         
         if (typeof window.grecaptcha === 'undefined') {
-            console.warn('App Check: reCAPTCHA v3 not loaded after waiting. App Check will be skipped.');
+            // Silent skip if reCAPTCHA not loaded (no console warning)
             return;
         }
 
