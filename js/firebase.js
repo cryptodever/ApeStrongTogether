@@ -19,7 +19,7 @@
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { initializeFirestore, getFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
 // ============================================
@@ -52,7 +52,32 @@ if (existingApps.length > 0) {
 
 // Initialize Firebase services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Initialize Firestore with long polling for better offline/network reliability
+// Use initializeFirestore to configure connection settings
+let db;
+try {
+    // Try with auto-detect long polling first (recommended)
+    db = initializeFirestore(app, {
+        experimentalAutoDetectLongPolling: true,
+        useFetchStreams: false
+    });
+} catch (error) {
+    // Fallback to force long polling if auto-detect fails
+    console.warn('Auto-detect long polling failed, using force long polling:', error);
+    try {
+        db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
+    } catch (fallbackError) {
+        // Last resort: use default getFirestore
+        console.warn('Force long polling failed, using default getFirestore:', fallbackError);
+        db = getFirestore(app);
+    }
+}
+
+export { db };
 export const storage = getStorage(app);
 
 // Export app instance for reference
