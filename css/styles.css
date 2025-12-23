@@ -2097,6 +2097,8 @@ nav {
         border-radius: 6px;
         width: 44px;
         height: 44px;
+        min-width: 44px;
+        min-height: 44px;
         padding: 0;
         cursor: pointer;
         flex-direction: column;
@@ -2105,7 +2107,9 @@ nav {
         gap: 5px;
         transition: all 0.2s ease;
         position: relative;
-        z-index: 101;
+        z-index: 10003;
+        pointer-events: auto;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .nav-menu-toggle:hover {
@@ -2147,47 +2151,54 @@ nav {
             overflow-y: visible;
             position: relative;
             z-index: 10000;
+            pointer-events: auto;
         }
 
         .nav-container {
             flex-wrap: nowrap;
             position: relative;
             overflow: visible;
+            pointer-events: auto;
         }
 
         .nav-menu-toggle {
             display: flex;
-            z-index: 10002;
+            z-index: 10003;
             position: relative;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
         }
 
         .nav-links {
             display: none;
-            position: fixed;
-            top: 0;
+            position: absolute;
+            top: 100%;
             left: 0;
             right: 0;
-            bottom: 0;
             flex-direction: column;
             align-items: stretch;
             gap: 0;
             background: rgba(15, 15, 15, 0.98);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            padding: 5rem 0 1rem;
+            padding: 1rem 0;
             margin: 0;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            z-index: 10001;
+            border-radius: 0 0 12px 12px;
+            z-index: 10002;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
+            max-height: calc(100vh - 80px);
         }
 
-        .nav-links[aria-expanded="false"] {
+        .nav-links[aria-expanded="false"],
+        .nav-links:not(.is-open):not([aria-expanded="true"]) {
             display: none;
         }
 
-        .nav-links[aria-expanded="true"] {
+        .nav-links[aria-expanded="true"],
+        .nav-links.is-open {
             display: flex;
         }
 
@@ -2868,11 +2879,13 @@ body.generator-body > * {
     transition: opacity 0.25s ease, visibility 0.25s ease;
     padding: 24px;
     border-radius: 20px;
+    pointer-events: none;
 }
 
 .auth-gate-overlay.show {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
 
 .auth-gate-content {
