@@ -131,38 +131,29 @@ function normalizeUsername(username) {
     return username.toLowerCase().replace(/^_+|_+$/g, '');
 }
 
+// Helper to detect offline/network blocked errors
+function isOfflineError(e) {
+    return e?.code === "unavailable" || /offline/i.test(e?.message || "");
+}
+
 // Check if username is already taken (using getDoc only, no watch streams)
-// Returns: { available: boolean, error?: string }
+// Returns: { ok: true, available: boolean } or { ok: false, available: false, reason: "offline" }
 async function checkUsernameAvailability(usernameLower) {
     try {
         const usernameDoc = await getDoc(doc(db, 'usernames', usernameLower));
         const isTaken = usernameDoc.exists();
         console.log(`Username check result for "${usernameLower}": ${isTaken ? 'taken' : 'available'}`);
-        return { available: !isTaken };
+        return { ok: true, available: !isTaken };
     } catch (error) {
-        console.error('Error checking username:', error);
-        
-        // Check if error is due to being offline or network blocked
-        const errorMessage = error.message?.toLowerCase() || '';
-        const errorCode = error.code || '';
-        const errorName = error.name || '';
-        
-        // Comprehensive offline detection
-        const isOffline = 
-            errorMessage.includes('offline') || 
-            errorMessage.includes('network') ||
-            errorMessage.includes('fetch') ||
-            errorCode === 'unavailable' || 
-            errorCode === 'failed-precondition' ||
-            errorCode === 'deadline-exceeded' ||
-            errorName === 'FirebaseError' && errorCode?.includes('unavailable');
-        
-        if (isOffline) {
+        // Handle offline/network blocked errors gracefully - do NOT throw
+        if (isOfflineError(error)) {
             console.log('Username check failed: offline/network blocked');
-            return { available: null, error: 'offline' };
+            console.warn("Can't check username right now (offline or blocked network).");
+            return { ok: false, available: false, reason: "offline" };
         }
         
-        // For other errors, return error state
+        // For other errors, log and return error state
+        console.error('Error checking username:', error);
         console.error('Username check failed with unknown error:', error);
         return { available: null, error: 'unknown' };
     }
@@ -291,15 +282,19 @@ if (signupFormEl && signupBtn) {
         signupBtn.textContent = 'Loading...';
 
         try {
-            // Quick availability check before proceeding (optional, but helps)
+            // Username availability check - block signup unless ok:true and available:true
             console.log('Final username check before signup...');
             const availabilityCheck = await checkUsernameAvailability(usernameLower);
-            if (availabilityCheck.available === false) {
-                showMessage('signup', 'error', 'Username is already taken.');
-                return;
-            }
-            if (availabilityCheck.error === 'offline') {
-                showMessage('signup', 'error', 'Offline / Network blocked. Check internet connection or disable adblock for this site.');
+            
+            // Block signup if check failed (ok:false) or username not available
+            if (availabilityCheck.ok !== true || availabilityCheck.available !== true) {
+                if (availabilityCheck.reason === 'offline') {
+                    showMessage('signup', 'error', 'Offline / Network blocked. Check internet connection or disable adblock for this site.');
+                } else if (availabilityCheck.available === false) {
+                    showMessage('signup', 'error', 'Username is already taken.');
+                } else {
+                    showMessage('signup', 'error', 'Username verification failed. Please check your connection and try again.');
+                }
                 return;
             }
 
@@ -424,11 +419,11 @@ function initUsernameChecking() {
             
             // Only update if input hasn't changed
             if (usernameInput.value.trim().toLowerCase() === normalized) {
-                if (result.available === true) {
+                if (result.ok === true && result.available === true) {
                     updateUsernameStatus('available', '✅ Available', true);
                 } else if (result.available === false) {
                     updateUsernameStatus('taken', '❌ Taken', false);
-                } else if (result.error === 'offline') {
+                } else if (result.reason === 'offline' || result.ok === false) {
                     updateUsernameStatus('error', '⚠️ Offline / Network blocked - Check internet or disable adblock', false);
                 } else {
                     updateUsernameStatus('error', '⚠️ Can\'t verify right now', false);
