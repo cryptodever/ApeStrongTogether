@@ -2147,8 +2147,7 @@ nav {
     @media (max-width: 768px) {
         nav {
             padding: 1rem;
-            overflow-x: hidden;
-            overflow-y: visible;
+            overflow: visible;
             position: relative;
             z-index: 10000;
             pointer-events: auto;
@@ -2195,10 +2194,21 @@ nav {
         }
 
         /* Menu visibility: .is-open class is the single source of truth */
-        .nav-links.is-open {
+        /* Use higher specificity to override body-class-specific rules */
+        nav .nav-links.is-open,
+        .nav-container .nav-links.is-open,
+        .nav-links.is-open,
+        body.login-body .nav-links.is-open,
+        body.generator-body .nav-links.is-open,
+        body.roadmap-body .nav-links.is-open,
+        body.verify-body .nav-links.is-open {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
         }
 
         /* Prevent body scroll when menu is open */
