@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
     <!-- iOS optimizations -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1038,18 +1038,7 @@
         </div>
     </div>
 
-    <script type="module">
-        // ============================================
-        // PROFILE PICTURE GENERATOR - PREMIUM VERSION
-        
-        // Import base URL helper for route-safe asset paths
-        const { withBase } = await import('../js/base-url.js');
-        // ============================================
-        // High-resolution export: 2048×2048 PNG
-        // Preloaded assets, layer locking, randomization
-        // ============================================
-
-        // Configuration
+    <script type="module" src="/js/generator.js?v=1"></script>
         const CONFIG = {
             PREVIEW_SIZE: 512,      // Display canvas size
             EXPORT_SIZE: 2048,      // High-res export size (always 2048x2048)
@@ -1393,7 +1382,8 @@
 
         async function preloadAllImages() {
             const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block';
+            loadingIndicator.classList.remove('hide');
+            loadingIndicator.classList.add('show');
             
             const imagesToLoad = [];
             
@@ -1420,11 +1410,13 @@
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
                 }
-                loadingIndicator.style.display = 'none';
+                loadingIndicator.classList.add('hide');
+                loadingIndicator.classList.remove('show');
                 render();
             } catch (error) {
                 console.error('Some images failed to load:', error);
-                loadingIndicator.style.display = 'none';
+                loadingIndicator.classList.add('hide');
+                loadingIndicator.classList.remove('show');
                 render();
             }
         }
@@ -2177,11 +2169,15 @@
             const bgGroup = document.getElementById('backgroundImageGroup');
             const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
             if (state.renderMode === 'baked') {
-                bgGroup.style.display = 'block'; // Show background selection
-                bakedBgGroup.style.display = 'block'; // Show baked background toggle
+                bgGroup.classList.remove('hide');
+                bgGroup.classList.add('show');
+                bakedBgGroup.classList.remove('hide');
+                bakedBgGroup.classList.add('show');
             } else {
-                bgGroup.style.display = 'block';
-                bakedBgGroup.style.display = 'none';
+                bgGroup.classList.remove('hide');
+                bgGroup.classList.add('show');
+                bakedBgGroup.classList.add('hide');
+                bakedBgGroup.classList.remove('show');
             }
             render();
         });
@@ -2196,10 +2192,13 @@
         const bgGroup = document.getElementById('backgroundImageGroup');
         const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
         if (state.renderMode === 'baked') {
-            bgGroup.style.display = 'block';
-            bakedBgGroup.style.display = 'block';
+            bgGroup.classList.remove('hide');
+            bgGroup.classList.add('show');
+            bakedBgGroup.classList.remove('hide');
+            bakedBgGroup.classList.add('show');
         } else {
-            bakedBgGroup.style.display = 'none';
+            bakedBgGroup.classList.add('hide');
+            bakedBgGroup.classList.remove('show');
         }
 
         // Accessories
@@ -2276,11 +2275,9 @@
             state.debug = !state.debug;
             const btn = document.getElementById('debugBtn');
             if (state.debug) {
-                btn.classList.add('active');
-                btn.style.background = 'rgba(74, 222, 128, 0.3)';
+                btn.classList.add('active', 'debug-btn-active');
             } else {
-                btn.classList.remove('active');
-                btn.style.background = '';
+                btn.classList.remove('active', 'debug-btn-active');
             }
             render();
         });
@@ -2304,8 +2301,14 @@
             document.getElementById('renderMode').value = 'layered';
             const bgGroup = document.getElementById('backgroundImageGroup');
             const bakedBgGroup = document.getElementById('bakedBackgroundGroup');
-            if (bgGroup) bgGroup.style.display = 'block';
-            if (bakedBgGroup) bakedBgGroup.style.display = 'none';
+            if (bgGroup) {
+                bgGroup.classList.remove('hide');
+                bgGroup.classList.add('show');
+            }
+            if (bakedBgGroup) {
+                bakedBgGroup.classList.add('hide');
+                bakedBgGroup.classList.remove('show');
+            }
             if (useBakedBgSelect) useBakedBgSelect.value = 'false';
 
             // Reset locks
@@ -2339,8 +2342,7 @@
             
             // Reset debug button
             const debugBtn = document.getElementById('debugBtn');
-            debugBtn.classList.remove('active');
-            debugBtn.style.background = '';
+            debugBtn.classList.remove('active', 'debug-btn-active');
 
             render();
         });

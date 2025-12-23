@@ -106,20 +106,17 @@ async function checkFirestoreHealth() {
         const statusMsg = 'Firestore NOT enabled for this project (create database in Firebase Console)';
         if (statusEl) {
             statusEl.textContent = `❌ ${statusMsg}`;
-            statusEl.style.color = '#f87171';
-            statusEl.className = 'firestore-status error';
+            statusEl.className = 'firestore-status error text-error';
         }
     } else {
         const statusMsg = `REST reachable: ${restStatus} | SDK reachable: ${sdkStatus}`;
         if (statusEl) {
             if (restResult.success && sdkResult.success) {
                 statusEl.textContent = `✅ ${statusMsg}`;
-                statusEl.style.color = '#4ade80';
-                statusEl.className = 'firestore-status success';
+                statusEl.className = 'firestore-status success text-success';
             } else {
                 statusEl.textContent = `⚠️ ${statusMsg}`;
-                statusEl.style.color = '#f87171';
-                statusEl.className = 'firestore-status error';
+                statusEl.className = 'firestore-status error text-error';
             }
         }
     }

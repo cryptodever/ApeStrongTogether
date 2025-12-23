@@ -63,7 +63,7 @@ function createOverlay() {
     }
     
     // Ensure generator container is positioned relative
-    generatorContainer.style.position = 'relative';
+    generatorContainer.classList.add('position-relative');
     
     authGateOverlay = document.createElement('div');
     authGateOverlay.id = 'authGateOverlay';
@@ -115,7 +115,7 @@ function showOverlay() {
             // Disable pointer events on all children except the overlay
             Array.from(generatorContainer.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
-                    child.style.pointerEvents = 'none';
+                    child.classList.add('pointer-events-none');
                 }
             });
         }
@@ -129,7 +129,8 @@ function hideOverlay() {
         const generatorContainer = document.querySelector('.generator-container');
         if (generatorContainer) {
             Array.from(generatorContainer.children).forEach(child => {
-                child.style.pointerEvents = 'auto';
+                child.classList.remove('pointer-events-none');
+                child.classList.add('pointer-events-auto');
             });
         }
     }
