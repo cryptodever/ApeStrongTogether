@@ -10,9 +10,17 @@ function initMobileMenu() {
     const menuToggle = document.getElementById('navMenuToggle');
     const navMenu = document.getElementById('navMenu');
     
-    if (!menuToggle || !navMenu) {
+    if (!menuToggle) {
+        console.log('Mobile menu: Toggle button not found');
         return;
     }
+    
+    if (!navMenu) {
+        console.log('Mobile menu: Menu container not found');
+        return;
+    }
+    
+    console.log('Mobile menu: Toggle button found, attaching click handler');
     
     function toggleMenu() {
         const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
@@ -21,17 +29,22 @@ function initMobileMenu() {
         menuToggle.setAttribute('aria-expanded', newState);
         navMenu.setAttribute('aria-expanded', newState);
         
-        // Prevent body scroll when menu is open
+        // Toggle .is-open class on menu
         if (newState) {
+            navMenu.classList.add('is-open');
             document.body.classList.add('menu-open');
         } else {
+            navMenu.classList.remove('is-open');
             document.body.classList.remove('menu-open');
         }
+        
+        console.log(`Mobile menu: Toggled to ${newState ? 'open' : 'closed'}`);
     }
     
     function closeMenu() {
         menuToggle.setAttribute('aria-expanded', 'false');
         navMenu.setAttribute('aria-expanded', 'false');
+        navMenu.classList.remove('is-open');
         document.body.classList.remove('menu-open');
     }
     
