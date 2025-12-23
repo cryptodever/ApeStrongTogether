@@ -3,7 +3,7 @@
  * Tests Firestore connectivity on page load (REST and SDK)
  */
 
-import { db, apiKey, projectId } from './firebase.js';
+import { db, apiKey, projectId, auth } from './firebase.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 /**
@@ -129,9 +129,32 @@ async function checkFirestoreHealth() {
 }
 
 /**
+ * Check if health check should run
+ * Only runs on localhost, with ?debug=1, or when user is authenticated
+ */
+function shouldRunHealthCheck() {
+    // Check if localhost
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    
+    // Check if debug query param exists
+    const urlParams = new URLSearchParams(location.search);
+    const hasDebug = urlParams.get('debug') === '1';
+    
+    // Check if user is authenticated
+    const hasUser = auth.currentUser !== null;
+    
+    return isLocalhost || hasDebug || hasUser;
+}
+
+/**
  * Initialize health check when DOM is ready
  */
 function initHealthCheck() {
+    // Early return if health check should not run
+    if (!shouldRunHealthCheck()) {
+        return;
+    }
+    
     // Wait a bit for Firebase to initialize
     setTimeout(() => {
         checkFirestoreHealth();
