@@ -1,0 +1,396 @@
+/* ============================================
+   Responsive Design System - Base Styles
+   ============================================ */
+
+/* Reset & Base */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ============================================
+   Design Tokens
+   ============================================ */
+
+:root {
+    /* Spacing Scale */
+    --space-xs: clamp(0.5rem, 0.5vw + 0.25rem, 0.75rem);
+    --space-sm: clamp(0.75rem, 1vw + 0.5rem, 1rem);
+    --space-md: clamp(1rem, 1.5vw + 0.75rem, 1.5rem);
+    --space-lg: clamp(1.5rem, 2vw + 1rem, 2.5rem);
+    --space-xl: clamp(2rem, 3vw + 1.5rem, 4rem);
+    --space-2xl: clamp(3rem, 4vw + 2rem, 6rem);
+    
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    
+    /* Typography Scale */
+    --font-size-xs: clamp(0.75rem, 0.5vw + 0.625rem, 0.875rem);
+    --font-size-sm: clamp(0.875rem, 0.5vw + 0.75rem, 1rem);
+    --font-size-base: clamp(1rem, 0.5vw + 0.875rem, 1.125rem);
+    --font-size-lg: clamp(1.125rem, 0.75vw + 1rem, 1.25rem);
+    --font-size-xl: clamp(1.25rem, 1vw + 1.125rem, 1.5rem);
+    --font-size-2xl: clamp(1.5rem, 1.5vw + 1.25rem, 2rem);
+    --font-size-3xl: clamp(2rem, 2vw + 1.5rem, 3rem);
+    --font-size-4xl: clamp(2.5rem, 3vw + 2rem, 4rem);
+    
+    /* Line Heights */
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+    
+    /* Container */
+    --container-max-width: 1100px;
+    --container-padding: clamp(1rem, 3vw, 2rem);
+}
+
+/* ============================================
+   Layout Utilities
+   ============================================ */
+
+/* Container - max width with auto margins and responsive padding */
+.container {
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding);
+    padding-right: var(--container-padding);
+}
+
+/* Stack - vertical spacing */
+.stack {
+    display: flex;
+    flex-direction: column;
+}
+
+.stack > * + * {
+    margin-top: var(--space-md);
+}
+
+.stack-sm > * + * {
+    margin-top: var(--space-sm);
+}
+
+.stack-lg > * + * {
+    margin-top: var(--space-lg);
+}
+
+.stack-xl > * + * {
+    margin-top: var(--space-xl);
+}
+
+/* Row - horizontal layout with gap */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.row-sm {
+    gap: var(--space-sm);
+}
+
+.row-lg {
+    gap: var(--space-lg);
+}
+
+/* Responsive row - stacks on mobile */
+@media (max-width: 768px) {
+    .row-responsive {
+        flex-direction: column;
+    }
+}
+
+/* Card - elevated container */
+.card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.card-sm {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+}
+
+.card-lg {
+    padding: var(--space-xl);
+    border-radius: var(--radius-2xl);
+}
+
+/* Button Base */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px; /* Comfortable tap target */
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    line-height: var(--line-height-tight);
+    text-decoration: none;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-sm {
+    min-height: 36px;
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-sm);
+}
+
+.btn-lg {
+    min-height: 52px;
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--font-size-lg);
+}
+
+/* Input Base */
+.input {
+    width: 100%;
+    min-height: 44px; /* Comfortable tap target */
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    color: inherit;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================
+   Typography Utilities
+   ============================================ */
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+.text-4xl { font-size: var(--font-size-4xl); }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* ============================================
+   Spacing Utilities
+   ============================================ */
+
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mt-xl { margin-top: var(--space-xl); }
+
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.mb-xl { margin-bottom: var(--space-xl); }
+
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-lg { padding: var(--space-lg); }
+.p-xl { padding: var(--space-xl); }
+
+/* ============================================
+   Responsive Breakpoints
+   ============================================ */
+
+/* Mobile First - base styles are for mobile */
+
+/* Tablet and up */
+@media (min-width: 768px) {
+    :root {
+        --container-padding: clamp(1.5rem, 4vw, 2.5rem);
+    }
+}
+
+/* Desktop and up */
+@media (min-width: 1024px) {
+    :root {
+        --container-padding: 2rem;
+    }
+}
+
+/* ============================================
+   Navigation Responsive
+   ============================================ */
+
+nav {
+    width: 100%;
+    padding: var(--space-sm) var(--container-padding);
+}
+
+.nav-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.nav-links {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    nav {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .nav-container {
+        gap: var(--space-sm);
+    }
+    
+    .nav-links {
+        gap: var(--space-sm);
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* ============================================
+   Form Responsive
+   ============================================ */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.form-group label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .form-group {
+        margin-bottom: var(--space-sm);
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.hidden {
+    display: none !important;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-sm {
+    gap: var(--space-sm);
+}
+
+.gap-md {
+    gap: var(--space-md);
+}
+
+.gap-lg {
+    gap: var(--space-lg);
+}
+

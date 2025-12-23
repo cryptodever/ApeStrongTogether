@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
     <title>Login | Apes Together Strong</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/base.css">
     <style>
         * {
             margin: 0;
@@ -122,9 +123,10 @@
         }
 
         .login-container {
-            max-width: 500px;
+            max-width: 420px;
             margin: 4rem auto;
             padding: 0 2rem;
+            width: 100%;
         }
 
         .auth-panel {
@@ -135,6 +137,7 @@
             padding: 2rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
                         inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            width: 100%;
         }
 
         .auth-header {
@@ -199,27 +202,30 @@
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #d0d0d0;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             font-weight: 500;
+            line-height: 1.5;
         }
 
         .form-group input {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             color: #ffffff;
             font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
+            font-size: 16px; /* Prevent zoom on iOS */
             transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .form-group input:focus {
@@ -276,6 +282,10 @@
             margin-bottom: 1.25rem;
             font-size: 0.9rem;
             display: none;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.5;
         }
 
         .message.show {
@@ -307,6 +317,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 1rem;
+            min-height: 44px; /* Comfortable tap target */
         }
 
         .btn:disabled {
@@ -365,6 +376,9 @@
             font-size: 0.85rem;
             min-height: 1.2rem;
             transition: all 0.2s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4;
         }
 
         .username-status.checking {
@@ -389,16 +403,62 @@
 
         @media (max-width: 768px) {
             .login-container {
+                max-width: 100%;
                 margin: 2rem auto;
                 padding: 0 1rem;
             }
 
             .auth-panel {
                 padding: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .auth-header {
+                margin-bottom: 1.5rem;
             }
 
             .auth-header h1 {
-                font-size: 2rem;
+                font-size: clamp(1.75rem, 5vw, 2rem);
+            }
+
+            .form-group {
+                margin-bottom: 1.25rem;
+            }
+
+            .form-group label {
+                font-size: 1rem;
+                margin-bottom: 0.625rem;
+            }
+
+            .form-group input {
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 0.875rem 1rem;
+            }
+
+            .btn {
+                width: 100%;
+                font-size: 1rem;
+            }
+
+            .message {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .auth-tabs {
+                margin-bottom: 1.5rem;
+            }
+
+            .auth-tab {
+                font-size: 0.9rem;
+                padding: 0.625rem 0.875rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .btn {
+                max-width: 100%;
             }
         }
     </style>
@@ -418,8 +478,8 @@
         </div>
     </nav>
 
-    <div class="login-container">
-        <div class="auth-panel">
+    <div class="login-container container">
+        <div class="auth-panel card">
             <div class="auth-header">
                 <h1>🦍 Login</h1>
             </div>
@@ -438,12 +498,12 @@
 
                 <div class="form-group">
                     <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" required autocomplete="email" placeholder="your@email.com">
+                    <input type="email" id="loginEmail" class="input" required autocomplete="email" placeholder="your@email.com">
                 </div>
 
                 <div class="form-group">
                     <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+                    <input type="password" id="loginPassword" class="input" required autocomplete="current-password" placeholder="••••••••">
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="loginBtn">Log In</button>
@@ -456,19 +516,19 @@
 
                 <div class="form-group">
                     <label for="signupUsername">Username</label>
-                    <input type="text" id="signupUsername" required autocomplete="username" placeholder="Example: apelover69" minlength="3" maxlength="20" pattern="[a-z0-9_]+">
+                    <input type="text" id="signupUsername" class="input" required autocomplete="username" placeholder="Example: apelover69" minlength="3" maxlength="20" pattern="[a-z0-9_]+">
                     <div id="usernameStatus" class="username-status"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="signupEmail">Email</label>
-                    <input type="email" id="signupEmail" required autocomplete="email" placeholder="your@email.com">
+                    <input type="email" id="signupEmail" class="input" required autocomplete="email" placeholder="your@email.com">
                 </div>
 
                 <div class="form-group">
                     <label for="signupPassword">Password</label>
                     <div class="password-toggle-container">
-                        <input type="password" id="signupPassword" required autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6">
+                        <input type="password" id="signupPassword" class="input" required autocomplete="new-password" placeholder="Minimum 6 characters" minlength="6">
                         <button type="button" class="password-toggle-btn" id="signupPasswordToggle" aria-label="Show password">
                             <span id="signupPasswordToggleIcon">👁️</span>
                         </button>
@@ -477,7 +537,7 @@
 
                 <div class="form-group">
                     <label for="signupConfirmPassword">Confirm Password</label>
-                    <input type="password" id="signupConfirmPassword" required autocomplete="new-password" placeholder="Confirm your password">
+                    <input type="password" id="signupConfirmPassword" class="input" required autocomplete="new-password" placeholder="Confirm your password">
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="signupBtn">Create Account</button>

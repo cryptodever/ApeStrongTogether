@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
     <!-- iOS optimizations -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,6 +41,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/base.css">
     <style>
         * {
             margin: 0;
@@ -257,9 +258,18 @@
 
         .generator-container {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 400px 1fr;
             gap: 2rem;
             align-items: start;
+        }
+
+        /* Desktop: controls left, preview right */
+        .generator-container > .controls-section {
+            order: 1;
+        }
+
+        .generator-container > .preview-section {
+            order: 2;
         }
 
         .preview-section {
@@ -346,15 +356,17 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem;
+            padding: 0.625rem 0.875rem;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #d0d0d0;
             transition: all 0.2s ease;
             margin-left: auto;
+            min-height: 36px; /* Larger tap target */
+            min-width: 80px; /* Prevent tiny toggles */
         }
 
         .lock-toggle:hover {
@@ -386,6 +398,8 @@
             font-family: 'Inter', sans-serif;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            min-height: 44px; /* Comfortable tap target */
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -454,14 +468,17 @@
 
         .control-input {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             color: #ffffff;
             font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
+            font-size: 16px; /* Prevent zoom on iOS */
             transition: all 0.3s ease;
+            min-height: 44px; /* Comfortable tap target */
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .control-input:focus {
@@ -472,15 +489,18 @@
 
         .control-select {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             color: #ffffff;
             font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
+            font-size: 16px; /* Prevent zoom on iOS */
             cursor: pointer;
             transition: all 0.3s ease;
+            min-height: 44px; /* Comfortable tap target */
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .control-select:focus {
@@ -589,28 +609,31 @@
 
         .slider {
             flex: 1;
-            height: 6px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+            border-radius: 4px;
             outline: none;
             -webkit-appearance: none;
             appearance: none;
+            min-height: 44px; /* Larger tap target area */
+            padding: 0;
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 24px;
+            height: 24px;
             background: #4ade80;
             border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+            margin-top: -8px; /* Center thumb on track */
         }
 
         .slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
+            width: 24px;
+            height: 24px;
             background: #4ade80;
             border-radius: 50%;
             cursor: pointer;
@@ -628,6 +651,16 @@
         @media (max-width: 1024px) {
             .generator-container {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            /* Mobile: controls first, preview second */
+            .generator-container > .controls-section {
+                order: 1;
+            }
+
+            .generator-container > .preview-section {
+                order: 2;
             }
 
             #profileCanvas {
@@ -640,11 +673,152 @@
 
         @media (max-width: 768px) {
             .generator-page {
-                padding: 2rem 1rem;
+                padding: 2rem 1rem 6rem; /* Extra bottom padding for sticky action bar */
+            }
+
+            .generator-header {
+                margin-bottom: 2rem;
+                padding-top: 1rem;
             }
 
             .generator-header h1 {
-                font-size: 2rem;
+                font-size: clamp(1.75rem, 5vw, 2.5rem);
+            }
+
+            .generator-container {
+                gap: 1.5rem;
+            }
+
+            .controls-section {
+                gap: 1.25rem;
+            }
+
+            .control-panel {
+                padding: 1.25rem;
+                border-radius: 12px;
+            }
+
+            .control-panel h3 {
+                font-size: 1.1rem;
+            }
+
+            .control-group {
+                margin-bottom: 1rem;
+            }
+
+            .control-label {
+                font-size: 0.95rem;
+                margin-bottom: 0.625rem;
+            }
+
+            .control-input,
+            .control-select {
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 1rem;
+                min-height: 48px; /* Larger on mobile */
+            }
+
+            .color-options {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.875rem;
+            }
+
+            .background-options {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.875rem;
+            }
+
+            /* Adjust ape options grid for mobile */
+            #apeOptions.trait-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .trait-option {
+                padding: 1rem;
+                min-height: 60px; /* Larger tap target */
+            }
+
+            .bg-option,
+            .color-option {
+                min-height: 60px; /* Larger tap target */
+            }
+
+            .lock-toggle {
+                min-height: 44px;
+                min-width: 100px;
+                padding: 0.75rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .slider {
+                height: 10px;
+            }
+
+            .slider::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+                margin-top: -9px;
+            }
+
+            .slider::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+            }
+
+            .slider-container {
+                gap: 1.25rem;
+            }
+
+            /* Preview section */
+            .preview-section {
+                backdrop-filter: blur(10px) saturate(120%);
+                -webkit-backdrop-filter: blur(10px) saturate(120%);
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .canvas-wrapper {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            /* iOS mobile optimizations */
+            #profileCanvas {
+                width: 100%;
+                max-width: 512px;
+                height: auto;
+                aspect-ratio: 1;
+            }
+
+            /* Action buttons - sticky on mobile */
+            .action-buttons {
+                position: sticky;
+                bottom: 1rem;
+                background: rgba(15, 15, 15, 0.95);
+                backdrop-filter: blur(20px) saturate(180%);
+                -webkit-backdrop-filter: blur(20px) saturate(180%);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 1rem;
+                margin-top: 1rem;
+                z-index: 10;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+                gap: 0.75rem;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+                min-height: 48px; /* Larger on mobile */
+            }
+
+            /* Prevent iOS text selection on interactive elements */
+            .trait-option, .bg-option, .color-option, .lock-toggle, .btn {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none;
+                touch-action: manipulation;
             }
 
             .nav-socials {
@@ -661,40 +835,6 @@
             .nav-social-icon svg {
                 width: 18px;
                 height: 18px;
-            }
-
-            .color-options {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .background-options {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            /* Adjust ape options grid for mobile */
-            #apeOptions.trait-options {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            /* iOS mobile optimizations */
-            #profileCanvas {
-                width: 100%;
-                max-width: 512px;
-                height: auto;
-                aspect-ratio: 1;
-            }
-
-            .preview-section {
-                backdrop-filter: blur(10px) saturate(120%);
-                -webkit-backdrop-filter: blur(10px) saturate(120%);
-            }
-
-            /* Prevent iOS text selection on interactive elements */
-            .trait-option, .bg-option, .color-option, .lock-toggle, .btn {
-                -webkit-user-select: none;
-                user-select: none;
-                -webkit-touch-callout: none;
-                touch-action: manipulation;
             }
         }
 

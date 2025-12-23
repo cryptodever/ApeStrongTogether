@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
     <title>Apes Together Strong</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/base.css">
     <style>
         * {
             margin: 0;
@@ -130,7 +131,7 @@
 
         /* Navigation styles are now in /partials/header.html */
 
-        .container {
+        .page-container {
             max-width: 900px;
             margin: 0 auto;
             width: 100%;
@@ -936,7 +937,7 @@
                 padding: 0 1.5rem;
             }
 
-            .container {
+            .page-container {
                 max-width: 100%;
                 padding: 2rem 1rem;
             }
@@ -1155,8 +1156,8 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="hero">
+    <div class="container page-container">
+        <div class="hero card">
             <h1 class="hero-title">APES TOGETHER STRONG</h1>
             <div class="hero-badge">
                 <span>Meme</span> • Community • Education
