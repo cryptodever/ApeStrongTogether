@@ -407,6 +407,29 @@ nav {
     display: none !important;
 }
 
+/* State classes for UI toggles */
+.open {
+    /* Used for open/expanded states (e.g., mobile menu) */
+}
+
+.active {
+    /* Used for active/selected states */
+    opacity: 1;
+}
+
+/* Helper text styles */
+.helper-text {
+    color: #888;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+.verify-message {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+}
+
 /* Position utilities */
 .position-relative {
     position: relative;

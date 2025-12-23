@@ -8,6 +8,14 @@ export function initRoadmap() {
     if (phase1) {
         phase1.classList.add('expanded');
     }
+    
+    // Attach event listeners to phase headers
+    document.querySelectorAll('.phase-header[data-phase]').forEach(header => {
+        header.addEventListener('click', () => {
+            const phaseNumber = parseInt(header.getAttribute('data-phase'));
+            togglePhase(phaseNumber);
+        });
+    });
 }
 
 export function togglePhase(phaseNumber) {
@@ -26,7 +34,4 @@ export function togglePhase(phaseNumber) {
         phaseDetails.classList.add('expanded');
     }
 }
-
-// Make togglePhase available globally for onclick handlers
-window.togglePhase = togglePhase;
 
