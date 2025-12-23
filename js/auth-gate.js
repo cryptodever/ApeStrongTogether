@@ -1,6 +1,6 @@
 /**
  * Authentication Gate Module
- * Blocks access to /generator unless user is authenticated
+ * Blocks access to /generator/ unless user is authenticated
  */
 
 import { auth } from './firebase.js';
