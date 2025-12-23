@@ -121,12 +121,26 @@ function validateUsername(username) {
 }
 
 // Check if username is already taken
+// Returns: boolean (if taken/not taken) or { ok: false, reason: "offline" } if offline
 async function isUsernameTaken(usernameLower) {
     try {
         const usernameDoc = await getDoc(doc(db, 'usernames', usernameLower));
         return usernameDoc.exists();
     } catch (error) {
         console.error('Error checking username:', error);
+        // Check if error is due to being offline
+        const errorMessage = error.message?.toLowerCase() || '';
+        const errorCode = error.code || '';
+        const isOffline = errorMessage.includes('offline') || 
+                         errorCode === 'unavailable' || 
+                         errorCode === 'failed-precondition';
+        
+        if (isOffline) {
+            console.log('Username check failed: offline');
+            return { ok: false, reason: 'offline' };
+        }
+        
+        // For other errors, still throw
         throw error;
     }
 }
@@ -225,17 +239,26 @@ if (signupFormEl && signupBtn) {
 
         try {
             // Check if username is already taken
+            console.log('Checking username...');
             const usernameLower = username.toLowerCase();
-            const taken = await isUsernameTaken(usernameLower);
+            const usernameCheckResult = await isUsernameTaken(usernameLower);
             
-            if (taken) {
+            // Handle offline result
+            if (usernameCheckResult && typeof usernameCheckResult === 'object' && usernameCheckResult.ok === false) {
+                if (usernameCheckResult.reason === 'offline') {
+                    showMessage('signup', 'error', 'Can\'t reach the database right now. Check internet or disable adblock for this site.');
+                    return;
+                }
+            }
+            
+            // Handle username taken result
+            if (usernameCheckResult === true) {
                 showMessage('signup', 'error', 'Username is already taken.');
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
                 return;
             }
 
             // Create auth user
+            console.log('Creating auth user...');
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
@@ -253,11 +276,12 @@ if (signupFormEl && signupBtn) {
                     console.error('Failed to rollback user:', deleteError);
                 }
                 showMessage('signup', 'error', 'Failed to create profile. Please try again.');
-                signupBtn.disabled = false;
-                signupBtn.textContent = 'Create Account';
             }
         } catch (error) {
+            console.error('Signup error:', error);
             showMessage('signup', 'error', formatAuthError(error));
+        } finally {
+            // Always reset loading state
             signupBtn.disabled = false;
             signupBtn.textContent = 'Create Account';
         }
