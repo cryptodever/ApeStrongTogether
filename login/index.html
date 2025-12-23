@@ -24,10 +24,14 @@
     <!-- Header Script -->
     <script type="module" src="/js/header.js?v=2"></script>
 
-    <div class="login-container container">
-        <div class="auth-panel card">
+    <div class="login-container">
+        <div class="auth-panel">
             <div class="auth-header">
-                <h1>🦍 Login</h1>
+                <div class="auth-brand">
+                    <span class="auth-brand-icon">🦍</span>
+                    <span>APE HUB</span>
+                </div>
+                <h1 id="authPageTitle">Log in</h1>
             </div>
             
             <div id="firestoreStatus" class="firestore-status"></div>
@@ -53,6 +57,9 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="loginBtn">Log In</button>
+                <div class="auth-form-footer">
+                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                </div>
             </form>
 
             <!-- Signup Form -->
@@ -87,6 +94,9 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary" id="signupBtn">Create Account</button>
+                <div class="auth-form-footer">
+                    <span>By continuing, you agree to our Terms of Service</span>
+                </div>
             </form>
         </div>
     </div>
