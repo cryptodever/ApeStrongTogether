@@ -50,6 +50,9 @@ async function loadHeader() {
         headerPlaceholder.innerHTML = html;
         headerLoaded = true;
         
+        // Set global flag for asset-selftest to check
+        window.headerLoaded = true;
+        
         // Dispatch custom event to signal header is loaded
         window.dispatchEvent(new CustomEvent('headerLoaded'));
         
@@ -84,6 +87,9 @@ async function loadHeader() {
                 </div>
             </nav>
         `;
+        headerLoaded = true;
+        window.headerLoaded = true;
+        window.dispatchEvent(new CustomEvent('headerLoaded'));
     }
 }
 

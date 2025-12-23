@@ -26,18 +26,56 @@
             }
         }
 
-        // Test 2: Header present check
+        // Test 2: Header present check (only after header injection completes or timeout)
         const headerContainer = document.getElementById('site-header');
         if (headerContainer) {
             // Check if header has been injected (has content)
-            if (headerContainer.innerHTML.trim().length > 0 || 
-                document.querySelector('nav') !== null) {
+            const hasContent = headerContainer.innerHTML.trim().length > 0;
+            const hasNav = document.querySelector('nav') !== null;
+            
+            if (hasContent || hasNav) {
                 console.log('✅ Header present');
             } else {
-                console.warn('⚠️ Header container exists but appears empty');
+                // Header not loaded yet - this is okay, will be checked again after headerLoaded event
+                // Don't warn here to avoid false positives during async loading
             }
         } else {
             console.warn('⚠️ Header container (#site-header) not found');
+        }
+    }
+
+    // Check header specifically after headerLoaded event or timeout
+    function checkHeaderAfterLoad() {
+        const headerContainer = document.getElementById('site-header');
+        if (headerContainer) {
+            const hasContent = headerContainer.innerHTML.trim().length > 0;
+            const hasNav = document.querySelector('nav') !== null;
+            
+            if (hasContent || hasNav) {
+                console.log('✅ Header present');
+            } else {
+                // Use MutationObserver to watch for header injection
+                const observer = new MutationObserver((mutations, obs) => {
+                    const hasContentNow = headerContainer.innerHTML.trim().length > 0;
+                    const hasNavNow = document.querySelector('nav') !== null;
+                    if (hasContentNow || hasNavNow) {
+                        console.log('✅ Header present');
+                        obs.disconnect();
+                    }
+                });
+                
+                observer.observe(headerContainer, { childList: true, subtree: true });
+                
+                // Also check after a reasonable timeout (5 seconds)
+                setTimeout(() => {
+                    observer.disconnect();
+                    const hasContentFinal = headerContainer.innerHTML.trim().length > 0;
+                    const hasNavFinal = document.querySelector('nav') !== null;
+                    if (!hasContentFinal && !hasNavFinal) {
+                        console.warn('⚠️ Header container exists but appears empty after 5s - header may have failed to load');
+                    }
+                }, 5000);
+            }
         }
     }
 
@@ -66,15 +104,30 @@
         }
     }, true);
 
-    // Run tests when DOM is ready
+    // Run CSS test immediately, header check after headerLoaded event
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait a bit for header to potentially load
-            setTimeout(runTests, 100);
+            // Run CSS check immediately
+            runTests();
+            // Check header after headerLoaded event or fallback timeout
+            if (window.headerLoaded) {
+                checkHeaderAfterLoad();
+            } else {
+                window.addEventListener('headerLoaded', checkHeaderAfterLoad, { once: true });
+                // Fallback: check after 2 seconds if event hasn't fired
+                setTimeout(checkHeaderAfterLoad, 2000);
+            }
         });
     } else {
-        // DOM already ready, wait a bit for header
-        setTimeout(runTests, 100);
+        // DOM already ready
+        runTests();
+        if (window.headerLoaded) {
+            checkHeaderAfterLoad();
+        } else {
+            window.addEventListener('headerLoaded', checkHeaderAfterLoad, { once: true });
+            // Fallback: check after 2 seconds if event hasn't fired
+            setTimeout(checkHeaderAfterLoad, 2000);
+        }
     }
 })();
 
