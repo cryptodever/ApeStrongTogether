@@ -20,11 +20,19 @@ function initMobileMenu() {
         
         menuToggle.setAttribute('aria-expanded', newState);
         navMenu.setAttribute('aria-expanded', newState);
+        
+        // Prevent body scroll when menu is open
+        if (newState) {
+            document.body.classList.add('menu-open');
+        } else {
+            document.body.classList.remove('menu-open');
+        }
     }
     
     function closeMenu() {
         menuToggle.setAttribute('aria-expanded', 'false');
         navMenu.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('menu-open');
     }
     
     // Toggle menu on button click
