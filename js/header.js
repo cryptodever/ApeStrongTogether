@@ -71,6 +71,14 @@ async function loadHeader() {
         
         console.log('Header: Header HTML injected successfully');
         
+        // Import mobile menu module BEFORE dispatching event (so listener is registered)
+        try {
+            await import('./header-menu.js');
+            console.log('Header: Mobile menu module loaded, event listener registered');
+        } catch (error) {
+            console.error('Header: Error loading mobile menu module:', error);
+        }
+        
         // Verify only one hamburger exists after injection
         const hamburgersAfter = document.querySelectorAll('#navMenuToggle');
         if (hamburgersAfter.length > 1) {
@@ -84,24 +92,15 @@ async function loadHeader() {
             console.warn('Header: No hamburger button found after injection');
         }
         
-        // Set global flag for asset-selftest to check
-        window.headerLoaded = true;
-        
-        // Dispatch custom event to signal header is loaded
-        window.dispatchEvent(new CustomEvent('headerLoaded'));
-        console.log('Header: headerLoaded event dispatched');
-        
         // Bind login/signup links after header is injected
         bindHeaderAuthLinks();
         
-        // Mobile menu will initialize via headerLoaded event listener in header-menu.js
-        // Import it to ensure the module loads and registers the event listener
-        try {
-            await import('./header-menu.js');
-            console.log('Header: Mobile menu module loaded, will initialize on headerLoaded event');
-        } catch (error) {
-            console.error('Header: Error loading mobile menu module:', error);
-        }
+        // Set global flag for asset-selftest to check
+        window.headerLoaded = true;
+        
+        // Dispatch custom event to signal header is loaded (AFTER module is imported)
+        window.dispatchEvent(new CustomEvent('headerLoaded'));
+        console.log('Header: headerLoaded event dispatched');
         
         // Initialize auth UI
         await initializeAuth();
