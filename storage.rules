@@ -1,0 +1,52 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ============================================
+    // USER-SPECIFIC PATHS
+    // ============================================
+    // Allow read/write only within users/{uid}/... where uid == auth.uid
+    
+    // Avatar-specific restrictions (images only, max 2MB)
+    match /users/{uid}/avatars/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null 
+        && request.auth.uid == uid
+        && request.resource.size <= 2 * 1024 * 1024  // 2MB max
+        && request.resource.contentType.matches('image/.*')
+        && isValidImageExtension(fileName);
+    }
+    
+    // General uploads under users/{uid}/ (max 10MB, deny executables)
+    // Note: This excludes /avatars/ since the more specific rule above takes precedence
+    match /users/{uid}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null 
+        && request.auth.uid == uid
+        && request.resource.size <= 10 * 1024 * 1024  // 10MB max
+        && !isExecutableFile(request.resource.name);
+    }
+    
+    // ============================================
+    // VALIDATION FUNCTIONS
+    // ============================================
+    
+    // Check if file has valid image extension
+    function isValidImageExtension(fileName) {
+      return fileName.matches('.*\\.(jpg|jpeg|png|gif|webp|svg)$');
+    }
+    
+    // Check if file is an executable (by extension)
+    function isExecutableFile(fileName) {
+      return fileName.matches('.*\\.(exe|bat|cmd|com|pif|scr|vbs|js|jar|apk|deb|rpm|dmg|pkg|sh|bash|zsh|fish|ps1|psm1|psd1|msi|app|deb|rpm|run)$');
+    }
+    
+    // ============================================
+    // DENY ALL OTHER ACCESS
+    // ============================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

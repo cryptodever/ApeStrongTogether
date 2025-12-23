@@ -69,6 +69,61 @@ if (existingApps.length > 0) {
 // Initialize Firebase services
 export const auth = getAuth(app);
 
+// ============================================
+// FIREBASE APP CHECK (reCAPTCHA v3)
+// ============================================
+// Feature-flag: Only enable App Check in production (not localhost)
+// This protects Firestore and Storage from abuse
+let appCheckInitialized = false;
+
+async function initializeAppCheck() {
+    // Skip App Check on localhost for development
+    if (isLocalhost()) {
+        console.log('App Check: Skipped on localhost (development mode)');
+        return;
+    }
+
+    try {
+        // Initialize App Check with reCAPTCHA v3
+        // NOTE: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 site key
+        const RECAPTCHA_SITE_KEY = 'YOUR_RECAPTCHA_SITE_KEY'; // TODO: Replace with actual site key
+        
+        if (RECAPTCHA_SITE_KEY === 'YOUR_RECAPTCHA_SITE_KEY') {
+            console.warn('App Check: reCAPTCHA site key not configured. App Check will be skipped.');
+            return;
+        }
+
+        // Wait for reCAPTCHA to be available (with timeout)
+        const maxWait = 5000; // 5 seconds
+        const startTime = Date.now();
+        
+        while (typeof window.grecaptcha === 'undefined' && (Date.now() - startTime) < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        if (typeof window.grecaptcha === 'undefined') {
+            console.warn('App Check: reCAPTCHA v3 not loaded after waiting. App Check will be skipped.');
+            return;
+        }
+
+        const { initializeAppCheck, ReCaptchaV3Provider } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app-check.js');
+        
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+            isTokenAutoRefreshEnabled: true
+        });
+        
+        appCheckInitialized = true;
+        console.log('✅ App Check initialized with reCAPTCHA v3');
+    } catch (error) {
+        console.error('App Check initialization error:', error);
+        // Don't block app initialization if App Check fails
+    }
+}
+
+// Initialize App Check (non-blocking, runs in background)
+initializeAppCheck();
+
 // Enable Firestore SDK debug logs
 setLogLevel("debug");
 

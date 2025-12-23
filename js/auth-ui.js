@@ -8,7 +8,8 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     onAuthStateChanged,
-    deleteUser
+    deleteUser,
+    sendEmailVerification
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
     doc,
@@ -142,9 +143,57 @@ function isDatabaseMissingError(e) {
     return /database.*\(default\).*does not exist/i.test(message);
 }
 
+// Rate limiting state for username checks (per-session)
+let lastUsernameCheckTime = 0;
+let usernameCheckTimes = []; // Array of timestamps for the last minute
+
+/**
+ * Check if username check rate limit is exceeded
+ * @param {boolean} bypass - If true, allows check but still enforces minimal limits
+ * @returns {Object} { allowed: boolean, reason?: string }
+ */
+function checkUsernameRateLimit(bypass = false) {
+    const now = Date.now();
+    
+    // Check 750ms cooldown (always enforced, even with bypass)
+    if (now - lastUsernameCheckTime < 750 && !bypass) {
+        return { allowed: false, reason: 'cooldown' };
+    }
+    
+    // If bypass is true, allow but still track (for spam prevention)
+    if (bypass) {
+        lastUsernameCheckTime = now;
+        usernameCheckTimes.push(now);
+        // Clean old timestamps (older than 1 minute)
+        usernameCheckTimes = usernameCheckTimes.filter(t => now - t < 60000);
+        return { allowed: true };
+    }
+    
+    // Check per-minute limit (max 20 per minute)
+    const oneMinuteAgo = now - 60000;
+    usernameCheckTimes = usernameCheckTimes.filter(t => t > oneMinuteAgo);
+    
+    if (usernameCheckTimes.length >= 20) {
+        return { allowed: false, reason: 'limit' };
+    }
+    
+    // Update tracking
+    lastUsernameCheckTime = now;
+    usernameCheckTimes.push(now);
+    return { allowed: true };
+}
+
 // Check if username is already taken (using getDoc only, no watch streams)
 // Returns: { ok: true, available: boolean } or { ok: false, available: false, reason: "offline" }
-async function checkUsernameAvailability(usernameLower) {
+// @param {boolean} bypassRateLimit - If true, bypasses rate limiting (for final signup check)
+async function checkUsernameAvailability(usernameLower, bypassRateLimit = false) {
+    // Check rate limit (unless bypassed)
+    const rateLimitCheck = checkUsernameRateLimit(bypassRateLimit);
+    if (!rateLimitCheck.allowed) {
+        console.log('Username check rate limit exceeded:', rateLimitCheck.reason);
+        return { ok: false, available: null, reason: 'rate_limit', rateLimitReason: rateLimitCheck.reason };
+    }
+    
     try {
         const usernameDoc = await getDoc(doc(db, 'usernames', usernameLower));
         const isTaken = usernameDoc.exists();
@@ -295,8 +344,9 @@ if (signupFormEl && signupBtn) {
 
         try {
             // Username availability check - block signup unless ok:true and available:true
+            // Use bypassRateLimit=true for final check, but it still respects minimal 750ms cooldown
             console.log('Final username check before signup...');
-            const availabilityCheck = await checkUsernameAvailability(usernameLower);
+            const availabilityCheck = await checkUsernameAvailability(usernameLower, true);
             
             // Block signup if check failed (ok:false) or username not available
             if (availabilityCheck.ok !== true || availabilityCheck.available !== true) {
@@ -347,9 +397,21 @@ if (signupFormEl && signupBtn) {
                     showMessage('signup', 'error', 'Failed to create profile. Please try again.');
                 }
             } else {
-                // Success - onAuthStateChanged will handle redirect
-                console.log('Signup completed successfully');
-                showMessage('signup', 'success', 'Account created! Redirecting...');
+                // Success - send verification email
+                console.log('Signup completed successfully, sending verification email...');
+                try {
+                    await sendEmailVerification(userCredential.user);
+                    console.log('Verification email sent');
+                } catch (verifyError) {
+                    console.error('Failed to send verification email:', verifyError);
+                    // Don't fail signup if verification email fails, just log it
+                }
+                
+                // Redirect to verify page
+                showMessage('signup', 'success', 'Account created! Please verify your email.');
+                setTimeout(() => {
+                    window.location.href = '/verify/';
+                }, 2000);
             }
         } catch (error) {
             console.error('Signup error:', error);
@@ -431,11 +493,13 @@ function initUsernameChecking() {
         // Debounce check (350ms)
         debounceTimer = setTimeout(async () => {
             lastCheckedValue = normalized;
-            const result = await checkUsernameAvailability(normalized);
+            const result = await checkUsernameAvailability(normalized, false);
             
             // Only update if input hasn't changed
             if (usernameInput.value.trim().toLowerCase() === normalized) {
-                if (result.ok === true && result.available === true) {
+                if (result.reason === 'rate_limit') {
+                    updateUsernameStatus('error', '⚠️ Slow down', false);
+                } else if (result.ok === true && result.available === true) {
                     updateUsernameStatus('available', '✅ Available', true);
                 } else if (result.available === false) {
                     updateUsernameStatus('taken', '❌ Taken', false);
@@ -451,15 +515,21 @@ function initUsernameChecking() {
     });
 }
 
-// Handle auth state changes - redirect after successful login/signup
+// Handle auth state changes - redirect after successful login (only if verified)
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log('Auth state changed: user logged in', user.uid);
-        // User is logged in - redirect to generator after a brief delay
-        setTimeout(() => {
-            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/generator/';
-            window.location.href = redirectUrl;
-        }, 1500);
+        // Only redirect to generator if email is verified
+        // Don't redirect if we're already on the verify page
+        if (user.emailVerified && !window.location.pathname.includes('/verify/')) {
+            setTimeout(() => {
+                const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/generator/';
+                window.location.href = redirectUrl;
+            }, 1500);
+        } else if (!user.emailVerified && window.location.pathname.includes('/login/')) {
+            // If on login page and not verified, redirect to verify page
+            window.location.href = '/verify/';
+        }
     } else {
         console.log('Auth state changed: user logged out');
     }
