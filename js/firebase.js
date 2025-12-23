@@ -36,6 +36,15 @@ const firebaseConfig = {
 };
 
 // ============================================
+// EMULATOR SAFETY GUARD
+// ============================================
+// Helper to ensure emulators only run on localhost (never on production)
+function isLocalhost() {
+    const hostname = window.location.hostname;
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+// ============================================
 // FIREBASE INITIALIZATION
 // ============================================
 // Initialize Firebase app only once (singleton pattern)
@@ -54,13 +63,26 @@ if (existingApps.length > 0) {
 export const auth = getAuth(app);
 
 // Initialize Firestore with long polling for better offline/network reliability
-// Use initializeFirestore to configure connection settings
 export const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
     useFetchStreams: false
 });
 export const storage = getStorage(app);
 
-// Export app instance for reference
-export { app };
+// ============================================
+// EMULATOR CONNECTION (localhost only)
+// ============================================
+// If you need to connect to Firebase Emulators, use this pattern:
+// 
+// if (isLocalhost()) {
+//   import { connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+//   import { connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+//   connectFirestoreEmulator(db, 'localhost', 8080);
+//   connectAuthEmulator(auth, 'http://localhost:9099');
+// }
+//
+// This ensures emulators NEVER run on github.io or production domains.
+
+// Export app instance and emulator guard for reference
+export { app, isLocalhost };
 
