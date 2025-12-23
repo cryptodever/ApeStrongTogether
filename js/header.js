@@ -12,9 +12,29 @@ let headerLoaded = false;
  * Load the header partial and inject it into the page
  */
 async function loadHeader() {
+    // Guard: Don't inject if already loaded
+    if (headerLoaded) {
+        return;
+    }
+
     const headerPlaceholder = document.getElementById('site-header');
     if (!headerPlaceholder) {
         console.error('Header: Could not find #site-header placeholder');
+        return;
+    }
+
+    // Guard: Don't inject if placeholder already has content
+    if (headerPlaceholder.innerHTML.trim().length > 0) {
+        console.log('Header: Already injected, skipping');
+        headerLoaded = true;
+        return;
+    }
+
+    // Guard: Don't inject if nav element already exists in DOM
+    const existingNav = document.querySelector('nav .nav-container');
+    if (existingNav) {
+        console.log('Header: Nav already exists in DOM, skipping injection');
+        headerLoaded = true;
         return;
     }
 
