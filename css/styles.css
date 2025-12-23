@@ -669,6 +669,13 @@ nav {
             position: relative;
             z-index: 99;
         }
+        
+        /* Ensure ticker-bar doesn't sit above mobile menu */
+        @media (max-width: 768px) {
+            .ticker-bar {
+                z-index: 1 !important;
+            }
+        }
 
         .ticker-content {
             display: flex;
@@ -2166,7 +2173,7 @@ nav {
             padding: 1rem;
             overflow: visible !important;
             position: relative;
-            z-index: 99998;
+            z-index: 2147483646;
             pointer-events: auto;
         }
 
@@ -2175,12 +2182,12 @@ nav {
             position: relative;
             overflow: visible !important;
             pointer-events: auto;
-            z-index: 99998;
+            z-index: 2147483646;
         }
 
         .nav-menu-toggle {
             display: flex;
-            z-index: 100000;
+            z-index: 2147483647;
             position: relative;
             pointer-events: auto;
             -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
@@ -2202,7 +2209,7 @@ nav {
             margin: 0;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
             border-radius: 0 0 12px 12px;
-            z-index: 99999;
+            z-index: 2147483647;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
@@ -2210,6 +2217,7 @@ nav {
             pointer-events: auto;
             /* Hidden by default */
             display: none;
+            isolation: isolate;
         }
 
         /* Menu visibility: .is-open class is the single source of truth */
@@ -2225,17 +2233,19 @@ nav {
             visibility: visible !important;
             opacity: 1 !important;
             position: fixed !important;
-            top: 0 !important;
+            top: 80px !important;
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
-            width: 100% !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
-            z-index: 99999 !important;
+            width: 100vw !important;
+            height: calc(100vh - 80px) !important;
+            max-height: calc(100vh - 80px) !important;
+            z-index: 2147483647 !important;
             pointer-events: auto !important;
-            margin-top: 80px !important;
+            margin: 0 !important;
             padding-top: 1rem !important;
+            transform: none !important;
+            will-change: auto !important;
         }
 
         /* Prevent body scroll when menu is open */
