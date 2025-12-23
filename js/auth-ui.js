@@ -3,12 +3,20 @@
  * Handles login and signup forms for login.html
  */
 
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
-    onAuthStateChanged
+    onAuthStateChanged,
+    deleteUser
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp,
+    deleteDoc
+} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 // Tab switching
 const loginTab = document.querySelector('[data-tab="login"]');
@@ -93,6 +101,53 @@ function formatAuthError(error) {
     return errorMessages[error.code] || error.message || 'An error occurred. Please try again.';
 }
 
+// Username validation
+function validateUsername(username) {
+    if (!username || username.length < 3 || username.length > 20) {
+        return { valid: false, error: 'Username must be 3-20 characters long.' };
+    }
+    
+    // Check for invalid characters (only letters, numbers, underscore allowed)
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        return { valid: false, error: 'Username can only contain letters, numbers, and underscores.' };
+    }
+    
+    // Check for spaces
+    if (/\s/.test(username)) {
+        return { valid: false, error: 'Username cannot contain spaces.' };
+    }
+    
+    return { valid: true };
+}
+
+// Check if username is already taken
+async function isUsernameTaken(usernameLower) {
+    try {
+        const usernameDoc = await getDoc(doc(db, 'usernames', usernameLower));
+        return usernameDoc.exists();
+    } catch (error) {
+        console.error('Error checking username:', error);
+        throw error;
+    }
+}
+
+// Create user profile and reserve username in Firestore
+async function createUserProfile(uid, username) {
+    const usernameLower = username.toLowerCase();
+    
+    // Create user profile
+    await setDoc(doc(db, 'users', uid), {
+        username: username,
+        usernameLower: usernameLower,
+        createdAt: serverTimestamp()
+    });
+    
+    // Reserve username
+    await setDoc(doc(db, 'usernames', usernameLower), {
+        uid: uid
+    });
+}
+
 // Login form handler
 const loginFormEl = document.getElementById('loginForm');
 const loginBtn = document.getElementById('loginBtn');
@@ -135,15 +190,25 @@ if (signupFormEl && signupBtn) {
         e.preventDefault();
         clearMessages();
         
+        const username = document.getElementById('signupUsername').value.trim();
         const email = document.getElementById('signupEmail').value.trim();
         const password = document.getElementById('signupPassword').value;
         const confirmPassword = document.getElementById('signupConfirmPassword').value;
 
-        if (!email || !password || !confirmPassword) {
+        // Validate all fields are filled
+        if (!username || !email || !password || !confirmPassword) {
             showMessage('signup', 'error', 'Please fill in all fields.');
             return;
         }
 
+        // Validate username
+        const usernameValidation = validateUsername(username);
+        if (!usernameValidation.valid) {
+            showMessage('signup', 'error', usernameValidation.error);
+            return;
+        }
+
+        // Validate password
         if (password.length < 6) {
             showMessage('signup', 'error', 'Password must be at least 6 characters.');
             return;
@@ -159,9 +224,38 @@ if (signupFormEl && signupBtn) {
         signupBtn.textContent = 'Loading...';
 
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            // Success - onAuthStateChanged will handle redirect
-            showMessage('signup', 'success', 'Account created! Redirecting...');
+            // Check if username is already taken
+            const usernameLower = username.toLowerCase();
+            const taken = await isUsernameTaken(usernameLower);
+            
+            if (taken) {
+                showMessage('signup', 'error', 'Username is already taken.');
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+                return;
+            }
+
+            // Create auth user
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const uid = userCredential.user.uid;
+
+            try {
+                // Create user profile and reserve username in Firestore
+                await createUserProfile(uid, username);
+                // Success - onAuthStateChanged will handle redirect
+                showMessage('signup', 'success', 'Account created! Redirecting...');
+            } catch (firestoreError) {
+                // If Firestore fails, try to roll back auth user
+                console.error('Firestore error:', firestoreError);
+                try {
+                    await deleteUser(userCredential.user);
+                } catch (deleteError) {
+                    console.error('Failed to rollback user:', deleteError);
+                }
+                showMessage('signup', 'error', 'Failed to create profile. Please try again.');
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+            }
         } catch (error) {
             showMessage('signup', 'error', formatAuthError(error));
             signupBtn.disabled = false;
