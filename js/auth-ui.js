@@ -31,6 +31,12 @@ function switchTab(tabName) {
     loginTab.classList.toggle('active', tabName === 'login');
     signupTab.classList.toggle('active', tabName === 'signup');
     
+    // Update page title
+    const pageTitle = document.getElementById('authPageTitle');
+    if (pageTitle) {
+        pageTitle.textContent = tabName === 'login' ? 'Log in' : 'Create account';
+    }
+    
     // Update forms
     loginForm.classList.toggle('active', tabName === 'login');
     signupForm.classList.toggle('active', tabName === 'signup');
