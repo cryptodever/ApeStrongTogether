@@ -141,19 +141,29 @@ async function checkUsernameAvailability(usernameLower) {
         return { available: !isTaken };
     } catch (error) {
         console.error('Error checking username:', error);
-        // Check if error is due to being offline
+        
+        // Check if error is due to being offline or network blocked
         const errorMessage = error.message?.toLowerCase() || '';
         const errorCode = error.code || '';
-        const isOffline = errorMessage.includes('offline') || 
-                         errorCode === 'unavailable' || 
-                         errorCode === 'failed-precondition';
+        const errorName = error.name || '';
+        
+        // Comprehensive offline detection
+        const isOffline = 
+            errorMessage.includes('offline') || 
+            errorMessage.includes('network') ||
+            errorMessage.includes('fetch') ||
+            errorCode === 'unavailable' || 
+            errorCode === 'failed-precondition' ||
+            errorCode === 'deadline-exceeded' ||
+            errorName === 'FirebaseError' && errorCode?.includes('unavailable');
         
         if (isOffline) {
-            console.log('Username check failed: offline');
+            console.log('Username check failed: offline/network blocked');
             return { available: null, error: 'offline' };
         }
         
         // For other errors, return error state
+        console.error('Username check failed with unknown error:', error);
         return { available: null, error: 'unknown' };
     }
 }
@@ -289,7 +299,7 @@ if (signupFormEl && signupBtn) {
                 return;
             }
             if (availabilityCheck.error === 'offline') {
-                showMessage('signup', 'error', 'Can\'t reach the database right now. Check internet or disable adblock for this site.');
+                showMessage('signup', 'error', 'Offline / Network blocked. Check internet connection or disable adblock for this site.');
                 return;
             }
 
@@ -419,7 +429,7 @@ function initUsernameChecking() {
                 } else if (result.available === false) {
                     updateUsernameStatus('taken', '❌ Taken', false);
                 } else if (result.error === 'offline') {
-                    updateUsernameStatus('error', '⚠️ Can\'t verify right now', false);
+                    updateUsernameStatus('error', '⚠️ Offline / Network blocked - Check internet or disable adblock', false);
                 } else {
                     updateUsernameStatus('error', '⚠️ Can\'t verify right now', false);
                 }
