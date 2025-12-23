@@ -217,23 +217,9 @@ function setupModalEvents() {
 }
 
 function setupHeaderButtons() {
-    const loginBtn = document.getElementById('headerLoginBtn');
-    const signupBtn = document.getElementById('headerSignupBtn');
+    // Login/signup buttons are now anchor links in header, so they redirect automatically
+    // Only need to handle logout button
     const logoutBtn = document.getElementById('headerLogoutBtn');
-    
-    if (loginBtn && !loginBtn.dataset.listenerAdded) {
-        loginBtn.dataset.listenerAdded = 'true';
-        loginBtn.addEventListener('click', () => {
-            openModal('login');
-        });
-    }
-    
-    if (signupBtn && !signupBtn.dataset.listenerAdded) {
-        signupBtn.dataset.listenerAdded = 'true';
-        signupBtn.addEventListener('click', () => {
-            openModal('signup');
-        });
-    }
     
     if (logoutBtn && !logoutBtn.dataset.listenerAdded) {
         logoutBtn.dataset.listenerAdded = 'true';

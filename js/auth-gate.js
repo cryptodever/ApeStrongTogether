@@ -70,41 +70,15 @@ function setupOverlayButtons() {
     
     if (loginBtn) {
         loginBtn.addEventListener('click', () => {
-            // Use global function or trigger header button
-            if (window.openAuthModal) {
-                window.openAuthModal('login');
-            } else {
-                // Fallback: trigger header button click
-                const headerLoginBtn = document.getElementById('headerLoginBtn');
-                if (headerLoginBtn) {
-                    headerLoginBtn.click();
-                } else {
-                    // Last resort: import and call
-                    import('./auth.js').then(({ openAuthModal }) => {
-                        openAuthModal('login');
-                    }).catch(console.error);
-                }
-            }
+            // Redirect to login page
+            window.location.href = '/login/';
         });
     }
     
     if (signupBtn) {
         signupBtn.addEventListener('click', () => {
-            // Use global function or trigger header button
-            if (window.openAuthModal) {
-                window.openAuthModal('signup');
-            } else {
-                // Fallback: trigger header button click
-                const headerSignupBtn = document.getElementById('headerSignupBtn');
-                if (headerSignupBtn) {
-                    headerSignupBtn.click();
-                } else {
-                    // Last resort: import and call
-                    import('./auth.js').then(({ openAuthModal }) => {
-                        openAuthModal('signup');
-                    }).catch(console.error);
-                }
-            }
+            // Redirect to signup page (login with mode parameter)
+            window.location.href = '/login/?mode=signup';
         });
     }
 }

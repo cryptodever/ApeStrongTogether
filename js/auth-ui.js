@@ -29,8 +29,17 @@ function switchTab(tabName) {
     clearMessages();
 }
 
-loginTab.addEventListener('click', () => switchTab('login'));
-signupTab.addEventListener('click', () => switchTab('signup'));
+if (loginTab && signupTab) {
+    loginTab.addEventListener('click', () => switchTab('login'));
+    signupTab.addEventListener('click', () => switchTab('signup'));
+}
+
+// Check URL parameter for mode and switch tab on page load
+const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get('mode');
+if (mode === 'signup' && signupTab && signupForm) {
+    switchTab('signup');
+}
 
 // Message helpers
 function showMessage(formType, type, message) {
@@ -71,74 +80,78 @@ function formatAuthError(error) {
 const loginFormEl = document.getElementById('loginForm');
 const loginBtn = document.getElementById('loginBtn');
 
-loginFormEl.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearMessages();
-    
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
+if (loginFormEl && loginBtn) {
+    loginFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearMessages();
+        
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
 
-    if (!email || !password) {
-        showMessage('login', 'error', 'Please fill in all fields.');
-        return;
-    }
+        if (!email || !password) {
+            showMessage('login', 'error', 'Please fill in all fields.');
+            return;
+        }
 
-    // Show loading state
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Loading...';
+        // Show loading state
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Loading...';
 
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // Success - onAuthStateChanged will handle redirect
-        showMessage('login', 'success', 'Login successful! Redirecting...');
-    } catch (error) {
-        showMessage('login', 'error', formatAuthError(error));
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Log In';
-    }
-});
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // Success - onAuthStateChanged will handle redirect
+            showMessage('login', 'success', 'Login successful! Redirecting...');
+        } catch (error) {
+            showMessage('login', 'error', formatAuthError(error));
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Log In';
+        }
+    });
+}
 
 // Signup form handler
 const signupFormEl = document.getElementById('signupForm');
 const signupBtn = document.getElementById('signupBtn');
 
-signupFormEl.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearMessages();
-    
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+if (signupFormEl && signupBtn) {
+    signupFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearMessages();
+        
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('signupConfirmPassword').value;
 
-    if (!email || !password || !confirmPassword) {
-        showMessage('signup', 'error', 'Please fill in all fields.');
-        return;
-    }
+        if (!email || !password || !confirmPassword) {
+            showMessage('signup', 'error', 'Please fill in all fields.');
+            return;
+        }
 
-    if (password.length < 6) {
-        showMessage('signup', 'error', 'Password must be at least 6 characters.');
-        return;
-    }
+        if (password.length < 6) {
+            showMessage('signup', 'error', 'Password must be at least 6 characters.');
+            return;
+        }
 
-    if (password !== confirmPassword) {
-        showMessage('signup', 'error', 'Passwords do not match.');
-        return;
-    }
+        if (password !== confirmPassword) {
+            showMessage('signup', 'error', 'Passwords do not match.');
+            return;
+        }
 
-    // Show loading state
-    signupBtn.disabled = true;
-    signupBtn.textContent = 'Loading...';
+        // Show loading state
+        signupBtn.disabled = true;
+        signupBtn.textContent = 'Loading...';
 
-    try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        // Success - onAuthStateChanged will handle redirect
-        showMessage('signup', 'success', 'Account created! Redirecting...');
-    } catch (error) {
-        showMessage('signup', 'error', formatAuthError(error));
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Create Account';
-    }
-});
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            // Success - onAuthStateChanged will handle redirect
+            showMessage('signup', 'success', 'Account created! Redirecting...');
+        } catch (error) {
+            showMessage('signup', 'error', formatAuthError(error));
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Create Account';
+        }
+    });
+}
 
 // Handle auth state changes - redirect after successful login/signup
 onAuthStateChanged(auth, (user) => {
@@ -150,4 +163,3 @@ onAuthStateChanged(auth, (user) => {
         }, 1500);
     }
 });
-
