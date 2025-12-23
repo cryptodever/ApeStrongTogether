@@ -2829,18 +2829,15 @@ body.generator-body > * {
 }
 
 /* Auth Gate Overlay Styles */
-.generator-container {
-    position: relative;
-}
-
 .auth-gate-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -2849,7 +2846,6 @@ body.generator-body > * {
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     padding: 2rem;
-    border-radius: 16px;
 }
 
 .auth-gate-overlay.show {
@@ -2858,32 +2854,33 @@ body.generator-body > * {
 }
 
 .auth-gate-content {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    padding: 3rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 2.5rem 3rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
     text-align: center;
-    max-width: 500px;
+    max-width: 420px;
     width: 100%;
 }
 
 .auth-gate-icon {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
-    filter: drop-shadow(0 0 20px rgba(74, 222, 128, 0.5));
+    font-size: 3.5rem;
+    margin-bottom: 1.25rem;
+    filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.6));
 }
 
 .auth-gate-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 600;
     color: #ffffff;
-    margin-bottom: 1rem;
+    margin-bottom: 0.875rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-shadow: 
         0 0 20px rgba(255, 215, 0, 0.5),
         0 0 40px rgba(74, 222, 128, 0.3),
@@ -2891,10 +2888,11 @@ body.generator-body > * {
 }
 
 .auth-gate-message {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #d0d0d0;
     margin-bottom: 2rem;
-    line-height: 1.6;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
 }
 
 .auth-gate-buttons {
@@ -2928,9 +2926,9 @@ body.generator-body > * {
 .generator-header h1,
 .generator-hero h1 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 5rem;
+    font-size: clamp(32px, 5vw, 64px);
     font-weight: 400;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     line-height: 1.1;
     margin-bottom: 1.5rem;
     color: #ffffff;
@@ -2970,12 +2968,32 @@ body.generator-body > * {
     margin: 0 auto;
 }
 
+/* Generator Page - Premium Layout */
+.generator-stage {
+    border-radius: 22px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
+    position: relative;
+}
+
+.generator-stage-inner {
+    padding: 28px;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .generator-container {
     display: grid;
     grid-template-columns: 400px 1fr;
     gap: 2rem;
     align-items: start;
     position: relative;
+    width: 100%;
 }
 
 /* Desktop: controls left, preview right */
@@ -2990,14 +3008,14 @@ body.generator-body > * {
 /* Desktop: ensure consistent stage height and centering */
 @media (min-width: 1025px) {
     .generator-container {
-        min-height: 520px;
+        min-height: auto;
     }
     
     .preview-section {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        min-height: 520px;
+        min-height: auto;
     }
 }
 
@@ -3421,6 +3439,16 @@ body.generator-body > * {
 
     .generator-shell {
         padding: 2rem 1rem 6rem;
+    }
+
+    .generator-stage {
+        border-radius: 16px;
+        margin: 0;
+    }
+
+    .generator-stage-inner {
+        padding: 1.5rem;
+        min-height: auto;
     }
 
     .generator-header,
