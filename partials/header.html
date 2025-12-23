@@ -576,12 +576,12 @@
             </div>
             
             <!-- Auth Controls -->
-            <div class="nav-auth" id="authLoggedOut" style="display: none;">
+            <div class="nav-auth hide" id="authLoggedOut">
                 <a href="/login/" class="nav-auth-btn nav-auth-btn-primary" id="headerLoginBtn">Log In</a>
                 <a href="/login/?mode=signup" class="nav-auth-btn nav-auth-btn-secondary" id="headerSignupBtn">Sign Up</a>
             </div>
             
-            <div class="nav-auth" id="authLoggedIn" style="display: none;">
+            <div class="nav-auth hide" id="authLoggedIn">
                 <div class="nav-auth-user">
                     Logged in as: <span id="userEmailDisplay"></span>
                 </div>
@@ -592,7 +592,7 @@
 </nav>
 
 <!-- Auth Modal -->
-<div class="auth-modal-backdrop" id="authModalBackdrop" style="display: none;">
+<div class="auth-modal-backdrop hide" id="authModalBackdrop">
     <div class="auth-modal" id="authModal">
         <button class="auth-modal-close" id="authModalClose" aria-label="Close">&times;</button>
         <div class="auth-modal-header">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com; frame-src https://www.google.com https://www.recaptcha.net;">
     <title>The Ape Roadmap 🗺️ | Apes Together Strong</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -598,7 +598,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(1)">
+                    <div class="phase-header" data-phase="1">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 1 — THE BEGINNING</h2>
                             <span class="phase-status-chip status-live">NOW ✅</span>
@@ -622,7 +622,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(2)">
+                    <div class="phase-header" data-phase="2">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 2 — Lore & Tools Drop 🔥</h2>
                             <span class="phase-status-chip status-cooking">COOKING 🔥</span>
@@ -646,7 +646,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(3)">
+                    <div class="phase-header" data-phase="3">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 3 — Community Chaos Mode 🍌</h2>
                             <span class="phase-status-chip status-chaos">CHAOS 🍌</span>
@@ -670,7 +670,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(4)">
+                    <div class="phase-header" data-phase="4">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 4 — The Ape Arcade 🎮</h2>
                             <span class="phase-status-chip status-arcade">ARCADE 🎮</span>
@@ -693,7 +693,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(5)">
+                    <div class="phase-header" data-phase="5">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 5 — The Ape Index 🧠</h2>
                             <span class="phase-status-chip status-index">INDEX 🧠</span>
@@ -716,7 +716,7 @@
             <div class="timeline-item">
                 <div class="timeline-node"></div>
                 <div class="timeline-content">
-                    <div class="phase-header" onclick="togglePhase(6)">
+                    <div class="phase-header" data-phase="6">
                         <div class="phase-title-wrapper">
                             <h2 class="phase-title">Phase 6 — If We Get There 🌀</h2>
                             <span class="phase-status-chip status-unknown">??? 🌀</span>
@@ -750,9 +750,6 @@
     </footer>
 
     <script type="module" src="/js/roadmap.js?v=1"></script>
-    <script type="module">
-        import { initRoadmap } from '/js/roadmap.js?v=1';
-        initRoadmap();
-    </script>
+    <script type="module" src="/js/roadmap-init.js?v=1"></script>
 </body>
 </html>
