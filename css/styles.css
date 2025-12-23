@@ -2144,10 +2144,14 @@ nav {
         nav {
             padding: 1rem;
             overflow-x: hidden;
+            overflow-y: visible;
+            position: relative;
         }
 
         .nav-container {
             flex-wrap: wrap;
+            position: relative;
+            overflow: visible;
         }
 
         .nav-menu-toggle {
@@ -2167,18 +2171,18 @@ nav {
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding: 1rem 0;
-            margin-top: 1rem;
+            margin-top: 0;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            z-index: 2000;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .nav-links[aria-expanded="false"] {
+            display: none;
         }
 
         .nav-links[aria-expanded="true"] {
             display: flex;
-            max-height: 600px;
-            opacity: 1;
         }
 
         .nav-links a {
@@ -2904,19 +2908,25 @@ body.generator-body > * {
 }
 
 .generator-page {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 4rem 2rem 6rem;
     position: relative;
 }
 
-.generator-header {
-    text-align: center;
-    margin-bottom: 6rem;
-    padding-top: 2rem;
+/* Generator Page - Layout */
+.generator-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
 }
 
-.generator-header h1 {
+.generator-header,
+.generator-hero {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-top: 0;
+}
+
+.generator-header h1,
+.generator-hero h1 {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 5rem;
     font-weight: 400;
@@ -2933,7 +2943,8 @@ body.generator-body > * {
     position: relative;
 }
 
-.generator-header h1::before {
+.generator-header h1::before,
+.generator-hero h1::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -2946,7 +2957,8 @@ body.generator-body > * {
     filter: blur(25px);
 }
 
-.generator-header p {
+.generator-header p,
+.generator-hero p {
     font-size: 1.3rem;
     color: #d0d0d0;
     font-style: italic;
@@ -2963,6 +2975,7 @@ body.generator-body > * {
     grid-template-columns: 400px 1fr;
     gap: 2rem;
     align-items: start;
+    position: relative;
 }
 
 /* Desktop: controls left, preview right */
@@ -2972,6 +2985,20 @@ body.generator-body > * {
 
 .generator-container > .preview-section {
     order: 2;
+}
+
+/* Desktop: ensure consistent stage height and centering */
+@media (min-width: 1025px) {
+    .generator-container {
+        min-height: 520px;
+    }
+    
+    .preview-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 520px;
+    }
 }
 
 .preview-section {
@@ -3392,16 +3419,18 @@ body.generator-body > * {
         width: 100%;
     }
 
-    .generator-page {
+    .generator-shell {
         padding: 2rem 1rem 6rem;
     }
 
-    .generator-header {
+    .generator-header,
+    .generator-hero {
         margin-bottom: 2rem;
         padding-top: 1rem;
     }
 
-    .generator-header h1 {
+    .generator-header h1,
+    .generator-hero h1 {
         font-size: clamp(1.75rem, 5vw, 2.5rem);
     }
 
@@ -4100,4 +4129,5 @@ body.verify-body > * {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
 }
+
 
