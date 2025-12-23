@@ -40,27 +40,38 @@ function initMobileMenu() {
     menuToggle.setAttribute('data-menu-initialized', 'true');
     
     function toggleMenu(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
         console.log('Mobile menu: Click event fired');
+        console.log('Mobile menu: Current navMenu.classList:', navMenu.classList.toString());
         
         // Use .is-open class as single source of truth
         const isOpen = navMenu.classList.contains('is-open');
         const newState = !isOpen;
+        
+        console.log(`Mobile menu: Current state isOpen=${isOpen}, newState=${newState}`);
         
         // Update .is-open class (single source of truth)
         if (newState) {
             navMenu.classList.add('is-open');
             document.body.classList.add('menu-open');
             menuToggle.setAttribute('aria-expanded', 'true');
+            console.log('Mobile menu: Added .is-open class');
         } else {
             navMenu.classList.remove('is-open');
             document.body.classList.remove('menu-open');
             menuToggle.setAttribute('aria-expanded', 'false');
+            console.log('Mobile menu: Removed .is-open class');
         }
         
-        console.log(`Mobile menu: Toggled to ${newState ? 'open' : 'closed'} (is-open: ${navMenu.classList.contains('is-open')})`);
+        // Verify the class was actually added/removed
+        const hasClass = navMenu.classList.contains('is-open');
+        console.log(`Mobile menu: After toggle, hasClass=${hasClass}`);
+        console.log(`Mobile menu: navMenu computed display:`, window.getComputedStyle(navMenu).display);
+        console.log(`Mobile menu: Toggled to ${newState ? 'open' : 'closed'} (is-open: ${hasClass})`);
     }
     
     function closeMenu() {
@@ -71,9 +82,11 @@ function initMobileMenu() {
     
     // Toggle menu on button click
     console.log('Mobile menu: Attaching click handler to button');
+    console.log('Mobile menu: Button element:', menuToggle);
+    console.log('Mobile menu: Menu element:', navMenu);
     menuToggle.addEventListener('click', toggleMenu, { passive: false });
     
-    console.log('Mobile menu: Initialization complete');
+    console.log('Mobile menu: Click handler attached, initialization complete');
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
