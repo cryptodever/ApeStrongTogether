@@ -4,6 +4,8 @@
  * Initializes authentication UI after injection
  */
 
+import { withBase } from './base-url.js';
+
 let headerLoaded = false;
 
 /**
@@ -17,10 +19,10 @@ async function loadHeader() {
     }
 
     try {
-        // Use import.meta.url to resolve path relative to this module, ensuring it works from any route depth
-        // header.js is in /js/, so we need to go up one level to root, then into /partials/
-        const headerUrl = new URL('../partials/header.html', import.meta.url);
-        const response = await fetch(headerUrl.href);
+        // Use withBase() to ensure path works from any route depth
+        // Paths starting with "/" are absolute from root, withBase() preserves them
+        const headerPath = withBase('/partials/header.html');
+        const response = await fetch(headerPath);
         if (!response.ok) {
             throw new Error(`Failed to load header: ${response.status}`);
         }

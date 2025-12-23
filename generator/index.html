@@ -50,7 +50,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background-color: #1a1a1a;
-            background-image: url('../background_homepage.png');
+            background-image: url('/background_homepage.png');
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
@@ -774,14 +774,14 @@
                     <div class="control-group" id="backgroundImageGroup">
                         <label class="control-label">Background Image</label>
                         <div class="background-options" id="backgroundOptions">
-                            <div class="bg-option selected" data-bg="../pfp_generator_images/pfp_bg1.png" style="background-image: url('../pfp_generator_images/pfp_bg1.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg2.png" style="background-image: url('../pfp_generator_images/pfp_bg2.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg3.png" style="background-image: url('../pfp_generator_images/pfp_bg3.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg4.png" style="background-image: url('../pfp_generator_images/pfp_bg4.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg5.png" style="background-image: url('../pfp_generator_images/pfp_bg5.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg6.png" style="background-image: url('../pfp_generator_images/pfp_bg6.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg7.png" style="background-image: url('../pfp_generator_images/pfp_bg7.png');"></div>
-                            <div class="bg-option" data-bg="../pfp_generator_images/pfp_bg8.png" style="background-image: url('../pfp_generator_images/pfp_bg8.png');"></div>
+                            <div class="bg-option selected" data-bg="/pfp_generator_images/pfp_bg1.png" style="background-image: url('/pfp_generator_images/pfp_bg1.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg2.png" style="background-image: url('/pfp_generator_images/pfp_bg2.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg3.png" style="background-image: url('/pfp_generator_images/pfp_bg3.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg4.png" style="background-image: url('/pfp_generator_images/pfp_bg4.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg5.png" style="background-image: url('/pfp_generator_images/pfp_bg5.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg6.png" style="background-image: url('/pfp_generator_images/pfp_bg6.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg7.png" style="background-image: url('/pfp_generator_images/pfp_bg7.png');"></div>
+                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg8.png" style="background-image: url('/pfp_generator_images/pfp_bg8.png');"></div>
                         </div>
                     </div>
                 </div>
@@ -893,9 +893,12 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         // ============================================
         // PROFILE PICTURE GENERATOR - PREMIUM VERSION
+        
+        // Import base URL helper for route-safe asset paths
+        const { withBase } = await import('../js/base-url.js');
         // ============================================
         // High-resolution export: 2048×2048 PNG
         // Preloaded assets, layer locking, randomization
@@ -1098,7 +1101,7 @@
             renderMode: 'layered', // 'layered' or 'baked'
             useBakedBackground: false, // In baked mode: true = use baked bg, false = use selected bg
             background: {
-                image: '../pfp_generator_images/pfp_bg1.png'
+                image: '/pfp_generator_images/pfp_bg1.png'
             },
             ape: {
                 type: 'ape1'
@@ -1180,22 +1183,19 @@
         // IMAGE LOADING & PRELOADING
         // ============================================
 
-        /**
-         * Resolve a relative path to an absolute URL, ensuring route safety
-         * @param {string} relativePath - Relative path like '../pfp_generator_images/pfp_bg1.png'
-         * @returns {string} - Absolute URL
-         */
-        function resolveAssetPath(relativePath) {
-            return new URL(relativePath, window.location.href).href;
-        }
-
         function loadImage(src) {
             return new Promise((resolve, reject) => {
-                // Resolve relative paths to absolute URLs for route safety
-                // Use original src as cache key, but resolve for actual loading
+                // Normalize path: if it's already absolute (starts with /), use withBase() to ensure route safety
+                // If it's relative (starts with ../), convert to absolute first, then use withBase()
+                let normalizedSrc = src;
+                if (src.startsWith('../')) {
+                    // Convert relative path to absolute from root
+                    // e.g., "../pfp_generator_images/bg1.png" -> "/pfp_generator_images/bg1.png"
+                    normalizedSrc = '/' + src.replace(/^\.\.\//, '');
+                }
                 const resolvedSrc = src.startsWith('http') || src.startsWith('data:') 
                     ? src 
-                    : resolveAssetPath(src);
+                    : withBase(normalizedSrc);
                 
                 if (imageCache.backgrounds[src] || imageCache.apes[src]) {
                     resolve(imageCache.backgrounds[src] || imageCache.apes[src]);
@@ -1241,9 +1241,9 @@
 
         function getApeImagePath(apeType) {
             // New naming convention: ape_pfp_1.png, ape_pfp_2.png, etc.
-            // Return relative path - will be resolved in loadImage() for route safety
+            // Return absolute path from root - will be resolved with withBase() in loadImage()
             const apeNumber = apeType.slice(-1); // Extract number from 'ape1', 'ape2', etc.
-            return `../pfp_generator_apes/ape_pfp_${apeNumber}.png`;
+            return `/pfp_generator_apes/ape_pfp_${apeNumber}.png`;
         }
 
         async function preloadAllImages() {
@@ -1252,10 +1252,9 @@
             
             const imagesToLoad = [];
             
-            // Preload backgrounds
-            // Paths will be resolved in loadImage() for route safety
+            // Preload backgrounds - use absolute paths from root
             for (let i = 1; i <= 8; i++) {
-                imagesToLoad.push(loadImage(`../pfp_generator_images/pfp_bg${i}.png`));
+                imagesToLoad.push(loadImage(`/pfp_generator_images/pfp_bg${i}.png`));
             }
             
             // Preload all ape images (7 apes)
@@ -2144,7 +2143,7 @@
         document.getElementById('resetBtn').addEventListener('click', () => {
             // Reset state
             state.renderMode = 'layered';
-            state.background.image = '../pfp_generator_images/pfp_bg1.png';
+            state.background.image = '/pfp_generator_images/pfp_bg1.png';
             state.ape.type = 'ape1';
             state.accessories.hat = 'none';
             state.accessories.glasses = 'none';
