@@ -2244,9 +2244,8 @@ nav {
    Roadmap Page Styles (extracted from roadmap/index.html)
    ============================================ */
 
-/* Roadmap page body styles - scoped to .roadmap-page parent */
-body.roadmap-body,
-body:has(.roadmap-page) {
+/* Roadmap page body styles - scoped to .roadmap-body class */
+body.roadmap-body {
     font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background-color: #1a1a1a;
     background-image: url('/background_homepage.png');
@@ -2261,8 +2260,7 @@ body:has(.roadmap-page) {
     position: relative;
 }
 
-body.roadmap-body::before,
-body:has(.roadmap-page)::before {
+body.roadmap-body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -2278,8 +2276,7 @@ body:has(.roadmap-page)::before {
     z-index: 0;
 }
 
-body.roadmap-body::after,
-body:has(.roadmap-page)::after {
+body.roadmap-body::after {
     content: '';
     position: fixed;
     top: 0;
@@ -2292,8 +2289,7 @@ body:has(.roadmap-page)::after {
     opacity: 0.3;
 }
 
-body.roadmap-body > *,
-body:has(.roadmap-page) > * {
+body.roadmap-body > * {
     position: relative;
     z-index: 1;
 }
