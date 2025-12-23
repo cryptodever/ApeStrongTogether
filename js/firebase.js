@@ -19,7 +19,7 @@
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { initializeFirestore, setLogLevel } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
 // ============================================
@@ -62,10 +62,14 @@ if (existingApps.length > 0) {
 // Initialize Firebase services
 export const auth = getAuth(app);
 
-// Initialize Firestore with long polling for better offline/network reliability
+// Enable Firestore SDK debug logs
+setLogLevel("debug");
+
+// Initialize Firestore with forced long polling for better offline/network reliability
 export const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
-    useFetchStreams: false
+    useFetchStreams: false,
+    experimentalLongPollingOptions: { timeoutSeconds: 10 }
 });
 export const storage = getStorage(app);
 
@@ -83,6 +87,8 @@ export const storage = getStorage(app);
 //
 // This ensures emulators NEVER run on github.io or production domains.
 
-// Export app instance and emulator guard for reference
+// Export app instance, emulator guard, and config values for reference
 export { app, isLocalhost };
+export const apiKey = firebaseConfig.apiKey;
+export const projectId = firebaseConfig.projectId;
 
