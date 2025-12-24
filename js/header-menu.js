@@ -53,22 +53,17 @@ function createMobileMenuOverlay() {
     const linksSection = document.createElement('div');
     linksSection.className = 'mobile-menu-links';
     
-    // Add APE HUB as first link
-    const homeLink = document.createElement('a');
-    homeLink.href = '/';
-    homeLink.className = 'mobile-menu-link';
-    homeLink.textContent = 'APE HUB';
-    linksSection.appendChild(homeLink);
-    
-    // Add other nav links
+    // Add nav links (excluding APE HUB since it's already in the header)
     if (originalMenu) {
         const navLinks = originalMenu.querySelectorAll('a:not(.nav-social-icon):not(.nav-auth-btn)');
         navLinks.forEach(link => {
-            if (link.textContent.trim() !== 'APE HUB') {
+            // Skip APE HUB link since it's already in the header brand
+            const linkText = link.textContent.trim();
+            if (linkText !== 'APE HUB') {
                 const menuLink = document.createElement('a');
                 menuLink.href = link.href;
                 menuLink.className = 'mobile-menu-link';
-                menuLink.textContent = link.textContent.trim();
+                menuLink.textContent = linkText;
                 if (link.target) menuLink.target = link.target;
                 if (link.rel) menuLink.rel = link.rel;
                 linksSection.appendChild(menuLink);
