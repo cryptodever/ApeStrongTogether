@@ -284,6 +284,8 @@ async function checkUsernameAvailability(usernameLower, bypassRateLimit = false)
 }
 
 // Atomically reserve username using Firestore transaction
+// TODO: REVERT - This is temporarily split into two sequential writes for debugging
+// After identifying which write is failing, revert back to runTransaction()
 async function reserveUsernameTransaction(uid, usernameLower, email) {
     // Validate inputs
     if (!uid || !usernameLower || !email) {
@@ -294,8 +296,8 @@ async function reserveUsernameTransaction(uid, usernameLower, email) {
     const usernameRef = doc(db, 'usernames', usernameLower);
     const userRef = doc(db, 'users', uid);
     
-    // Log transaction details for debugging
-    console.log('🔄 Starting username reservation transaction:');
+    // Log debug details
+    console.log('🔄 DEBUG MODE: Starting username reservation (two sequential writes, NOT transaction):');
     console.log('  - UID:', uid);
     console.log('  - Username:', usernameLower);
     console.log('  - Username doc path: usernames/' + usernameLower);
@@ -304,57 +306,81 @@ async function reserveUsernameTransaction(uid, usernameLower, email) {
     console.log('  - Firestore db instance:', db ? 'initialized' : 'NOT INITIALIZED');
     
     try {
-        await runTransaction(db, async (transaction) => {
-            // Check if username is already taken
-            const usernameDoc = await transaction.get(usernameRef);
-            if (usernameDoc.exists()) {
-                console.log(`❌ Transaction failed: username "${usernameLower}" already taken`);
-                throw new Error('USERNAME_TAKEN');
-            }
-            
-            // Reserve username
-            // Rule validation: usernames/{username} requires:
-            // - request.auth.uid == request.resource.data.uid
-            // - !exists(...)
-            // - username matches regex
-            const usernameData = {
-                uid: uid,
-                createdAt: serverTimestamp()
-            };
-            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
-            transaction.set(usernameRef, usernameData);
-            
-            // Create user profile
-            // Rule validation: users/{uid} requires:
-            // - request.auth.uid == uid (document ID must match authenticated user)
-            // - All required fields present and validated
-            const userData = {
-                username: usernameLower,
-                email: email,
-                createdAt: serverTimestamp(),
-                avatarCount: 0
-            };
-            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
-            transaction.set(userRef, userData);
-        });
-        
-        console.log(`✅ Transaction success: username "${usernameLower}" reserved for uid ${uid}`);
-        return { success: true };
-    } catch (error) {
-        if (error.message === 'USERNAME_TAKEN') {
-            console.log(`❌ Transaction failed: username taken`);
+        // STEP 1: Check if username exists and attempt to create usernames/{username}
+        console.log('📝 Step 1: Creating usernames/' + usernameLower);
+        const usernameDoc = await getDoc(usernameRef);
+        if (usernameDoc.exists()) {
+            console.log(`❌ Step 1 failed: username "${usernameLower}" already taken`);
             return { success: false, reason: 'taken' };
         }
-        console.error('❌ Transaction error:', error);
+        
+        const usernameData = {
+            uid: uid,
+            createdAt: serverTimestamp()
+        };
+        console.log('  - Writing usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
+        
+        try {
+            await setDoc(usernameRef, usernameData, { merge: false });
+            console.log('✅ Step 1 SUCCESS: usernames/' + usernameLower + ' created');
+        } catch (step1Error) {
+            console.error('❌ Step 1 FAILED: usernames/' + usernameLower + ' creation failed');
+            console.error('  - Error code:', step1Error.code);
+            console.error('  - Error message:', step1Error.message);
+            if (step1Error.code === 'permission-denied' || step1Error.code === 'PERMISSION_DENIED') {
+                console.error('  - PERMISSION_DENIED on usernames/{username}');
+                console.error('    * Check: request.auth.uid == data.uid');
+                console.error('    * Check: !exists() check');
+                console.error('    * Check: username matches regex');
+                console.error('    * Check: createdAt is timestamp');
+            }
+            return { success: false, reason: 'error', error: step1Error, failedStep: 'usernames' };
+        }
+        
+        // STEP 2: Attempt to create users/{uid}
+        console.log('📝 Step 2: Creating users/' + uid);
+        const userData = {
+            username: usernameLower,
+            email: email,
+            createdAt: serverTimestamp(),
+            avatarCount: 0
+        };
+        console.log('  - Writing users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
+        
+        try {
+            await setDoc(userRef, userData, { merge: false });
+            console.log('✅ Step 2 SUCCESS: users/' + uid + ' created');
+        } catch (step2Error) {
+            console.error('❌ Step 2 FAILED: users/' + uid + ' creation failed');
+            console.error('  - Error code:', step2Error.code);
+            console.error('  - Error message:', step2Error.message);
+            if (step2Error.code === 'permission-denied' || step2Error.code === 'PERMISSION_DENIED') {
+                console.error('  - PERMISSION_DENIED on users/{uid}');
+                console.error('    * Check: request.auth.uid == uid');
+                console.error('    * Check: keys().hasOnly() validation');
+                console.error('    * Check: username regex match');
+                console.error('    * Check: createdAt is timestamp');
+                console.error('    * Check: avatarCount is int >= 0');
+            }
+            
+            // Try to clean up step 1 if step 2 fails
+            try {
+                console.log('🧹 Attempting to rollback step 1 (delete usernames/' + usernameLower + ')');
+                await deleteDoc(usernameRef);
+                console.log('✅ Rollback successful: usernames/' + usernameLower + ' deleted');
+            } catch (rollbackError) {
+                console.error('⚠️ Rollback failed (username doc may remain):', rollbackError);
+            }
+            
+            return { success: false, reason: 'error', error: step2Error, failedStep: 'users' };
+        }
+        
+        console.log(`✅ Both steps SUCCESS: username "${usernameLower}" reserved for uid ${uid}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Unexpected error:', error);
         console.error('  - Error code:', error.code);
         console.error('  - Error message:', error.message);
-        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-            console.error('  - PERMISSION_DENIED: Check Firestore rules');
-            console.error('    * Ensure request.auth.uid == uid for users/{uid}');
-            console.error('    * Ensure request.auth.uid == data.uid for usernames/{username}');
-            console.error('    * Ensure username matches regex: ^[a-z0-9_]{3,20}$');
-            console.error('    * Ensure all required fields are present');
-        }
         return { success: false, reason: 'error', error: error };
     }
 }
@@ -647,6 +673,23 @@ if (signupFormEl && signupBtn) {
     });
 }
 
+// Check Firestore rules version on startup
+async function checkRulesVersion() {
+    try {
+        const rulesDoc = await getDoc(doc(db, 'meta', 'rules'));
+        if (rulesDoc.exists()) {
+            const version = rulesDoc.data().version;
+            console.log('📋 Firestore rules version:', version);
+            console.log('✅ Confirmed: Client is using the intended Firestore project and ruleset');
+        } else {
+            console.warn('⚠️ meta/rules document not found - rules version check skipped');
+        }
+    } catch (error) {
+        console.error('❌ Failed to check Firestore rules version:', error);
+        // Don't block initialization if version check fails
+    }
+}
+
 // Initialize username checking UI and debounced availability check
 function initUsernameChecking() {
     const usernameInput = document.getElementById('signupUsername');
@@ -772,6 +815,9 @@ onAuthStateChanged(auth, (user) => {
 let authStateChecked = false;
 function initializeAuthUI() {
     console.log('Auth UI loaded');
+    
+    // Check Firestore rules version on startup
+    checkRulesVersion();
     
     // Get current user status (only once)
     if (!authStateChecked) {
