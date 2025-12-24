@@ -6,7 +6,7 @@ service cloud.firestore {
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
     function isValidUsername(u) { return u.matches('^[a-z0-9_]{3,20}$'); }
 
-    // Allow public read of rules version doc
+    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
       allow write: if false;
@@ -17,15 +17,16 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
 
-      // NOTE: createdAt may be applied via serverTimestamp() transform and may not appear in request.resource.data
+      // createdAt is required and must be a timestamp (set via Timestamp.now())
       allow create: if isSignedIn()
         && isValidUsername(username)
         && request.resource.data.keys().hasOnly(['uid','createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
+        && request.resource.data.uid is string
+        && request.resource.data.createdAt is timestamp
         && !exists(/databases/$(database)/documents/usernames/$(username));
 
-      // Allow user to delete their own claim (for rollback/cleanup)
+      // Allow rollback/cleanup for own claim
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
 
       allow update: if false;
@@ -36,7 +37,7 @@ service cloud.firestore {
       allow get: if isOwner(uid);
       allow list: if false;
 
-      // NOTE: createdAt may be applied via serverTimestamp() transform and may not appear in request.resource.data
+      // createdAt is required and must be a timestamp (set via Timestamp.now())
       allow create: if isOwner(uid)
         && request.resource.data.keys().hasOnly(['username','email','avatarCount','createdAt'])
         && request.resource.data.username is string
@@ -44,9 +45,8 @@ service cloud.firestore {
         && request.resource.data.email is string
         && request.resource.data.avatarCount is int
         && request.resource.data.avatarCount >= 0
-        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp);
+        && request.resource.data.createdAt is timestamp;
 
-      // Lock everything for now (you can open update later)
       allow update, delete: if false;
     }
 
