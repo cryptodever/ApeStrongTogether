@@ -3452,10 +3452,12 @@ body.generator-body > * {
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         display: flex !important;
-        align-items: center !important;
+        align-items: flex-start !important;
         justify-content: center !important;
-        padding: 2rem;
+        padding: 3rem 2rem 2rem 2rem;
+        padding-top: 4rem !important;
         margin: 0;
+        overflow-y: auto;
     }
 
     .auth-gate-content {
@@ -3601,7 +3603,8 @@ body.generator-body > * {
 
     /* Enhanced auth gate on wide desktop */
     .auth-gate-overlay {
-        padding: 2.5rem;
+        padding: 4rem 2.5rem 2.5rem 2.5rem;
+        padding-top: 5rem !important;
     }
 
     .auth-gate-content {
