@@ -19,7 +19,7 @@
 
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { initializeFirestore, setLogLevel } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
 // ============================================
@@ -39,13 +39,8 @@ const firebaseConfig = {
 console.log('🔥 Firebase initialized with config:', {
   projectId: firebaseConfig.projectId,
   appId: firebaseConfig.appId,
-  authDomain: firebaseConfig.authDomain,
-  apiKeyLast6: firebaseConfig.apiKey.slice(-6)
+  authDomain: firebaseConfig.authDomain
 });
-console.log('📋 PROJECT VERIFICATION:');
-console.log('  - projectId:', firebaseConfig.projectId);
-console.log('  - appId:', firebaseConfig.appId);
-console.log('  - apiKey (last 6 chars):', firebaseConfig.apiKey.slice(-6));
 
 // ============================================
 // EMULATOR SAFETY GUARD
@@ -231,11 +226,8 @@ appCheckPromise.then(() => {
         console.warn('   Check: Firebase Console → App Check → Firestore enforcement status');
     }
 }).catch(() => {
-    console.warn('⚠️  App Check initialization failed');
+    // Silent fail - App Check is optional
 });
-
-// Enable Firestore SDK debug logs
-setLogLevel("debug");
 
 // Initialize Firestore with forced long polling for better offline/network reliability
 // IMPORTANT: App Check should be initialized before this (done above)
