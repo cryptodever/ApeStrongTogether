@@ -16,7 +16,7 @@ import {
     doc,
     getDoc,
     setDoc,
-    serverTimestamp,
+    Timestamp,
     deleteDoc,
     runTransaction
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
@@ -315,19 +315,19 @@ async function reserveUsernameTransaction(uid, usernameLower, email) {
             // Reserve username
             const usernameData = {
                 uid: uid,
-                createdAt: serverTimestamp()
+                createdAt: Timestamp.now()
             };
-            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
+            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'Timestamp.now()' });
             transaction.set(usernameRef, usernameData);
             
             // Create user profile
             const userData = {
                 username: usernameLower,
                 email: email,
-                createdAt: serverTimestamp(),
+                createdAt: Timestamp.now(),
                 avatarCount: 0
             };
-            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
+            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'Timestamp.now()', avatarCount: 0 });
             transaction.set(userRef, userData);
         });
         
