@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // DEBUG VERSION A: ALLOW USERNAMES CREATE ONLY
+    // ============================================
+    // This version ONLY allows usernames/{username} creates
+    // users/{uid} creates will be denied to isolate the issue
+    // USE THIS TO TEST: If transaction fails, the issue is with usernames rule
+    // USE THIS TO TEST: If transaction partially succeeds (username doc created), issue is with users rule
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    match /users/{uid} {
+      // Allow read of own user document
+      allow get: if request.auth != null && request.auth.uid == uid;
+      
+      // DEBUG: DENY CREATE to isolate usernames rule
+      allow create: if false;
+      
+      // Disallow update and delete
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // USERNAMES COLLECTION
+    // ============================================
+    match /usernames/{username} {
+      // Allow public read for username availability checks
+      allow get: if true;
+      
+      // Allow create - THIS IS THE ONLY CREATE ALLOWED IN DEBUG A
+      allow create: if request.auth != null
+        && !exists(/databases/$(database)/documents/usernames/$(username))
+        && username.matches('^[a-z0-9_]{3,20}$')
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt is timestamp;
+      
+      // Disallow update - usernames are immutable once created
+      allow update: if false;
+      
+      // Disallow delete
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // DENY ALL OTHER ACCESS
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

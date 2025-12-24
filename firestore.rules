@@ -5,112 +5,91 @@ service cloud.firestore {
     // ============================================
     // USERS COLLECTION
     // ============================================
-    // Users can only read/write their own document
-    // Prevents listing all users (using 'get' instead of 'read')
     match /users/{uid} {
-      // Allow authenticated users to read their own document
+      // Allow read of own user document
       allow get: if request.auth != null && request.auth.uid == uid;
       
-      // Allow create only when:
-      // 1. User is authenticated
-      // 2. Document ID matches authenticated user's UID
-      // 3. Document fields pass validation
-      allow create: if request.auth != null 
-        && request.auth.uid == uid
-        && validateUserDocument(request.resource.data);
+      // Disallow list queries
+      allow list: if false;
       
-      // Allow update only when:
-      // 1. User is authenticated
-      // 2. Document ID matches authenticated user's UID
-      // 3. Document fields pass validation (on update, existing fields must be preserved or valid)
-      allow update: if request.auth != null 
+      // Allow create only when all conditions are met
+      // Required fields: username, email, avatarCount, createdAt
+      // Optional fields: photoURL, bio, lastLoginAt (validated if present, not required)
+      allow create: if request.auth != null
         && request.auth.uid == uid
-        && validateUserDocument(request.resource.data);
+        && request.resource.data.createdAt is timestamp
+        // Required fields must be present
+        && request.resource.data.keys().hasAll(['username', 'email', 'avatarCount', 'createdAt'])
+        // Validate required fields
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
+        && request.resource.data.email is string
+        && request.resource.data.avatarCount is int
+        && request.resource.data.avatarCount >= 0
+        // Validate optional fields if present (lastLoginAt is optional on create)
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
+        && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
+        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp)
+        // Ensure only allowed keys are present (4 required + up to 3 optional = max 7 keys)
+        && request.resource.data.keys().size() >= 4
+        && request.resource.data.keys().size() <= 7;
       
-      // Disallow delete (users should use account deletion flow)
+      // Allow update with strict constraints
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && // Username cannot change
+        request.resource.data.username == resource.data.username
+        && // createdAt cannot change
+        request.resource.data.createdAt == resource.data.createdAt
+        && // Email cannot change
+        request.resource.data.email == resource.data.email
+        && // avatarCount can only increase or stay same (never decrease)
+        request.resource.data.avatarCount is int
+        && request.resource.data.avatarCount >= resource.data.avatarCount
+        && request.resource.data.avatarCount >= 0
+        && // Validate all fields that are present
+        request.resource.data.username is string
+        && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
+        && request.resource.data.email is string
+        && request.resource.data.createdAt is timestamp
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
+        && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
+        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp)
+        && // Ensure no new fields are added beyond allowed set
+        request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt', 'photoURL', 'bio', 'lastLoginAt']);
+      
+      // Disallow delete
       allow delete: if false;
     }
     
     // ============================================
     // USERNAMES COLLECTION
     // ============================================
-    // Stores username reservations for uniqueness checking
     match /usernames/{username} {
-      // Allow public get for username availability checks
-      // Using 'get' instead of 'read' prevents list queries (browsing all usernames)
+      // Allow public read for username availability checks
       allow get: if true;
       
-      // Allow create only when:
-      // 1. User is authenticated
-      // 2. Document doesn't already exist (prevents duplicate usernames)
-      // 3. Stored UID matches authenticated user's UID
-      // 4. Username format is valid (lowercase alphanumeric + underscore, 3-20 chars)
-      // 5. Document fields pass validation
-      // Note: The !exists() check ensures username can only be claimed once
+      // Allow create only when all conditions are met
+      // IMPORTANT: Order matters - validate createdAt is timestamp BEFORE hasOnly() check
+      // serverTimestamp() sentinels (REQUEST_TIME) are recognized as timestamp type in rules
       allow create: if request.auth != null
         && !exists(/databases/$(database)/documents/usernames/$(username))
-        && request.resource.data.uid == request.auth.uid
         && username.matches('^[a-z0-9_]{3,20}$')
-        && validateUsernameDocument(request.resource.data);
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid;
       
-      // Deny updates - usernames are immutable once created
-      // This ensures username reservations cannot be changed or transferred
+      // Disallow update - usernames are immutable once created
       allow update: if false;
       
-      // Deny delete - username reservations are permanent (or handled by Cloud Function)
+      // Disallow delete - username reservations are permanent (or handled by Cloud Function)
       allow delete: if false;
-    }
-    
-    // ============================================
-    // VALIDATION FUNCTIONS
-    // ============================================
-    
-    // Validate user document schema
-    // Ensures all required fields are present with correct types
-    // IMPORTANT: serverTimestamp() sentinels are treated as timestamp type in rules
-    function validateUserDocument(data) {
-      // Check that all required fields are present (including createdAt with serverTimestamp() sentinel)
-      return data.keys().hasAll(['username', 'email', 'createdAt', 'avatarCount'])
-        // Validate username: string, lowercase alphanumeric + underscore, 3-20 chars
-        && data.username is string
-        && data.username.matches('^[a-z0-9_]{3,20}$')
-        // Validate email: string, basic email format
-        && data.email is string
-        && data.email.matches('^[^@]+@[^@]+\\.[^@]+$')
-        // Validate createdAt: must be a timestamp type
-        // serverTimestamp() sentinels are automatically recognized as timestamp type
-        // Do NOT use equality checks like == request.time which would fail on sentinels
-        && data.createdAt is timestamp
-        // Validate avatarCount: integer >= 0
-        && data.avatarCount is int
-        && data.avatarCount >= 0
-        // Ensure no extra fields beyond allowed set
-        // Note: hasOnly() works correctly with serverTimestamp() sentinels
-        && data.keys().hasOnly(['username', 'email', 'createdAt', 'avatarCount']);
-    }
-    
-    // Validate username document schema
-    // Ensures username reservation documents contain only required fields
-    // IMPORTANT: serverTimestamp() sentinels are treated as timestamp type in rules
-    function validateUsernameDocument(data) {
-      // Check that all required fields are present (including createdAt with serverTimestamp() sentinel)
-      return data.keys().hasAll(['uid', 'createdAt'])
-        // Validate uid: must be a non-empty string
-        && data.uid is string
-        && data.uid.size() > 0
-        // Validate createdAt: must be a timestamp type
-        // serverTimestamp() sentinels are automatically recognized as timestamp type
-        // Do NOT use equality checks like == request.time which would fail on sentinels
-        && data.createdAt is timestamp
-        // Ensure no extra fields beyond allowed set
-        // Note: hasOnly() works correctly with serverTimestamp() sentinels
-        && data.keys().hasOnly(['uid', 'createdAt']);
     }
     
     // ============================================
     // DENY ALL OTHER ACCESS
     // ============================================
-    // Default deny rule - any collection/document not explicitly allowed above is denied
     match /{document=**} {
       allow read, write: if false;
     }
