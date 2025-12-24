@@ -285,41 +285,76 @@ async function checkUsernameAvailability(usernameLower, bypassRateLimit = false)
 
 // Atomically reserve username using Firestore transaction
 async function reserveUsernameTransaction(uid, usernameLower, email) {
+    // Validate inputs
+    if (!uid || !usernameLower || !email) {
+        console.error('❌ reserveUsernameTransaction: Missing required parameters', { uid, usernameLower, email });
+        return { success: false, reason: 'error', error: new Error('Missing required parameters') };
+    }
+    
     const usernameRef = doc(db, 'usernames', usernameLower);
     const userRef = doc(db, 'users', uid);
+    
+    // Log transaction details for debugging
+    console.log('🔄 Starting username reservation transaction:');
+    console.log('  - UID:', uid);
+    console.log('  - Username:', usernameLower);
+    console.log('  - Username doc path: usernames/' + usernameLower);
+    console.log('  - User doc path: users/' + uid);
+    console.log('  - Email:', email);
+    console.log('  - Firestore db instance:', db ? 'initialized' : 'NOT INITIALIZED');
     
     try {
         await runTransaction(db, async (transaction) => {
             // Check if username is already taken
             const usernameDoc = await transaction.get(usernameRef);
             if (usernameDoc.exists()) {
-                console.log(`Transaction failed: username "${usernameLower}" already taken`);
+                console.log(`❌ Transaction failed: username "${usernameLower}" already taken`);
                 throw new Error('USERNAME_TAKEN');
             }
             
             // Reserve username
-            transaction.set(usernameRef, {
+            // Rule validation: usernames/{username} requires:
+            // - request.auth.uid == request.resource.data.uid
+            // - !exists(...)
+            // - username matches regex
+            const usernameData = {
                 uid: uid,
                 createdAt: serverTimestamp()
-            });
+            };
+            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
+            transaction.set(usernameRef, usernameData);
             
             // Create user profile
-            transaction.set(userRef, {
+            // Rule validation: users/{uid} requires:
+            // - request.auth.uid == uid (document ID must match authenticated user)
+            // - All required fields present and validated
+            const userData = {
                 username: usernameLower,
                 email: email,
                 createdAt: serverTimestamp(),
                 avatarCount: 0
-            });
+            };
+            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
+            transaction.set(userRef, userData);
         });
         
-        console.log(`Transaction success: username "${usernameLower}" reserved for uid ${uid}`);
+        console.log(`✅ Transaction success: username "${usernameLower}" reserved for uid ${uid}`);
         return { success: true };
     } catch (error) {
         if (error.message === 'USERNAME_TAKEN') {
-            console.log(`Transaction failed: username taken`);
+            console.log(`❌ Transaction failed: username taken`);
             return { success: false, reason: 'taken' };
         }
-        console.error('Transaction error:', error);
+        console.error('❌ Transaction error:', error);
+        console.error('  - Error code:', error.code);
+        console.error('  - Error message:', error.message);
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            console.error('  - PERMISSION_DENIED: Check Firestore rules');
+            console.error('    * Ensure request.auth.uid == uid for users/{uid}');
+            console.error('    * Ensure request.auth.uid == data.uid for usernames/{username}');
+            console.error('    * Ensure username matches regex: ^[a-z0-9_]{3,20}$');
+            console.error('    * Ensure all required fields are present');
+        }
         return { success: false, reason: 'error', error: error };
     }
 }
@@ -508,13 +543,33 @@ if (signupFormEl && signupBtn) {
             }
 
             // Step 1: Create auth user
-            console.log('Creating auth user...');
+            // IMPORTANT: Fully await user creation before proceeding
+            console.log('🔐 Step 1: Creating Firebase Auth user...');
+            console.log('  - Email:', email);
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            
+            // Extract UID from credential immediately (do NOT use auth.currentUser)
             const uid = userCredential.user.uid;
-            console.log('Auth user created:', uid);
+            console.log('✅ Auth user created successfully');
+            console.log('  - UID from credential:', uid);
+            console.log('  - User email:', userCredential.user.email);
+            console.log('  - Email verified:', userCredential.user.emailVerified);
+            
+            // Verify Firestore is initialized
+            if (!db) {
+                console.error('❌ Firestore db is not initialized!');
+                throw new Error('Firestore not initialized');
+            }
+            console.log('  - Firestore db initialized:', !!db);
+            
+            // Brief pause to ensure auth state propagates to Firestore rules
+            // This ensures request.auth is available when transaction runs
+            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log('  - Auth state propagation delay completed');
 
             // Step 2: Atomically reserve username and create user profile using transaction
-            console.log('Reserving username with transaction...');
+            // IMPORTANT: Use uid from credential, NOT auth.currentUser
+            console.log('📝 Step 2: Reserving username and creating user profile...');
             const transactionResult = await reserveUsernameTransaction(uid, usernameLower, email);
             
             if (!transactionResult.success) {
