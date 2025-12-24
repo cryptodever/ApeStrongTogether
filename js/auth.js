@@ -4,13 +4,14 @@
  * Works with header partial (modal HTML already in DOM)
  */
 
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 let authStateListener = null;
 let eventsSetup = false;
@@ -289,7 +290,7 @@ export function openAuthModal(mode = 'login') {
 // Also expose globally for easy access from overlay buttons
 window.openAuthModal = openAuthModal;
 
-function updateHeaderUI(user) {
+async function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
     const userEmailEl = document.getElementById('userEmailDisplay');
@@ -302,7 +303,23 @@ function updateHeaderUI(user) {
         if (authLoggedIn) {
             authLoggedIn.classList.remove('hide');
             authLoggedIn.classList.add('show-flex');
+            
+            // Show email initially (fallback)
             if (userEmailEl) userEmailEl.textContent = user.email;
+            
+            // Fetch username from Firestore user profile and update if available
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.username && userEmailEl) {
+                        userEmailEl.textContent = userData.username;
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch username, using email:', error);
+                // Email is already displayed, so no need to update
+            }
         }
     } else {
         if (authLoggedIn) {
