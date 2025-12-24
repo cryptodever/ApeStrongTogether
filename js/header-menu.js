@@ -25,11 +25,120 @@ function createMobileMenuOverlay() {
     mobileMenuPanel = document.createElement('div');
     mobileMenuPanel.className = 'mobile-menu-panel';
     
-    // Clone menu content from original nav-links
+    // Get original menu for content
     const originalMenu = document.getElementById('navMenu');
+    const authLoggedOut = document.getElementById('authLoggedOut');
+    const authLoggedIn = document.getElementById('authLoggedIn');
+    
+    // Build panel structure
+    // Header row: APE HUB + Close button
+    const header = document.createElement('div');
+    header.className = 'mobile-menu-header';
+    
+    const brand = document.createElement('a');
+    brand.href = '/';
+    brand.className = 'mobile-menu-brand';
+    brand.textContent = 'APE HUB';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'mobile-menu-close';
+    closeBtn.setAttribute('aria-label', 'Close menu');
+    closeBtn.innerHTML = '&times;';
+    
+    header.appendChild(brand);
+    header.appendChild(closeBtn);
+    
+    // Nav links section
+    const linksSection = document.createElement('div');
+    linksSection.className = 'mobile-menu-links';
+    
+    // Add APE HUB as first link
+    const homeLink = document.createElement('a');
+    homeLink.href = '/';
+    homeLink.className = 'mobile-menu-link';
+    homeLink.textContent = 'APE HUB';
+    linksSection.appendChild(homeLink);
+    
+    // Add other nav links
     if (originalMenu) {
-        mobileMenuPanel.innerHTML = originalMenu.innerHTML;
+        const navLinks = originalMenu.querySelectorAll('a:not(.nav-social-icon):not(.nav-auth-btn)');
+        navLinks.forEach(link => {
+            if (link.textContent.trim() !== 'APE HUB') {
+                const menuLink = document.createElement('a');
+                menuLink.href = link.href;
+                menuLink.className = 'mobile-menu-link';
+                menuLink.textContent = link.textContent.trim();
+                if (link.target) menuLink.target = link.target;
+                if (link.rel) menuLink.rel = link.rel;
+                linksSection.appendChild(menuLink);
+            }
+        });
     }
+    
+    // Social icons section (if exists)
+    const socialsContainer = originalMenu?.querySelector('.nav-socials');
+    if (socialsContainer && socialsContainer.innerHTML.trim()) {
+        const socialsWrapper = document.createElement('div');
+        socialsWrapper.className = 'mobile-menu-socials';
+        socialsWrapper.innerHTML = socialsContainer.innerHTML;
+        linksSection.appendChild(socialsWrapper);
+    }
+    
+    // Auth section at bottom
+    const actionsSection = document.createElement('div');
+    actionsSection.className = 'mobile-menu-actions';
+    
+    // Determine which auth section to show
+    const isLoggedIn = authLoggedIn && !authLoggedIn.classList.contains('hide');
+    const isLoggedOut = authLoggedOut && !authLoggedOut.classList.contains('hide');
+    
+    if (isLoggedOut && authLoggedOut) {
+        // Logged out: show Log In + Sign Up buttons
+        const loginBtn = authLoggedOut.querySelector('#headerLoginBtn');
+        const signupBtn = authLoggedOut.querySelector('#headerSignupBtn');
+        
+        if (loginBtn) {
+            const btn = document.createElement('a');
+            btn.href = loginBtn.href;
+            btn.className = 'mobile-menu-btn mobile-menu-btn-primary';
+            btn.textContent = loginBtn.textContent.trim();
+            actionsSection.appendChild(btn);
+        }
+        
+        if (signupBtn) {
+            const btn = document.createElement('a');
+            btn.href = signupBtn.href;
+            btn.className = 'mobile-menu-btn mobile-menu-btn-secondary';
+            btn.textContent = signupBtn.textContent.trim();
+            actionsSection.appendChild(btn);
+        }
+    } else if (isLoggedIn && authLoggedIn) {
+        // Logged in: show user info + Log Out button
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const logoutBtn = authLoggedIn.querySelector('#headerLogoutBtn');
+        
+        if (userEmailDisplay) {
+            const userInfo = document.createElement('div');
+            userInfo.className = 'mobile-menu-user';
+            userInfo.textContent = `Logged in as: ${userEmailDisplay.textContent}`;
+            actionsSection.appendChild(userInfo);
+        }
+        
+        if (logoutBtn) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mobile-menu-btn mobile-menu-btn-secondary';
+            btn.textContent = logoutBtn.textContent.trim();
+            btn.id = 'mobileMenuLogoutBtn';
+            actionsSection.appendChild(btn);
+        }
+    }
+    
+    // Assemble panel
+    mobileMenuPanel.appendChild(header);
+    mobileMenuPanel.appendChild(linksSection);
+    mobileMenuPanel.appendChild(actionsSection);
     
     mobileMenuOverlay.appendChild(mobileMenuPanel);
     
@@ -97,6 +206,25 @@ function initMobileMenu() {
         
         // Create/recreate overlay to get latest content
         createMobileMenuOverlay();
+        
+        // Attach close button handler
+        const closeBtn = mobileMenuPanel.querySelector('.mobile-menu-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeMenu);
+        }
+        
+        // Attach logout button handler if it exists
+        const mobileLogoutBtn = document.getElementById('mobileMenuLogoutBtn');
+        if (mobileLogoutBtn) {
+            const originalLogoutBtn = document.getElementById('headerLogoutBtn');
+            if (originalLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', () => {
+                    originalLogoutBtn.click();
+                    closeMenu();
+                });
+            }
+        }
+        
         attachOverlayListeners();
         
         // Update button state

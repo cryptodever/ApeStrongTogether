@@ -2232,8 +2232,8 @@ nav {
             height: 100vh;
             z-index: 2147483647;
             background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             pointer-events: auto;
             display: flex;
             align-items: flex-start;
@@ -2252,14 +2252,12 @@ nav {
         .mobile-menu-panel {
             position: relative;
             width: calc(100% - 24px);
-            max-width: 500px;
-            background: rgba(15, 15, 15, 0.99);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            padding: 1rem 0;
+            max-width: 520px;
+            background: linear-gradient(180deg, rgba(20, 20, 20, 0.99) 0%, rgba(15, 15, 15, 0.99) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+            padding: 16px;
             margin: 0 12px;
             max-height: calc(100vh - 100px);
             overflow-y: auto;
@@ -2272,56 +2270,196 @@ nav {
             gap: 0;
         }
         
-        .mobile-menu-panel a,
-        .mobile-menu-panel button,
-        .mobile-menu-panel .nav-auth-btn {
-            padding: 1rem 1.5rem;
+        /* Header: Brand + Close button */
+        .mobile-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+        }
+        
+        .mobile-menu-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
+            transition: color 0.2s ease;
+        }
+        
+        .mobile-menu-brand:hover {
+            color: #4ade80;
+        }
+        
+        .mobile-menu-close {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        .mobile-menu-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+        
+        .mobile-menu-close:active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Nav links section */
+        .mobile-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .mobile-menu-link {
+            height: 56px;
+            min-height: 56px;
+            padding: 0 16px;
             display: flex;
             align-items: center;
             color: #e8e8e8;
             text-decoration: none;
             font-size: 1rem;
+            font-weight: 500;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             pointer-events: auto;
             -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
             transition: background 0.2s ease, color 0.2s ease;
         }
         
-        .mobile-menu-panel a:hover,
-        .mobile-menu-panel button:hover,
-        .mobile-menu-panel .nav-auth-btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #4ade80;
-        }
-        
-        .mobile-menu-panel a:last-child,
-        .mobile-menu-panel button:last-child {
+        .mobile-menu-link:last-of-type {
             border-bottom: none;
         }
         
-        .mobile-menu-panel .nav-socials {
+        .mobile-menu-link:hover,
+        .mobile-menu-link:active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #4ade80;
+        }
+        
+        /* Social icons section */
+        .mobile-menu-socials {
+            display: flex;
             flex-direction: row;
-            margin: 1rem 1.5rem 0;
-            padding: 1rem 0 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
             justify-content: center;
             gap: 1rem;
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
         }
         
-        .mobile-menu-panel .nav-auth {
+        .mobile-menu-socials a {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e8e8e8;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
+            transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        .mobile-menu-socials a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #4ade80;
+        }
+        
+        .mobile-menu-socials a svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
+        /* Auth actions section */
+        .mobile-menu-actions {
+            display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            align-items: stretch;
-            margin: 1rem 1.5rem 0;
-            padding: 1rem 0 0;
+            gap: 12px;
+            padding-top: 16px;
+            margin-top: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .mobile-menu-panel .nav-auth-btn {
-            width: 100%;
+        .mobile-menu-user {
+            padding: 14px 16px;
+            color: #b0b0b0;
+            font-size: 0.875rem;
             text-align: center;
-            min-height: 44px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 4px;
+        }
+        
+        .mobile-menu-btn {
+            height: 52px;
+            min-height: 52px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: rgba(74, 222, 128, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .mobile-menu-btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #000000;
+        }
+        
+        .mobile-menu-btn-primary:hover,
+        .mobile-menu-btn-primary:active {
+            background: linear-gradient(135deg, #5fe890 0%, #2dd469 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+        }
+        
+        .mobile-menu-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e8e8e8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .mobile-menu-btn-secondary:hover,
+        .mobile-menu-btn-secondary:active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
         }
 
         /* Menu visibility: .is-open class is the single source of truth */
