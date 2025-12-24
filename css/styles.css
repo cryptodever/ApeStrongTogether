@@ -3361,9 +3361,147 @@ body.generator-body > * {
 .generator-stage-inner {
     padding: 24px;
     display: grid;
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 1fr;
     gap: 24px;
     align-items: start;
+}
+
+/* Desktop Layout Improvements */
+@media (min-width: 768px) {
+    /* Hero area cleanup */
+    .generator-hero {
+        margin-bottom: 32px;
+        padding-top: 24px;
+    }
+
+    .generator-hero h1 {
+        font-size: clamp(40px, 4vw, 56px);
+        margin-bottom: 1rem;
+    }
+
+    .generator-hero p {
+        font-size: 1.2rem;
+        max-width: 700px;
+    }
+}
+
+@media (min-width: 1024px) {
+    /* Top spacing - prevent header collision */
+    .generator-shell {
+        padding-top: 48px;
+        padding-bottom: 80px;
+    }
+
+    /* Hero improvements */
+    .generator-hero {
+        margin-bottom: 40px;
+        padding-top: 32px;
+    }
+
+    .generator-hero h1 {
+        font-size: clamp(44px, 3.5vw, 52px);
+    }
+
+    .generator-hero p {
+        font-size: 1.25rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* Generator stage - centered and tighter */
+    .generator-stage {
+        max-width: 1150px;
+        margin: 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 
+            0 8px 40px rgba(0, 0, 0, 0.4),
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .generator-stage-inner {
+        padding: 32px;
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 32px;
+        align-items: start;
+    }
+
+    /* Preview section alignment */
+    .preview-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+    }
+
+    /* Auth gate overlay positioning - centered */
+    .auth-gate-overlay {
+        border-radius: 20px;
+        z-index: 1001;
+    }
+
+    .auth-gate-content {
+        max-width: 420px;
+        transform: scale(0.95);
+        animation: scaleIn 0.3s ease-out forwards;
+    }
+
+    .auth-gate-overlay.show .auth-gate-content {
+        transform: scale(1);
+        animation: none;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+}
+
+@media (min-width: 1280px) {
+    /* Wide desktop adjustments */
+    .generator-shell {
+        padding-top: 56px;
+        max-width: 1400px;
+    }
+
+    .generator-hero {
+        margin-bottom: 48px;
+    }
+
+    .generator-hero h1 {
+        font-size: clamp(48px, 3vw, 56px);
+    }
+
+    .generator-hero p {
+        max-width: 1000px;
+        font-size: 1.3rem;
+    }
+
+    .generator-stage {
+        max-width: 1200px;
+    }
+
+    .generator-stage-inner {
+        padding: 40px;
+        grid-template-columns: 420px 1fr;
+        gap: 40px;
+    }
+
+    /* Improved controls spacing */
+    .controls-section {
+        position: sticky;
+        top: 24px;
+        align-self: start;
+    }
 }
 
 .generator-container {
