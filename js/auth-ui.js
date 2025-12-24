@@ -9,7 +9,8 @@ import {
     signInWithEmailAndPassword,
     onAuthStateChanged,
     deleteUser,
-    sendEmailVerification
+    sendEmailVerification,
+    sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
     doc,
@@ -25,6 +26,7 @@ const loginTab = document.querySelector('[data-tab="login"]');
 const signupTab = document.querySelector('[data-tab="signup"]');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
+const resetPasswordForm = document.getElementById('resetPasswordForm');
 
 function switchTab(tabName) {
     // Update tabs
@@ -41,7 +43,62 @@ function switchTab(tabName) {
     loginForm.classList.toggle('active', tabName === 'login');
     signupForm.classList.toggle('active', tabName === 'signup');
     
+    // Hide reset form when switching tabs
+    if (resetPasswordForm) {
+        resetPasswordForm.classList.remove('active');
+    }
+    
     // Clear messages
+    clearMessages();
+}
+
+// Show/hide password reset form
+function showResetForm() {
+    if (!resetPasswordForm) return;
+    
+    loginForm.classList.remove('active');
+    signupForm.classList.remove('active');
+    resetPasswordForm.classList.add('active');
+    
+    // Update page title
+    const pageTitle = document.getElementById('authPageTitle');
+    if (pageTitle) {
+        pageTitle.textContent = 'Reset Password';
+    }
+    
+    // Hide tabs
+    if (loginTab && signupTab) {
+        loginTab.style.display = 'none';
+        signupTab.style.display = 'none';
+    }
+    
+    clearMessages();
+    
+    // Focus on email input
+    const resetEmailInput = document.getElementById('resetEmail');
+    if (resetEmailInput) {
+        setTimeout(() => resetEmailInput.focus(), 100);
+    }
+}
+
+function hideResetForm() {
+    if (!resetPasswordForm) return;
+    
+    resetPasswordForm.classList.remove('active');
+    loginForm.classList.add('active');
+    
+    // Update page title
+    const pageTitle = document.getElementById('authPageTitle');
+    if (pageTitle) {
+        pageTitle.textContent = 'Log in';
+    }
+    
+    // Show tabs
+    if (loginTab && signupTab) {
+        loginTab.style.display = '';
+        signupTab.style.display = '';
+    }
+    
     clearMessages();
 }
 
@@ -296,6 +353,77 @@ if (loginFormEl && loginBtn) {
             showMessage('login', 'error', formatAuthError(error));
             loginBtn.disabled = false;
             loginBtn.textContent = 'Log In';
+        }
+    });
+}
+
+// Password reset form handler
+const resetFormEl = document.getElementById('resetPasswordForm');
+const resetBtn = document.getElementById('resetBtn');
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+const backToLoginLink = document.getElementById('backToLoginLink');
+
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showResetForm();
+    });
+}
+
+if (backToLoginLink) {
+    backToLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideResetForm();
+    });
+}
+
+if (resetFormEl && resetBtn) {
+    resetFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearMessages();
+        
+        const email = document.getElementById('resetEmail').value.trim();
+
+        if (!email) {
+            showMessage('reset', 'error', 'Please enter your email address.');
+            return;
+        }
+
+        // Show loading state
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Sending...';
+
+        try {
+            // Send password reset email
+            // Using ActionCodeSettings with production URL
+            await sendPasswordResetEmail(auth, email, {
+                url: window.location.origin + '/login/',
+                handleCodeInApp: false
+            });
+            
+            console.log('✅ Password reset email sent to:', email);
+            
+            // Show generic success message (privacy-safe - doesn't reveal if email exists)
+            showMessage('reset', 'success', 'If an account exists with this email, a password reset link has been sent. Please check your inbox.');
+            
+            // Clear the email field
+            document.getElementById('resetEmail').value = '';
+            
+            // Reset button after a delay
+            setTimeout(() => {
+                resetBtn.disabled = false;
+                resetBtn.textContent = 'Send reset link';
+            }, 3000);
+        } catch (error) {
+            console.error('❌ Failed to send password reset email:', error);
+            console.error('Error code:', error.code, 'Error message:', error.message);
+            
+            // Show generic error message (privacy-safe)
+            // Don't reveal if email exists or specific error details
+            showMessage('reset', 'error', 'Unable to send reset email. Please check your email address and try again.');
+            
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'Send reset link';
         }
     });
 }

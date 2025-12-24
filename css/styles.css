@@ -4646,6 +4646,46 @@ body.login-body .nav-links a:hover::after {
     color: #4ade80;
 }
 
+.login-container .auth-link {
+    color: #9ca3af;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.login-container .auth-link:hover {
+    color: #4ade80;
+}
+
+/* Password Reset Form Styles */
+.login-container .reset-form {
+    display: none;
+}
+
+.login-container .reset-form.active {
+    display: block;
+}
+
+.login-container .reset-form-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.login-container .reset-form-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    letter-spacing: 0.02em;
+}
+
+.login-container .reset-form-description {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+    line-height: 1.5;
+}
+
 
 /* ===================== Verify Page Styles ===================== */
 

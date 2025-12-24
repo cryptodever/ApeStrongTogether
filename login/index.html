@@ -58,7 +58,28 @@
 
                 <button type="submit" class="btn btn-primary" id="loginBtn">Log In</button>
                 <div class="auth-form-footer">
-                    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+                    <a href="#" id="forgotPasswordLink" class="auth-link">Forgot password?</a>
+                </div>
+            </form>
+
+            <!-- Password Reset Form -->
+            <form id="resetPasswordForm" class="auth-form reset-form">
+                <div class="message error" id="resetError"></div>
+                <div class="message success" id="resetSuccess"></div>
+
+                <div class="reset-form-header">
+                    <h2>Reset Password</h2>
+                    <p class="reset-form-description">Enter your email address and we'll send you a link to reset your password.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input type="email" id="resetEmail" class="input" required autocomplete="email" placeholder="your@email.com">
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="resetBtn">Send reset link</button>
+                <div class="auth-form-footer">
+                    <a href="#" id="backToLoginLink" class="auth-link">Back to login</a>
                 </div>
             </form>
 
