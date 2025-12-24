@@ -3,7 +3,7 @@
  * Handles login and signup forms for login.html
  */
 
-import { auth, db } from './firebase.js';
+import { auth, db, app, appCheckInitialized } from './firebase.js';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
@@ -669,6 +669,137 @@ async function checkRulesVersion() {
     }
 }
 
+// Part A: Log Firebase project details for verification
+function logFirebaseProjectDetails() {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔍 PART A: Firebase Project Verification');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('projectId:', app.options.projectId);
+    console.log('appId:', app.options.appId);
+    console.log('apiKey (last 6 chars):', app.options.apiKey.slice(-6));
+    console.log('Expected projectId: apes-365b0');
+    console.log('✅ Verify above matches Firebase Console project');
+    console.log('═══════════════════════════════════════════════════════');
+}
+
+// Part B: Ping Firestore with permissive rules test
+async function pingFirestore() {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔍 PART B: Firestore Ping Test');
+    console.log('═══════════════════════════════════════════════════════');
+    
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error('❌ Not signed in - cannot test write');
+            return;
+        }
+        
+        console.log('Testing write to meta/ping...');
+        await setDoc(doc(db, 'meta', 'ping'), { 
+            uid: currentUser.uid, 
+            t: Timestamp.now()
+        }, { merge: true });
+        console.log('✅ Write to meta/ping succeeded');
+        
+        console.log('Testing read from meta/ping...');
+        const pingDoc = await getDoc(doc(db, 'meta', 'ping'));
+        if (pingDoc.exists()) {
+            console.log('✅ Read from meta/ping succeeded');
+            console.log('   Data:', pingDoc.data());
+        } else {
+            console.warn('⚠️  meta/ping document does not exist after write');
+        }
+    } catch (error) {
+        console.error('❌ Ping test FAILED');
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            console.error('   → This means rules are NOT deployed or wrong project');
+            console.error('   → OR App Check is blocking writes');
+            console.error('   → Check Firebase Console → Firestore → Rules');
+        }
+    }
+    console.log('═══════════════════════════════════════════════════════');
+}
+
+// Part C: Binary isolation test - test usernames create only
+async function testUsernamesCreateOnly() {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔍 PART C.1: Test usernames/{username} create only');
+    console.log('═══════════════════════════════════════════════════════');
+    
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error('❌ Not signed in');
+            return;
+        }
+        
+        const testUsername = 'test_' + Date.now();
+        console.log('Attempting to create usernames/' + testUsername + ' (no field checks)...');
+        
+        await setDoc(doc(db, 'usernames', testUsername), {
+            uid: currentUser.uid,
+            createdAt: Timestamp.now()
+        });
+        
+        console.log('✅ usernames/{username} create succeeded');
+        console.log('   → Rules allow usernames create');
+        
+        // Cleanup
+        await deleteDoc(doc(db, 'usernames', testUsername));
+        console.log('   Cleaned up test document');
+    } catch (error) {
+        console.error('❌ usernames/{username} create FAILED');
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
+        console.error('   → This path is being blocked');
+    }
+    console.log('═══════════════════════════════════════════════════════');
+}
+
+// Part C: Binary isolation test - test users create only
+async function testUsersCreateOnly() {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔍 PART C.2: Test users/{uid} create only');
+    console.log('═══════════════════════════════════════════════════════');
+    
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error('❌ Not signed in');
+            return;
+        }
+        
+        console.log('Attempting to create users/' + currentUser.uid + ' (no field checks)...');
+        
+        await setDoc(doc(db, 'users', currentUser.uid), {
+            username: 'testuser',
+            email: 'test@example.com',
+            avatarCount: 0,
+            createdAt: Timestamp.now()
+        });
+        
+        console.log('✅ users/{uid} create succeeded');
+        console.log('   → Rules allow users create');
+        
+        // Cleanup (if possible)
+        try {
+            await deleteDoc(doc(db, 'users', currentUser.uid));
+            console.log('   Cleaned up test document');
+        } catch (cleanupError) {
+            console.warn('   Could not clean up (rules may deny delete)');
+        }
+    } catch (error) {
+        console.error('❌ users/{uid} create FAILED');
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
+        console.error('   → This path is being blocked');
+    }
+    console.log('═══════════════════════════════════════════════════════');
+}
+
 // Initialize username checking UI and debounced availability check
 function initUsernameChecking() {
     const usernameInput = document.getElementById('signupUsername');
@@ -797,6 +928,30 @@ function initializeAuthUI() {
     
     // Check Firestore rules version on startup
     checkRulesVersion();
+    
+    // Part A: Log Firebase project details
+    logFirebaseProjectDetails();
+    
+    // Part D: Log App Check status
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔍 PART D: App Check Status');
+    console.log('═══════════════════════════════════════════════════════');
+    if (appCheckInitialized) {
+        console.log('✅ App Check: INITIALIZED');
+    } else {
+        console.warn('⚠️  App Check: NOT INITIALIZED');
+        console.warn('   If App Check enforcement is ON in Firebase Console, Firestore writes will return 403');
+        console.warn('   Check: Firebase Console → App Check → Firestore enforcement');
+    }
+    console.log('═══════════════════════════════════════════════════════');
+    
+    // Expose test functions globally for console debugging
+    window.debugFirestore = {
+        ping: pingFirestore,
+        testUsernames: testUsernamesCreateOnly,
+        testUsers: testUsersCreateOnly
+    };
+    console.log('💡 Debug functions available: window.debugFirestore.ping(), .testUsernames(), .testUsers()');
     
     // Get current user status (only once)
     if (!authStateChecked) {
