@@ -39,8 +39,13 @@ const firebaseConfig = {
 console.log('🔥 Firebase initialized with config:', {
   projectId: firebaseConfig.projectId,
   appId: firebaseConfig.appId,
-  authDomain: firebaseConfig.authDomain
+  authDomain: firebaseConfig.authDomain,
+  apiKeyLast6: firebaseConfig.apiKey.slice(-6)
 });
+console.log('📋 PROJECT VERIFICATION:');
+console.log('  - projectId:', firebaseConfig.projectId);
+console.log('  - appId:', firebaseConfig.appId);
+console.log('  - apiKey (last 6 chars):', firebaseConfig.apiKey.slice(-6));
 
 // ============================================
 // EMULATOR SAFETY GUARD
@@ -72,42 +77,65 @@ export const auth = getAuth(app);
 // ============================================
 // FIREBASE APP CHECK (reCAPTCHA v3)
 // ============================================
-// Feature-flag: Only enable App Check in production (not localhost)
-// This protects Firestore and Storage from abuse
+// App Check protects Firestore and Storage from abuse
+// IMPORTANT: Initialize App Check BEFORE Firestore initialization
 let appCheckInitialized = false;
+let appCheckPromise = null;
 
+/**
+ * Initialize Firebase App Check with reCAPTCHA v3
+ * 
+ * Setup steps:
+ * 1. Get reCAPTCHA v3 site key from Google reCAPTCHA Admin Console:
+ *    https://www.google.com/recaptcha/admin
+ * 2. Register your domain (e.g., apetogetherstronger.com, *.github.io)
+ * 3. Set RECAPTCHA_SITE_KEY below to your site key
+ * 4. Ensure CSP allows:
+ *    - script-src: https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/
+ *    - frame-src: https://www.google.com/recaptcha/
+ *    - connect-src: https://www.google.com/recaptcha/ (for token requests)
+ * 
+ * Note: App Check is skipped on localhost for development convenience
+ */
 async function initializeAppCheck() {
     // Skip App Check on localhost for development
     if (isLocalhost()) {
-        // Silent skip on localhost (no console output to reduce spam)
+        console.log('🔧 App Check skipped on localhost (development mode)');
+        return;
+    }
+
+    // TODO: Replace with your reCAPTCHA v3 site key from Google reCAPTCHA Admin Console
+    const RECAPTCHA_SITE_KEY = 'YOUR_RECAPTCHA_V3_SITE_KEY_HERE';
+    
+    if (!RECAPTCHA_SITE_KEY || RECAPTCHA_SITE_KEY === 'YOUR_RECAPTCHA_V3_SITE_KEY_HERE') {
+        console.warn('⚠️  App Check not configured: RECAPTCHA_SITE_KEY not set');
+        console.warn('   App Check will not be initialized. Firestore writes may fail if enforcement is enabled.');
+        console.warn('   Get site key: https://www.google.com/recaptcha/admin');
         return;
     }
 
     try {
-        // Initialize App Check with reCAPTCHA v3
-        // NOTE: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 site key
-        const RECAPTCHA_SITE_KEY = 'YOUR_RECAPTCHA_SITE_KEY'; // TODO: Replace with actual site key
+        // Dynamically import App Check module (ES module, CSP-safe)
+        const { initializeAppCheck, ReCaptchaV3Provider } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app-check.js');
         
-        if (RECAPTCHA_SITE_KEY === 'YOUR_RECAPTCHA_SITE_KEY' || !RECAPTCHA_SITE_KEY) {
-            // Silent skip if not configured (no console warning to reduce spam)
-            return;
-        }
-
-        // Wait for reCAPTCHA to be available (with timeout)
-        const maxWait = 5000; // 5 seconds
+        // Load reCAPTCHA v3 script (CSP-safe, uses existing script-src allowances)
+        // This must be done before initializing App Check
+        await loadRecaptchaScript(RECAPTCHA_SITE_KEY);
+        
+        // Wait for grecaptcha to be available
+        const maxWait = 10000; // 10 seconds
         const startTime = Date.now();
-        
         while (typeof window.grecaptcha === 'undefined' && (Date.now() - startTime) < maxWait) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         if (typeof window.grecaptcha === 'undefined') {
-            // Silent skip if reCAPTCHA not loaded (no console warning)
+            console.error('❌ App Check initialization failed: reCAPTCHA script not loaded');
+            console.error('   Check CSP: script-src must allow https://www.google.com/recaptcha/');
             return;
         }
 
-        const { initializeAppCheck, ReCaptchaV3Provider } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-app-check.js');
-        
+        // Initialize App Check with reCAPTCHA v3 provider
         initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
             isTokenAutoRefreshEnabled: true
@@ -116,18 +144,66 @@ async function initializeAppCheck() {
         appCheckInitialized = true;
         console.log('✅ App Check initialized with reCAPTCHA v3');
     } catch (error) {
-        console.error('App Check initialization error:', error);
+        console.error('❌ App Check initialization error:', error);
+        console.error('   Error details:', error.message);
         // Don't block app initialization if App Check fails
     }
 }
 
-// Initialize App Check (non-blocking, runs in background)
-initializeAppCheck();
+/**
+ * Load reCAPTCHA v3 script dynamically (CSP-safe)
+ * Uses ES modules and dynamic script injection that respects CSP
+ */
+function loadRecaptchaScript(siteKey) {
+    return new Promise((resolve, reject) => {
+        // Check if script is already loaded
+        if (typeof window.grecaptcha !== 'undefined') {
+            resolve();
+            return;
+        }
+
+        // Check if script tag already exists
+        const existingScript = document.querySelector('script[src*="recaptcha"]');
+        if (existingScript) {
+            // Script exists, wait for it to load
+            existingScript.addEventListener('load', resolve);
+            existingScript.addEventListener('error', reject);
+            return;
+        }
+
+        // Create and inject script tag
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?render=' + siteKey;
+        script.async = true;
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load reCAPTCHA script. Check CSP: script-src must allow https://www.google.com/recaptcha/'));
+        document.head.appendChild(script);
+    });
+}
+
+// Initialize App Check BEFORE Firestore (non-blocking, runs in background)
+// This ensures App Check tokens are available when Firestore operations occur
+appCheckPromise = initializeAppCheck();
+
+// Log App Check status after initialization attempt
+appCheckPromise.then(() => {
+    if (appCheckInitialized) {
+        console.log('✅ App Check status: INITIALIZED');
+    } else {
+        console.warn('⚠️  App Check status: NOT INITIALIZED');
+        console.warn('   If App Check enforcement is ON in Firebase Console, Firestore writes will return 403');
+        console.warn('   Check: Firebase Console → App Check → Firestore enforcement status');
+    }
+}).catch(() => {
+    console.warn('⚠️  App Check initialization failed');
+});
 
 // Enable Firestore SDK debug logs
 setLogLevel("debug");
 
 // Initialize Firestore with forced long polling for better offline/network reliability
+// IMPORTANT: App Check should be initialized before this (done above)
 export const db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
     useFetchStreams: false,
@@ -150,7 +226,7 @@ export const storage = getStorage(app);
 // This ensures emulators NEVER run on github.io or production domains.
 
 // Export app instance, emulator guard, and config values for reference
-export { app, isLocalhost };
+export { app, isLocalhost, appCheckPromise };
 export const apiKey = firebaseConfig.apiKey;
 export const projectId = firebaseConfig.projectId;
-
+export { appCheckInitialized };
