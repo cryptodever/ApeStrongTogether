@@ -14,49 +14,43 @@ service cloud.firestore {
       
       // Allow create only when all conditions are met
       // Required fields: username, email, avatarCount, createdAt
-      // Optional fields: photoURL, bio, lastLoginAt (validated if present, not required)
+      // Optional fields: photoURL, bio, lastLoginAt
+      // 
+      // CRITICAL: Validate createdAt is timestamp FIRST (before hasAll/hasOnly/size checks)
+      // serverTimestamp() sentinels (REQUEST_TIME) are automatically recognized as timestamp type
+      // Do NOT use createdAt == request.time (would fail on sentinels)
       allow create: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.createdAt is timestamp
-        // Required fields must be present
         && request.resource.data.keys().hasAll(['username', 'email', 'avatarCount', 'createdAt'])
-        // Validate required fields
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
         && request.resource.data.email is string
         && request.resource.data.avatarCount is int
         && request.resource.data.avatarCount >= 0
-        // Validate optional fields if present (lastLoginAt is optional on create)
         && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
         && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
         && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp)
-        // Ensure only allowed keys are present (4 required + up to 3 optional = max 7 keys)
         && request.resource.data.keys().size() >= 4
         && request.resource.data.keys().size() <= 7;
       
       // Allow update with strict constraints
       allow update: if request.auth != null
         && request.auth.uid == uid
-        && // Username cannot change
-        request.resource.data.username == resource.data.username
-        && // createdAt cannot change
-        request.resource.data.createdAt == resource.data.createdAt
-        && // Email cannot change
-        request.resource.data.email == resource.data.email
-        && // avatarCount can only increase or stay same (never decrease)
-        request.resource.data.avatarCount is int
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.avatarCount is int
         && request.resource.data.avatarCount >= resource.data.avatarCount
         && request.resource.data.avatarCount >= 0
-        && // Validate all fields that are present
-        request.resource.data.username is string
+        && request.resource.data.username is string
         && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
         && request.resource.data.email is string
         && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt', 'photoURL', 'bio', 'lastLoginAt'])
         && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
         && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
-        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp)
-        && // Ensure no new fields are added beyond allowed set
-        request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt', 'photoURL', 'bio', 'lastLoginAt']);
+        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp);
       
       // Disallow delete
       allow delete: if false;
@@ -70,8 +64,10 @@ service cloud.firestore {
       allow get: if true;
       
       // Allow create only when all conditions are met
-      // IMPORTANT: Order matters - validate createdAt is timestamp BEFORE hasOnly() check
-      // serverTimestamp() sentinels (REQUEST_TIME) are recognized as timestamp type in rules
+      // 
+      // CRITICAL: Validate createdAt is timestamp FIRST (before hasOnly() check)
+      // serverTimestamp() sentinels (REQUEST_TIME) are automatically recognized as timestamp type
+      // Do NOT use createdAt == request.time (would fail on sentinels)
       allow create: if request.auth != null
         && !exists(/databases/$(database)/documents/usernames/$(username))
         && username.matches('^[a-z0-9_]{3,20}$')

@@ -3,48 +3,70 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
-    // DEBUG VERSION B: ALLOW USERS CREATE ONLY
+    // DEBUG VARIANT B: ALLOW USERS CREATE ONLY
     // ============================================
     // This version ONLY allows users/{uid} creates
     // usernames/{username} creates will be denied to isolate the issue
-    // USE THIS TO TEST: If transaction fails, the issue is with users rule
-    // USE THIS TO TEST: If transaction partially succeeds (user doc created), issue is with usernames rule
+    // 
+    // TEST RESULT INTERPRETATION:
+    // - If transaction FAILS: Issue is with users/{uid} rule
+    // - If transaction PARTIALLY SUCCEEDS (user doc created): Issue is with usernames/{username} rule
     
     // ============================================
     // USERS COLLECTION
     // ============================================
     match /users/{uid} {
-      // Allow read of own user document
       allow get: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
       
       // Allow create - THIS IS THE ONLY CREATE ALLOWED IN DEBUG B
+      // IMPORTANT: Validate createdAt is timestamp BEFORE other checks
+      // serverTimestamp() sentinels (REQUEST_TIME) are recognized as timestamp type in rules
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt'])
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasAll(['username', 'email', 'avatarCount', 'createdAt'])
         && request.resource.data.username is string
+        && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
         && request.resource.data.email is string
         && request.resource.data.avatarCount is int
         && request.resource.data.avatarCount >= 0
-        && request.resource.data.createdAt is timestamp;
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
+        && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
+        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp)
+        && request.resource.data.keys().size() >= 4
+        && request.resource.data.keys().size() <= 7;
       
-      // Disallow update and delete
-      allow update, delete: if false;
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.avatarCount is int
+        && request.resource.data.avatarCount >= resource.data.avatarCount
+        && request.resource.data.avatarCount >= 0
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
+        && request.resource.data.email is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt', 'photoURL', 'bio', 'lastLoginAt'])
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL is string)
+        && (!('bio' in request.resource.data) || (request.resource.data.bio is string && request.resource.data.bio.size() <= 160))
+        && (!('lastLoginAt' in request.resource.data) || request.resource.data.lastLoginAt is timestamp);
+      
+      allow delete: if false;
     }
     
     // ============================================
     // USERNAMES COLLECTION
     // ============================================
     match /usernames/{username} {
-      // Allow public read for username availability checks
       allow get: if true;
       
       // DEBUG: DENY CREATE to isolate users rule
       allow create: if false;
       
-      // Disallow update - usernames are immutable once created
       allow update: if false;
-      
-      // Disallow delete
       allow delete: if false;
     }
     
@@ -56,4 +78,3 @@ service cloud.firestore {
     }
   }
 }
-
