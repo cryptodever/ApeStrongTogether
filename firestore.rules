@@ -5,40 +5,60 @@ service cloud.firestore {
     // ============================================
     // USERS COLLECTION
     // ============================================
-    // Disallow listing all users (no browsing)
-    // Using 'get' instead of 'read' prevents list queries
+    // Users can only read/write their own document
+    // Prevents listing all users (using 'get' instead of 'read')
     match /users/{uid} {
-      // Users can only read/write their own document
-      // 'get' allows individual document reads, but list queries are implicitly disallowed
+      // Allow authenticated users to read their own document
       allow get: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
       
-      // Validate schema on write
-      allow create, update: if request.auth != null 
+      // Allow create only when:
+      // 1. User is authenticated
+      // 2. Document ID matches authenticated user's UID
+      // 3. Document fields pass validation
+      allow create: if request.auth != null 
         && request.auth.uid == uid
         && validateUserDocument(request.resource.data);
+      
+      // Allow update only when:
+      // 1. User is authenticated
+      // 2. Document ID matches authenticated user's UID
+      // 3. Document fields pass validation (on update, existing fields must be preserved or valid)
+      allow update: if request.auth != null 
+        && request.auth.uid == uid
+        && validateUserDocument(request.resource.data);
+      
+      // Disallow delete (users should use account deletion flow)
+      allow delete: if false;
     }
     
     // ============================================
     // USERNAMES COLLECTION
     // ============================================
+    // Stores username reservations for uniqueness checking
     match /usernames/{username} {
-      // Public read for availability checks
-      allow read: if true;
+      // Allow public get for username availability checks
+      // Using 'get' instead of 'read' prevents list queries (browsing all usernames)
+      allow get: if true;
       
-      // Allow create only if:
+      // Allow create only when:
       // 1. User is authenticated
-      // 2. Document doesn't already exist
-      // 3. Stored uid equals request.auth.uid
-      // 4. Username matches regex: ^[a-z0-9_]{3,20}$
+      // 2. Document doesn't already exist (prevents duplicate usernames)
+      // 3. Stored UID matches authenticated user's UID
+      // 4. Username format is valid (lowercase alphanumeric + underscore, 3-20 chars)
+      // 5. Document fields pass validation
+      // Note: The !exists() check ensures username can only be claimed once
       allow create: if request.auth != null
         && !exists(/databases/$(database)/documents/usernames/$(username))
         && request.resource.data.uid == request.auth.uid
         && username.matches('^[a-z0-9_]{3,20}$')
         && validateUsernameDocument(request.resource.data);
       
-      // Disallow update and delete
-      allow update, delete: if false;
+      // Deny updates - usernames are immutable once created
+      // This ensures username reservations cannot be changed or transferred
+      allow update: if false;
+      
+      // Deny delete - username reservations are permanent (or handled by Cloud Function)
+      allow delete: if false;
     }
     
     // ============================================
@@ -46,30 +66,53 @@ service cloud.firestore {
     // ============================================
     
     // Validate user document schema
+    // Ensures all required fields are present with correct types
+    // IMPORTANT: serverTimestamp() sentinels are treated as timestamp type in rules
     function validateUserDocument(data) {
+      // Check that all required fields are present (including createdAt with serverTimestamp() sentinel)
       return data.keys().hasAll(['username', 'email', 'createdAt', 'avatarCount'])
+        // Validate username: string, lowercase alphanumeric + underscore, 3-20 chars
         && data.username is string
+        && data.username.matches('^[a-z0-9_]{3,20}$')
+        // Validate email: string, basic email format
         && data.email is string
+        && data.email.matches('^[^@]+@[^@]+\\.[^@]+$')
+        // Validate createdAt: must be a timestamp type
+        // serverTimestamp() sentinels are automatically recognized as timestamp type
+        // Do NOT use equality checks like == request.time which would fail on sentinels
         && data.createdAt is timestamp
+        // Validate avatarCount: integer >= 0
         && data.avatarCount is int
         && data.avatarCount >= 0
-        && data.username.matches('^[a-z0-9_]{3,20}$')
-        && data.email.matches('^[^@]+@[^@]+\\.[^@]+$'); // Basic email validation
+        // Ensure no extra fields beyond allowed set
+        // Note: hasOnly() works correctly with serverTimestamp() sentinels
+        && data.keys().hasOnly(['username', 'email', 'createdAt', 'avatarCount']);
     }
     
     // Validate username document schema
+    // Ensures username reservation documents contain only required fields
+    // IMPORTANT: serverTimestamp() sentinels are treated as timestamp type in rules
     function validateUsernameDocument(data) {
+      // Check that all required fields are present (including createdAt with serverTimestamp() sentinel)
       return data.keys().hasAll(['uid', 'createdAt'])
+        // Validate uid: must be a non-empty string
         && data.uid is string
-        && data.createdAt is timestamp;
+        && data.uid.size() > 0
+        // Validate createdAt: must be a timestamp type
+        // serverTimestamp() sentinels are automatically recognized as timestamp type
+        // Do NOT use equality checks like == request.time which would fail on sentinels
+        && data.createdAt is timestamp
+        // Ensure no extra fields beyond allowed set
+        // Note: hasOnly() works correctly with serverTimestamp() sentinels
+        && data.keys().hasOnly(['uid', 'createdAt']);
     }
     
     // ============================================
     // DENY ALL OTHER ACCESS
     // ============================================
+    // Default deny rule - any collection/document not explicitly allowed above is denied
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
-
