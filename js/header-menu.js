@@ -225,11 +225,14 @@ function initMobileMenu() {
         // Update button state
         menuToggle.setAttribute('aria-expanded', 'true');
         
-        // Prevent body scroll
+        // Prevent body scroll and block page interactions
         document.body.classList.add('menu-open');
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
         
-        // Show overlay
+        // Show overlay (append to body, not nested in any transformed element)
         mobileMenuOverlay.setAttribute('aria-hidden', 'false');
         mobileMenuOverlay.classList.add('is-open');
         document.body.appendChild(mobileMenuOverlay);
@@ -246,9 +249,12 @@ function initMobileMenu() {
         // Update button state
         menuToggle.setAttribute('aria-expanded', 'false');
         
-        // Restore body scroll
+        // Restore body scroll and page interactions
         document.body.classList.remove('menu-open');
         document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
         
         // Hide overlay
         if (mobileMenuOverlay) {
