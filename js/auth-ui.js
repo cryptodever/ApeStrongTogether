@@ -283,73 +283,102 @@ async function checkUsernameAvailability(usernameLower, bypassRateLimit = false)
     }
 }
 
-// Atomically reserve username and create user profile using Firestore transaction
-// This ensures both writes succeed or both fail (no orphaned usernames)
-async function reserveUsernameTransaction(uid, usernameLower, email) {
+// Reserve username only (used during signup - profile created after email verification)
+async function reserveUsernameOnly(uid, usernameLower) {
     // Validate inputs
-    if (!uid || !usernameLower || !email) {
-        console.error('❌ reserveUsernameTransaction: Missing required parameters', { uid, usernameLower, email });
+    if (!uid || !usernameLower) {
+        console.error('❌ reserveUsernameOnly: Missing required parameters', { uid, usernameLower });
         return { success: false, reason: 'error', error: new Error('Missing required parameters') };
     }
     
     const usernameRef = doc(db, 'usernames', usernameLower);
-    const userRef = doc(db, 'users', uid);
     
-    // Log transaction details
-    console.log('🔄 Starting atomic username reservation transaction:');
+    // Log reservation details
+    console.log('🔄 Reserving username only:');
     console.log('  - UID:', uid);
     console.log('  - Username:', usernameLower);
     console.log('  - Username doc path: usernames/' + usernameLower);
-    console.log('  - User doc path: users/' + uid);
+    console.log('  - Note: User profile will be created after email verification');
+    
+    try {
+        // Check if username is already taken
+        const usernameDoc = await getDoc(usernameRef);
+        if (usernameDoc.exists()) {
+            console.log(`❌ Username reservation failed: username "${usernameLower}" already taken`);
+            return { success: false, reason: 'taken' };
+        }
+        
+        // Reserve username
+        const usernameData = {
+            uid: uid,
+            createdAt: Timestamp.now()
+        };
+        console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'Timestamp.now()' });
+        await setDoc(usernameRef, usernameData);
+        
+        console.log(`✅ Username reserved: "${usernameLower}" for uid ${uid}`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Username reservation error:', error);
+        console.error('  - Error code:', error.code);
+        console.error('  - Error message:', error.message);
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            console.error('  - PERMISSION_DENIED: Check Firestore rules');
+            console.error('    * usernames/{username}: Ensure request.auth.uid == data.uid');
+        }
+        return { success: false, reason: 'error', error: error };
+    }
+}
+
+// Create user profile after email verification (called from verify page)
+async function createUserProfileAfterVerification(uid, usernameLower, email) {
+    // Validate inputs
+    if (!uid || !usernameLower || !email) {
+        console.error('❌ createUserProfileAfterVerification: Missing required parameters', { uid, usernameLower, email });
+        return { success: false, reason: 'error', error: new Error('Missing required parameters') };
+    }
+    
+    const userRef = doc(db, 'users', uid);
+    
+    // Check if user profile already exists
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+        console.log('✅ User profile already exists');
+        return { success: true, alreadyExists: true };
+    }
+    
+    console.log('📝 Creating user profile after email verification:');
+    console.log('  - UID:', uid);
+    console.log('  - Username:', usernameLower);
     console.log('  - Email:', email);
     
     try {
-        await runTransaction(db, async (transaction) => {
-            // Check if username is already taken
-            const usernameDoc = await transaction.get(usernameRef);
-            if (usernameDoc.exists()) {
-                console.log(`❌ Transaction failed: username "${usernameLower}" already taken`);
-                throw new Error('USERNAME_TAKEN');
-            }
-            
-            // Reserve username
-            const usernameData = {
-                uid: uid,
-                createdAt: Timestamp.now()
-            };
-            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'Timestamp.now()' });
-            transaction.set(usernameRef, usernameData);
-            
-            // Create user profile
-            const userData = {
-                username: usernameLower,
-                email: email,
-                createdAt: Timestamp.now(),
-                avatarCount: 0
-            };
-            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'Timestamp.now()', avatarCount: 0 });
-            transaction.set(userRef, userData);
-        });
+        // Create user profile
+        const userData = {
+            username: usernameLower,
+            email: email,
+            createdAt: Timestamp.now(),
+            avatarCount: 0
+        };
+        console.log('  - Setting users/' + uid + ' with data:', userData);
+        await setDoc(userRef, userData);
         
-        console.log(`✅ Transaction success: username "${usernameLower}" reserved for uid ${uid}`);
+        console.log(`✅ User profile created successfully for uid ${uid}`);
         return { success: true };
     } catch (error) {
-        if (error.message === 'USERNAME_TAKEN') {
-            console.log(`❌ Transaction failed: username taken`);
-            return { success: false, reason: 'taken' };
-        }
-        console.error('❌ Transaction error:', error);
+        console.error('❌ User profile creation error:', error);
         console.error('  - Error code:', error.code);
         console.error('  - Error message:', error.message);
         if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
             console.error('  - PERMISSION_DENIED: Check Firestore rules');
             console.error('    * users/{uid}: Ensure request.auth.uid == uid');
-            console.error('    * usernames/{username}: Ensure request.auth.uid == data.uid');
-            console.error('    * Verify all field validations pass');
         }
         return { success: false, reason: 'error', error: error };
     }
 }
+
+// Export function for use in verify.js
+export { createUserProfileAfterVerification };
 
 // Login form handler
 const loginFormEl = document.getElementById('loginForm');
@@ -559,19 +588,18 @@ if (signupFormEl && signupBtn) {
             await new Promise(resolve => setTimeout(resolve, 100));
             console.log('  - Auth state propagation delay completed');
 
-            // Step 2: Atomically reserve username and create user profile using transaction
+            // Step 2: Reserve username only (user profile created after email verification)
             // IMPORTANT: Use uid from credential, NOT auth.currentUser
-            // Transaction ensures both docs are created or neither (no orphaned usernames)
-            console.log('📝 Step 2: Reserving username and creating user profile (atomic transaction)...');
-            const transactionResult = await reserveUsernameTransaction(uid, usernameLower, email);
+            // Profile will be created after email verification is confirmed
+            console.log('📝 Step 2: Reserving username only (profile will be created after email verification)...');
+            const usernameReservationResult = await reserveUsernameOnly(uid, usernameLower);
             
-            if (!transactionResult.success) {
+            if (!usernameReservationResult.success) {
                 // Clear signup flag before error handling
                 isSignupInProgress = false;
                 
-                // Transaction failed - clean up the Auth user to prevent orphaned accounts
-                // The transaction ensures no username doc was created, so we only need to clean up Auth
-                console.log('Transaction failed, cleaning up Auth user...');
+                // Username reservation failed - clean up the Auth user to prevent orphaned accounts
+                console.log('Username reservation failed, cleaning up Auth user...');
                 try {
                     await deleteUser(userCredential.user);
                     console.log('✅ Auth user deleted successfully (no orphaned account)');
@@ -579,23 +607,30 @@ if (signupFormEl && signupBtn) {
                     console.error('❌ Failed to delete Auth user:', deleteError);
                     console.error('  - Error code:', deleteError.code);
                     console.error('  - Error message:', deleteError.message);
-                    // Note: If delete fails due to recent login requirements, the user will need to
-                    // manually delete their account or we can handle it later. For now, log the error.
                     if (deleteError.code === 'auth/requires-recent-login') {
                         console.warn('⚠️ Auth user requires recent login to delete - may need manual cleanup');
                     }
                 }
                 
                 // Show appropriate error message
-                if (transactionResult.reason === 'taken') {
+                if (usernameReservationResult.reason === 'taken') {
                     showMessage('signup', 'error', 'Username was just taken. Please choose another.');
                 } else {
-                    const errorMsg = transactionResult.error?.code === 'permission-denied' || transactionResult.error?.code === 'PERMISSION_DENIED'
+                    const errorMsg = usernameReservationResult.error?.code === 'permission-denied' || usernameReservationResult.error?.code === 'PERMISSION_DENIED'
                         ? 'Permission denied. Please check your connection and try again.'
-                        : 'Failed to create profile. Please try again.';
+                        : 'Failed to reserve username. Please try again.';
                     showMessage('signup', 'error', errorMsg);
                 }
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+                return;
             } else {
+                console.log('✅ Username reserved successfully (profile will be created after email verification)');
+                
+                // Store username in localStorage for retrieval after email verification
+                localStorage.setItem('pending_username', usernameLower);
+                console.log('  - Username stored in localStorage for profile creation');
+                
                 // Success - send verification email immediately after user creation
                 // IMPORTANT: Use userCredential.user (the newly created user) and await the call
                 console.log('Signup completed successfully, sending verification email...');
@@ -608,7 +643,7 @@ if (signupFormEl && signupBtn) {
                     await sendEmailVerification(userCredential.user);
                     verificationEmailSent = true;
                     console.log('✅ Verification email sent successfully to:', userCredential.user.email);
-                    showMessage('signup', 'success', 'Account created! Verification email sent. Please check your inbox.');
+                    showMessage('signup', 'success', 'Account created! Please verify your email to complete signup. Check your inbox for the verification link.');
                 } catch (verifyError) {
                     // Log the error but don't fail the signup - user account is still created
                     console.error('❌ Failed to send verification email:', verifyError);

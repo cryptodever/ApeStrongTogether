@@ -8,6 +8,7 @@ import {
     sendEmailVerification,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { createUserProfileAfterVerification } from './auth-ui.js';
 
 const resendBtn = document.getElementById('resendBtn');
 const continueBtn = document.getElementById('continueBtn');
@@ -83,8 +84,47 @@ if (continueBtn) {
             
             // Check if verified
             if (currentUser && currentUser.emailVerified) {
-                // Redirect to generator
-                window.location.href = '/generator/';
+                // Email is verified - create user profile if it doesn't exist yet
+                console.log('Email verified! Creating user profile...');
+                
+                try {
+                    // Get username from localStorage (stored during signup)
+                    const pendingUsername = localStorage.getItem('pending_username');
+                    
+                    if (pendingUsername) {
+                        console.log(`Found reserved username in localStorage: ${pendingUsername}`);
+                        
+                        // Create profile with the reserved username
+                        const profileResult = await createUserProfileAfterVerification(
+                            currentUser.uid,
+                            pendingUsername,
+                            currentUser.email
+                        );
+                        
+                        // Clear the pending username from localStorage
+                        localStorage.removeItem('pending_username');
+                        
+                        if (profileResult.success) {
+                            console.log('✅ User profile created successfully');
+                            // Redirect to generator
+                            window.location.href = '/generator/';
+                        } else {
+                            showMessage('error', 'Profile creation failed. Please try again.');
+                            continueBtn.disabled = false;
+                            continueBtn.textContent = 'I Verified, Continue';
+                        }
+                    } else {
+                        console.warn('⚠️ No pending username found - profile may already exist');
+                        // Still redirect - profile might already exist or user may have logged in previously
+                        window.location.href = '/generator/';
+                    }
+                } catch (profileError) {
+                    console.error('Error creating user profile:', profileError);
+                    // Clear localStorage on error
+                    localStorage.removeItem('pending_username');
+                    // If profile creation fails, still redirect - user might already have profile
+                    window.location.href = '/generator/';
+                }
             } else {
                 showMessage('error', 'Email not verified yet. Please check your inbox and click the verification link.');
                 continueBtn.disabled = false;
