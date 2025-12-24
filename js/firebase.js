@@ -158,6 +158,7 @@ function loadRecaptchaScript(siteKey) {
     return new Promise((resolve, reject) => {
         // Check if script is already loaded
         if (typeof window.grecaptcha !== 'undefined') {
+            console.log('✅ reCAPTCHA already loaded (grecaptcha found)');
             resolve();
             return;
         }
@@ -165,19 +166,53 @@ function loadRecaptchaScript(siteKey) {
         // Check if script tag already exists
         const existingScript = document.querySelector('script[src*="recaptcha"]');
         if (existingScript) {
-            // Script exists, wait for it to load
-            existingScript.addEventListener('load', resolve);
-            existingScript.addEventListener('error', reject);
+            console.log('⏳ reCAPTCHA script tag exists, waiting for load...');
+            // If script already loaded, resolve immediately
+            if (existingScript.complete || existingScript.readyState === 'complete') {
+                // Script already loaded, wait a bit for grecaptcha to be available
+                const checkInterval = setInterval(() => {
+                    if (typeof window.grecaptcha !== 'undefined') {
+                        clearInterval(checkInterval);
+                        console.log('✅ reCAPTCHA loaded from existing script');
+                        resolve();
+                    }
+                }, 100);
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (typeof window.grecaptcha === 'undefined') {
+                        console.warn('⚠️  Existing reCAPTCHA script found but grecaptcha not available');
+                    }
+                    resolve(); // Resolve anyway to continue
+                }, 5000);
+                return;
+            }
+            // Script exists but not loaded yet, wait for it
+            existingScript.addEventListener('load', () => {
+                console.log('✅ reCAPTCHA loaded from existing script tag');
+                resolve();
+            });
+            existingScript.addEventListener('error', () => {
+                console.error('❌ Existing reCAPTCHA script failed to load');
+                reject(new Error('Existing reCAPTCHA script failed to load'));
+            });
             return;
         }
 
         // Create and inject script tag
+        console.log('📥 Loading reCAPTCHA script dynamically...');
         const script = document.createElement('script');
         script.src = 'https://www.google.com/recaptcha/api.js?render=' + siteKey;
         script.async = true;
         script.defer = true;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load reCAPTCHA script. Check CSP: script-src must allow https://www.google.com/recaptcha/'));
+        script.onload = () => {
+            console.log('✅ reCAPTCHA script loaded successfully');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('❌ Failed to load reCAPTCHA script');
+            console.error('   Check CSP: script-src must allow https://www.google.com/recaptcha/');
+            reject(new Error('Failed to load reCAPTCHA script. Check CSP: script-src must allow https://www.google.com/recaptcha/'));
+        };
         document.head.appendChild(script);
     });
 }

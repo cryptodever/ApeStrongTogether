@@ -949,9 +949,21 @@ function initializeAuthUI() {
     window.debugFirestore = {
         ping: pingFirestore,
         testUsernames: testUsernamesCreateOnly,
-        testUsers: testUsersCreateOnly
+        testUsers: testUsersCreateOnly,
+        all: async () => {
+            try {
+                const { runAllDiagnostics } = await import('/js/debug-firestore.js');
+                await runAllDiagnostics();
+            } catch (error) {
+                console.error('Failed to load diagnostics:', error);
+            }
+        }
     };
-    console.log('💡 Debug functions available: window.debugFirestore.ping(), .testUsernames(), .testUsers()');
+    console.log('💡 Debug functions available:');
+    console.log('   - window.debugFirestore.all() - Run all diagnostics');
+    console.log('   - window.debugFirestore.ping() - Test basic write/read');
+    console.log('   - window.debugFirestore.testUsernames() - Test usernames create');
+    console.log('   - window.debugFirestore.testUsers() - Test users create');
     
     // Get current user status (only once)
     if (!authStateChecked) {
