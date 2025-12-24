@@ -946,17 +946,17 @@ function initializeAuthUI() {
     console.log('═══════════════════════════════════════════════════════');
     
     // Expose test functions globally for console debugging
-    window.debugFirestore = {
-        ping: pingFirestore,
-        testUsernames: testUsernamesCreateOnly,
-        testUsers: testUsersCreateOnly,
-        all: async () => {
-            try {
-                const { runAllDiagnostics } = await import('/js/debug-firestore.js');
-                await runAllDiagnostics();
-            } catch (error) {
-                console.error('Failed to load diagnostics:', error);
-            }
+    window.debugFirestore = window.debugFirestore || {};
+    window.debugFirestore.ping = pingFirestore;
+    window.debugFirestore.testUsernames = testUsernamesCreateOnly;
+    window.debugFirestore.testUsers = testUsersCreateOnly;
+    window.debugFirestore.all = async function() {
+        try {
+            const { runAllDiagnostics } = await import('/js/debug-firestore.js');
+            await runAllDiagnostics();
+        } catch (error) {
+            console.error('Failed to load diagnostics:', error);
+            console.error('Error details:', error.message);
         }
     };
     console.log('💡 Debug functions available:');

@@ -151,6 +151,9 @@ export async function testBasicWrite() {
 // Auto-run if loaded directly in console
 if (typeof window !== 'undefined') {
     window.debugFirestoreAll = runAllDiagnostics;
-    console.log('💡 Run: debugFirestoreAll() to run all diagnostics');
+    // Also attach to window.debugFirestore if it exists
+    if (window.debugFirestore) {
+        window.debugFirestore.all = runAllDiagnostics;
+    }
 }
 
