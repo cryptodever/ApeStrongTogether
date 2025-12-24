@@ -283,9 +283,8 @@ async function checkUsernameAvailability(usernameLower, bypassRateLimit = false)
     }
 }
 
-// Atomically reserve username using Firestore transaction
-// TODO: REVERT - This is temporarily split into two sequential writes for debugging
-// After identifying which write is failing, revert back to runTransaction()
+// Atomically reserve username and create user profile using Firestore transaction
+// This ensures both writes succeed or both fail (no orphaned usernames)
 async function reserveUsernameTransaction(uid, usernameLower, email) {
     // Validate inputs
     if (!uid || !usernameLower || !email) {
@@ -296,91 +295,58 @@ async function reserveUsernameTransaction(uid, usernameLower, email) {
     const usernameRef = doc(db, 'usernames', usernameLower);
     const userRef = doc(db, 'users', uid);
     
-    // Log debug details
-    console.log('🔄 DEBUG MODE: Starting username reservation (two sequential writes, NOT transaction):');
+    // Log transaction details
+    console.log('🔄 Starting atomic username reservation transaction:');
     console.log('  - UID:', uid);
     console.log('  - Username:', usernameLower);
     console.log('  - Username doc path: usernames/' + usernameLower);
     console.log('  - User doc path: users/' + uid);
     console.log('  - Email:', email);
-    console.log('  - Firestore db instance:', db ? 'initialized' : 'NOT INITIALIZED');
     
     try {
-        // STEP 1: Check if username exists and attempt to create usernames/{username}
-        console.log('📝 Step 1: Creating usernames/' + usernameLower);
-        const usernameDoc = await getDoc(usernameRef);
-        if (usernameDoc.exists()) {
-            console.log(`❌ Step 1 failed: username "${usernameLower}" already taken`);
-            return { success: false, reason: 'taken' };
-        }
-        
-        const usernameData = {
-            uid: uid,
-            createdAt: serverTimestamp()
-        };
-        console.log('  - Writing usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
-        
-        try {
-            await setDoc(usernameRef, usernameData, { merge: false });
-            console.log('✅ Step 1 SUCCESS: usernames/' + usernameLower + ' created');
-        } catch (step1Error) {
-            console.error('❌ Step 1 FAILED: usernames/' + usernameLower + ' creation failed');
-            console.error('  - Error code:', step1Error.code);
-            console.error('  - Error message:', step1Error.message);
-            if (step1Error.code === 'permission-denied' || step1Error.code === 'PERMISSION_DENIED') {
-                console.error('  - PERMISSION_DENIED on usernames/{username}');
-                console.error('    * Check: request.auth.uid == data.uid');
-                console.error('    * Check: !exists() check');
-                console.error('    * Check: username matches regex');
-                console.error('    * Check: createdAt is timestamp');
-            }
-            return { success: false, reason: 'error', error: step1Error, failedStep: 'usernames' };
-        }
-        
-        // STEP 2: Attempt to create users/{uid}
-        console.log('📝 Step 2: Creating users/' + uid);
-        const userData = {
-            username: usernameLower,
-            email: email,
-            createdAt: serverTimestamp(),
-            avatarCount: 0
-        };
-        console.log('  - Writing users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
-        
-        try {
-            await setDoc(userRef, userData, { merge: false });
-            console.log('✅ Step 2 SUCCESS: users/' + uid + ' created');
-        } catch (step2Error) {
-            console.error('❌ Step 2 FAILED: users/' + uid + ' creation failed');
-            console.error('  - Error code:', step2Error.code);
-            console.error('  - Error message:', step2Error.message);
-            if (step2Error.code === 'permission-denied' || step2Error.code === 'PERMISSION_DENIED') {
-                console.error('  - PERMISSION_DENIED on users/{uid}');
-                console.error('    * Check: request.auth.uid == uid');
-                console.error('    * Check: keys().hasOnly() validation');
-                console.error('    * Check: username regex match');
-                console.error('    * Check: createdAt is timestamp');
-                console.error('    * Check: avatarCount is int >= 0');
+        await runTransaction(db, async (transaction) => {
+            // Check if username is already taken
+            const usernameDoc = await transaction.get(usernameRef);
+            if (usernameDoc.exists()) {
+                console.log(`❌ Transaction failed: username "${usernameLower}" already taken`);
+                throw new Error('USERNAME_TAKEN');
             }
             
-            // Try to clean up step 1 if step 2 fails
-            try {
-                console.log('🧹 Attempting to rollback step 1 (delete usernames/' + usernameLower + ')');
-                await deleteDoc(usernameRef);
-                console.log('✅ Rollback successful: usernames/' + usernameLower + ' deleted');
-            } catch (rollbackError) {
-                console.error('⚠️ Rollback failed (username doc may remain):', rollbackError);
-            }
+            // Reserve username
+            const usernameData = {
+                uid: uid,
+                createdAt: serverTimestamp()
+            };
+            console.log('  - Setting usernames/' + usernameLower + ' with data:', { uid, createdAt: 'serverTimestamp()' });
+            transaction.set(usernameRef, usernameData);
             
-            return { success: false, reason: 'error', error: step2Error, failedStep: 'users' };
-        }
+            // Create user profile
+            const userData = {
+                username: usernameLower,
+                email: email,
+                createdAt: serverTimestamp(),
+                avatarCount: 0
+            };
+            console.log('  - Setting users/' + uid + ' with data:', { username: usernameLower, email, createdAt: 'serverTimestamp()', avatarCount: 0 });
+            transaction.set(userRef, userData);
+        });
         
-        console.log(`✅ Both steps SUCCESS: username "${usernameLower}" reserved for uid ${uid}`);
+        console.log(`✅ Transaction success: username "${usernameLower}" reserved for uid ${uid}`);
         return { success: true };
     } catch (error) {
-        console.error('❌ Unexpected error:', error);
+        if (error.message === 'USERNAME_TAKEN') {
+            console.log(`❌ Transaction failed: username taken`);
+            return { success: false, reason: 'taken' };
+        }
+        console.error('❌ Transaction error:', error);
         console.error('  - Error code:', error.code);
         console.error('  - Error message:', error.message);
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            console.error('  - PERMISSION_DENIED: Check Firestore rules');
+            console.error('    * users/{uid}: Ensure request.auth.uid == uid');
+            console.error('    * usernames/{username}: Ensure request.auth.uid == data.uid');
+            console.error('    * Verify all field validations pass');
+        }
         return { success: false, reason: 'error', error: error };
     }
 }
@@ -595,33 +561,39 @@ if (signupFormEl && signupBtn) {
 
             // Step 2: Atomically reserve username and create user profile using transaction
             // IMPORTANT: Use uid from credential, NOT auth.currentUser
-            console.log('📝 Step 2: Reserving username and creating user profile...');
+            // Transaction ensures both docs are created or neither (no orphaned usernames)
+            console.log('📝 Step 2: Reserving username and creating user profile (atomic transaction)...');
             const transactionResult = await reserveUsernameTransaction(uid, usernameLower, email);
             
             if (!transactionResult.success) {
                 // Clear signup flag before error handling
                 isSignupInProgress = false;
                 
-                if (transactionResult.reason === 'taken') {
-                    // Username was taken between check and transaction
-                    console.log('Username taken during transaction, rolling back auth user');
-                    try {
-                        await deleteUser(userCredential.user);
-                        console.log('Auth user rolled back successfully');
-                    } catch (deleteError) {
-                        console.error('Failed to rollback auth user:', deleteError);
+                // Transaction failed - clean up the Auth user to prevent orphaned accounts
+                // The transaction ensures no username doc was created, so we only need to clean up Auth
+                console.log('Transaction failed, cleaning up Auth user...');
+                try {
+                    await deleteUser(userCredential.user);
+                    console.log('✅ Auth user deleted successfully (no orphaned account)');
+                } catch (deleteError) {
+                    console.error('❌ Failed to delete Auth user:', deleteError);
+                    console.error('  - Error code:', deleteError.code);
+                    console.error('  - Error message:', deleteError.message);
+                    // Note: If delete fails due to recent login requirements, the user will need to
+                    // manually delete their account or we can handle it later. For now, log the error.
+                    if (deleteError.code === 'auth/requires-recent-login') {
+                        console.warn('⚠️ Auth user requires recent login to delete - may need manual cleanup');
                     }
+                }
+                
+                // Show appropriate error message
+                if (transactionResult.reason === 'taken') {
                     showMessage('signup', 'error', 'Username was just taken. Please choose another.');
                 } else {
-                    // Other transaction error
-                    console.error('Transaction failed:', transactionResult.error);
-                    try {
-                        await deleteUser(userCredential.user);
-                        console.log('Auth user rolled back after transaction error');
-                    } catch (deleteError) {
-                        console.error('Failed to rollback auth user:', deleteError);
-                    }
-                    showMessage('signup', 'error', 'Failed to create profile. Please try again.');
+                    const errorMsg = transactionResult.error?.code === 'permission-denied' || transactionResult.error?.code === 'PERMISSION_DENIED'
+                        ? 'Permission denied. Please check your connection and try again.'
+                        : 'Failed to create profile. Please try again.';
+                    showMessage('signup', 'error', errorMsg);
                 }
             } else {
                 // Success - send verification email immediately after user creation

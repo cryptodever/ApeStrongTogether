@@ -42,6 +42,7 @@ service cloud.firestore {
     match /usernames/{username} {
       // Allow public read for username availability checks
       allow get: if true;
+      allow list: if false;
       
       // Allow create only when all conditions are met
       // createdAt may be present as serverTimestamp() sentinel (REQUEST_TIME transform)
@@ -55,11 +56,13 @@ service cloud.firestore {
         && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
         && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
       
+      // Allow delete only for rollback - user can delete their own username claim
+      // This enables cleanup if signup transaction fails after username is created
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+      
       // Disallow update - usernames are immutable once created
       allow update: if false;
-      
-      // Disallow delete - username reservations are permanent (or handled by Cloud Function)
-      allow delete: if false;
     }
     
     // ============================================
