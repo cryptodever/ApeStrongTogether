@@ -304,6 +304,9 @@ if (loginFormEl && loginBtn) {
 const signupFormEl = document.getElementById('signupForm');
 const signupBtn = document.getElementById('signupBtn');
 
+// Flag to prevent onAuthStateChanged from redirecting during signup
+let isSignupInProgress = false;
+
 if (signupFormEl && signupBtn) {
     signupFormEl.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -347,6 +350,9 @@ if (signupFormEl && signupBtn) {
         // Show loading state
         signupBtn.disabled = true;
         signupBtn.textContent = 'Loading...';
+        
+        // Set flag to prevent premature redirects
+        isSignupInProgress = true;
 
         try {
             // Username availability check - block signup unless ok:true and available:true
@@ -356,6 +362,9 @@ if (signupFormEl && signupBtn) {
             
             // Block signup if check failed (ok:false) or username not available
             if (availabilityCheck.ok !== true || availabilityCheck.available !== true) {
+                // Clear signup flag on early return
+                isSignupInProgress = false;
+                
                 if (availabilityCheck.reason === 'database_missing') {
                     showMessage('signup', 'error', 'Firestore database isn\'t created for this Firebase project. Enable Cloud Firestore in Firebase Console.');
                 } else if (availabilityCheck.reason === 'offline') {
@@ -381,6 +390,9 @@ if (signupFormEl && signupBtn) {
             const transactionResult = await reserveUsernameTransaction(uid, usernameLower, email);
             
             if (!transactionResult.success) {
+                // Clear signup flag before error handling
+                isSignupInProgress = false;
+                
                 if (transactionResult.reason === 'taken') {
                     // Username was taken between check and transaction
                     console.log('Username taken during transaction, rolling back auth user');
@@ -403,29 +415,51 @@ if (signupFormEl && signupBtn) {
                     showMessage('signup', 'error', 'Failed to create profile. Please try again.');
                 }
             } else {
-                // Success - send verification email
+                // Success - send verification email immediately after user creation
+                // IMPORTANT: Use userCredential.user (the newly created user) and await the call
                 console.log('Signup completed successfully, sending verification email...');
+                
+                let verificationEmailSent = false;
                 try {
+                    // Send email verification - MUST await this before any redirect or UI transition
+                    // This uses the user object from the credential (correct approach)
+                    // Using default settings - Firebase will send verification email with default redirect
                     await sendEmailVerification(userCredential.user);
-                    console.log('Verification email sent');
+                    verificationEmailSent = true;
+                    console.log('✅ Verification email sent successfully to:', userCredential.user.email);
+                    showMessage('signup', 'success', 'Account created! Verification email sent. Please check your inbox.');
                 } catch (verifyError) {
-                    console.error('Failed to send verification email:', verifyError);
-                    // Don't fail signup if verification email fails, just log it
+                    // Log the error but don't fail the signup - user account is still created
+                    console.error('❌ Failed to send verification email:', verifyError);
+                    console.error('Error code:', verifyError.code, 'Error message:', verifyError.message);
+                    
+                    // Show user-friendly error message
+                    const errorMsg = verifyError.code === 'auth/too-many-requests' 
+                        ? 'Too many verification emails. Please try again later or check your spam folder.'
+                        : 'Account created, but verification email failed to send. You can request a new one on the verify page.';
+                    showMessage('signup', 'error', errorMsg);
+                } finally {
+                    // Clear the signup flag to allow normal redirects
+                    isSignupInProgress = false;
                 }
                 
-                // Redirect to verify page
-                showMessage('signup', 'success', 'Account created! Please verify your email.');
+                // Only redirect after verification email attempt completes (success or failure)
+                // This ensures sendEmailVerification() has fully resolved before any redirect
                 setTimeout(() => {
                     window.location.href = '/verify/';
-                }, 2000);
+                }, verificationEmailSent ? 2000 : 1500);
             }
         } catch (error) {
             console.error('Signup error:', error);
             showMessage('signup', 'error', formatAuthError(error));
+            // Clear signup flag on error
+            isSignupInProgress = false;
         } finally {
-            // Always reset loading state
-            signupBtn.disabled = false;
-            signupBtn.textContent = 'Create Account';
+            // Always reset loading state (but keep flag if signup succeeded)
+            if (!isSignupInProgress) {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+            }
         }
     });
 }
@@ -525,6 +559,13 @@ function initUsernameChecking() {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log('Auth state changed: user logged in', user.uid);
+        
+        // Don't redirect if signup is in progress (prevents interrupting email verification)
+        if (isSignupInProgress) {
+            console.log('Signup in progress, skipping auth state redirect');
+            return;
+        }
+        
         // Only redirect to generator if email is verified
         // Don't redirect if we're already on the verify page
         if (user.emailVerified && !window.location.pathname.includes('/verify/')) {
@@ -534,7 +575,10 @@ onAuthStateChanged(auth, (user) => {
             }, 1500);
         } else if (!user.emailVerified && window.location.pathname.includes('/login/')) {
             // If on login page and not verified, redirect to verify page
-            window.location.href = '/verify/';
+            // But only if signup is not in progress
+            if (!isSignupInProgress) {
+                window.location.href = '/verify/';
+            }
         }
     } else {
         console.log('Auth state changed: user logged out');
