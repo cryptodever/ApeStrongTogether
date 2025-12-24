@@ -657,8 +657,15 @@ async function checkRulesVersion() {
             console.warn('⚠️ meta/rules document not found - rules version check skipped');
         }
     } catch (error) {
-        console.error('❌ Failed to check Firestore rules version:', error);
-        // Don't block initialization if version check fails
+        // Handle permission-denied specifically
+        if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            console.error('❌ Permission denied: meta/rules read is blocked by Firestore rules');
+            console.error('   Ensure rules allow: match /meta/{docId} { allow read: if docId == "rules"; }');
+        } else {
+            console.error('❌ Failed to check Firestore rules version:', error);
+            console.error('   Error code:', error.code, 'Error message:', error.message);
+            // Don't block initialization if version check fails
+        }
     }
 }
 
