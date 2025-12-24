@@ -1,14 +1,49 @@
-// RULES_VERSION: 2025-12-23-2213
+// RULES_VERSION: 2025-12-24-1300
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    /**
+     * Safely validates createdAt field when using serverTimestamp()
+     * 
+     * serverTimestamp() can arrive as:
+     * 1. A sentinel value in request.resource.data.createdAt (passes is timestamp check)
+     * 2. Applied via transform (field may not be in request.resource.data but will be set server-side)
+     * 
+     * This function accepts createdAt if:
+     * - It exists in request.resource.data and is a timestamp (handles sentinels and regular timestamps)
+     * - OR it's missing from request.resource.data but will be set via serverTimestamp transform
+     * 
+     * Note: When using transaction.set() with serverTimestamp(), the sentinel IS included
+     * in request.resource.data and passes "is timestamp" check, so Case 1 typically applies.
+     * Case 2 is defensive for transform-only scenarios.
+     */
+    function isValidCreatedAt() {
+      return (
+        // Case 1: createdAt exists in request.resource.data and is a timestamp
+        // This handles:
+        // - Regular timestamp values
+        // - serverTimestamp() sentinels (which pass is timestamp check)
+        ('createdAt' in request.resource.data && request.resource.data.createdAt is timestamp)
+        ||
+        // Case 2: createdAt is missing but will be set via serverTimestamp transform
+        // This handles edge cases where createdAt is applied via transform only
+        // (not present in request.resource.data but will be set server-side)
+        !('createdAt' in request.resource.data)
+      );
+    }
+    
+    // ============================================
     // META COLLECTION
     // ============================================
     // Allow public read of meta/rules for version verification
-    match /meta/rules {
-      allow get: if true;
+    match /meta/{docId} {
+      // Only allow reading the "rules" document, deny others
+      allow get: if docId == "rules";
       allow list, create, update, delete: if false;
     }
     
@@ -16,22 +51,21 @@ service cloud.firestore {
     // USERS COLLECTION
     // ============================================
     match /users/{uid} {
+      // Owner can read their own user document
       allow get: if request.auth != null && request.auth.uid == uid;
       allow list: if false;
       
       // Allow create only when all conditions are met
-      // createdAt may be present as serverTimestamp() sentinel (REQUEST_TIME transform)
-      // or may be in updateTransforms - validate only if present in request.resource.data
+      // Uses helper function to safely validate createdAt with serverTimestamp()
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && request.resource.data.keys().hasAll(['username', 'email', 'avatarCount'])
+        && request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt'])
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[a-z0-9_]{3,20}$')
         && request.resource.data.email is string
         && request.resource.data.avatarCount is int
         && request.resource.data.avatarCount >= 0
-        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
-        && request.resource.data.keys().hasOnly(['username', 'email', 'avatarCount', 'createdAt']);
+        && isValidCreatedAt();
       
       allow update, delete: if false;
     }
@@ -45,16 +79,15 @@ service cloud.firestore {
       allow list: if false;
       
       // Allow create only when all conditions are met
-      // createdAt may be present as serverTimestamp() sentinel (REQUEST_TIME transform)
-      // or may be in updateTransforms - validate only if present in request.resource.data
+      // Uses helper function to safely validate createdAt with serverTimestamp()
+      // Enforce uniqueness: document must not already exist
       allow create: if request.auth != null
         && !exists(/databases/$(database)/documents/usernames/$(username))
         && username.matches('^[a-z0-9_]{3,20}$')
-        && request.resource.data.keys().hasAll(['uid'])
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
         && request.resource.data.uid is string
         && request.resource.data.uid == request.auth.uid
-        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
-        && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+        && isValidCreatedAt();
       
       // Allow delete only for rollback - user can delete their own username claim
       // This enables cleanup if signup transaction fails after username is created
