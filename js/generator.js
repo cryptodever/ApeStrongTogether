@@ -118,14 +118,6 @@ import { withBase } from './base-url.js';
             // Get image's natural aspect ratio
             const imgAspectRatio = img.width / img.height;
             
-            // Debug: Log image dimensions to help diagnose stretching
-            console.log('Ape image dimensions:', {
-                width: img.width,
-                height: img.height,
-                aspectRatio: imgAspectRatio,
-                bbox: { width: bbox.width, height: bbox.height, aspectRatio: bbox.width / bbox.height }
-            });
-            
             // Calculate scale based on image dimensions (not bbox) to maintain true aspect ratio
             // Fit image within safe area while preserving aspect ratio
             const scaleByWidth = safeArea.width / img.width;
@@ -1256,16 +1248,6 @@ import { withBase } from './base-url.js';
             randomize();
         });
         
-        document.getElementById('debugBtn').addEventListener('click', () => {
-            state.debug = !state.debug;
-            const btn = document.getElementById('debugBtn');
-            if (state.debug) {
-                btn.classList.add('active', 'debug-btn-active');
-            } else {
-                btn.classList.remove('active', 'debug-btn-active');
-            }
-            render();
-        });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
             // Reset state
@@ -1326,9 +1308,6 @@ import { withBase } from './base-url.js';
             document.getElementById('textSize').value = 40;
             document.getElementById('textSizeValue').textContent = 40;
             
-            // Reset debug button
-            const debugBtn = document.getElementById('debugBtn');
-            debugBtn.classList.remove('active', 'debug-btn-active');
 
             render();
         });
