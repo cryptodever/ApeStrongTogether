@@ -30,9 +30,21 @@
 
     <main class="profile-page">
         <div class="profile-container">
-            <!-- Banner Image Section -->
-            <div class="profile-banner">
-                <img id="profileBannerImg" src="/pfp_generator_apes/ape_pfp_1.png" alt="Profile Banner" />
+            <!-- Banner and Bio Section -->
+            <div class="profile-banner-bio-row">
+                <!-- Banner Image Section -->
+                <div class="profile-banner">
+                    <img id="profileBannerImg" src="/pfp_generator_apes/ape_pfp_1.png" alt="Profile Banner" />
+                </div>
+                
+                <!-- Bio Section -->
+                <div class="profile-bio-section">
+                    <div class="profile-bio">
+                        <label for="profileBio">Bio</label>
+                        <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
+                        <small class="char-count"><span id="bioCharCount">0</span>/500</small>
+                    </div>
+                </div>
             </div>
             
             <!-- Profile Settings -->
@@ -40,21 +52,16 @@
                 <div class="profile-settings-card">
                     <div class="profile-header-row">
                         <h2>Profile Settings</h2>
+                    </div>
+                    
+                    <div class="profile-rank-country-row">
                         <div class="profile-rank">
                             <span class="rank-label">LVL</span>
                             <span class="rank-value" id="profileRank">1</span>
                         </div>
-                    </div>
-                    
-                    <div class="profile-bio">
-                        <label for="profileBio">Bio</label>
-                        <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
-                        <small class="char-count"><span id="bioCharCount">0</span>/500</small>
-                    </div>
-                    
-                    <div class="profile-country">
-                        <label for="profileCountry">Country</label>
-                        <select id="profileCountry" class="country-select">
+                        <div class="profile-country">
+                            <label for="profileCountry">Country</label>
+                            <select id="profileCountry" class="country-select">
                             <option value="">🌍</option>
                             <option value="US">🇺🇸</option>
                             <option value="GB">🇬🇧</option>
@@ -335,7 +342,7 @@
                             <img src="/pfp_generator_images/pfp_bg8.png" alt="Banner 15" />
                         </div>
                     </div>
-                    <button class="btn btn-secondary view-more-btn" id="viewMoreBannersBtn">View More</button>
+                    <button class="btn btn-primary view-more-btn" id="viewMoreBannersBtn">View More</button>
                 </div>
             </section>
         </div>
