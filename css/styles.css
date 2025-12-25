@@ -3638,7 +3638,6 @@ body.generator-body > * {
 
 .generator-container {
     display: contents;
-    position: relative;
 }
 
 /* Desktop: controls left, preview right */
