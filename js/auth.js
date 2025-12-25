@@ -11,10 +11,11 @@ import {
     signOut,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
-import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 let authStateListener = null;
 let eventsSetup = false;
+let userProfileListener = null;
 
 /**
  * Initialize auth UI (works with header partial)
@@ -290,10 +291,50 @@ export function openAuthModal(mode = 'login') {
 // Also expose globally for easy access from overlay buttons
 window.openAuthModal = openAuthModal;
 
+function updateUsernameDisplay(user) {
+    const userEmailEl = document.getElementById('userEmailDisplay');
+    if (!userEmailEl || !user) return;
+    
+    // Show email initially (fallback)
+    userEmailEl.textContent = user.email;
+    
+    // Set up real-time listener for user profile
+    // First, unsubscribe from any existing listener
+    if (userProfileListener) {
+        userProfileListener();
+        userProfileListener = null;
+    }
+    
+    // Create real-time listener to watch for profile creation/updates
+    const userDocRef = doc(db, 'users', user.uid);
+    userProfileListener = onSnapshot(
+        userDocRef,
+        (userDoc) => {
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                console.log('User profile data:', userData);
+                if (userData.username) {
+                    console.log('Updating display to username:', userData.username);
+                    if (userEmailEl) {
+                        userEmailEl.textContent = userData.username;
+                    }
+                } else {
+                    console.warn('Username field not found in user profile, keeping email');
+                }
+            } else {
+                console.log('User profile document does not exist yet, showing email');
+            }
+        },
+        (error) => {
+            console.error('Error listening to user profile:', error);
+            // Keep showing email on error
+        }
+    );
+}
+
 async function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
-    const userEmailEl = document.getElementById('userEmailDisplay');
     
     if (user) {
         if (authLoggedOut) {
@@ -304,24 +345,16 @@ async function updateHeaderUI(user) {
             authLoggedIn.classList.remove('hide');
             authLoggedIn.classList.add('show-flex');
             
-            // Show email initially (fallback)
-            if (userEmailEl) userEmailEl.textContent = user.email;
-            
-            // Fetch username from Firestore user profile and update if available
-            try {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    if (userData.username && userEmailEl) {
-                        userEmailEl.textContent = userData.username;
-                    }
-                }
-            } catch (error) {
-                console.warn('Could not fetch username, using email:', error);
-                // Email is already displayed, so no need to update
-            }
+            // Set up username display with real-time listener
+            updateUsernameDisplay(user);
         }
     } else {
+        // Clean up listener when user logs out
+        if (userProfileListener) {
+            userProfileListener();
+            userProfileListener = null;
+        }
+        
         if (authLoggedIn) {
             authLoggedIn.classList.add('hide');
             authLoggedIn.classList.remove('show-flex');
