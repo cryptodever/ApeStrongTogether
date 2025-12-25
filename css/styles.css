@@ -5114,6 +5114,13 @@ body.chat-body > * {
     gap: 2rem;
 }
 
+/* Banner and Bio Row */
+.profile-banner-bio-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
 /* Profile Banner */
 .profile-banner {
     width: 100%;
@@ -5124,6 +5131,29 @@ body.chat-body > * {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+/* Bio Section */
+.profile-bio-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-bio-section .profile-bio {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 2px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .profile-banner img {
@@ -5161,6 +5191,13 @@ body.chat-body > * {
     font-family: 'Space Grotesk', sans-serif;
 }
 
+.profile-rank-country-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
 .profile-rank {
     display: flex;
     align-items: center;
@@ -5170,6 +5207,7 @@ body.chat-body > * {
     border: 1px solid rgba(74, 222, 128, 0.3);
     border-radius: 8px;
     font-family: 'Space Grotesk', sans-serif;
+    flex-shrink: 0;
 }
 
 .profile-rank .rank-label {
@@ -5187,8 +5225,22 @@ body.chat-body > * {
     text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
 }
 
+.profile-rank-country-row .profile-country {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
 .profile-bio {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-bio textarea {
+    flex: 1;
+    min-height: 150px;
 }
 
 .profile-bio label,
@@ -5232,6 +5284,10 @@ body.chat-body > * {
 
 .profile-country {
     margin-bottom: 1.5rem;
+}
+
+.profile-rank-country-row .profile-country {
+    margin-bottom: 0;
 }
 
 .profile-country select {
@@ -5382,14 +5438,53 @@ body.chat-body > * {
     margin-top: 1rem;
 }
 
+/* Profile page buttons - green styling */
+.profile-page .btn-primary,
+.profile-settings-card .btn-primary,
+.banner-selection-card .btn-primary {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.profile-page .btn-primary:hover:not(:disabled),
+.profile-settings-card .btn-primary:hover:not(:disabled),
+.banner-selection-card .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(74, 222, 128, 0.5);
+}
+
+.profile-page .btn-primary:disabled,
+.profile-settings-card .btn-primary:disabled,
+.banner-selection-card .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Desktop Styles */
 @media (min-width: 768px) {
     .profile-page {
         padding: 3rem 2rem;
     }
 
+    .profile-banner-bio-row {
+        flex-direction: row;
+        gap: 2rem;
+        align-items: stretch;
+    }
+
     .profile-banner {
+        width: 50%;
         height: 400px;
+        flex-shrink: 0;
+    }
+
+    .profile-bio-section {
+        width: 50%;
     }
 
     .banner-grid {
