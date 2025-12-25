@@ -114,18 +114,30 @@ import { withBase } from './base-url.js';
             // Compute bounding box
             const bbox = computeBoundingBox(img);
             
-            // Scale factor to fit bbox within safe area (contain behavior)
-            // This ensures the image fits within the safe area while maintaining aspect ratio
-            const scale = Math.min(safeArea.width / bbox.width, safeArea.height / bbox.height);
+            // Get image's natural aspect ratio
+            const imgAspectRatio = img.width / img.height;
             
-            // Scaled bbox dimensions
+            // Calculate scale based on image dimensions (not bbox) to maintain true aspect ratio
+            // Fit image within safe area while preserving aspect ratio
+            const scaleByWidth = safeArea.width / img.width;
+            const scaleByHeight = safeArea.height / img.height;
+            const scale = Math.min(scaleByWidth, scaleByHeight);
+            
+            // Calculate draw dimensions using image's natural aspect ratio
+            // Always maintain the exact aspect ratio of the source image
+            let drawWidth = img.width * scale;
+            let drawHeight = img.height * scale;
+            
+            // Force correct aspect ratio to prevent any stretching
+            const calculatedAspectRatio = drawWidth / drawHeight;
+            if (Math.abs(calculatedAspectRatio - imgAspectRatio) > 0.001) {
+                // Recalculate height based on width to ensure perfect aspect ratio
+                drawHeight = drawWidth / imgAspectRatio;
+            }
+            
+            // Scaled bbox dimensions (for positioning reference)
             const scaledBboxW = bbox.width * scale;
             const scaledBboxH = bbox.height * scale;
-            
-            // Full image scale - maintain aspect ratio by using the same scale for both dimensions
-            const fullScale = scale;
-            const drawWidth = img.width * fullScale;
-            const drawHeight = img.height * fullScale;
             
             // Calculate the offset from image top-left to bbox center
             const bboxOffsetX = bbox.centerX;
