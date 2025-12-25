@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <title>Live Chat 💬 | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=2">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="chat-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="chat-page">
+        <div class="chat-container">
+            <header class="chat-header">
+                <h1>Live Chat 💬</h1>
+                <p>Connect with the Ape community</p>
+            </header>
+
+            <div class="chat-content">
+                <div class="chat-placeholder">
+                    <div class="chat-placeholder-icon">💬</div>
+                    <h2>Chat Coming Soon</h2>
+                    <p>Live chat functionality will be available here soon. Stay tuned!</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/chat-init.js?v=2"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>
+
