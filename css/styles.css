@@ -630,51 +630,48 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > 
     position: relative;
     z-index: 1;
 }
-        
-        /* Ensure page content doesn't sit above mobile menu on mobile */
-        @media (max-width: 768px) {
-            body > *:not(nav):not(#site-header):not(.mobile-menu-overlay) {
-                z-index: 1 !important;
-            }
-            
-            .container,
-            .page-container,
-            .hero,
-            .card,
-            section,
-            main,
-            .token-address-section,
-            .thesis-statement,
-            .what-is-this,
-            .whats-coming,
-            .roadmap-page,
-            .generator-shell,
-            .generator-stage,
-            .generator-page {
-                z-index: 1 !important;
-                position: relative;
-            }
-        }
 
-        /* Navigation styles are now in /partials/header.html */
+/* Ensure page content doesn't sit above mobile menu on mobile */
+@media (max-width: 768px) {
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > *:not(nav):not(#site-header):not(.mobile-menu-overlay) {
+        z-index: 1 !important;
+    }
+    
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .container,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .page-container,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .hero,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .card,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) section,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) main,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .token-address-section,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .thesis-statement,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .what-is-this,
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .whats-coming {
+        z-index: 1 !important;
+        position: relative;
+    }
+}
 
-        .ticker-bar {
-            width: 100%;
-            background: rgba(15, 15, 15, 0.7);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 0.5rem 0;
-            overflow: hidden;
-            position: relative;
-            z-index: 99;
-        }
-        
-        /* Ensure ticker-bar doesn't sit above mobile menu */
-        @media (max-width: 768px) {
-            .ticker-bar {
-                z-index: 1 !important;
-            }
-        }
+/* Navigation styles are now in /partials/header.html */
+
+/* Homepage-specific styles - only apply when NOT on login/generator/roadmap/chat pages */
+body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
+    width: 100%;
+    background: rgba(15, 15, 15, 0.7);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 0.5rem 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 99;
+}
+
+/* Ensure ticker-bar doesn't sit above mobile menu */
+@media (max-width: 768px) {
+    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
+        z-index: 1 !important;
+    }
+}
 
         .ticker-content {
             display: flex;
