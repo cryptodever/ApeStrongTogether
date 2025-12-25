@@ -352,23 +352,11 @@ async function updateHeaderUI(user) {
         
         // Show chat link only if user is logged in and email is verified
         if (chatLink) {
-            try {
-                // Reload user to get latest verification status
-                await user.reload();
-                const currentUser = auth.currentUser;
-                if (currentUser && currentUser.emailVerified) {
-                    chatLink.classList.remove('hide');
-                } else {
-                    chatLink.classList.add('hide');
-                }
-            } catch (error) {
-                console.error('Error checking email verification for chat link:', error);
-                // On error, check user object directly
-                if (user.emailVerified) {
-                    chatLink.classList.remove('hide');
-                } else {
-                    chatLink.classList.add('hide');
-                }
+            // Check email verification status (don't reload to avoid breaking auth flow)
+            if (user.emailVerified) {
+                chatLink.classList.remove('hide');
+            } else {
+                chatLink.classList.add('hide');
             }
         }
     } else {
