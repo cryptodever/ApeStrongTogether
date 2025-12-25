@@ -13,11 +13,12 @@ import { withBase } from './base-url.js';
             PREVIEW_SIZE: 512,      // Display canvas size
             EXPORT_SIZE: 2048,      // High-res export size (always 2048x2048)
             
-            // Fixed Safe Area (for 2048x2048 canvas) - adjusted for better ape fitting
-            SAFE_W: 0.85 * 2048,    // Safe area width: 1740.8
-            SAFE_H: 0.85 * 2048,    // Safe area height: 1740.8
-            SAFE_X: (2048 - (0.85 * 2048)) / 2,  // Safe area X: 153.6
-            SAFE_Y: (2048 - (0.85 * 2048)) / 2,  // Safe area Y: 153.6
+            // Fixed Safe Area (for 2048x2048 canvas) - adjusted to be more square-friendly
+            // Using a slightly wider safe area to prevent vertical stretching
+            SAFE_W: 0.90 * 2048,    // Safe area width: 1843.2
+            SAFE_H: 0.90 * 2048,    // Safe area height: 1843.2
+            SAFE_X: (2048 - (0.90 * 2048)) / 2,  // Safe area X: 102.4
+            SAFE_Y: (2048 - (0.90 * 2048)) / 2,  // Safe area Y: 102.4
             
             // Anchor point (bbox center target) - centered for better balance
             ANCHOR_X: 1024,         // Center X
@@ -117,6 +118,14 @@ import { withBase } from './base-url.js';
             // Get image's natural aspect ratio
             const imgAspectRatio = img.width / img.height;
             
+            // Debug: Log image dimensions to help diagnose stretching
+            console.log('Ape image dimensions:', {
+                width: img.width,
+                height: img.height,
+                aspectRatio: imgAspectRatio,
+                bbox: { width: bbox.width, height: bbox.height, aspectRatio: bbox.width / bbox.height }
+            });
+            
             // Calculate scale based on image dimensions (not bbox) to maintain true aspect ratio
             // Fit image within safe area while preserving aspect ratio
             const scaleByWidth = safeArea.width / img.width;
@@ -129,11 +138,8 @@ import { withBase } from './base-url.js';
             let drawHeight = img.height * scale;
             
             // Force correct aspect ratio to prevent any stretching
-            const calculatedAspectRatio = drawWidth / drawHeight;
-            if (Math.abs(calculatedAspectRatio - imgAspectRatio) > 0.001) {
-                // Recalculate height based on width to ensure perfect aspect ratio
-                drawHeight = drawWidth / imgAspectRatio;
-            }
+            // Always recalculate height from width to ensure perfect aspect ratio
+            drawHeight = drawWidth / imgAspectRatio;
             
             // Scaled bbox dimensions (for positioning reference)
             const scaledBboxW = bbox.width * scale;
