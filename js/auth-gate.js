@@ -1,6 +1,6 @@
 /**
  * Authentication Gate Module
- * Blocks access to /generator/ unless user is authenticated
+ * Blocks access to protected pages unless user is authenticated and email verified
  */
 
 import { auth } from './firebase.js';
@@ -49,21 +49,30 @@ export function initAuthGate() {
         } else {
             // User is not logged in - show overlay
             showOverlay();
-            console.log('AuthGate: not logged in, blocking generator');
+            console.log('AuthGate: not logged in, blocking access');
         }
     });
 }
 
 function createOverlay() {
-    // Find the generator container
+    // Find the container (generator or chat)
     const generatorContainer = document.querySelector('.generator-container');
-    if (!generatorContainer) {
-        console.error('AuthGate: Could not find .generator-container');
+    const chatContainer = document.querySelector('.chat-container');
+    const container = generatorContainer || chatContainer;
+    
+    if (!container) {
+        console.error('AuthGate: Could not find .generator-container or .chat-container');
         return;
     }
     
-    // Ensure generator container is positioned relative
-    generatorContainer.classList.add('position-relative');
+    // Determine page type and message
+    const isChatPage = !!chatContainer;
+    const pageMessage = isChatPage 
+        ? 'Sign up / Log in to access live chat.' 
+        : 'Sign up / Log in to generate your Ape.';
+    
+    // Ensure container is positioned relative
+    container.classList.add('position-relative');
     
     authGateOverlay = document.createElement('div');
     authGateOverlay.id = 'authGateOverlay';
@@ -72,7 +81,7 @@ function createOverlay() {
         <div class="auth-gate-content">
             <div class="auth-gate-icon">🦍</div>
             <h2 class="auth-gate-title">Members Only</h2>
-            <p class="auth-gate-message">Sign up / Log in to generate your Ape.</p>
+            <p class="auth-gate-message">${pageMessage}</p>
             <div class="auth-gate-buttons">
                 <button class="btn btn-primary" id="authGateLoginBtn">Log In</button>
                 <button class="btn btn-secondary" id="authGateSignupBtn">Sign Up</button>
@@ -80,8 +89,8 @@ function createOverlay() {
         </div>
     `;
     
-    // Append overlay to generator container (not body)
-    generatorContainer.appendChild(authGateOverlay);
+    // Append overlay to container (not body)
+    container.appendChild(authGateOverlay);
     
     // Wire up buttons to open auth modal
     setupOverlayButtons();
@@ -109,11 +118,14 @@ function setupOverlayButtons() {
 function showOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.add('show');
-        // Disable pointer events on generator container content (but not header)
+        // Disable pointer events on container content (but not header)
         const generatorContainer = document.querySelector('.generator-container');
-        if (generatorContainer) {
+        const chatContainer = document.querySelector('.chat-container');
+        const container = generatorContainer || chatContainer;
+        
+        if (container) {
             // Disable pointer events on all children except the overlay
-            Array.from(generatorContainer.children).forEach(child => {
+            Array.from(container.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
                     child.classList.add('pointer-events-none');
                 }
@@ -125,10 +137,13 @@ function showOverlay() {
 function hideOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.remove('show');
-        // Re-enable pointer events on generator container content
+        // Re-enable pointer events on container content
         const generatorContainer = document.querySelector('.generator-container');
-        if (generatorContainer) {
-            Array.from(generatorContainer.children).forEach(child => {
+        const chatContainer = document.querySelector('.chat-container');
+        const container = generatorContainer || chatContainer;
+        
+        if (container) {
+            Array.from(container.children).forEach(child => {
                 child.classList.remove('pointer-events-none');
                 child.classList.add('pointer-events-auto');
             });

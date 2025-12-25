@@ -335,6 +335,7 @@ function updateUsernameDisplay(user) {
 async function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
+    const chatLink = document.getElementById('navChatLink');
     
     if (user) {
         if (authLoggedOut) {
@@ -348,11 +349,38 @@ async function updateHeaderUI(user) {
             // Set up username display with real-time listener
             updateUsernameDisplay(user);
         }
+        
+        // Show chat link only if user is logged in and email is verified
+        if (chatLink) {
+            try {
+                // Reload user to get latest verification status
+                await user.reload();
+                const currentUser = auth.currentUser;
+                if (currentUser && currentUser.emailVerified) {
+                    chatLink.classList.remove('hide');
+                } else {
+                    chatLink.classList.add('hide');
+                }
+            } catch (error) {
+                console.error('Error checking email verification for chat link:', error);
+                // On error, check user object directly
+                if (user.emailVerified) {
+                    chatLink.classList.remove('hide');
+                } else {
+                    chatLink.classList.add('hide');
+                }
+            }
+        }
     } else {
         // Clean up listener when user logs out
         if (userProfileListener) {
             userProfileListener();
             userProfileListener = null;
+        }
+        
+        // Hide chat link when logged out
+        if (chatLink) {
+            chatLink.classList.add('hide');
         }
         
         if (authLoggedIn) {
