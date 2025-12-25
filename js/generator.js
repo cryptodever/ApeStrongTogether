@@ -13,15 +13,15 @@ import { withBase } from './base-url.js';
             PREVIEW_SIZE: 512,      // Display canvas size
             EXPORT_SIZE: 2048,      // High-res export size (always 2048x2048)
             
-            // Fixed Safe Area (for 2048x2048 canvas)
-            SAFE_W: 0.82 * 2048,    // Safe area width: 1679.36
-            SAFE_H: 0.82 * 2048,    // Safe area height: 1679.36
-            SAFE_X: (2048 - (0.82 * 2048)) / 2,  // Safe area X: 184.32
-            SAFE_Y: (2048 - (0.82 * 2048)) / 2,  // Safe area Y: 184.32
+            // Fixed Safe Area (for 2048x2048 canvas) - adjusted for better ape fitting
+            SAFE_W: 0.85 * 2048,    // Safe area width: 1740.8
+            SAFE_H: 0.85 * 2048,    // Safe area height: 1740.8
+            SAFE_X: (2048 - (0.85 * 2048)) / 2,  // Safe area X: 153.6
+            SAFE_Y: (2048 - (0.85 * 2048)) / 2,  // Safe area Y: 153.6
             
-            // Anchor point (bbox center target)
+            // Anchor point (bbox center target) - centered for better balance
             ANCHOR_X: 1024,         // Center X
-            ANCHOR_Y: 900,          // Slightly above center for avatar framing
+            ANCHOR_Y: 1024,        // Center Y for even vertical distribution
             
             // Alpha threshold for bbox detection
             ALPHA_THRESHOLD: 10,    // Pixels with alpha > 10 are considered non-transparent
@@ -115,17 +115,14 @@ import { withBase } from './base-url.js';
             const bbox = computeBoundingBox(img);
             
             // Scale factor to fit bbox within safe area (contain behavior)
+            // This ensures the image fits within the safe area while maintaining aspect ratio
             const scale = Math.min(safeArea.width / bbox.width, safeArea.height / bbox.height);
             
             // Scaled bbox dimensions
             const scaledBboxW = bbox.width * scale;
             const scaledBboxH = bbox.height * scale;
             
-            // Position so bbox center aligns to anchor point
-            const drawX = anchor.x - (bbox.centerX * scale);
-            const drawY = anchor.y - (bbox.centerY * scale);
-            
-            // Full image scale
+            // Full image scale - maintain aspect ratio by using the same scale for both dimensions
             const fullScale = scale;
             const drawWidth = img.width * fullScale;
             const drawHeight = img.height * fullScale;
