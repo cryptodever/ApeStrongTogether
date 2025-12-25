@@ -693,7 +693,7 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
             text-align: center;
             margin: 0 0 3rem 0;
             padding: 2.5rem 3rem 2rem;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.22);
             border-radius: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
