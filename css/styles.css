@@ -2592,12 +2592,12 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > 
 /* Roadmap page body styles - scoped to .roadmap-body class */
 body.roadmap-body {
     font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background-color: #1a1a1a;
-    background-image: url('/background_homepage.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-position: center !important;
     color: #e0e0e0;
     line-height: 1.8;
     min-height: 100vh;
@@ -3122,12 +3122,12 @@ body.roadmap-body > * {
 /* Generator page body styles - scoped to .generator-body */
 body.generator-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background-color: #1a1a1a;
-    background-image: url('/background_homepage.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-position: center !important;
     color: #e0e0e0;
     line-height: 1.8;
     min-height: 100vh;
@@ -4232,12 +4232,12 @@ body.generator-body > * {
 /* Login page body styles - scoped to .login-body */
 body.login-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background-color: #1a1a1a;
-    background-image: url('/background_homepage.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-position: center !important;
     color: #e0e0e0;
     line-height: 1.8;
     min-height: 100vh;
@@ -4935,12 +4935,12 @@ body.verify-body > * {
 /* Chat page body styles - scoped to .chat-body */
 body.chat-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background-color: #1a1a1a;
-    background-image: url('/background_homepage.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    background-position: center !important;
     color: #e0e0e0;
     line-height: 1.8;
     min-height: 100vh;
