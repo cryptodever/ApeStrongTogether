@@ -5111,7 +5111,7 @@ body.chat-body > * {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 /* Banner and Bio Row */
@@ -5168,7 +5168,7 @@ body.chat-body > * {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    padding: 2rem;
+    padding: 1.5rem;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
@@ -5180,7 +5180,7 @@ body.chat-body > * {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .profile-settings-card h2 {
@@ -5194,8 +5194,8 @@ body.chat-body > * {
 .profile-rank-country-row {
     display: flex;
     align-items: flex-end;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .profile-rank {
@@ -5322,7 +5322,7 @@ body.chat-body > * {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    padding: 2rem;
+    padding: 1.5rem;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
@@ -5334,7 +5334,7 @@ body.chat-body > * {
     font-size: 1.5rem;
     font-weight: 700;
     color: #ffffff;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     font-family: 'Space Grotesk', sans-serif;
 }
 
@@ -5468,18 +5468,22 @@ body.chat-body > * {
 /* Desktop Styles */
 @media (min-width: 768px) {
     .profile-page {
-        padding: 3rem 2rem;
+        padding: 2rem 1.5rem;
+    }
+
+    .profile-container {
+        gap: 1.25rem;
     }
 
     .profile-banner-bio-row {
         flex-direction: row;
-        gap: 2rem;
+        gap: 1.5rem;
         align-items: stretch;
     }
 
     .profile-banner {
         width: 50%;
-        height: 400px;
+        height: 350px;
         flex-shrink: 0;
     }
 
@@ -5487,9 +5491,17 @@ body.chat-body > * {
         width: 50%;
     }
 
+    .profile-settings-card {
+        padding: 1.5rem;
+    }
+
+    .banner-selection-card {
+        padding: 1.5rem;
+    }
+
     .banner-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
+        gap: 1rem;
     }
 
     .banner-item.blurred {
@@ -5503,15 +5515,15 @@ body.chat-body > * {
 
 @media (min-width: 1024px) {
     .profile-page {
-        padding: 4rem 2rem;
+        padding: 2.5rem 2rem;
     }
 
     .profile-banner {
-        height: 500px;
+        height: 380px;
     }
 
     .profile-settings-card,
     .banner-selection-card {
-        padding: 2.5rem;
+        padding: 1.75rem;
     }
 }
