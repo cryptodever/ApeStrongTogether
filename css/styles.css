@@ -408,10 +408,7 @@ nav {
 }
 
 /* State classes for UI toggles */
-.open {
-    /* Used for open/expanded states (e.g., mobile menu) */
-    /* Add specific styles here if needed */
-}
+/* .open class is used for open/expanded states (e.g., mobile menu) - defined elsewhere if needed */
 
 .active {
     /* Used for active/selected states */
@@ -5112,4 +5109,3 @@ body.chat-body > * {
         margin-bottom: 20px;
     }
 }
-
