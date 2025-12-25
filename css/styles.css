@@ -690,27 +690,15 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
             position: relative;
         }
 
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url('/hero_banner.png');
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            z-index: -1;
-            pointer-events: none;
-            border-radius: 16px;
-        }
-
         .hero {
             text-align: center;
             margin: 0 0 3rem 0;
             padding: 2.5rem 3rem 2rem;
-            background: rgba(255, 255, 255, 0.02);
+            background-image: url('/hero_banner.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-color: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.22);
             border-radius: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
@@ -720,6 +708,19 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
             position: relative;
             z-index: 1;
             overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            z-index: 0;
+            pointer-events: none;
         }
 
         .hero::after {
