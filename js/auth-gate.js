@@ -56,6 +56,8 @@ export function initAuthGate() {
 
 function createOverlay() {
     // Find the container (generator or chat)
+    // For generator, use .generator-container (even though it has display: contents, it still works for appending)
+    // For chat, use .chat-container
     const generatorContainer = document.querySelector('.generator-container');
     const chatContainer = document.querySelector('.chat-container');
     const container = generatorContainer || chatContainer;
@@ -71,8 +73,7 @@ function createOverlay() {
         ? 'Sign up / Log in to access live chat.' 
         : 'Sign up / Log in to generate your Ape.';
     
-    // Ensure container is positioned relative
-    container.classList.add('position-relative');
+    // Note: Both containers already have position: relative in CSS, so no need to add class
     
     authGateOverlay = document.createElement('div');
     authGateOverlay.id = 'authGateOverlay';
