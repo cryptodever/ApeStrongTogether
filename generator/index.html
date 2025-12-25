@@ -9,42 +9,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
-    <title>Profile Pic Generator 🦍 | Apes Together Strong</title>
+    <title>Profile 🦍 | Apes Together Strong</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!--
-    ============================================
-    TRAIT FOLDER STRUCTURE DOCUMENTATION
-    ============================================
-    
-    All trait images should be organized as follows:
-    
-    /../pfp_generator_images/
-        - pfp_bg1.png through pfp_bg8.png (background images, 1024×1024 recommended)
-    
-    /../pfp_generator_apes/
-        - ape_pfp_1.png through ape_pfp_7.png (7 different ape variations)
-    
-    Image Requirements:
-    - All images should be PNG with transparency where needed
-    - Recommended size: 1024×1024 or larger for best quality
-    - Export resolution: 2048×2048 (4x the display preview)
-    - Ape images should have transparent backgrounds
-    - Background images should fill the entire canvas
-    
-    Future layered trait support:
-    /traits/backgrounds/ - Background layers
-    /traits/bodies/      - Base ape bodies
-    /traits/eyes/        - Eye variations
-    /traits/mouths/      - Mouth/expression variations
-    /traits/accessories/ - Hats, glasses, jewelry
-    /traits/effects/     - Overlay effects
-    ============================================
-    -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css?v=4">
+    <link rel="stylesheet" href="/css/styles.css?v=5">
     
     <!-- reCAPTCHA v3 for Firebase App Check -->
     <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
@@ -57,189 +28,340 @@
     <!-- Header Script -->
     <script type="module" src="/js/header.js?v=2"></script>
 
-    <main class="generator-page">
-        <div class="generator-shell">
-            <header class="generator-hero">
-                <h1>Profile Pic Generator V1</h1>
-                <p>Create your custom ape avatar with backgrounds, traits, accessories, and text overlays</p>
-            </header>
-
-            <section class="generator-stage">
-                <div class="generator-stage-inner">
-                    <div class="generator-container">
-            <div class="preview-section">
-                <div class="canvas-wrapper">
-                    <canvas id="profileCanvas"></canvas>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="downloadBtn">Download PNG (2048×2048)</button>
-                    <button class="btn btn-secondary" id="randomizeBtn">🎲 Randomize</button>
-                    <button class="btn btn-secondary" id="resetBtn">Reset</button>
-                </div>
-                <div id="loadingIndicator" class="loading-indicator hide">
-                    <div class="loading-spinner"></div>
-                    <p>Loading assets...</p>
-                </div>
+    <main class="profile-page">
+        <div class="profile-container">
+            <!-- Banner Image Section -->
+            <div class="profile-banner">
+                <img id="profileBannerImg" src="/pfp_generator_apes/ape_pfp_1.png" alt="Profile Banner" />
             </div>
-
-            <div class="controls-section">
-                <!-- Background Panel -->
-                <div class="control-panel">
-                    <div class="control-panel-header">
-                        <h3>Background</h3>
-                        <button class="lock-toggle" data-layer="background" title="Lock/Unlock layer">
-                            <span class="lock-icon">🔓</span>
-                        </button>
+            
+            <!-- Profile Settings -->
+            <section class="profile-settings">
+                <div class="profile-settings-card">
+                    <h2>Profile Settings</h2>
+                    
+                    <div class="profile-bio">
+                        <label for="profileBio">Bio</label>
+                        <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
+                        <small class="char-count"><span id="bioCharCount">0</span>/500</small>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">Rendering Mode</label>
-                        <select class="control-select" id="renderMode">
-                            <option value="layered">Layered Mode (Recommended)</option>
-                            <option value="baked">Baked Mode (Single Image)</option>
+                    
+                    <div class="profile-country">
+                        <label for="profileCountry">Country</label>
+                        <select id="profileCountry" class="country-select">
+                            <option value="">Select Country</option>
+                            <option value="US">🇺🇸 United States</option>
+                            <option value="GB">🇬🇧 United Kingdom</option>
+                            <option value="CA">🇨🇦 Canada</option>
+                            <option value="AU">🇦🇺 Australia</option>
+                            <option value="DE">🇩🇪 Germany</option>
+                            <option value="FR">🇫🇷 France</option>
+                            <option value="IT">🇮🇹 Italy</option>
+                            <option value="ES">🇪🇸 Spain</option>
+                            <option value="NL">🇳🇱 Netherlands</option>
+                            <option value="BR">🇧🇷 Brazil</option>
+                            <option value="MX">🇲🇽 Mexico</option>
+                            <option value="JP">🇯🇵 Japan</option>
+                            <option value="KR">🇰🇷 South Korea</option>
+                            <option value="CN">🇨🇳 China</option>
+                            <option value="IN">🇮🇳 India</option>
+                            <option value="RU">🇷🇺 Russia</option>
+                            <option value="ZA">🇿🇦 South Africa</option>
+                            <option value="AR">🇦🇷 Argentina</option>
+                            <option value="CH">🇨🇭 Switzerland</option>
+                            <option value="SE">🇸🇪 Sweden</option>
+                            <option value="NO">🇳🇴 Norway</option>
+                            <option value="DK">🇩🇰 Denmark</option>
+                            <option value="FI">🇫🇮 Finland</option>
+                            <option value="PL">🇵🇱 Poland</option>
+                            <option value="TR">🇹🇷 Turkey</option>
+                            <option value="SA">🇸🇦 Saudi Arabia</option>
+                            <option value="AE">🇦🇪 United Arab Emirates</option>
+                            <option value="SG">🇸🇬 Singapore</option>
+                            <option value="NZ">🇳🇿 New Zealand</option>
+                            <option value="IE">🇮🇪 Ireland</option>
+                            <option value="PT">🇵🇹 Portugal</option>
+                            <option value="GR">🇬🇷 Greece</option>
+                            <option value="BE">🇧🇪 Belgium</option>
+                            <option value="AT">🇦🇹 Austria</option>
+                            <option value="IL">🇮🇱 Israel</option>
+                            <option value="TH">🇹🇭 Thailand</option>
+                            <option value="MY">🇲🇾 Malaysia</option>
+                            <option value="PH">🇵🇭 Philippines</option>
+                            <option value="ID">🇮🇩 Indonesia</option>
+                            <option value="VN">🇻🇳 Vietnam</option>
+                            <option value="CL">🇨🇱 Chile</option>
+                            <option value="CO">🇨🇴 Colombia</option>
+                            <option value="PE">🇵🇪 Peru</option>
+                            <option value="VE">🇻🇪 Venezuela</option>
+                            <option value="EG">🇪🇬 Egypt</option>
+                            <option value="NG">🇳🇬 Nigeria</option>
+                            <option value="KE">🇰🇪 Kenya</option>
+                            <option value="GH">🇬🇭 Ghana</option>
+                            <option value="ET">🇪🇹 Ethiopia</option>
+                            <option value="TZ">🇹🇿 Tanzania</option>
+                            <option value="UG">🇺🇬 Uganda</option>
+                            <option value="ZM">🇿🇲 Zambia</option>
+                            <option value="ZW">🇿🇼 Zimbabwe</option>
+                            <option value="AO">🇦🇴 Angola</option>
+                            <option value="MZ">🇲🇿 Mozambique</option>
+                            <option value="MW">🇲🇼 Malawi</option>
+                            <option value="MG">🇲🇬 Madagascar</option>
+                            <option value="CM">🇨🇲 Cameroon</option>
+                            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+                            <option value="SN">🇸🇳 Senegal</option>
+                            <option value="ML">🇲🇱 Mali</option>
+                            <option value="BF">🇧🇫 Burkina Faso</option>
+                            <option value="NE">🇳🇪 Niger</option>
+                            <option value="TD">🇹🇩 Chad</option>
+                            <option value="SD">🇸🇩 Sudan</option>
+                            <option value="SO">🇸🇴 Somalia</option>
+                            <option value="ER">🇪🇷 Eritrea</option>
+                            <option value="DJ">🇩🇯 Djibouti</option>
+                            <option value="RW">🇷🇼 Rwanda</option>
+                            <option value="BI">🇧🇮 Burundi</option>
+                            <option value="SS">🇸🇸 South Sudan</option>
+                            <option value="CF">🇨🇫 Central African Republic</option>
+                            <option value="CD">🇨🇩 Democratic Republic of the Congo</option>
+                            <option value="CG">🇨🇬 Republic of the Congo</option>
+                            <option value="GA">🇬🇦 Gabon</option>
+                            <option value="GQ">🇬🇶 Equatorial Guinea</option>
+                            <option value="ST">🇸🇹 São Tomé and Príncipe</option>
+                            <option value="CV">🇨🇻 Cape Verde</option>
+                            <option value="GW">🇬🇼 Guinea-Bissau</option>
+                            <option value="GN">🇬🇳 Guinea</option>
+                            <option value="SL">🇸🇱 Sierra Leone</option>
+                            <option value="LR">🇱🇷 Liberia</option>
+                            <option value="TG">🇹🇬 Togo</option>
+                            <option value="BJ">🇧🇯 Benin</option>
+                            <option value="TG">🇹🇬 Togo</option>
+                            <option value="GH">🇬🇭 Ghana</option>
+                            <option value="TG">🇹🇬 Togo</option>
+                            <option value="BJ">🇧🇯 Benin</option>
+                            <option value="NE">🇳🇪 Niger</option>
+                            <option value="NG">🇳🇬 Nigeria</option>
+                            <option value="CM">🇨🇲 Cameroon</option>
+                            <option value="TD">🇹🇩 Chad</option>
+                            <option value="CF">🇨🇫 Central African Republic</option>
+                            <option value="SD">🇸🇩 Sudan</option>
+                            <option value="ET">🇪🇹 Ethiopia</option>
+                            <option value="ER">🇪🇷 Eritrea</option>
+                            <option value="DJ">🇩🇯 Djibouti</option>
+                            <option value="SO">🇸🇴 Somalia</option>
+                            <option value="KE">🇰🇪 Kenya</option>
+                            <option value="UG">🇺🇬 Uganda</option>
+                            <option value="RW">🇷🇼 Rwanda</option>
+                            <option value="BI">🇧🇮 Burundi</option>
+                            <option value="TZ">🇹🇿 Tanzania</option>
+                            <option value="MZ">🇲🇿 Mozambique</option>
+                            <option value="MW">🇲🇼 Malawi</option>
+                            <option value="ZM">🇿🇲 Zambia</option>
+                            <option value="ZW">🇿🇼 Zimbabwe</option>
+                            <option value="BW">🇧🇼 Botswana</option>
+                            <option value="NA">🇳🇦 Namibia</option>
+                            <option value="LS">🇱🇸 Lesotho</option>
+                            <option value="SZ">🇸🇿 Eswatini</option>
+                            <option value="AO">🇦🇴 Angola</option>
+                            <option value="MG">🇲🇬 Madagascar</option>
+                            <option value="MU">🇲🇺 Mauritius</option>
+                            <option value="SC">🇸🇨 Seychelles</option>
+                            <option value="KM">🇰🇲 Comoros</option>
+                            <option value="MV">🇲🇻 Maldives</option>
+                            <option value="LK">🇱🇰 Sri Lanka</option>
+                            <option value="BD">🇧🇩 Bangladesh</option>
+                            <option value="PK">🇵🇰 Pakistan</option>
+                            <option value="AF">🇦🇫 Afghanistan</option>
+                            <option value="IR">🇮🇷 Iran</option>
+                            <option value="IQ">🇮🇶 Iraq</option>
+                            <option value="SY">🇸🇾 Syria</option>
+                            <option value="LB">🇱🇧 Lebanon</option>
+                            <option value="JO">🇯🇴 Jordan</option>
+                            <option value="PS">🇵🇸 Palestine</option>
+                            <option value="YE">🇾🇪 Yemen</option>
+                            <option value="OM">🇴🇲 Oman</option>
+                            <option value="QA">🇶🇦 Qatar</option>
+                            <option value="BH">🇧🇭 Bahrain</option>
+                            <option value="KW">🇰🇼 Kuwait</option>
+                            <option value="KZ">🇰🇿 Kazakhstan</option>
+                            <option value="UZ">🇺🇿 Uzbekistan</option>
+                            <option value="TM">🇹🇲 Turkmenistan</option>
+                            <option value="TJ">🇹🇯 Tajikistan</option>
+                            <option value="KG">🇰🇬 Kyrgyzstan</option>
+                            <option value="MN">🇲🇳 Mongolia</option>
+                            <option value="KP">🇰🇵 North Korea</option>
+                            <option value="TW">🇹🇼 Taiwan</option>
+                            <option value="HK">🇭🇰 Hong Kong</option>
+                            <option value="MO">🇲🇴 Macau</option>
+                            <option value="BN">🇧🇳 Brunei</option>
+                            <option value="KH">🇰🇭 Cambodia</option>
+                            <option value="LA">🇱🇦 Laos</option>
+                            <option value="MM">🇲🇲 Myanmar</option>
+                            <option value="BT">🇧🇹 Bhutan</option>
+                            <option value="NP">🇳🇵 Nepal</option>
+                            <option value="MV">🇲🇻 Maldives</option>
+                            <option value="FJ">🇫🇯 Fiji</option>
+                            <option value="PG">🇵🇬 Papua New Guinea</option>
+                            <option value="SB">🇸🇧 Solomon Islands</option>
+                            <option value="VU">🇻🇺 Vanuatu</option>
+                            <option value="NC">🇳🇨 New Caledonia</option>
+                            <option value="PF">🇵🇫 French Polynesia</option>
+                            <option value="WS">🇼🇸 Samoa</option>
+                            <option value="TO">🇹🇴 Tonga</option>
+                            <option value="KI">🇰🇮 Kiribati</option>
+                            <option value="TV">🇹🇻 Tuvalu</option>
+                            <option value="NR">🇳🇷 Nauru</option>
+                            <option value="PW">🇵🇼 Palau</option>
+                            <option value="FM">🇫🇲 Micronesia</option>
+                            <option value="MH">🇲🇭 Marshall Islands</option>
+                            <option value="IS">🇮🇸 Iceland</option>
+                            <option value="GL">🇬🇱 Greenland</option>
+                            <option value="FO">🇫🇴 Faroe Islands</option>
+                            <option value="AX">🇦🇽 Åland Islands</option>
+                            <option value="SJ">🇸🇯 Svalbard and Jan Mayen</option>
+                            <option value="GI">🇬🇮 Gibraltar</option>
+                            <option value="AD">🇦🇩 Andorra</option>
+                            <option value="MC">🇲🇨 Monaco</option>
+                            <option value="SM">🇸🇲 San Marino</option>
+                            <option value="VA">🇻🇦 Vatican City</option>
+                            <option value="LI">🇱🇮 Liechtenstein</option>
+                            <option value="MT">🇲🇹 Malta</option>
+                            <option value="CY">🇨🇾 Cyprus</option>
+                            <option value="LU">🇱🇺 Luxembourg</option>
+                            <option value="EE">🇪🇪 Estonia</option>
+                            <option value="LV">🇱🇻 Latvia</option>
+                            <option value="LT">🇱🇹 Lithuania</option>
+                            <option value="BY">🇧🇾 Belarus</option>
+                            <option value="UA">🇺🇦 Ukraine</option>
+                            <option value="MD">🇲🇩 Moldova</option>
+                            <option value="RO">🇷🇴 Romania</option>
+                            <option value="BG">🇧🇬 Bulgaria</option>
+                            <option value="RS">🇷🇸 Serbia</option>
+                            <option value="ME">🇲🇪 Montenegro</option>
+                            <option value="BA">🇧🇦 Bosnia and Herzegovina</option>
+                            <option value="HR">🇭🇷 Croatia</option>
+                            <option value="SI">🇸🇮 Slovenia</option>
+                            <option value="SK">🇸🇰 Slovakia</option>
+                            <option value="CZ">🇨🇿 Czech Republic</option>
+                            <option value="HU">🇭🇺 Hungary</option>
+                            <option value="AL">🇦🇱 Albania</option>
+                            <option value="MK">🇲🇰 North Macedonia</option>
+                            <option value="XK">🇽🇰 Kosovo</option>
+                            <option value="GE">🇬🇪 Georgia</option>
+                            <option value="AM">🇦🇲 Armenia</option>
+                            <option value="AZ">🇦🇿 Azerbaijan</option>
+                            <option value="UY">🇺🇾 Uruguay</option>
+                            <option value="PY">🇵🇾 Paraguay</option>
+                            <option value="BO">🇧🇴 Bolivia</option>
+                            <option value="EC">🇪🇨 Ecuador</option>
+                            <option value="GY">🇬🇾 Guyana</option>
+                            <option value="SR">🇸🇷 Suriname</option>
+                            <option value="GF">🇬🇫 French Guiana</option>
+                            <option value="FK">🇫🇰 Falkland Islands</option>
+                            <option value="GS">🇬🇸 South Georgia and the South Sandwich Islands</option>
+                            <option value="BZ">🇧🇿 Belize</option>
+                            <option value="GT">🇬🇹 Guatemala</option>
+                            <option value="HN">🇭🇳 Honduras</option>
+                            <option value="SV">🇸🇻 El Salvador</option>
+                            <option value="NI">🇳🇮 Nicaragua</option>
+                            <option value="CR">🇨🇷 Costa Rica</option>
+                            <option value="PA">🇵🇦 Panama</option>
+                            <option value="CU">🇨🇺 Cuba</option>
+                            <option value="JM">🇯🇲 Jamaica</option>
+                            <option value="HT">🇭🇹 Haiti</option>
+                            <option value="DO">🇩🇴 Dominican Republic</option>
+                            <option value="PR">🇵🇷 Puerto Rico</option>
+                            <option value="TT">🇹🇹 Trinidad and Tobago</option>
+                            <option value="BB">🇧🇧 Barbados</option>
+                            <option value="BS">🇧🇸 Bahamas</option>
+                            <option value="AG">🇦🇬 Antigua and Barbuda</option>
+                            <option value="DM">🇩🇲 Dominica</option>
+                            <option value="LC">🇱🇨 Saint Lucia</option>
+                            <option value="VC">🇻🇨 Saint Vincent and the Grenadines</option>
+                            <option value="GD">🇬🇩 Grenada</option>
+                            <option value="KN">🇰🇳 Saint Kitts and Nevis</option>
                         </select>
-                        <small class="helper-text">
-                            Layered: Background + transparent ape. Baked: Single image with background included.
-                        </small>
                     </div>
-                    <div class="control-group hide" id="bakedBackgroundGroup">
-                        <label class="control-label">Background Option</label>
-                        <select class="control-select" id="useBakedBackground">
-                            <option value="false">Use Selected Background</option>
-                            <option value="true">Use Baked Background (if present)</option>
-                        </select>
-                        <small class="helper-text">
-                            Choose whether to use the selected background or the background included in the baked image.
-                        </small>
-                    </div>
-                    <div class="control-group" id="backgroundImageGroup">
-                        <label class="control-label">Background Image</label>
-                        <div class="background-options" id="backgroundOptions">
-                            <div class="bg-option selected" data-bg="/pfp_generator_images/pfp_bg1.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg1.png" alt="Background 1"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg2.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg2.png" alt="Background 2"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg3.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg3.png" alt="Background 3"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg4.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg4.png" alt="Background 4"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg5.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg5.png" alt="Background 5"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg6.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg6.png" alt="Background 6"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg7.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg7.png" alt="Background 7"></div>
-                            <div class="bg-option" data-bg="/pfp_generator_images/pfp_bg8.png"><img class="bg-thumb" src="/pfp_generator_images/pfp_bg8.png" alt="Background 8"></div>
+                    
+                    <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+                </div>
+            </section>
+            
+            <!-- Banner Selection -->
+            <section class="banner-selection">
+                <div class="banner-selection-card">
+                    <h3>Select Banner</h3>
+                    <div class="banner-grid" id="bannerGrid">
+                        <!-- First 4: Placeholders with lock -->
+                        <div class="banner-item locked" data-banner="/pfp_generator_apes/ape_pfp_1.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_apes/ape_pfp_1.png" alt="Banner 1" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_generator_apes/ape_pfp_2.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_apes/ape_pfp_2.png" alt="Banner 2" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_generator_apes/ape_pfp_3.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_apes/ape_pfp_3.png" alt="Banner 3" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_generator_apes/ape_pfp_4.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_apes/ape_pfp_4.png" alt="Banner 4" />
+                        </div>
+                        <!-- Remaining: Blurred, expandable -->
+                        <div class="banner-item blurred" data-banner="/pfp_generator_apes/ape_pfp_5.png">
+                            <img src="/pfp_generator_apes/ape_pfp_5.png" alt="Banner 5" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_apes/ape_pfp_6.png">
+                            <img src="/pfp_generator_apes/ape_pfp_6.png" alt="Banner 6" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_apes/ape_pfp_7.png">
+                            <img src="/pfp_generator_apes/ape_pfp_7.png" alt="Banner 7" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg1.png">
+                            <img src="/pfp_generator_images/pfp_bg1.png" alt="Banner 8" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg2.png">
+                            <img src="/pfp_generator_images/pfp_bg2.png" alt="Banner 9" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg3.png">
+                            <img src="/pfp_generator_images/pfp_bg3.png" alt="Banner 10" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg4.png">
+                            <img src="/pfp_generator_images/pfp_bg4.png" alt="Banner 11" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg5.png">
+                            <img src="/pfp_generator_images/pfp_bg5.png" alt="Banner 12" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg6.png">
+                            <img src="/pfp_generator_images/pfp_bg6.png" alt="Banner 13" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg7.png">
+                            <img src="/pfp_generator_images/pfp_bg7.png" alt="Banner 14" />
+                        </div>
+                        <div class="banner-item blurred" data-banner="/pfp_generator_images/pfp_bg8.png">
+                            <img src="/pfp_generator_images/pfp_bg8.png" alt="Banner 15" />
                         </div>
                     </div>
-                </div>
-
-                <!-- Ape Traits Panel -->
-                <div class="control-panel">
-                    <div class="control-panel-header">
-                        <h3>Ape Traits</h3>
-                        <button class="lock-toggle" data-layer="ape" title="Lock/Unlock layer">
-                            <span class="lock-icon">🔓</span>
-                        </button>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Choose Ape</label>
-                        <div class="trait-options" id="apeOptions">
-                            <div class="trait-option selected" data-ape="ape1">Ape 1</div>
-                            <div class="trait-option" data-ape="ape2">Ape 2</div>
-                            <div class="trait-option" data-ape="ape3">Ape 3</div>
-                            <div class="trait-option" data-ape="ape4">Ape 4</div>
-                            <div class="trait-option" data-ape="ape5">Ape 5</div>
-                            <div class="trait-option" data-ape="ape6">Ape 6</div>
-                            <div class="trait-option" data-ape="ape7">Ape 7</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Accessories Panel -->
-                <div class="control-panel">
-                    <div class="control-panel-header">
-                        <h3>Accessories</h3>
-                        <button class="lock-toggle" data-layer="accessories" title="Lock/Unlock layer">
-                            <span class="lock-icon">🔓</span>
-                        </button>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Hat</label>
-                        <select class="control-select" id="hatSelect">
-                            <option value="none">None</option>
-                            <option value="cap">Baseball Cap</option>
-                            <option value="beanie">Beanie</option>
-                            <option value="crown">Crown</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Glasses</label>
-                        <select class="control-select" id="glassesSelect">
-                            <option value="none">None</option>
-                            <option value="sunglasses">Sunglasses</option>
-                            <option value="glasses">Glasses</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Jewelry</label>
-                        <select class="control-select" id="jewelrySelect">
-                            <option value="none">None</option>
-                            <option value="chain">Chain</option>
-                            <option value="necklace">Necklace</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Text Overlay Panel -->
-                <div class="control-panel">
-                    <div class="control-panel-header">
-                        <h3>Text Overlay</h3>
-                        <button class="lock-toggle" data-layer="text" title="Lock/Unlock layer">
-                            <span class="lock-icon">🔓</span>
-                        </button>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Text</label>
-                        <input type="text" class="control-input" id="textInput" placeholder="Enter text..." maxlength="20">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Font</label>
-                        <select class="control-select" id="fontSelect">
-                            <option value="Inter">Inter</option>
-                            <option value="Space Grotesk">Space Grotesk</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Impact">Impact</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Text Color</label>
-                        <div class="color-options" id="textColors">
-                            <div class="color-option color-white selected" data-color="#ffffff"></div>
-                            <div class="color-option color-green" data-color="#4ade80"></div>
-                            <div class="color-option color-gold" data-color="#ffd700"></div>
-                            <div class="color-option color-black" data-color="#000000"></div>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Position</label>
-                        <select class="control-select" id="textPosition">
-                            <option value="top">Top</option>
-                            <option value="center">Center</option>
-                            <option value="bottom">Bottom</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Size</label>
-                        <div class="slider-container">
-                            <input type="range" class="slider" id="textSize" min="20" max="80" value="40">
-                            <span class="slider-value" id="textSizeValue">40</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                    </div>
+                    <button class="btn btn-secondary view-more-btn" id="viewMoreBannersBtn">View More</button>
                 </div>
             </section>
         </div>
     </main>
 
-    <script type="module" src="/js/generator.js?v=2"></script>
-    
-    <!-- Firebase test module (verification only) -->
-    <script type="module" src="/js/firebase-test.js?v=2"></script>
+    <script type="module" src="/js/profile-init.js?v=1"></script>
     <script type="module" src="/js/asset-selftest.js?v=2"></script>
 </body>
 </html>

@@ -5094,3 +5094,293 @@ body.chat-body > * {
         margin-bottom: 20px;
     }
 }
+
+/* ============================================
+   PROFILE PAGE STYLES
+   ============================================ */
+
+.profile-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.profile-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Profile Banner */
+.profile-banner {
+    width: 100%;
+    height: 300px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.profile-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Profile Settings Card */
+.profile-settings-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 2px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.profile-settings-card h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.profile-bio {
+    margin-bottom: 1.5rem;
+}
+
+.profile-bio label,
+.profile-country label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-bio textarea {
+    width: 100%;
+    padding: 0.875rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 100px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.profile-bio textarea:focus {
+    outline: none;
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.profile-bio .char-count {
+    display: block;
+    text-align: right;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.25rem;
+}
+
+.profile-country {
+    margin-bottom: 1.5rem;
+}
+
+.profile-country select {
+    width: 100%;
+    padding: 0.875rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.profile-country select:focus {
+    outline: none;
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.profile-country select option {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+/* Banner Selection */
+.banner-selection-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 2px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.banner-selection-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.banner-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.banner-item {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.banner-item:hover:not(.locked) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.banner-item.selected {
+    border-color: rgba(74, 222, 128, 0.8);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+}
+
+.banner-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.banner-item.locked {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.banner-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 2;
+}
+
+.banner-lock-overlay .lock-icon {
+    font-size: 2rem;
+}
+
+.banner-lock-overlay .lock-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.banner-item.blurred {
+    filter: blur(4px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.banner-grid:not(.expanded) .banner-item.blurred {
+    display: none;
+}
+
+.banner-grid.expanded .banner-item.blurred {
+    display: block;
+    filter: blur(0);
+    opacity: 1;
+    pointer-events: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.view-more-btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+    .profile-page {
+        padding: 3rem 2rem;
+    }
+
+    .profile-banner {
+        height: 400px;
+    }
+
+    .banner-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .banner-item.blurred {
+        display: block;
+    }
+    
+    .banner-grid:not(.expanded) .banner-item.blurred {
+        display: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    .profile-page {
+        padding: 4rem 2rem;
+    }
+
+    .profile-banner {
+        height: 500px;
+    }
+
+    .profile-settings-card,
+    .banner-selection-card {
+        padding: 2.5rem;
+    }
+}
