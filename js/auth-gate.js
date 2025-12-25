@@ -55,22 +55,24 @@ export function initAuthGate() {
 }
 
 function createOverlay() {
-    // Find the container (generator or chat)
-    // For generator, use .generator-container (even though it has display: contents, it still works for appending)
-    // For chat, use .chat-container
+    // Find the container (generator, profile, or chat)
     const generatorContainer = document.querySelector('.generator-container');
+    const profileContainer = document.querySelector('.profile-container');
     const chatContainer = document.querySelector('.chat-container');
-    const container = generatorContainer || chatContainer;
+    const container = generatorContainer || profileContainer || chatContainer;
     
     if (!container) {
-        console.error('AuthGate: Could not find .generator-container or .chat-container');
+        console.error('AuthGate: Could not find .generator-container, .profile-container, or .chat-container');
         return;
     }
     
     // Determine page type and message
     const isChatPage = !!chatContainer;
+    const isProfilePage = !!profileContainer;
     const pageMessage = isChatPage 
         ? 'Sign up / Log in to access live chat.' 
+        : isProfilePage
+        ? 'Sign up / Log in to access your profile.'
         : 'Sign up / Log in to generate your Ape.';
     
     // Note: Both containers already have position: relative in CSS, so no need to add class
@@ -121,8 +123,9 @@ function showOverlay() {
         authGateOverlay.classList.add('show');
         // Disable pointer events on container content (but not header)
         const generatorContainer = document.querySelector('.generator-container');
+        const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
-        const container = generatorContainer || chatContainer;
+        const container = generatorContainer || profileContainer || chatContainer;
         
         if (container) {
             // Disable pointer events on all children except the overlay
@@ -140,8 +143,9 @@ function hideOverlay() {
         authGateOverlay.classList.remove('show');
         // Re-enable pointer events on container content
         const generatorContainer = document.querySelector('.generator-container');
+        const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
-        const container = generatorContainer || chatContainer;
+        const container = generatorContainer || profileContainer || chatContainer;
         
         if (container) {
             Array.from(container.children).forEach(child => {
