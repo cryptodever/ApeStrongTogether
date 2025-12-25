@@ -4852,6 +4852,14 @@ body.verify-body > * {
     line-height: 1.6;
 }
 
+.verify-message.verify-hint {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+    opacity: 0.9;
+}
+
 .verify-email {
     font-weight: 600;
     color: #4ade80;
