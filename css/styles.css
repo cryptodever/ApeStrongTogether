@@ -5111,7 +5111,7 @@ body.chat-body > * {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 /* Banner and Bio Row */
@@ -5119,18 +5119,21 @@ body.chat-body > * {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 /* Profile Banner */
 .profile-banner {
     width: 100%;
     height: 300px;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
     position: relative;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
 }
 
@@ -5141,7 +5144,16 @@ body.chat-body > * {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 2rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Bio Section (in profile settings) */
@@ -5150,17 +5162,18 @@ body.chat-body > * {
 }
 
 .profile-settings .profile-bio-section .profile-bio {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     padding: 1.5rem;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
-        0 2px 12px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
 }
 
 .profile-banner-bg {
@@ -5186,14 +5199,14 @@ body.chat-body > * {
 
 /* Profile Settings Card */
 .profile-settings-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
-        0 2px 12px rgba(0, 0, 0, 0.15),
+        0 8px 32px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -5201,15 +5214,18 @@ body.chat-body > * {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .profile-settings-card h2 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
     font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
 }
 
 /* Rank Section - Centered with Progress Bar */
@@ -5224,52 +5240,58 @@ body.chat-body > * {
 .profile-rank {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.5rem;
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    border-radius: 8px;
+    gap: 0.75rem;
+    padding: 0.75rem 2rem;
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    border-radius: 12px;
     font-family: 'Space Grotesk', sans-serif;
+    box-shadow: 
+        0 4px 16px rgba(74, 222, 128, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .profile-rank .rank-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: rgba(74, 222, 128, 0.9);
+    color: rgba(74, 222, 128, 0.85);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
 }
 
 .profile-rank .rank-value {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #4ade80;
-    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    text-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
 }
 
 /* Progress Bar */
 .rank-progress-bar {
     width: 100%;
-    max-width: 400px;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
+    max-width: 350px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
     overflow: hidden;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .rank-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4ade80, #22c55e);
-    border-radius: 5px;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
+    border-radius: 6px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 0 12px rgba(74, 222, 128, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* Country Section */
 .profile-country-section {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .profile-country-section .profile-country {
@@ -5285,29 +5307,38 @@ body.chat-body > * {
 
 .profile-bio textarea {
     flex: 1;
-    min-height: 150px;
+    min-height: 120px;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.profile-bio textarea:focus {
+    outline: none;
+    border-color: rgba(74, 222, 128, 0.4);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
 }
 
 .profile-bio label,
 .profile-country label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
+    font-family: 'Space Grotesk', sans-serif;
 }
 
-.profile-bio textarea {
-    width: 100%;
-    padding: 0.875rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    color: #ffffff;
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
+/* Removed duplicate textarea styles - using the cleaner version above */
     resize: vertical;
     min-height: 100px;
     transition: border-color 0.2s ease, background 0.2s ease;
@@ -5324,7 +5355,9 @@ body.chat-body > * {
     text-align: right;
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
 }
 
 .profile-country {
@@ -5364,23 +5397,25 @@ body.chat-body > * {
 
 /* Banner Selection */
 .banner-selection-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 
-        0 2px 12px rgba(0, 0, 0, 0.15),
+        0 8px 32px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    margin-bottom: 1.5rem;
 }
 
 .banner-selection-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #ffffff;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
 }
 
 .banner-grid {
@@ -5527,7 +5562,7 @@ body.chat-body > * {
     }
 
     .profile-container {
-        gap: 1.25rem;
+        gap: 2rem;
     }
 
     .profile-banner-bio-row {
@@ -5581,6 +5616,6 @@ body.chat-body > * {
 
     .profile-settings-card,
     .banner-selection-card {
-        padding: 1.75rem;
+        padding: 2.25rem;
     }
 }
