@@ -225,6 +225,12 @@ function selectBannerBg(bgPath) {
     const bannerBgItem = document.querySelector(`#bannerBgGrid [data-banner-bg="${bgPath}"]`);
     if (!bannerBgItem) return;
     
+    // Check if banner background is locked
+    if (bannerBgItem.classList.contains('locked')) {
+        console.log('Banner background is locked');
+        return;
+    }
+    
     // Update banner background
     const bannerBg = document.getElementById('profileBannerBg');
     if (bannerBg) {
