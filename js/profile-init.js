@@ -368,32 +368,6 @@ function setupEventListeners() {
         bannerBgGrid.addEventListener('click', handleBannerBgClick);
     }
     
-    listenersAttached = true;
-    console.log('Profile event listeners attached');
-}
-
-// Event handler for banner clicks (using event delegation)
-function handleBannerClick(event) {
-    const bannerItem = event.target.closest('.banner-item');
-    if (bannerItem) {
-        const bannerPath = bannerItem.dataset.banner;
-        if (bannerPath) {
-            selectBanner(bannerPath);
-        }
-    }
-}
-
-// Event handler for banner background clicks (using event delegation)
-function handleBannerBgClick(event) {
-    const bannerBgItem = event.target.closest('.banner-item');
-    if (bannerBgItem) {
-        const bgPath = bannerBgItem.dataset.bannerBg;
-        if (bgPath) {
-            selectBannerBg(bgPath);
-        }
-    }
-}
-    
     // View More button for banners
     const viewMoreBannersBtn = document.getElementById('viewMoreBannersBtn');
     if (viewMoreBannersBtn) {
@@ -432,6 +406,31 @@ function handleBannerBgClick(event) {
                 }
             }
         });
+    }
+    
+    listenersAttached = true;
+    console.log('Profile event listeners attached');
+}
+
+// Event handler for banner clicks (using event delegation)
+function handleBannerClick(event) {
+    const bannerItem = event.target.closest('.banner-item');
+    if (bannerItem) {
+        const bannerPath = bannerItem.dataset.banner;
+        if (bannerPath) {
+            selectBanner(bannerPath);
+        }
+    }
+}
+
+// Event handler for banner background clicks (using event delegation)
+function handleBannerBgClick(event) {
+    const bannerBgItem = event.target.closest('.banner-item');
+    if (bannerBgItem) {
+        const bgPath = bannerBgItem.dataset.bannerBg;
+        if (bgPath) {
+            selectBannerBg(bgPath);
+        }
     }
 }
 
