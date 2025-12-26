@@ -44,10 +44,10 @@
                         <label for="profileBio">Bio</label>
                         <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
                         <small class="char-count"><span id="bioCharCount">0</span>/500</small>
-                    </div>
+                </div>
                 </div>
             </div>
-            
+
             <!-- Profile Settings -->
             <section class="profile-settings">
                 <div class="profile-settings-card">
@@ -55,11 +55,17 @@
                         <h2>Profile Settings</h2>
                     </div>
                     
-                    <div class="profile-rank-country-row">
+                    <div class="profile-rank-section">
                         <div class="profile-rank">
                             <span class="rank-label">LVL</span>
                             <span class="rank-value" id="profileRank">1</span>
                         </div>
+                        <div class="rank-progress-bar">
+                            <div class="rank-progress-fill" id="rankProgressFill" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-country-section">
                         <div class="profile-country">
                             <label for="profileCountry">Country</label>
                             <select id="profileCountry" class="country-select">
@@ -288,16 +294,16 @@
                         </div>
                         <div class="banner-item" data-banner="/pfp_apes/bg3.png">
                             <img src="/pfp_apes/bg3.png" alt="Banner 3" />
-                        </div>
+                    </div>
                         <div class="banner-item" data-banner="/pfp_apes/bg4.png">
                             <img src="/pfp_apes/bg4.png" alt="Banner 4" />
-                        </div>
+                </div>
                         <!-- Second row: Locked -->
                         <div class="banner-item locked" data-banner="/pfp_apes/tg_1.png">
                             <div class="banner-lock-overlay">
                                 <span class="lock-icon">🔒</span>
                                 <span class="lock-text">Locked</span>
-                            </div>
+                    </div>
                             <img src="/pfp_apes/tg_1.png" alt="Banner 5" />
                         </div>
                         <div class="banner-item locked" data-banner="/pfp_apes/tg_2.png">
@@ -306,21 +312,21 @@
                                 <span class="lock-text">Locked</span>
                             </div>
                             <img src="/pfp_apes/tg_2.png" alt="Banner 6" />
-                        </div>
+                    </div>
                         <div class="banner-item locked" data-banner="/pfp_apes/tg_3.png">
                             <div class="banner-lock-overlay">
                                 <span class="lock-icon">🔒</span>
                                 <span class="lock-text">Locked</span>
-                            </div>
+                </div>
                             <img src="/pfp_apes/tg_3.png" alt="Banner 7" />
-                        </div>
+                    </div>
                         <div class="banner-item locked" data-banner="/pfp_apes/tg_4.png">
                             <div class="banner-lock-overlay">
                                 <span class="lock-icon">🔒</span>
                                 <span class="lock-text">Locked</span>
-                            </div>
+                    </div>
                             <img src="/pfp_apes/tg_4.png" alt="Banner 8" />
-                        </div>
+                    </div>
                     </div>
                     <button class="btn btn-primary view-more-btn" id="viewMoreBannersBtn">View More</button>
                 </div>
@@ -333,13 +339,13 @@
                     <div class="banner-grid" id="bannerBgGrid">
                         <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg1.png">
                             <img src="/pfp_generator_images/pfp_bg1.png" alt="Background 1" />
-                        </div>
+                    </div>
                         <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg2.png">
                             <img src="/pfp_generator_images/pfp_bg2.png" alt="Background 2" />
-                        </div>
+                    </div>
                         <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg3.png">
                             <img src="/pfp_generator_images/pfp_bg3.png" alt="Background 3" />
-                        </div>
+                    </div>
                         <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg4.png">
                             <img src="/pfp_generator_images/pfp_bg4.png" alt="Background 4" />
                         </div>
@@ -350,12 +356,12 @@
                                 <span class="lock-text">Locked</span>
                             </div>
                             <img src="/pfp_generator_images/pfp_bg5.png" alt="Background 5" />
-                        </div>
+                    </div>
                         <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg6.png">
                             <div class="banner-lock-overlay">
                                 <span class="lock-icon">🔒</span>
                                 <span class="lock-text">Locked</span>
-                            </div>
+                    </div>
                             <img src="/pfp_generator_images/pfp_bg6.png" alt="Background 6" />
                         </div>
                         <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg7.png">
@@ -364,14 +370,14 @@
                                 <span class="lock-text">Locked</span>
                             </div>
                             <img src="/pfp_generator_images/pfp_bg7.png" alt="Background 7" />
-                        </div>
+                    </div>
                         <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg8.png">
                             <div class="banner-lock-overlay">
                                 <span class="lock-icon">🔒</span>
                                 <span class="lock-text">Locked</span>
-                            </div>
+                </div>
                             <img src="/pfp_generator_images/pfp_bg8.png" alt="Background 8" />
-                        </div>
+            </div>
                     </div>
                     <button class="btn btn-primary view-more-btn" id="viewMoreBannerBgsBtn">View More</button>
                 </div>
