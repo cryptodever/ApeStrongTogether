@@ -5293,6 +5293,7 @@ body.chat-body > * {
 
 .rank-progress-fill {
     height: 100%;
+    width: 25%; /* Default placeholder progress */
     background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
     border-radius: 6px;
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
