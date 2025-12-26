@@ -5205,23 +5205,25 @@ body.chat-body > * {
     font-family: 'Space Grotesk', sans-serif;
 }
 
-.profile-rank-country-row {
+/* Rank Section - Centered with Progress Bar */
+.profile-rank-section {
     display: flex;
-    align-items: flex-end;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
 }
 
 .profile-rank {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.5rem;
     background: rgba(74, 222, 128, 0.1);
     border: 1px solid rgba(74, 222, 128, 0.3);
     border-radius: 8px;
     font-family: 'Space Grotesk', sans-serif;
-    flex-shrink: 0;
 }
 
 .profile-rank .rank-label {
@@ -5239,10 +5241,33 @@ body.chat-body > * {
     text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
 }
 
-.profile-rank-country-row .profile-country {
+/* Progress Bar */
+.rank-progress-bar {
+    width: 100%;
+    max-width: 300px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rank-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+/* Country Section */
+.profile-country-section {
+    margin-bottom: 1rem;
+}
+
+.profile-country-section .profile-country {
     margin-bottom: 0;
-    flex: 1;
-    min-width: 0;
 }
 
 .profile-bio {
@@ -5300,9 +5325,9 @@ body.chat-body > * {
     margin-bottom: 1.5rem;
 }
 
-.profile-rank-country-row .profile-country {
-    margin-bottom: 0;
-}
+    .profile-country-section .profile-country {
+        margin-bottom: 0;
+    }
 
 .profile-country select {
     width: auto;
