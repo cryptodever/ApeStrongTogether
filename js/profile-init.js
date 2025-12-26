@@ -78,8 +78,17 @@ async function loadProfile() {
                     bannerImg.src = userData.bannerImage;
                 }
                 
+                // Load banner background
+                const bannerBg = document.getElementById('profileBannerBg');
+                if (bannerBg && userData.bannerBackground) {
+                    bannerBg.style.backgroundImage = `url(${userData.bannerBackground})`;
+                }
+                
                 // Update selected banner in grid
                 updateBannerSelection(userData.bannerImage);
+                
+                // Update selected banner background in grid
+                updateBannerBgSelection(userData.bannerBackground);
             } else {
                 // Profile doesn't exist yet, use defaults
                 console.log('Profile does not exist yet, using defaults');
@@ -107,6 +116,10 @@ async function saveProfile() {
         const bio = document.getElementById('profileBio')?.value || '';
         const country = document.getElementById('profileCountry')?.value || '';
         const bannerImage = document.getElementById('profileBannerImg')?.src || '';
+        const bannerBg = document.getElementById('profileBannerBg');
+        const bannerBackground = bannerBg?.style.backgroundImage 
+            ? bannerBg.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1')
+            : '';
         
         const userDocRef = doc(db, 'users', currentUser.uid);
         
@@ -120,6 +133,7 @@ async function saveProfile() {
             bio: bio.trim(),
             country: country,
             bannerImage: bannerImage,
+            bannerBackground: bannerBackground,
             updatedAt: new Date().toISOString()
         }, { merge: true });
         
@@ -158,10 +172,21 @@ function updateCharCount() {
 
 // Update banner selection in grid
 function updateBannerSelection(selectedBanner) {
-    const bannerItems = document.querySelectorAll('.banner-item');
+    const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
     bannerItems.forEach(item => {
         item.classList.remove('selected');
         if (item.dataset.banner === selectedBanner) {
+            item.classList.add('selected');
+        }
+    });
+}
+
+// Update banner background selection in grid
+function updateBannerBgSelection(selectedBg) {
+    const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
+    bannerBgItems.forEach(item => {
+        item.classList.remove('selected');
+        if (item.dataset.bannerBg === selectedBg) {
             item.classList.add('selected');
         }
     });
@@ -171,7 +196,7 @@ function updateBannerSelection(selectedBanner) {
 function selectBanner(bannerPath) {
     if (!currentUser) return;
     
-    const bannerItem = document.querySelector(`[data-banner="${bannerPath}"]`);
+    const bannerItem = document.querySelector(`#bannerGrid [data-banner="${bannerPath}"]`);
     if (!bannerItem) return;
     
     // Check if banner is locked
@@ -193,6 +218,26 @@ function selectBanner(bannerPath) {
     saveProfile();
 }
 
+// Handle banner background selection
+function selectBannerBg(bgPath) {
+    if (!currentUser) return;
+    
+    const bannerBgItem = document.querySelector(`#bannerBgGrid [data-banner-bg="${bgPath}"]`);
+    if (!bannerBgItem) return;
+    
+    // Update banner background
+    const bannerBg = document.getElementById('profileBannerBg');
+    if (bannerBg) {
+        bannerBg.style.backgroundImage = `url(${bgPath})`;
+    }
+    
+    // Update selection in grid
+    updateBannerBgSelection(bgPath);
+    
+    // Auto-save banner background selection
+    saveProfile();
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Bio character count
@@ -208,12 +253,23 @@ function setupEventListeners() {
     }
     
     // Banner selection
-    const bannerItems = document.querySelectorAll('.banner-item');
+    const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
     bannerItems.forEach(item => {
         item.addEventListener('click', () => {
             const bannerPath = item.dataset.banner;
             if (bannerPath) {
                 selectBanner(bannerPath);
+            }
+        });
+    });
+    
+    // Banner background selection
+    const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
+    bannerBgItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const bgPath = item.dataset.bannerBg;
+            if (bgPath) {
+                selectBannerBg(bgPath);
             }
         });
     });

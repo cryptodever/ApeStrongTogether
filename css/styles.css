@@ -5156,11 +5156,25 @@ body.chat-body > * {
     flex-direction: column;
 }
 
+.profile-banner-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
 .profile-banner img {
+    position: relative;
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    z-index: 1;
 }
 
 /* Profile Settings Card */
