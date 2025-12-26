@@ -106,7 +106,7 @@ exports.cleanupUserData = functions.auth.user().onDelete(async (user) => {
  */
 const axios = require('axios');
 
-exports.verifyXAccount = functions.https.onCall(async (data, context) => {
+exports.verifyXAccount = functions.region('us-central1').https.onCall(async (data, context) => {
     // Verify user is authenticated
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
