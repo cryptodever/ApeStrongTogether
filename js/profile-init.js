@@ -3,9 +3,10 @@
  * Handles authentication gate, profile loading, and saving to Firestore
  */
 
-import { auth, db } from './firebase.js';
+import { auth, db, app } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import { doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-functions.js';
 
 // Initialize auth gate for profile page
 (async () => {
@@ -26,6 +27,7 @@ import { doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebas
 let currentUser = null;
 let profileListener = null;
 let isSaving = false;
+let isVerifying = false;
 
 // Initialize profile page
 onAuthStateChanged(auth, async (user) => {
@@ -83,6 +85,8 @@ async function loadProfile() {
                 const xAccountInput = document.getElementById('profileXAccount');
                 if (xAccountInput && userData.xAccount) {
                     xAccountInput.value = userData.xAccount;
+                    // Show verification section if X account exists
+                    updateXVerificationUI(userData);
                 }
                 
                 // Load banner image
@@ -166,6 +170,11 @@ async function saveProfile() {
         const country = countrySelect.value || '';
         const xAccount = document.getElementById('profileXAccount')?.value || '';
         
+        // Get existing verification status (don't overwrite if verified)
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const existingData = userDoc.exists() ? userDoc.data() : {};
+        const xAccountVerified = existingData.xAccountVerified || false;
+        
         // Extract banner image path (handle both full URL and relative path)
         let bannerImage = '';
         if (bannerImg.src) {
@@ -197,20 +206,26 @@ async function saveProfile() {
         
         const userDocRef = doc(db, 'users', currentUser.uid);
         
-        // Get existing profile data to merge
-        const userDoc = await getDoc(userDocRef);
-        const existingData = userDoc.exists() ? userDoc.data() : {};
-        
         // Update profile data
         await setDoc(userDocRef, {
             ...existingData,
             bio: bio.trim(),
             country: country,
             xAccount: xAccount.trim(),
+            xAccountVerified: xAccountVerified, // Preserve verification status
             bannerImage: bannerImage,
             bannerBackground: bannerBackground,
             updatedAt: new Date().toISOString()
         }, { merge: true });
+        
+        // If X account changed, reset verification
+        if (xAccount.trim() !== (existingData.xAccount || '')) {
+            await setDoc(userDocRef, {
+                xAccountVerified: false,
+                xVerificationAttempts: 0
+            }, { merge: true });
+            updateXVerificationUI({ xAccountVerified: false, xAccount: xAccount.trim() });
+        }
         
         console.log('Profile saved successfully', { bio: bio.trim(), country, xAccount: xAccount.trim(), bannerImage, bannerBackground });
         
@@ -244,6 +259,48 @@ async function saveProfile() {
         }
     } finally {
         isSaving = false;
+    }
+}
+
+// Generate unique verification code for user
+function generateVerificationCode(uid) {
+    // Create a unique code based on user ID and timestamp
+    // Format: ATS-[8 character code]
+    const timestamp = Date.now().toString(36);
+    const uidHash = uid.substring(0, 4).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `ATS-${uidHash}${random}`;
+}
+
+// Get or create verification code for user
+async function getOrCreateVerificationCode() {
+    if (!currentUser) return null;
+    
+    try {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            // Return existing code or generate new one
+            if (userData.xVerificationCode) {
+                return userData.xVerificationCode;
+            }
+        }
+        
+        // Generate new code
+        const code = generateVerificationCode(currentUser.uid);
+        
+        // Save code to Firestore
+        await setDoc(userDocRef, {
+            xVerificationCode: code,
+            xVerificationCodeGeneratedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        return code;
+    } catch (error) {
+        console.error('Error getting/creating verification code:', error);
+        return null;
     }
 }
 
@@ -347,6 +404,208 @@ function selectBannerBg(bgPath) {
     saveProfile();
 }
 
+// Update X verification UI based on status
+async function updateXVerificationUI(userData) {
+    const xAccountInput = document.getElementById('profileXAccount');
+    const verificationSection = document.getElementById('xVerificationSection');
+    const verificationStatus = document.getElementById('xVerificationStatus');
+    const verificationCodeElement = document.getElementById('xVerificationCode');
+    
+    if (!xAccountInput || !verificationSection || !verificationStatus) return;
+    
+    const xAccount = xAccountInput.value.trim();
+    const isVerified = userData.xAccountVerified === true;
+    const verificationCode = userData.xVerificationCode;
+    
+    // Update status indicator
+    verificationStatus.className = 'x-verification-status';
+    if (isVerified) {
+        verificationStatus.textContent = '✓ Verified';
+        verificationStatus.classList.add('verified');
+        verificationSection.style.display = 'none';
+    } else if (xAccount) {
+        verificationStatus.textContent = 'Unverified';
+        verificationStatus.classList.add('unverified');
+        verificationSection.style.display = 'block';
+        
+        // Load or generate verification code
+        if (verificationCodeElement) {
+            const code = await getOrCreateVerificationCode();
+            if (code) {
+                verificationCodeElement.textContent = code;
+            }
+        }
+    } else {
+        verificationStatus.textContent = '';
+        verificationSection.style.display = 'none';
+    }
+}
+
+// Copy verification code to clipboard
+async function copyVerificationCode() {
+    const codeElement = document.getElementById('xVerificationCode');
+    if (!codeElement) return;
+    
+    const code = codeElement.textContent;
+    try {
+        await navigator.clipboard.writeText(code);
+        const copyBtn = document.getElementById('copyVerificationCode');
+        if (copyBtn) {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '✓ Copied';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Failed to copy code:', error);
+        // Fallback: select text
+        const range = document.createRange();
+        range.selectNode(codeElement);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    }
+}
+
+// Verify X account
+async function verifyXAccount() {
+    if (!currentUser || isVerifying) return;
+    
+    const xAccountInput = document.getElementById('profileXAccount');
+    const verifyBtn = document.getElementById('verifyXAccountBtn');
+    const verificationStatus = document.getElementById('xVerificationStatus');
+    
+    if (!xAccountInput || !verifyBtn) return;
+    
+    const xAccount = xAccountInput.value.trim();
+    if (!xAccount) {
+        alert('Please enter your X account username first');
+        return;
+    }
+    
+    // Extract username (remove @ if present)
+    const username = xAccount.replace(/^@/, '').trim();
+    
+    // Rate limiting check
+    try {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const attempts = userData.xVerificationAttempts || 0;
+        
+        if (attempts >= 5) {
+            alert('Too many verification attempts. Please try again later.');
+            return;
+        }
+    } catch (error) {
+        console.error('Error checking verification attempts:', error);
+    }
+    
+    isVerifying = true;
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = 'Verifying...';
+    
+    if (verificationStatus) {
+        verificationStatus.textContent = 'Verifying...';
+        verificationStatus.className = 'x-verification-status verifying';
+    }
+    
+    try {
+        // Get verification code
+        const verificationCode = await getOrCreateVerificationCode();
+        if (!verificationCode) {
+            throw new Error('Failed to get verification code');
+        }
+        
+        // Call Firebase Cloud Function to verify X account
+        const functions = getFunctions(app);
+        const verifyXAccount = httpsCallable(functions, 'verifyXAccount');
+        
+        const result = await verifyXAccount({
+            username: username,
+            verificationCode: verificationCode,
+            uid: currentUser.uid
+        });
+        
+        if (result.verified) {
+            // Update Firestore
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            await setDoc(userDocRef, {
+                xAccountVerified: true,
+                xAccount: xAccount,
+                xVerifiedAt: new Date().toISOString(),
+                xVerificationAttempts: 0 // Reset on success
+            }, { merge: true });
+            
+            // Update UI
+            if (verificationStatus) {
+                verificationStatus.textContent = '✓ Verified';
+                verificationStatus.className = 'x-verification-status verified';
+            }
+            verifyBtn.textContent = 'Verified';
+            verifyBtn.disabled = true;
+            
+            const verificationSection = document.getElementById('xVerificationSection');
+            if (verificationSection) {
+                verificationSection.style.display = 'none';
+            }
+        } else {
+            throw new Error(result.error || 'Verification code not found in bio');
+        }
+    } catch (error) {
+        console.error('Verification error:', error);
+        
+        // Handle Firebase Functions HttpsError
+        let errorMessage = 'Verification failed';
+        if (error.code) {
+            // Firebase Functions error
+            switch (error.code) {
+                case 'not-found':
+                    errorMessage = 'X account not found. Please check the username.';
+                    break;
+                case 'permission-denied':
+                    errorMessage = 'Permission denied. Please try again.';
+                    break;
+                case 'resource-exhausted':
+                    errorMessage = 'Too many requests. Please try again later.';
+                    break;
+                case 'failed-precondition':
+                    errorMessage = 'X API not configured. Please contact support.';
+                    break;
+                default:
+                    errorMessage = error.message || 'Verification failed';
+            }
+        } else {
+            errorMessage = error.message || 'Verification failed';
+        }
+        
+        // Increment attempt counter
+        try {
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            const attempts = (userData.xVerificationAttempts || 0) + 1;
+            
+            await setDoc(userDocRef, {
+                xVerificationAttempts: attempts
+            }, { merge: true });
+        } catch (updateError) {
+            console.error('Error updating attempt counter:', updateError);
+        }
+        
+        alert(`${errorMessage}\n\nMake sure you've added the verification code to your X bio and try again.`);
+        
+        if (verificationStatus) {
+            verificationStatus.textContent = 'Unverified';
+            verificationStatus.className = 'x-verification-status unverified';
+        }
+        verifyBtn.textContent = 'Verify X Account';
+    } finally {
+        isVerifying = false;
+        verifyBtn.disabled = false;
+    }
+}
+
 // Event listener flags to prevent duplicates
 let listenersAttached = false;
 
@@ -380,6 +639,46 @@ function setupEventListeners() {
     const bannerBgGrid = document.getElementById('bannerBgGrid');
     if (bannerBgGrid) {
         bannerBgGrid.addEventListener('click', handleBannerBgClick);
+    }
+    
+    // X Account input - show verification section when account is entered
+    const xAccountInput = document.getElementById('profileXAccount');
+    if (xAccountInput) {
+        xAccountInput.addEventListener('input', async () => {
+            const xAccount = xAccountInput.value.trim();
+            if (xAccount) {
+                // Load user data to check verification status
+                try {
+                    const userDocRef = doc(db, 'users', currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        updateXVerificationUI(userDoc.data());
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                }
+            } else {
+                const verificationSection = document.getElementById('xVerificationSection');
+                const verificationStatus = document.getElementById('xVerificationStatus');
+                if (verificationSection) verificationSection.style.display = 'none';
+                if (verificationStatus) {
+                    verificationStatus.textContent = '';
+                    verificationStatus.className = 'x-verification-status';
+                }
+            }
+        });
+    }
+    
+    // Copy verification code button
+    const copyCodeBtn = document.getElementById('copyVerificationCode');
+    if (copyCodeBtn) {
+        copyCodeBtn.addEventListener('click', copyVerificationCode);
+    }
+    
+    // Verify X account button
+    const verifyXBtn = document.getElementById('verifyXAccountBtn');
+    if (verifyXBtn) {
+        verifyXBtn.addEventListener('click', verifyXAccount);
     }
     
     // View More button for banners

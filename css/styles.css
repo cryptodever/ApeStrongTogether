@@ -5363,6 +5363,122 @@ body.chat-body > * {
     background: rgba(0, 0, 0, 0.3);
 }
 
+/* X Account Verification Styles */
+.x-account-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.x-verification-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    white-space: nowrap;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.x-verification-status.unverified {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.x-verification-status.verifying {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.2);
+}
+
+.x-verification-status.verified {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.2);
+}
+
+.x-verification-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.x-verification-code-display {
+    margin-bottom: 1rem;
+}
+
+.x-verification-code-display label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.verification-code-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.verification-code-box code {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4ade80;
+    letter-spacing: 0.1em;
+}
+
+.btn-copy-code {
+    background: rgba(74, 222, 128, 0.2);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 6px;
+    padding: 0.375rem 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.btn-copy-code:hover {
+    background: rgba(74, 222, 128, 0.3);
+    border-color: rgba(74, 222, 128, 0.5);
+    transform: scale(1.05);
+}
+
+.verification-instructions {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.5;
+}
+
+#verifyXAccountBtn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: rgba(74, 222, 128, 0.2);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+    font-weight: 600;
+}
+
+#verifyXAccountBtn:hover:not(:disabled) {
+    background: rgba(74, 222, 128, 0.3);
+    border-color: rgba(74, 222, 128, 0.6);
+}
+
+#verifyXAccountBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .profile-bio {
     margin-bottom: 0;
     flex: 1;

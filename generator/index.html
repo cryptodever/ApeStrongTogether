@@ -47,7 +47,7 @@
                     </div>
                     <div class="rank-progress-bar">
                         <div class="rank-progress-fill" id="rankProgressFill"></div>
-                    </div>
+                </div>
                 </div>
             </div>
 
@@ -280,7 +280,21 @@
                             
                             <div class="profile-x-account">
                                 <label for="profileXAccount">X Account</label>
-                                <input type="text" id="profileXAccount" class="x-account-input" placeholder="@username" />
+                                <div class="x-account-input-wrapper">
+                                    <input type="text" id="profileXAccount" class="x-account-input" placeholder="@username" />
+                                    <span class="x-verification-status" id="xVerificationStatus"></span>
+                                </div>
+                                <div class="x-verification-section" id="xVerificationSection" style="display: none;">
+                                    <div class="x-verification-code-display">
+                                        <label>Verification Code:</label>
+                                        <div class="verification-code-box">
+                                            <code id="xVerificationCode">Loading...</code>
+                                            <button class="btn-copy-code" id="copyVerificationCode" title="Copy code">📋</button>
+                                        </div>
+                                        <p class="verification-instructions">Add this code to your X bio, then click Verify</p>
+                                    </div>
+                                    <button class="btn btn-secondary" id="verifyXAccountBtn">Verify X Account</button>
+                                </div>
                             </div>
                         </div>
                     </div>
