@@ -5354,9 +5354,19 @@ body.chat-body > * {
 
 .banner-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
     margin-bottom: 1.5rem;
+}
+
+/* Hide all items except first on mobile when not expanded */
+.banner-grid:not(.expanded) .banner-item:not(:first-child) {
+    display: none;
+}
+
+/* Show all items when expanded */
+.banner-grid.expanded .banner-item {
+    display: block;
 }
 
 .banner-item {
@@ -5517,12 +5527,14 @@ body.chat-body > * {
         grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
     }
-
-    .banner-item.blurred {
+    
+    /* Show all items on desktop */
+    .banner-grid:not(.expanded) .banner-item:not(:first-child) {
         display: block;
     }
     
-    .banner-grid:not(.expanded) .banner-item.blurred {
+    /* Hide View More button on desktop */
+    .view-more-btn {
         display: none;
     }
 }
