@@ -30,7 +30,7 @@
 
     <main class="profile-page">
         <div class="profile-container">
-            <!-- Banner and Bio Section -->
+            <!-- Banner and Level Section -->
             <div class="profile-banner-bio-row">
                 <!-- Banner Image Section -->
                 <div class="profile-banner">
@@ -38,12 +38,14 @@
                     <img id="profileBannerImg" src="/pfp_apes/bg1.png" alt="Profile Banner" />
                 </div>
                 
-                <!-- Bio Section -->
-                <div class="profile-bio-section">
-                    <div class="profile-bio">
-                        <label for="profileBio">Bio</label>
-                        <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
-                        <small class="char-count"><span id="bioCharCount">0</span>/500</small>
+                <!-- Level Section -->
+                <div class="profile-rank-section">
+                    <div class="profile-rank">
+                        <span class="rank-label">LVL</span>
+                        <span class="rank-value" id="profileRank">1</span>
+                    </div>
+                    <div class="rank-progress-bar">
+                        <div class="rank-progress-fill" id="rankProgressFill" style="width: 25%"></div>
                 </div>
                 </div>
             </div>
@@ -55,13 +57,11 @@
                         <h2>Profile Settings</h2>
                     </div>
                     
-                    <div class="profile-rank-section">
-                        <div class="profile-rank">
-                            <span class="rank-label">LVL</span>
-                            <span class="rank-value" id="profileRank">1</span>
-                        </div>
-                        <div class="rank-progress-bar">
-                            <div class="rank-progress-fill" id="rankProgressFill" style="width: 25%"></div>
+                    <div class="profile-bio-section">
+                        <div class="profile-bio">
+                            <label for="profileBio">Bio</label>
+                            <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
+                            <small class="char-count"><span id="bioCharCount">0</span>/500</small>
                         </div>
                     </div>
                     
