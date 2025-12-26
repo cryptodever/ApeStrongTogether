@@ -5310,6 +5310,58 @@ body.chat-body > * {
     margin-bottom: 0;
 }
 
+/* Country and X Account Row */
+.profile-country-x-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-x-account {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-x-account label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.x-account-input {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.x-account-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.x-account-input:focus {
+    outline: none;
+    border-color: rgba(74, 222, 128, 0.4);
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+.x-account-input:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+}
+
 .profile-bio {
     margin-bottom: 0;
     flex: 1;
@@ -5376,6 +5428,26 @@ body.chat-body > * {
 
     .profile-country-section .profile-country {
         margin-bottom: 0;
+    }
+    
+    /* Country and X Account Row - Side by side on desktop */
+    .profile-country-x-row {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 1.5rem;
+    }
+    
+    .profile-country-x-row .profile-country {
+        flex: 0 0 auto;
+    }
+    
+    .profile-country-x-row .profile-x-account {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .x-account-input {
+        width: 100%;
     }
 
 .profile-country select {
