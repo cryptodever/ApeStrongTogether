@@ -60,6 +60,12 @@ async function loadProfile() {
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 
+                // Load username
+                const usernameElement = document.getElementById('profileUsername');
+                if (usernameElement && userData.username) {
+                    usernameElement.textContent = userData.username;
+                }
+                
                 // Load bio
                 const bioTextarea = document.getElementById('profileBio');
                 if (bioTextarea && userData.bio) {
