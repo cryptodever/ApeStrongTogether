@@ -47,7 +47,18 @@ service cloud.firestore {
         && request.resource.data.avatarCount >= 0
         && request.resource.data.createdAt is timestamp;
 
-      allow update, delete: if false;
+      // Allow updates to profile fields (bio, country, bannerImage, bannerBackground, updatedAt)
+      allow update: if isOwner(uid)
+        && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.username == resource.data.username)
+        && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.email == resource.data.email)
+        && (!('avatarCount' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.avatarCount == resource.data.avatarCount)
+        && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.createdAt == resource.data.createdAt);
+
+      allow delete: if false;
     }
 
     // Default deny

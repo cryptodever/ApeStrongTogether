@@ -40,6 +40,7 @@ onAuthStateChanged(auth, async (user) => {
             profileListener = null;
         }
         currentUser = null;
+        listenersAttached = false; // Reset flag for next login
     }
 });
 
@@ -75,26 +76,44 @@ async function loadProfile() {
                 // Load banner image
                 const bannerImg = document.getElementById('profileBannerImg');
                 if (bannerImg && userData.bannerImage) {
-                    bannerImg.src = userData.bannerImage;
+                    // Ensure path starts with / if it's a relative path
+                    const bannerPath = userData.bannerImage.startsWith('/') 
+                        ? userData.bannerImage 
+                        : '/' + userData.bannerImage;
+                    bannerImg.src = bannerPath;
                 }
                 
                 // Load banner background
                 const bannerBg = document.getElementById('profileBannerBg');
                 if (bannerBg && userData.bannerBackground) {
-                    bannerBg.style.backgroundImage = `url(${userData.bannerBackground})`;
+                    // Ensure path starts with / if it's a relative path
+                    const bgPath = userData.bannerBackground.startsWith('/')
+                        ? userData.bannerBackground
+                        : '/' + userData.bannerBackground;
+                    bannerBg.style.backgroundImage = `url(${bgPath})`;
                 }
                 
-                // Update selected banner in grid
-                updateBannerSelection(userData.bannerImage);
+                // Update selected banner in grid (only if bannerImage exists)
+                if (userData.bannerImage) {
+                    updateBannerSelection(userData.bannerImage);
+                }
                 
-                // Update selected banner background in grid
-                updateBannerBgSelection(userData.bannerBackground);
+                // Update selected banner background in grid (only if bannerBackground exists)
+                if (userData.bannerBackground) {
+                    updateBannerBgSelection(userData.bannerBackground);
+                }
             } else {
                 // Profile doesn't exist yet, use defaults
                 console.log('Profile does not exist yet, using defaults');
             }
         }, (error) => {
             console.error('Error loading profile:', error);
+            // Provide user feedback for load errors
+            if (error.code === 'permission-denied') {
+                console.error('Permission denied loading profile. User may not have access.');
+            } else if (error.code === 'unavailable') {
+                console.error('Firestore unavailable. Check internet connection.');
+            }
         });
     } catch (error) {
         console.error('Error setting up profile listener:', error);
@@ -103,7 +122,15 @@ async function loadProfile() {
 
 // Save profile to Firestore
 async function saveProfile() {
-    if (!currentUser || isSaving) return;
+    if (!currentUser) {
+        console.warn('Cannot save profile: user not authenticated');
+        return;
+    }
+    
+    if (isSaving) {
+        console.warn('Save already in progress, skipping...');
+        return;
+    }
     
     isSaving = true;
     const saveBtn = document.getElementById('saveProfileBtn');
@@ -113,13 +140,47 @@ async function saveProfile() {
     }
     
     try {
-        const bio = document.getElementById('profileBio')?.value || '';
-        const country = document.getElementById('profileCountry')?.value || '';
-        const bannerImage = document.getElementById('profileBannerImg')?.src || '';
+        // Validate required elements exist
+        const bioTextarea = document.getElementById('profileBio');
+        const countrySelect = document.getElementById('profileCountry');
+        const bannerImg = document.getElementById('profileBannerImg');
         const bannerBg = document.getElementById('profileBannerBg');
-        const bannerBackground = bannerBg?.style.backgroundImage 
-            ? bannerBg.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1')
-            : '';
+        
+        if (!bioTextarea || !countrySelect || !bannerImg || !bannerBg) {
+            throw new Error('Required profile elements not found');
+        }
+        
+        const bio = bioTextarea.value || '';
+        const country = countrySelect.value || '';
+        
+        // Extract banner image path (handle both full URL and relative path)
+        let bannerImage = '';
+        if (bannerImg.src) {
+            try {
+                // Extract path from full URL if needed, or use as-is if already a path
+                const url = new URL(bannerImg.src, window.location.origin);
+                bannerImage = url.pathname;
+            } catch (e) {
+                // If it's already a relative path, use as-is
+                bannerImage = bannerImg.src.startsWith('/') ? bannerImg.src : '/' + bannerImg.src;
+            }
+        }
+        
+        // Extract banner background path
+        let bannerBackground = '';
+        if (bannerBg.style.backgroundImage) {
+            const bgMatch = bannerBg.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/);
+            if (bgMatch && bgMatch[1]) {
+                // Extract path from full URL if needed
+                try {
+                    const bgUrl = new URL(bgMatch[1], window.location.origin);
+                    bannerBackground = bgUrl.pathname;
+                } catch {
+                    // If it's already a relative path, ensure it starts with /
+                    bannerBackground = bgMatch[1].startsWith('/') ? bgMatch[1] : '/' + bgMatch[1];
+                }
+            }
+        }
         
         const userDocRef = doc(db, 'users', currentUser.uid);
         
@@ -137,7 +198,7 @@ async function saveProfile() {
             updatedAt: new Date().toISOString()
         }, { merge: true });
         
-        console.log('Profile saved successfully');
+        console.log('Profile saved successfully', { bio: bio.trim(), country, bannerImage, bannerBackground });
         
         // Show success message
         if (saveBtn) {
@@ -149,8 +210,19 @@ async function saveProfile() {
         }
     } catch (error) {
         console.error('Error saving profile:', error);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Error - Try Again';
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission Denied';
+            console.error('Firestore permission denied. Check Firestore rules.');
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'Network Error';
+            console.error('Firestore unavailable. Check internet connection.');
+        }
+        
         if (saveBtn) {
-            saveBtn.textContent = 'Error - Try Again';
+            saveBtn.textContent = errorMessage;
             saveBtn.disabled = false;
             setTimeout(() => {
                 saveBtn.textContent = 'Save Profile';
@@ -170,12 +242,24 @@ function updateCharCount() {
     }
 }
 
+// Helper function to normalize paths for comparison
+function normalizePath(path) {
+    if (!path) return '';
+    // Remove leading slash for comparison, handle both /path and path
+    return path.startsWith('/') ? path : '/' + path;
+}
+
 // Update banner selection in grid
 function updateBannerSelection(selectedBanner) {
+    if (!selectedBanner) return;
+    
     const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
+    const normalizedSelected = normalizePath(selectedBanner);
+    
     bannerItems.forEach(item => {
         item.classList.remove('selected');
-        if (item.dataset.banner === selectedBanner) {
+        const itemPath = normalizePath(item.dataset.banner);
+        if (itemPath === normalizedSelected) {
             item.classList.add('selected');
         }
     });
@@ -183,10 +267,15 @@ function updateBannerSelection(selectedBanner) {
 
 // Update banner background selection in grid
 function updateBannerBgSelection(selectedBg) {
+    if (!selectedBg) return;
+    
     const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
+    const normalizedSelected = normalizePath(selectedBg);
+    
     bannerBgItems.forEach(item => {
         item.classList.remove('selected');
-        if (item.dataset.bannerBg === selectedBg) {
+        const itemPath = normalizePath(item.dataset.bannerBg);
+        if (itemPath === normalizedSelected) {
             item.classList.add('selected');
         }
     });
@@ -244,8 +333,17 @@ function selectBannerBg(bgPath) {
     saveProfile();
 }
 
-// Setup event listeners
+// Event listener flags to prevent duplicates
+let listenersAttached = false;
+
+// Setup event listeners (only called once per auth state change)
 function setupEventListeners() {
+    // Prevent duplicate listeners
+    if (listenersAttached) {
+        console.warn('Event listeners already attached, skipping...');
+        return;
+    }
+    
     // Bio character count
     const bioTextarea = document.getElementById('profileBio');
     if (bioTextarea) {
@@ -258,27 +356,43 @@ function setupEventListeners() {
         saveBtn.addEventListener('click', saveProfile);
     }
     
-    // Banner selection
-    const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
-    bannerItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const bannerPath = item.dataset.banner;
-            if (bannerPath) {
-                selectBanner(bannerPath);
-            }
-        });
-    });
+    // Banner selection - use event delegation to handle dynamic items
+    const bannerGrid = document.getElementById('bannerGrid');
+    if (bannerGrid) {
+        bannerGrid.addEventListener('click', handleBannerClick);
+    }
     
-    // Banner background selection
-    const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
-    bannerBgItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const bgPath = item.dataset.bannerBg;
-            if (bgPath) {
-                selectBannerBg(bgPath);
-            }
-        });
-    });
+    // Banner background selection - use event delegation
+    const bannerBgGrid = document.getElementById('bannerBgGrid');
+    if (bannerBgGrid) {
+        bannerBgGrid.addEventListener('click', handleBannerBgClick);
+    }
+    
+    listenersAttached = true;
+    console.log('Profile event listeners attached');
+}
+
+// Event handler for banner clicks (using event delegation)
+function handleBannerClick(event) {
+    const bannerItem = event.target.closest('.banner-item');
+    if (bannerItem) {
+        const bannerPath = bannerItem.dataset.banner;
+        if (bannerPath) {
+            selectBanner(bannerPath);
+        }
+    }
+}
+
+// Event handler for banner background clicks (using event delegation)
+function handleBannerBgClick(event) {
+    const bannerBgItem = event.target.closest('.banner-item');
+    if (bannerBgItem) {
+        const bgPath = bannerBgItem.dataset.bannerBg;
+        if (bgPath) {
+            selectBannerBg(bgPath);
+        }
+    }
+}
     
     // View More button for banners
     const viewMoreBannersBtn = document.getElementById('viewMoreBannersBtn');
