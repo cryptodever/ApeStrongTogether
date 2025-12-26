@@ -274,21 +274,41 @@ function setupEventListeners() {
         });
     });
     
-    // View More button
-    const viewMoreBtn = document.getElementById('viewMoreBannersBtn');
-    if (viewMoreBtn) {
-        viewMoreBtn.addEventListener('click', () => {
+    // View More button for banners
+    const viewMoreBannersBtn = document.getElementById('viewMoreBannersBtn');
+    if (viewMoreBannersBtn) {
+        viewMoreBannersBtn.addEventListener('click', () => {
             const bannerGrid = document.getElementById('bannerGrid');
             if (bannerGrid) {
                 const isExpanded = bannerGrid.classList.contains('expanded');
                 if (isExpanded) {
                     bannerGrid.classList.remove('expanded');
-                    viewMoreBtn.textContent = 'View More';
+                    viewMoreBannersBtn.textContent = 'View More';
                     // Scroll to top of banner section
                     bannerGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } else {
                     bannerGrid.classList.add('expanded');
-                    viewMoreBtn.textContent = 'Show Less';
+                    viewMoreBannersBtn.textContent = 'Show Less';
+                }
+            }
+        });
+    }
+    
+    // View More button for banner backgrounds
+    const viewMoreBannerBgsBtn = document.getElementById('viewMoreBannerBgsBtn');
+    if (viewMoreBannerBgsBtn) {
+        viewMoreBannerBgsBtn.addEventListener('click', () => {
+            const bannerBgGrid = document.getElementById('bannerBgGrid');
+            if (bannerBgGrid) {
+                const isExpanded = bannerBgGrid.classList.contains('expanded');
+                if (isExpanded) {
+                    bannerBgGrid.classList.remove('expanded');
+                    viewMoreBannerBgsBtn.textContent = 'View More';
+                    // Scroll to top of banner background section
+                    bannerBgGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    bannerBgGrid.classList.add('expanded');
+                    viewMoreBannerBgsBtn.textContent = 'Show Less';
                 }
             }
         });
