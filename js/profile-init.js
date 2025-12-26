@@ -721,6 +721,50 @@ function setupEventListeners() {
         });
     }
     
+    // X Account Instructions Modal
+    const showInstructionsBtn = document.getElementById('showXInstructionsBtn');
+    const closeInstructionsBtn = document.getElementById('closeXInstructionsBtn');
+    const closeInstructionsBtn2 = document.getElementById('closeXInstructionsBtn2');
+    const instructionsModal = document.getElementById('xInstructionsModal');
+    
+    if (showInstructionsBtn && instructionsModal) {
+        showInstructionsBtn.addEventListener('click', () => {
+            instructionsModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        });
+    }
+    
+    const closeModal = () => {
+        if (instructionsModal) {
+            instructionsModal.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+    };
+    
+    if (closeInstructionsBtn) {
+        closeInstructionsBtn.addEventListener('click', closeModal);
+    }
+    
+    if (closeInstructionsBtn2) {
+        closeInstructionsBtn2.addEventListener('click', closeModal);
+    }
+    
+    // Close modal when clicking outside
+    if (instructionsModal) {
+        instructionsModal.addEventListener('click', (e) => {
+            if (e.target === instructionsModal) {
+                closeModal();
+            }
+        });
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && instructionsModal && instructionsModal.classList.contains('show')) {
+            closeModal();
+        }
+    });
+    
     listenersAttached = true;
     console.log('Profile event listeners attached');
 }

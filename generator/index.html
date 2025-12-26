@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css?v=5">
+    <link rel="stylesheet" href="/css/styles.css?v=6">
     
     <!-- reCAPTCHA v3 for Firebase App Check -->
     <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
@@ -279,7 +279,10 @@
                             </div>
                             
                             <div class="profile-x-account">
-                                <label for="profileXAccount">X Account</label>
+                                <label for="profileXAccount">
+                                    X Account
+                                    <button type="button" class="info-icon" id="showXInstructionsBtn" title="How to verify your X account">ℹ️</button>
+                                </label>
                                 <div class="x-account-input-wrapper">
                                     <input type="text" id="profileXAccount" class="x-account-input" placeholder="@username" />
                                     <span class="x-verification-status" id="xVerificationStatus"></span>
@@ -407,6 +410,46 @@
             </section>
         </div>
     </main>
+
+    <!-- X Verification Instructions Modal -->
+    <div class="modal-overlay" id="xInstructionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>How to Verify Your X Account</h3>
+                <button type="button" class="modal-close" id="closeXInstructionsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ol class="verification-steps">
+                    <li>
+                        <strong>Enter your X username</strong>
+                        <p>Type your X (Twitter) username in the field above (with or without @)</p>
+                    </li>
+                    <li>
+                        <strong>Copy your verification code</strong>
+                        <p>After entering your username, a unique verification code will appear. Click the 📋 button to copy it.</p>
+                    </li>
+                    <li>
+                        <strong>Add code to your X bio</strong>
+                        <p>Go to your X profile settings and edit your bio. Paste the verification code anywhere in your bio text.</p>
+                    </li>
+                    <li>
+                        <strong>Click "Verify X Account"</strong>
+                        <p>Once you've added the code to your bio, click the "Verify X Account" button. We'll check if the code is in your bio.</p>
+                    </li>
+                    <li>
+                        <strong>You're verified!</strong>
+                        <p>If the code is found in your bio, your X account will be marked as verified. You can remove the code from your bio after verification.</p>
+                    </li>
+                </ol>
+                <div class="verification-note">
+                    <p><strong>Note:</strong> The verification code must be in your public X bio for verification to work. Make sure your profile is public or the verification may fail.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="closeXInstructionsBtn2">Got it!</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/js/profile-init.js?v=1"></script>
     <script type="module" src="/js/asset-selftest.js?v=2"></script>
