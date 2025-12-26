@@ -79,6 +79,12 @@ async function loadProfile() {
                     countrySelect.value = userData.country;
                 }
                 
+                // Load X account
+                const xAccountInput = document.getElementById('profileXAccount');
+                if (xAccountInput && userData.xAccount) {
+                    xAccountInput.value = userData.xAccount;
+                }
+                
                 // Load banner image
                 const bannerImg = document.getElementById('profileBannerImg');
                 if (bannerImg && userData.bannerImage) {
@@ -158,6 +164,7 @@ async function saveProfile() {
         
         const bio = bioTextarea.value || '';
         const country = countrySelect.value || '';
+        const xAccount = document.getElementById('profileXAccount')?.value || '';
         
         // Extract banner image path (handle both full URL and relative path)
         let bannerImage = '';
@@ -199,12 +206,13 @@ async function saveProfile() {
             ...existingData,
             bio: bio.trim(),
             country: country,
+            xAccount: xAccount.trim(),
             bannerImage: bannerImage,
             bannerBackground: bannerBackground,
             updatedAt: new Date().toISOString()
         }, { merge: true });
         
-        console.log('Profile saved successfully', { bio: bio.trim(), country, bannerImage, bannerBackground });
+        console.log('Profile saved successfully', { bio: bio.trim(), country, xAccount: xAccount.trim(), bannerImage, bannerBackground });
         
         // Show success message
         if (saveBtn) {
