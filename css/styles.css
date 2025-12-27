@@ -561,60 +561,60 @@ nav {
 
 /* Homepage-specific body styles - only apply when NOT on login/generator/roadmap/chat pages */
 body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background-color: #1a1a1a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background-color: #1a1a1a;
     background-image: url('/background_homepage.png');
     background-size: cover;
     background-repeat: no-repeat;
-    background-attachment: fixed;
+            background-attachment: fixed;
     background-position: center center;
-    color: #e0e0e0;
-    line-height: 1.8;
-    min-height: 100vh;
-    padding: 0;
-    position: relative;
+            color: #e0e0e0;
+            line-height: 1.8;
+            min-height: 100vh;
+            padding: 0;
+            position: relative;
     overflow-x: hidden;
-}
+        }
 
 body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
     background: 
         linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.4) 80%, rgba(0, 0, 0, 0.5) 100%),
         radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.03) 0%, transparent 60%),
         radial-gradient(ellipse at center 70%, rgba(255, 215, 0, 0.03) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-}
+            pointer-events: none;
+            z-index: 0;
+        }
 
 body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.3;
-}
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
+        }
 
 body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > * {
-    position: relative;
-    z-index: 1;
-}
-
-/* Ensure page content doesn't sit above mobile menu on mobile */
-@media (max-width: 768px) {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Ensure page content doesn't sit above mobile menu on mobile */
+        @media (max-width: 768px) {
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > *:not(nav):not(#site-header):not(.mobile-menu-overlay) {
-        z-index: 1 !important;
-    }
-    
+                z-index: 1 !important;
+            }
+            
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .container,
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .page-container,
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .hero,
@@ -625,31 +625,31 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > 
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .thesis-statement,
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .what-is-this,
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .whats-coming {
-        z-index: 1 !important;
-        position: relative;
-    }
-}
+                z-index: 1 !important;
+                position: relative;
+            }
+        }
 
-/* Navigation styles are now in /partials/header.html */
+        /* Navigation styles are now in /partials/header.html */
 
 /* Homepage-specific styles - only apply when NOT on login/generator/roadmap/chat pages */
 body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
-    width: 100%;
-    background: rgba(15, 15, 15, 0.7);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 0.5rem 0;
-    overflow: hidden;
-    position: relative;
-    z-index: 99;
-}
-
-/* Ensure ticker-bar doesn't sit above mobile menu */
-@media (max-width: 768px) {
+            width: 100%;
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.5rem 0;
+            overflow: hidden;
+            position: relative;
+            z-index: 99;
+        }
+        
+        /* Ensure ticker-bar doesn't sit above mobile menu */
+        @media (max-width: 768px) {
     body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
-        z-index: 1 !important;
-    }
-}
+                z-index: 1 !important;
+            }
+        }
 
         .ticker-content {
             display: flex;
@@ -1695,8 +1695,8 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
    Header/Navigation Styles (extracted from partials/header.html)
    ============================================ */
 
-/* Navigation Styles */
-nav {
+    /* Navigation Styles */
+    nav {
         width: 100%;
         padding: 1.25rem 2rem;
         background: rgba(15, 15, 15, 0.85);
@@ -3934,19 +3934,20 @@ body.tokenomics-body > * {
 /* Allocation Details Grid */
 .allocation-details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin: 2rem 0;
 }
 
 .allocation-detail-item {
     display: flex;
-    gap: 1rem;
-    padding: 1.5rem;
+    gap: 1.5rem;
+    padding: 2rem 1.75rem;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     transition: all 0.3s ease;
+    min-height: 180px;
 }
 
 .allocation-detail-item:hover {
@@ -3956,37 +3957,41 @@ body.tokenomics-body > * {
 }
 
 .detail-icon {
-    font-size: 2.5rem;
+    font-size: 3.5rem;
     flex-shrink: 0;
     line-height: 1;
 }
 
 .detail-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .detail-content h3 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 600;
     color: #ffffff;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
 }
 
 .detail-percent {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.8rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: #4ade80;
-    margin: 0.5rem 0;
-    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+    margin: 0.75rem 0;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
 }
 
 .detail-content p {
-    font-size: 0.95rem;
-    line-height: 1.8;
+    font-size: 1.1rem;
+    line-height: 1.9;
     color: #d0d0d0;
-    margin: 0.5rem 0 0 0;
+    margin: 0.75rem 0 0 0;
 }
 
 .detail-content p br {
@@ -4474,6 +4479,28 @@ body.tokenomics-body > * {
     .transparency-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .allocation-detail-item {
+        padding: 1.5rem 1.25rem;
+        min-height: auto;
+        gap: 1rem;
+    }
+
+    .detail-icon {
+        font-size: 2.5rem;
+    }
+
+    .detail-content h3 {
+        font-size: 1.2rem;
+    }
+
+    .detail-percent {
+        font-size: 2rem;
+    }
+
+    .detail-content p {
+        font-size: 0.95rem;
     }
 
     .tokenomics-hero {
