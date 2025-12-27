@@ -96,11 +96,11 @@ function initializePieChart() {
     const svg = document.getElementById('feePieChart');
     if (!svg) return;
     
-    // Placeholder percentages - replace with actual values
+    // Fee allocation percentages
     const allocations = [
         { percent: 40, color: '#4ade80', label: 'Liquidity Growth' },
-        { percent: 25, color: '#22c55e', label: 'Market Making' },
-        { percent: 20, color: '#16a34a', label: 'Buyback & Burn' },
+        { percent: 20, color: '#22c55e', label: 'Market Making' },
+        { percent: 25, color: '#16a34a', label: 'Buyback & Burn' },
         { percent: 15, color: '#15803d', label: 'Creator Revenue' }
     ];
     
