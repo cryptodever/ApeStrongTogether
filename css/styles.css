@@ -3373,6 +3373,57 @@ body.tokenomics-body > * {
 }
 
 /* Allocation Grid */
+.distribution-explanation {
+    margin: 2rem 0;
+    padding: 1.75rem;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    border-radius: 12px;
+    line-height: 1.8;
+}
+
+.distribution-explanation p {
+    font-size: 1rem;
+    color: #e0e0e0;
+    margin: 0 0 1rem 0;
+}
+
+.distribution-explanation p:last-child {
+    margin-bottom: 0;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #d0d0d0;
+    font-style: italic;
+}
+
+.distribution-explanation strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.distribution-explanation ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    list-style: none;
+}
+
+.distribution-explanation ul li {
+    font-size: 0.95rem;
+    color: #d0d0d0;
+    margin-bottom: 0.75rem;
+    padding-left: 1.5rem;
+    position: relative;
+    line-height: 1.7;
+}
+
+.distribution-explanation ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #4ade80;
+    font-weight: bold;
+}
+
 .allocation-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -4466,6 +4517,20 @@ body.tokenomics-body > * {
 
     .supply-value {
         font-size: 2rem;
+    }
+
+    .distribution-explanation {
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+    }
+
+    .distribution-explanation p {
+        font-size: 0.9rem;
+    }
+
+    .distribution-explanation ul li {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
     }
 
     .allocation-grid,
