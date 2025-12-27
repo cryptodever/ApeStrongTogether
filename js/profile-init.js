@@ -566,13 +566,21 @@ async function copyVerificationCode() {
 
 // Verify X account
 async function verifyXAccount() {
-    if (!currentUser || isVerifying) return;
+    console.log('[verifyXAccount] Function called');
+    
+    if (!currentUser || isVerifying) {
+        console.log('[verifyXAccount] Early return - no user or already verifying', { currentUser: !!currentUser, isVerifying });
+        return;
+    }
     
     const xAccountInput = document.getElementById('profileXAccount');
     const verifyBtn = document.getElementById('verifyXAccountBtn');
     const verificationStatus = document.getElementById('xVerificationStatus');
     
-    if (!xAccountInput || !verifyBtn) return;
+    if (!xAccountInput || !verifyBtn) {
+        console.error('[verifyXAccount] Missing required elements', { xAccountInput: !!xAccountInput, verifyBtn: !!verifyBtn });
+        return;
+    }
     
     const xAccount = xAccountInput.value.trim();
     if (!xAccount) {
@@ -582,6 +590,7 @@ async function verifyXAccount() {
     
     // Extract username (remove @ if present)
     const username = xAccount.replace(/^@/, '').trim();
+    console.log('[verifyXAccount] Starting verification for username:', username);
     
     // Rate limiting check with time-based reset (24 hours)
     try {
@@ -642,20 +651,26 @@ async function verifyXAccount() {
     
     try {
         // Get verification code
+        console.log('[verifyXAccount] Getting verification code...');
         const verificationCode = await getOrCreateVerificationCode();
         if (!verificationCode) {
             throw new Error('Failed to get verification code');
         }
+        console.log('[verifyXAccount] Verification code:', verificationCode);
         
         // Call Firebase Cloud Function to verify X account
-        const functions = getFunctions(app);
-        const verifyXAccount = httpsCallable(functions, 'verifyXAccount');
+        console.log('[verifyXAccount] Initializing Firebase Functions...');
+        const functions = getFunctions(app, 'us-central1'); // Specify region to match function deployment
+        console.log('[verifyXAccount] Creating callable function...');
+        const verifyXAccountCallable = httpsCallable(functions, 'verifyXAccount');
         
-        const result = await verifyXAccount({
+        console.log('[verifyXAccount] Calling function with:', { username, verificationCode, uid: currentUser.uid });
+        const result = await verifyXAccountCallable({
             username: username,
             verificationCode: verificationCode,
             uid: currentUser.uid
         });
+        console.log('[verifyXAccount] Function result:', result);
         
         if (result.verified) {
             // Update Firestore
@@ -684,7 +699,13 @@ async function verifyXAccount() {
             throw new Error(result.error || 'Verification code not found in bio');
         }
     } catch (error) {
-        console.error('Verification error:', error);
+        console.error('[verifyXAccount] Verification error:', error);
+        console.error('[verifyXAccount] Error details:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            stack: error.stack
+        });
         
         // Handle Firebase Functions HttpsError
         let errorMessage = 'Verification failed';
