@@ -2490,6 +2490,7 @@ nav {
         body.login-body .nav-links.is-open,
         body.generator-body .nav-links.is-open,
         body.roadmap-body .nav-links.is-open,
+        body.tokenomics-body .nav-links.is-open,
         body.verify-body .nav-links.is-open {
             /* Keep for desktop compatibility, but mobile uses overlay */
             display: flex !important;
@@ -2523,6 +2524,8 @@ nav {
         body.generator-body::after,
         body.roadmap-body::before,
         body.roadmap-body::after,
+        body.tokenomics-body::before,
+        body.tokenomics-body::after,
         body.verify-body::before,
         body.verify-body::after {
             z-index: -1 !important;
@@ -2674,6 +2677,48 @@ body.roadmap-body::after {
 }
 
 body.roadmap-body > * {
+    position: relative;
+    z-index: 1;
+}
+
+body.tokenomics-body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body.tokenomics-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0.85) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.tokenomics-body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(74, 222, 128, 0.05) 0%, transparent 70%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+body.tokenomics-body > * {
     position: relative;
     z-index: 1;
 }
@@ -3155,6 +3200,655 @@ body.roadmap-body > * {
     }
 }
 
+/* ============================================
+   TOKENOMICS PAGE STYLES
+   ============================================ */
+
+.tokenomics-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+    position: relative;
+}
+
+.tokenomics-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1000px;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.tokenomics-page > * {
+    position: relative;
+    z-index: 1;
+}
+
+.tokenomics-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    padding-top: 2rem;
+}
+
+.tokenomics-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    color: #ffffff;
+    text-shadow: 
+        0 0 40px rgba(74, 222, 128, 0.6),
+        0 0 60px rgba(74, 222, 128, 0.4),
+        0 4px 15px rgba(0, 0, 0, 0.7),
+        0 0 100px rgba(74, 222, 128, 0.3);
+    filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.6));
+    position: relative;
+}
+
+.tokenomics-header h1::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 110%;
+    height: 120%;
+    background: radial-gradient(ellipse, rgba(74, 222, 128, 0.15) 0%, transparent 70%);
+    z-index: -1;
+    filter: blur(25px);
+}
+
+.tokenomics-header p {
+    font-size: 1.2rem;
+    color: #d0d0d0;
+    font-style: italic;
+    letter-spacing: 0.03em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+}
+
+.tokenomics-section {
+    margin-bottom: 3rem;
+}
+
+.tokenomics-section h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.3),
+                 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.tokenomics-section p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    margin-bottom: 1.25rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.tokenomics-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.tokenomics-list li {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    position: relative;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.tokenomics-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0.5rem;
+    color: #4ade80;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.tokenomics-list li strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* Supply Info */
+.supply-info {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.supply-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 3rem;
+    background: rgba(74, 222, 128, 0.1);
+    border: 2px solid rgba(74, 222, 128, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(74, 222, 128, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.supply-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+.supply-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+}
+
+.supply-unit {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Allocation Grid */
+.allocation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.allocation-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.allocation-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.allocation-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.allocation-content {
+    flex: 1;
+}
+
+.allocation-content h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.allocation-percent {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4ade80;
+    margin: 0.5rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+}
+
+.allocation-content p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #d0d0d0;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Vesting Grid */
+.vesting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.vesting-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.vesting-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateY(-2px);
+}
+
+.vesting-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.vesting-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.transparency-note {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+}
+
+.transparency-note p {
+    margin: 0;
+    color: #e0e0e0;
+}
+
+.transparency-note strong {
+    color: #4ade80;
+}
+
+/* Fees Grid */
+.fees-content {
+    margin: 1.5rem 0;
+}
+
+.fees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.fee-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    text-align: center;
+}
+
+.fee-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 1rem 0;
+}
+
+.fee-percent {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #4ade80;
+    margin: 0.5rem 0;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+}
+
+.fee-item ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0 0;
+    text-align: left;
+}
+
+.fee-item ul li {
+    font-size: 0.9rem;
+    color: #d0d0d0;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.fee-item ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #4ade80;
+}
+
+.no-fees-note {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.no-fees-note p {
+    margin: 0;
+    color: #e0e0e0;
+}
+
+.no-fees-note strong {
+    color: #4ade80;
+}
+
+/* Liquidity Features */
+.liquidity-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.liquidity-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.liquidity-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.liquidity-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+/* Launchr Features */
+.launchr-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.launchr-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.launchr-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.launchr-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.launchr-commitment {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+}
+
+.launchr-commitment p {
+    margin: 0;
+    color: #e0e0e0;
+}
+
+.launchr-commitment strong {
+    color: #4ade80;
+}
+
+/* Utility Grid */
+.utility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.utility-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.utility-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateY(-2px);
+}
+
+.utility-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.utility-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.utility-note {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    font-style: italic;
+}
+
+/* Security List */
+.security-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.security-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.security-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.security-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+/* Growth Features */
+.growth-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.growth-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.growth-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.growth-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.sustainability-note {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+}
+
+.sustainability-note p {
+    margin: 0;
+    color: #e0e0e0;
+}
+
+.sustainability-note strong {
+    color: #4ade80;
+}
+
+/* Closing Section */
+.tokenomics-closing {
+    text-align: center;
+    margin-top: 4rem;
+    padding: 3rem 2rem;
+    background: rgba(74, 222, 128, 0.05);
+    border: 2px solid rgba(74, 222, 128, 0.2);
+}
+
+.tokenomics-closing h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #4ade80;
+    text-shadow: 0 0 30px rgba(74, 222, 128, 0.6);
+}
+
+.tokenomics-closing p {
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 1rem auto;
+}
+
+.closing-strong {
+    font-size: 1.3rem;
+    color: #4ade80;
+    font-weight: 600;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .tokenomics-page {
+        padding: 3rem 1.5rem 4rem;
+    }
+
+    .tokenomics-header {
+        margin-bottom: 3rem;
+        padding-top: 1.5rem;
+    }
+
+    .tokenomics-header h1 {
+        font-size: 2.5rem;
+    }
+
+    .tokenomics-header h1::before {
+        width: 120%;
+        height: 130%;
+    }
+
+    .tokenomics-header p {
+        font-size: 1rem;
+    }
+
+    .tokenomics-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .supply-badge {
+        padding: 1.5rem 2rem;
+    }
+
+    .supply-value {
+        font-size: 2rem;
+    }
+
+    .allocation-grid,
+    .vesting-grid,
+    .fees-grid,
+    .liquidity-features,
+    .launchr-features,
+    .utility-grid,
+    .security-list,
+    .growth-features {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .tokenomics-closing {
+        padding: 2rem 1.5rem;
+    }
+
+    .tokenomics-closing h2 {
+        font-size: 1.8rem;
+    }
+}
 
 /* ===================== Generator Page Styles ===================== */
 
