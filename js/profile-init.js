@@ -46,6 +46,29 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Check and reset rate limits if 24 hours have passed
+async function checkAndResetRateLimit(userData, userDocRef) {
+    const attempts = userData.xVerificationAttempts || 0;
+    const firstAttemptAt = userData.xVerificationFirstAttemptAt;
+    const RATE_LIMIT_HOURS = 24;
+    
+    if (firstAttemptAt && attempts > 0) {
+        const firstAttemptTime = new Date(firstAttemptAt).getTime();
+        const now = Date.now();
+        const hoursSinceFirstAttempt = (now - firstAttemptTime) / (1000 * 60 * 60);
+        
+        if (hoursSinceFirstAttempt >= RATE_LIMIT_HOURS) {
+            // Reset attempts after 24 hours
+            await setDoc(userDocRef, {
+                xVerificationAttempts: 0,
+                xVerificationFirstAttemptAt: null
+            }, { merge: true });
+            return true; // Rate limit was reset
+        }
+    }
+    return false; // Rate limit not reset
+}
+
 // Load user profile from Firestore
 async function loadProfile() {
     if (!currentUser) return;
@@ -58,9 +81,18 @@ async function loadProfile() {
             profileListener();
         }
         
-        profileListener = onSnapshot(userDocRef, (userDoc) => {
+        profileListener = onSnapshot(userDocRef, async (userDoc) => {
             if (userDoc.exists()) {
-                const userData = userDoc.data();
+                let userData = userDoc.data();
+                
+                // Check and reset rate limit if needed (only if attempts > 0 to avoid unnecessary writes)
+                if ((userData.xVerificationAttempts || 0) > 0) {
+                    const wasReset = await checkAndResetRateLimit(userData, userDocRef);
+                    // If reset, the listener will fire again with updated data, so we can return early
+                    if (wasReset) {
+                        return; // Wait for the next snapshot with reset data
+                    }
+                }
                 
                 // Load username
                 const usernameElement = document.getElementById('profileUsername');
@@ -222,7 +254,8 @@ async function saveProfile() {
         if (xAccount.trim() !== (existingData.xAccount || '')) {
             await setDoc(userDocRef, {
                 xAccountVerified: false,
-                xVerificationAttempts: 0
+                xVerificationAttempts: 0,
+                xVerificationFirstAttemptAt: null // Reset timestamp when account changes
             }, { merge: true });
             updateXVerificationUI({ xAccountVerified: false, xAccount: xAccount.trim() });
         }
@@ -405,17 +438,54 @@ function selectBannerBg(bgPath) {
 }
 
 // Update X verification UI based on status
+// Helper function to format time remaining
+function formatTimeRemaining(hoursRemaining) {
+    if (hoursRemaining >= 1) {
+        const hours = Math.floor(hoursRemaining);
+        const minutes = Math.floor((hoursRemaining - hours) * 60);
+        if (hours >= 24) {
+            const days = Math.floor(hours / 24);
+            const remainingHours = hours % 24;
+            return `${days} day${days !== 1 ? 's' : ''}${remainingHours > 0 ? ` and ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}` : ''}`;
+        }
+        return `${hours} hour${hours !== 1 ? 's' : ''}${minutes > 0 ? ` and ${minutes} minute${minutes !== 1 ? 's' : ''}` : ''}`;
+    } else {
+        const minutes = Math.ceil(hoursRemaining * 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    }
+}
+
 async function updateXVerificationUI(userData) {
     const xAccountInput = document.getElementById('profileXAccount');
     const verificationSection = document.getElementById('xVerificationSection');
     const verificationStatus = document.getElementById('xVerificationStatus');
     const verificationCodeElement = document.getElementById('xVerificationCode');
+    const verifyBtn = document.getElementById('verifyXAccountBtn');
     
     if (!xAccountInput || !verificationSection || !verificationStatus) return;
     
     const xAccount = xAccountInput.value.trim();
     const isVerified = userData.xAccountVerified === true;
     const verificationCode = userData.xVerificationCode;
+    const attempts = userData.xVerificationAttempts || 0;
+    const firstAttemptAt = userData.xVerificationFirstAttemptAt;
+    const RATE_LIMIT_HOURS = 24;
+    const RATE_LIMIT_ATTEMPTS = 5;
+    
+    // Check rate limit status
+    let isRateLimited = false;
+    let timeRemaining = null;
+    
+    if (firstAttemptAt && attempts >= RATE_LIMIT_ATTEMPTS) {
+        const firstAttemptTime = new Date(firstAttemptAt).getTime();
+        const now = Date.now();
+        const hoursSinceFirstAttempt = (now - firstAttemptTime) / (1000 * 60 * 60);
+        
+        if (hoursSinceFirstAttempt < RATE_LIMIT_HOURS) {
+            isRateLimited = true;
+            timeRemaining = formatTimeRemaining(RATE_LIMIT_HOURS - hoursSinceFirstAttempt);
+        }
+    }
     
     // Update status indicator
     verificationStatus.className = 'x-verification-status';
@@ -423,10 +493,33 @@ async function updateXVerificationUI(userData) {
         verificationStatus.textContent = '✓ Verified';
         verificationStatus.classList.add('verified');
         verificationSection.style.display = 'none';
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Verified';
+        }
     } else if (xAccount) {
-        verificationStatus.textContent = 'Unverified';
-        verificationStatus.classList.add('unverified');
-        verificationSection.style.display = 'block';
+        if (isRateLimited) {
+            verificationStatus.textContent = `Rate Limited - Try again in ${timeRemaining}`;
+            verificationStatus.classList.add('unverified');
+            verificationSection.style.display = 'block';
+            if (verifyBtn) {
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = `Rate Limited (${attempts}/${RATE_LIMIT_ATTEMPTS})`;
+            }
+        } else {
+            verificationStatus.textContent = 'Unverified';
+            verificationStatus.classList.add('unverified');
+            verificationSection.style.display = 'block';
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify X Account';
+            }
+        }
+        
+        // Show attempt count if attempts > 0 but not rate limited
+        if (attempts > 0 && !isRateLimited) {
+            verificationStatus.textContent = `Unverified (${attempts}/${RATE_LIMIT_ATTEMPTS} attempts)`;
+        }
         
         // Load or generate verification code
         if (verificationCodeElement) {
@@ -438,6 +531,10 @@ async function updateXVerificationUI(userData) {
     } else {
         verificationStatus.textContent = '';
         verificationSection.style.display = 'none';
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Verify X Account';
+        }
     }
 }
 
@@ -486,15 +583,48 @@ async function verifyXAccount() {
     // Extract username (remove @ if present)
     const username = xAccount.replace(/^@/, '').trim();
     
-    // Rate limiting check
+    // Rate limiting check with time-based reset (24 hours)
     try {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         const userData = userDoc.exists() ? userDoc.data() : {};
         const attempts = userData.xVerificationAttempts || 0;
+        const firstAttemptAt = userData.xVerificationFirstAttemptAt;
+        const RATE_LIMIT_HOURS = 24;
+        const RATE_LIMIT_ATTEMPTS = 5;
         
-        if (attempts >= 5) {
-            alert('Too many verification attempts. Please try again later.');
+        // Check if attempts should be reset (24 hours passed)
+        if (firstAttemptAt) {
+            const firstAttemptTime = new Date(firstAttemptAt).getTime();
+            const now = Date.now();
+            const hoursSinceFirstAttempt = (now - firstAttemptTime) / (1000 * 60 * 60);
+            
+            if (hoursSinceFirstAttempt >= RATE_LIMIT_HOURS) {
+                // Reset attempts after 24 hours
+                await setDoc(userDocRef, {
+                    xVerificationAttempts: 0,
+                    xVerificationFirstAttemptAt: null
+                }, { merge: true });
+            } else if (attempts >= RATE_LIMIT_ATTEMPTS) {
+                // Still rate limited - calculate time remaining
+                const hoursRemaining = RATE_LIMIT_HOURS - hoursSinceFirstAttempt;
+                const minutesRemaining = Math.ceil(hoursRemaining * 60);
+                
+                let timeMessage;
+                if (hoursRemaining >= 1) {
+                    const hours = Math.floor(hoursRemaining);
+                    const minutes = Math.floor((hoursRemaining - hours) * 60);
+                    timeMessage = `${hours} hour${hours !== 1 ? 's' : ''}${minutes > 0 ? ` and ${minutes} minute${minutes !== 1 ? 's' : ''}` : ''}`;
+                } else {
+                    timeMessage = `${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}`;
+                }
+                
+                alert(`Too many verification attempts (${attempts}/${RATE_LIMIT_ATTEMPTS}).\n\nPlease try again in ${timeMessage}.`);
+                return;
+            }
+        } else if (attempts >= RATE_LIMIT_ATTEMPTS) {
+            // No timestamp but at limit - this shouldn't happen, but handle it
+            alert(`Too many verification attempts (${attempts}/${RATE_LIMIT_ATTEMPTS}). Please try again in 24 hours.`);
             return;
         }
     } catch (error) {
@@ -534,7 +664,8 @@ async function verifyXAccount() {
                 xAccountVerified: true,
                 xAccount: xAccount,
                 xVerifiedAt: new Date().toISOString(),
-                xVerificationAttempts: 0 // Reset on success
+                xVerificationAttempts: 0, // Reset on success
+                xVerificationFirstAttemptAt: null // Reset timestamp on success
             }, { merge: true });
             
             // Update UI
@@ -579,15 +710,17 @@ async function verifyXAccount() {
             errorMessage = error.message || 'Verification failed';
         }
         
-        // Increment attempt counter
+        // Increment attempt counter and track first attempt time
         try {
             const userDocRef = doc(db, 'users', currentUser.uid);
             const userDoc = await getDoc(userDocRef);
             const userData = userDoc.exists() ? userDoc.data() : {};
             const attempts = (userData.xVerificationAttempts || 0) + 1;
+            const firstAttemptAt = userData.xVerificationFirstAttemptAt || new Date().toISOString();
             
             await setDoc(userDocRef, {
-                xVerificationAttempts: attempts
+                xVerificationAttempts: attempts,
+                xVerificationFirstAttemptAt: firstAttemptAt // Set on first attempt, keep same timestamp
             }, { merge: true });
         } catch (updateError) {
             console.error('Error updating attempt counter:', updateError);
