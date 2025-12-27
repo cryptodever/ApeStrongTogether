@@ -153,11 +153,30 @@ exports.verifyXAccount = functions.region('us-central1').https.onCall(async (dat
         const userData = response.data.data;
         const bio = userData.description || '';
 
-        // Check if verification code exists in bio
-        const codeFound = bio.includes(verificationCode);
+        // Normalize bio and code for comparison
+        // - Convert to uppercase for case-insensitive matching
+        // - Replace multiple whitespace/newlines with single space
+        // - Trim leading/trailing whitespace
+        const normalizeText = (text) => {
+            return text
+                .replace(/\s+/g, ' ')  // Replace all whitespace (spaces, newlines, tabs) with single space
+                .trim()
+                .toUpperCase();
+        };
 
-        // Log verification attempt
-        console.log(`[verifyXAccount:${uid}] Username: ${cleanUsername}, Code found: ${codeFound}`);
+        const normalizedBio = normalizeText(bio);
+        const normalizedCode = normalizeText(verificationCode);
+
+        // Check if verification code exists in bio (case-insensitive, whitespace-tolerant)
+        const codeFound = normalizedBio.includes(normalizedCode);
+
+        // Log verification attempt with details for debugging
+        console.log(`[verifyXAccount:${uid}] Username: ${cleanUsername}`);
+        console.log(`[verifyXAccount:${uid}] Looking for code: ${verificationCode} (normalized: ${normalizedCode})`);
+        console.log(`[verifyXAccount:${uid}] Bio length: ${bio.length}`);
+        console.log(`[verifyXAccount:${uid}] Bio content: "${bio}"`);
+        console.log(`[verifyXAccount:${uid}] Normalized bio: "${normalizedBio}"`);
+        console.log(`[verifyXAccount:${uid}] Code found: ${codeFound}`);
 
         return {
             verified: codeFound,
