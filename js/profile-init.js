@@ -492,7 +492,7 @@ async function updateXVerificationUI(userData) {
     if (isVerified) {
         verificationStatus.textContent = '✓ Verified';
         verificationStatus.classList.add('verified');
-        verificationSection.style.display = 'none';
+        verificationSection.classList.add('hide');
         if (verifyBtn) {
             verifyBtn.disabled = false;
             verifyBtn.textContent = 'Verified';
@@ -501,7 +501,7 @@ async function updateXVerificationUI(userData) {
         if (isRateLimited) {
             verificationStatus.textContent = `Rate Limited - Try again in ${timeRemaining}`;
             verificationStatus.classList.add('unverified');
-            verificationSection.style.display = 'block';
+            verificationSection.classList.remove('hide');
             if (verifyBtn) {
                 verifyBtn.disabled = true;
                 verifyBtn.textContent = `Rate Limited (${attempts}/${RATE_LIMIT_ATTEMPTS})`;
@@ -509,7 +509,7 @@ async function updateXVerificationUI(userData) {
         } else {
             verificationStatus.textContent = 'Unverified';
             verificationStatus.classList.add('unverified');
-            verificationSection.style.display = 'block';
+            verificationSection.classList.remove('hide');
             if (verifyBtn) {
                 verifyBtn.disabled = false;
                 verifyBtn.textContent = 'Verify X Account';
@@ -530,7 +530,7 @@ async function updateXVerificationUI(userData) {
         }
     } else {
         verificationStatus.textContent = '';
-        verificationSection.style.display = 'none';
+        verificationSection.classList.add('hide');
         if (verifyBtn) {
             verifyBtn.disabled = false;
             verifyBtn.textContent = 'Verify X Account';
@@ -671,8 +671,12 @@ async function verifyXAccount() {
             uid: currentUser.uid
         });
         console.log('[verifyXAccount] Function result:', result);
+        console.log('[verifyXAccount] Result data:', result.data);
         
-        if (result.verified) {
+        // Firebase callable functions return data in result.data
+        const verificationResult = result.data;
+        
+        if (verificationResult && verificationResult.verified) {
             // Update Firestore
             const userDocRef = doc(db, 'users', currentUser.uid);
             await setDoc(userDocRef, {
@@ -693,10 +697,10 @@ async function verifyXAccount() {
             
             const verificationSection = document.getElementById('xVerificationSection');
             if (verificationSection) {
-                verificationSection.style.display = 'none';
+                verificationSection.classList.add('hide');
             }
         } else {
-            throw new Error(result.error || 'Verification code not found in bio');
+            throw new Error(verificationResult?.error || 'Verification code not found in bio');
         }
     } catch (error) {
         console.error('[verifyXAccount] Verification error:', error);
@@ -814,7 +818,7 @@ function setupEventListeners() {
             } else {
                 const verificationSection = document.getElementById('xVerificationSection');
                 const verificationStatus = document.getElementById('xVerificationStatus');
-                if (verificationSection) verificationSection.style.display = 'none';
+                if (verificationSection) verificationSection.classList.add('hide');
                 if (verificationStatus) {
                     verificationStatus.textContent = '';
                     verificationStatus.className = 'x-verification-status';
