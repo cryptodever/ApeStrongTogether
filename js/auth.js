@@ -335,6 +335,9 @@ function updateUsernameDisplay(user) {
 async function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
+    const navDivider = document.getElementById('navDivider');
+    const navProfileLink = document.getElementById('navProfileLink');
+    const navChatLink = document.getElementById('navChatLink');
     
     if (user) {
         if (authLoggedOut) {
@@ -347,6 +350,16 @@ async function updateHeaderUI(user) {
             
             // Set up username display with real-time listener
             updateUsernameDisplay(user);
+        }
+        // Remove logged-out styling from divider and account links when logged in
+        if (navDivider) {
+            navDivider.classList.remove('logged-out');
+        }
+        if (navProfileLink) {
+            navProfileLink.classList.remove('logged-out');
+        }
+        if (navChatLink) {
+            navChatLink.classList.remove('logged-out');
         }
     } else {
         // Clean up listener when user logs out
@@ -362,6 +375,16 @@ async function updateHeaderUI(user) {
         if (authLoggedOut) {
             authLoggedOut.classList.remove('hide');
             authLoggedOut.classList.add('show-flex');
+        }
+        // Add logged-out styling to divider and account links when logged out
+        if (navDivider) {
+            navDivider.classList.add('logged-out');
+        }
+        if (navProfileLink) {
+            navProfileLink.classList.add('logged-out');
+        }
+        if (navChatLink) {
+            navChatLink.classList.add('logged-out');
         }
     }
 }
