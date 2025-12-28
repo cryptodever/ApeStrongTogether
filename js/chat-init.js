@@ -220,6 +220,16 @@ function setupEventListeners() {
                 emojiPickerEl.classList.add('hide');
             }
         });
+        
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (emojiPickerEl && !emojiPickerEl.classList.contains('hide')) {
+                // Check if click is outside both the picker and the button
+                if (!emojiPickerEl.contains(e.target) && !emojiBtn.contains(e.target)) {
+                    emojiPickerEl.classList.add('hide');
+                }
+            }
+        });
     }
     
     // Setup emoji picker options
@@ -1149,33 +1159,60 @@ function showEmojiPicker(button) {
     // Show the picker first to get its actual dimensions
     emojiPickerEl.classList.remove('hide');
     
-    // Get button and picker positions
+    // Force a reflow to ensure dimensions are calculated
+    emojiPickerEl.offsetHeight;
+    
+    // Get button position relative to viewport
     const rect = button.getBoundingClientRect();
     const pickerWidth = emojiPickerEl.offsetWidth || 300;
     const pickerHeight = emojiPickerEl.offsetHeight || 250;
     
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 10; // Padding from edges
+    
     // Calculate position - try to position above the button, aligned to the right
     let left = rect.right - pickerWidth;
-    let top = rect.top - pickerHeight - 10;
+    let top = rect.top - pickerHeight - padding;
     
     // If it would go off the top of the screen, position it below instead
-    if (top < 10) {
-        top = rect.bottom + 10;
+    if (top < padding) {
+        top = rect.bottom + padding;
+    }
+    
+    // If it would go off the bottom of the screen, position it above
+    if (top + pickerHeight > viewportHeight - padding) {
+        top = rect.top - pickerHeight - padding;
+        // If still off screen, position at top of viewport
+        if (top < padding) {
+            top = padding;
+        }
     }
     
     // If it would go off the right edge, align to the right edge of the screen
-    if (left < 10) {
-        left = 10;
+    if (left < padding) {
+        left = padding;
     }
     
     // If it would go off the left edge, align to the left edge of the button
-    if (left + pickerWidth > window.innerWidth - 10) {
-        left = window.innerWidth - pickerWidth - 10;
+    if (left + pickerWidth > viewportWidth - padding) {
+        left = viewportWidth - pickerWidth - padding;
+        // If still off screen, align to left edge of button
+        if (left < rect.left) {
+            left = rect.left;
+        }
     }
     
-    // Apply the calculated position
+    // Ensure it doesn't go off screen on any side
+    left = Math.max(padding, Math.min(left, viewportWidth - pickerWidth - padding));
+    top = Math.max(padding, Math.min(top, viewportHeight - pickerHeight - padding));
+    
+    // Apply the calculated position using fixed positioning
     emojiPickerEl.style.left = left + 'px';
     emojiPickerEl.style.top = top + 'px';
+    emojiPickerEl.style.right = 'auto';
+    emojiPickerEl.style.bottom = 'auto';
 }
 
 // Report a message
