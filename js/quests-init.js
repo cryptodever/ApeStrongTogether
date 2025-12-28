@@ -420,8 +420,10 @@ async function loadUserQuestProgress() {
             userQuests[data.questId] = data;
         });
 
-        // Check for quests that need reset (daily/weekly)
-        await checkAndResetQuests();
+        // Check for quests that need reset (daily/weekly) - only if quests are loaded
+        if (availableQuests.length > 0) {
+            await checkAndResetQuests();
+        }
         
         // Track daily activity after quests are loaded and reset
         await trackDailyActivity();
@@ -433,7 +435,7 @@ async function loadUserQuestProgress() {
 
 // Check and reset quests based on reset period
 async function checkAndResetQuests() {
-    if (!currentUser) return;
+    if (!currentUser || availableQuests.length === 0) return;
 
     const now = Date.now();
     const updates = [];
@@ -442,8 +444,18 @@ async function checkAndResetQuests() {
         const userQuest = userQuests[quest.id];
         if (!userQuest) continue;
 
-        const resetAt = userQuest.resetAt?.toMillis() || 0;
-        const shouldReset = now >= resetAt;
+        // Check if quest needs reset
+        let resetAtMillis = 0;
+        if (userQuest.resetAt) {
+            if (userQuest.resetAt.toMillis) {
+                resetAtMillis = userQuest.resetAt.toMillis();
+            } else if (userQuest.resetAt.toDate) {
+                resetAtMillis = userQuest.resetAt.toDate().getTime();
+            } else if (typeof userQuest.resetAt === 'number') {
+                resetAtMillis = userQuest.resetAt;
+            }
+        }
+        const shouldReset = resetAtMillis > 0 && now >= resetAtMillis;
 
         if (shouldReset) {
             // Calculate next reset time
@@ -621,7 +633,7 @@ export async function updateQuestProgress(questId, increment = 1) {
 
     const quest = availableQuests.find(q => q.id === questId);
     if (!quest) {
-        console.warn(`updateQuestProgress: Quest ${questId} not found`);
+        console.warn(`updateQuestProgress: Quest ${questId} not found in available quests`);
         return;
     }
     if (!quest.isActive) {
@@ -633,6 +645,12 @@ export async function updateQuestProgress(questId, increment = 1) {
         const userQuestId = `${currentUser.uid}_${quest.id}`;
         const userQuestRef = doc(db, 'userQuests', userQuestId);
         const userQuestDoc = await getDoc(userQuestRef);
+        
+        // Reload user quest progress if not already loaded (important when called from other pages)
+        if (!userQuests[questId] && userQuestDoc.exists()) {
+            const data = userQuestDoc.data();
+            userQuests[questId] = data;
+        }
 
         let currentProgress = 0;
         let completed = false;
@@ -643,12 +661,32 @@ export async function updateQuestProgress(questId, increment = 1) {
             currentProgress = data.progress || 0;
             completed = data.completed || false;
             resetAt = data.resetAt;
+            
+            // Check if quest needs reset before updating
+            if (resetAt) {
+                let resetAtMillis = 0;
+                if (resetAt.toMillis) {
+                    resetAtMillis = resetAt.toMillis();
+                } else if (resetAt.toDate) {
+                    resetAtMillis = resetAt.toDate().getTime();
+                } else if (typeof resetAt === 'number') {
+                    resetAtMillis = resetAt;
+                }
+                
+                // If reset time has passed, reset the quest first
+                if (resetAtMillis > 0 && Date.now() >= resetAtMillis) {
+                    const nextReset = getNextResetTime(quest.resetPeriod);
+                    currentProgress = 0;
+                    completed = false;
+                    resetAt = Timestamp.fromDate(nextReset);
+                }
+            }
         } else {
             // Create new user quest entry
             resetAt = Timestamp.fromDate(getNextResetTime(quest.resetPeriod));
         }
 
-        // Don't update if already completed
+        // Don't update if already completed (after potential reset)
         if (completed) return;
 
         // Update progress
@@ -680,6 +718,9 @@ export async function updateQuestProgress(questId, increment = 1) {
         if (isNowCompleted) {
             await awardQuestPoints(quest.rewardPoints);
             
+            // Reload user profile to get updated points/level
+            await loadUserProfile();
+            
             // If this is a daily quest (but not the "complete all" quest itself), check if all daily quests are completed
             if (quest.type === 'daily' && quest.id !== 'daily_complete_quest') {
                 await checkAndUpdateCompleteAllDailyQuests();
@@ -690,13 +731,17 @@ export async function updateQuestProgress(questId, increment = 1) {
                 await updateQuestProgress('weekly_complete_daily_5', 1);
             }
             
-            // Refresh display
-            displayQuests();
-            updateUserStats();
-            showQuestCompletionNotification(quest);
+            // Refresh display only if on quests page
+            if (dailyQuestsEl && weeklyQuestsEl) {
+                displayQuests();
+                updateUserStats();
+                showQuestCompletionNotification(quest);
+            }
         } else {
-            // Just update the display
-            displayQuests();
+            // Just update the display if on quests page
+            if (dailyQuestsEl && weeklyQuestsEl) {
+                displayQuests();
+            }
         }
     } catch (error) {
         console.error(`Error updating quest progress for ${questId}:`, error);
