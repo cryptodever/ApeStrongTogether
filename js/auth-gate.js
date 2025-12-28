@@ -61,15 +61,14 @@ export function initAuthGate() {
 }
 
 function createOverlay() {
-    // Find the container (generator, profile, chat, or quests)
-    const generatorContainer = document.querySelector('.generator-container');
+    // Find the container (profile, chat, or quests)
     const profileContainer = document.querySelector('.profile-container');
     const chatContainer = document.querySelector('.chat-container');
     const questsContainer = document.querySelector('.quests-container');
-    const container = generatorContainer || profileContainer || chatContainer || questsContainer;
+    const container = profileContainer || chatContainer || questsContainer;
     
     if (!container) {
-        console.error('AuthGate: Could not find .generator-container, .profile-container, .chat-container, or .quests-container');
+        console.error('AuthGate: Could not find .profile-container, .chat-container, or .quests-container');
         return;
     }
     
@@ -132,11 +131,10 @@ function showOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.add('show');
         // Disable pointer events on container content (but not header)
-        const generatorContainer = document.querySelector('.generator-container');
         const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
-        const container = generatorContainer || profileContainer || chatContainer || questsContainer;
+        const container = profileContainer || chatContainer || questsContainer;
         
         if (container) {
             // Disable pointer events on all children except the overlay
@@ -153,11 +151,10 @@ function hideOverlay() {
     if (authGateOverlay) {
         authGateOverlay.classList.remove('show');
         // Re-enable pointer events on container content
-        const generatorContainer = document.querySelector('.generator-container');
         const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
-        const container = generatorContainer || profileContainer || chatContainer || questsContainer;
+        const container = profileContainer || chatContainer || questsContainer;
         
         if (container) {
             Array.from(container.children).forEach(child => {

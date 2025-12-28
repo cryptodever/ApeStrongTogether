@@ -113,7 +113,7 @@ async function loadHeader() {
                     <div class="fallback-nav-links">
                         <a href="/" class="fallback-nav-link">APE HUB</a>
                         <a href="/roadmap/" class="fallback-nav-link">ROADMAP</a>
-                        <a href="/generator/" class="fallback-nav-link">GENERATOR</a>
+                        <a href="/profile/" class="fallback-nav-link">PROFILE</a>
                     </div>
                     <div class="fallback-nav-auth">
                         <a href="/login/" class="fallback-nav-btn-primary">Log In</a>

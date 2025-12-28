@@ -4,7 +4,7 @@
  * 
  * Works correctly from:
  * - Root: /
- * - Subdirectories: /generator/, /login/, etc.
+ * - Subdirectories: /profile/, /login/, etc.
  * - GitHub Pages: /repo-name/ or custom domain
  */
 
@@ -13,14 +13,14 @@
  * @returns {string} Base path (e.g., "", "/repo-name", "/generator")
  */
 export function getBasePath() {
-    // Get the pathname (e.g., "/generator/index.html" or "/index.html")
+    // Get the pathname (e.g., "/profile/index.html" or "/index.html")
     const pathname = window.location.pathname;
     
     // Remove filename (index.html, etc.) and trailing slashes
     let basePath = pathname.replace(/\/[^/]*\.html?$/, '').replace(/\/$/, '');
     
     // If we're at root, basePath should be empty string (not "/")
-    // If we're in a subdirectory like /generator/, basePath will be "/generator"
+    // If we're in a subdirectory like /profile/, basePath will be "/profile"
     return basePath || '';
 }
 
@@ -31,7 +31,7 @@ export function getBasePath() {
  * 
  * Examples:
  * - from /generator: withBase("/js/app.js") -> "/js/app.js" (absolute from root)
- * - from /generator: withBase("js/app.js") -> "/generator/js/app.js" (relative)
+ * - from /profile: withBase("js/app.js") -> "/profile/js/app.js" (relative)
  */
 export function withBase(path) {
     // If path is already absolute (starts with /), use it as-is from root

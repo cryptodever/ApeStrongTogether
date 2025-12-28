@@ -1,5 +1,5 @@
 /**
- * Redirect to /generator/
+ * Redirect to /profile/
  */
-window.location.replace('/generator/');
+window.location.replace('/profile/');
 

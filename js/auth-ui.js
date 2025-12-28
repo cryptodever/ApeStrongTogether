@@ -847,7 +847,7 @@ onAuthStateChanged(auth, (user) => {
         // Don't redirect if we're already on the verify page
         if (user.emailVerified && !window.location.pathname.includes('/verify/')) {
             setTimeout(() => {
-                const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/generator/';
+                const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/profile/';
                 window.location.href = redirectUrl;
             }, 1500);
         } else if (!user.emailVerified && window.location.pathname.includes('/login/')) {
