@@ -7171,14 +7171,12 @@ body.chat-body > * {
 
 /* Emoji Picker (for chat input) */
 .emoji-picker {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    right: 0;
+    position: fixed;
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 12px;
-    z-index: 1000;
+    z-index: 1001;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
 }

@@ -945,12 +945,36 @@ function showReactionPicker(messageId, button) {
 function showEmojiPicker(button) {
     if (!emojiPickerEl) return;
     
-    // Position the picker above the input container
-    const inputContainer = button.closest('.chat-input-container');
-    if (inputContainer) {
-        emojiPickerEl.classList.remove('hide');
-        // The picker is positioned relative to the input container using CSS
+    // Show the picker first to get its actual dimensions
+    emojiPickerEl.classList.remove('hide');
+    
+    // Get button and picker positions
+    const rect = button.getBoundingClientRect();
+    const pickerWidth = emojiPickerEl.offsetWidth || 300;
+    const pickerHeight = emojiPickerEl.offsetHeight || 250;
+    
+    // Calculate position - try to position above the button, aligned to the right
+    let left = rect.right - pickerWidth;
+    let top = rect.top - pickerHeight - 10;
+    
+    // If it would go off the top of the screen, position it below instead
+    if (top < 10) {
+        top = rect.bottom + 10;
     }
+    
+    // If it would go off the right edge, align to the right edge of the screen
+    if (left < 10) {
+        left = 10;
+    }
+    
+    // If it would go off the left edge, align to the left edge of the button
+    if (left + pickerWidth > window.innerWidth - 10) {
+        left = window.innerWidth - pickerWidth - 10;
+    }
+    
+    // Apply the calculated position
+    emojiPickerEl.style.left = left + 'px';
+    emojiPickerEl.style.top = top + 'px';
 }
 
 // Report a message
