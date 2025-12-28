@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify User Email - Admin Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4ade80;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #22c55e;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid #4ade80;
+            display: block;
+        }
+        .error {
+            background: rgba(248, 113, 113, 0.2);
+            border: 1px solid #f87171;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦍 Verify User Email</h1>
+        <p>Enter the user's UID to verify their email address.</p>
+        
+        <input type="text" id="uidInput" placeholder="User UID" value="Gz1UdzwKuGUoKjGVuqt1yNSQcg33">
+        <button onclick="verifyEmail()">Verify Email</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-functions.js';
+        import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDt2g4jg0uQQa70suB5W6ftB5OSm7JFDww",
+            authDomain: "apes-365b0.firebaseapp.com",
+            projectId: "apes-365b0",
+            storageBucket: "apes-365b0.firebasestorage.app",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abc123"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'us-central1');
+
+        window.verifyEmail = async function() {
+            const uid = document.getElementById('uidInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!uid) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Please enter a UID';
+                return;
+            }
+
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Verifying...';
+
+            try {
+                // Check if user is logged in
+                if (!auth.currentUser) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'Please log in first. Go to your site, log in, then come back here.';
+                    return;
+                }
+
+                const verifyEmailCallable = httpsCallable(functions, 'verifyUserEmail');
+                const result = await verifyEmailCallable({ uid: uid });
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ Success! Email verified for: ${result.data.email || uid}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                if (error.code === 'permission-denied') {
+                    resultDiv.textContent = '❌ Error: You need admin role. Go to Firestore → users collection → your user doc → add field "role" = "admin"';
+                } else {
+                    resultDiv.textContent = `❌ Error: ${error.message || error.code || 'Unknown error'}`;
+                }
+            }
+        };
+    </script>
+</body>
+</html>
+
