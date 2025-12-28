@@ -577,28 +577,106 @@ async function awardQuestPoints(points) {
 
 // Show quest completion notification
 function showQuestCompletionNotification(quest) {
-    // Simple notification - can be enhanced later
+    // Create exciting notification popup
     const notification = document.createElement('div');
     notification.className = 'quest-notification';
+    
+    // Get current level progress to check for level up
+    const points = userProfile?.points || 0;
+    const levelProgress = getLevelProgress(points);
+    const newLevelProgress = getLevelProgress(points + quest.rewardPoints);
+    const leveledUp = newLevelProgress.level > levelProgress.level;
+    
     notification.innerHTML = `
         <div class="quest-notification-content">
-            <span class="quest-notification-icon">🎉</span>
-            <div class="quest-notification-text">
-                <strong>Quest Completed!</strong>
-                <p>${quest.title} - +${quest.rewardPoints} points</p>
+            <div class="quest-notification-icon-container">
+                <span class="quest-notification-icon">🎉</span>
+                ${leveledUp ? '<span class="quest-level-up-badge">LEVEL UP!</span>' : ''}
             </div>
+            <div class="quest-notification-text">
+                <strong class="quest-notification-title">Quest Completed!</strong>
+                <p class="quest-notification-quest-name">${escapeHtml(quest.title)}</p>
+                <div class="quest-notification-reward">
+                    <span class="quest-reward-icon">⭐</span>
+                    <span class="quest-reward-amount">+${quest.rewardPoints} XP</span>
+                </div>
+                ${leveledUp ? `<p class="quest-level-up-text">🎊 You reached Level ${newLevelProgress.level}! 🎊</p>` : ''}
+            </div>
+            <button class="quest-notification-close" aria-label="Close">&times;</button>
         </div>
+        <div class="quest-notification-particles"></div>
     `;
+    
     document.body.appendChild(notification);
 
-    // Animate in
-    setTimeout(() => notification.classList.add('show'), 10);
+    // Add close button handler
+    const closeBtn = notification.querySelector('.quest-notification-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeNotification(notification);
+        });
+    }
 
-    // Remove after 3 seconds
+    // Create particle effects
+    createParticleEffects(notification);
+
+    // Animate in with bounce effect
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+        notification.classList.add('show');
+        notification.classList.add('quest-notification-bounce');
+    }, 10);
+
+    // Remove bounce animation after initial animation
+    setTimeout(() => {
+        notification.classList.remove('quest-notification-bounce');
+    }, 600);
+
+    // Auto-remove after 5 seconds (longer for level ups)
+    const displayTime = leveledUp ? 6000 : 5000;
+    setTimeout(() => {
+        closeNotification(notification);
+    }, displayTime);
+}
+
+// Close notification with animation
+function closeNotification(notification) {
+    notification.classList.remove('show');
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 400);
+}
+
+// Create particle effects for celebration
+function createParticleEffects(container) {
+    const particlesContainer = container.querySelector('.quest-notification-particles');
+    if (!particlesContainer) return;
+
+    const emojis = ['🎉', '⭐', '✨', '💫', '🎊', '🔥', '💎', '🚀'];
+    const particleCount = 20;
+
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'quest-particle';
+        particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        // Random position and animation
+        const angle = (Math.PI * 2 * i) / particleCount;
+        const distance = 100 + Math.random() * 50;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        const delay = Math.random() * 0.3;
+        const duration = 1.5 + Math.random() * 0.5;
+        
+        particle.style.setProperty('--x', `${x}px`);
+        particle.style.setProperty('--y', `${y}px`);
+        particle.style.setProperty('--delay', `${delay}s`);
+        particle.style.setProperty('--duration', `${duration}s`);
+        particle.style.setProperty('--rotation', `${Math.random() * 720 - 360}deg`);
+        
+        particlesContainer.appendChild(particle);
+    }
 }
 
 // Escape HTML to prevent XSS
