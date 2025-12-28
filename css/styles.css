@@ -6818,6 +6818,10 @@ body.chat-body > * {
     align-items: flex-end;
 }
 
+.chat-message.own-message .message-actions {
+    align-self: flex-end;
+}
+
 .message-avatar {
     flex-shrink: 0;
 }
@@ -6910,6 +6914,8 @@ body.chat-body > * {
     opacity: 0;
     transition: opacity 0.2s ease;
     flex-shrink: 0;
+    margin-top: 8px;
+    align-self: flex-start;
 }
 
 .chat-message:hover .message-actions {
