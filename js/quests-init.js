@@ -43,16 +43,43 @@ let levelProgressBarEl, levelProgressFillEl, levelProgressTextEl;
     }
 })();
 
+// Track daily login
+let lastLoginDate = null;
+
 // Initialize quests when auth state changes
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
+        
+        // Track daily login
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toDateString();
+        
+        // Check if user logged in today
+        const shouldTrackLogin = lastLoginDate !== todayStr;
+        if (shouldTrackLogin) {
+            lastLoginDate = todayStr;
+        }
+        
         await loadUserProfile();
         await initializeQuests();
+        
+        // Track daily login after quests are initialized
+        if (shouldTrackLogin) {
+            setTimeout(async () => {
+                try {
+                    await updateQuestProgress('daily_login', 1);
+                } catch (error) {
+                    console.error('Error tracking daily login:', error);
+                }
+            }, 500);
+        }
     } else {
         currentUser = null;
         userProfile = null;
         userQuests = {};
+        lastLoginDate = null;
     }
 });
 
@@ -238,6 +265,9 @@ async function initializeQuests() {
     // Display quests
     displayQuests();
     
+    // Check if all daily quests are completed (for the "complete all" quest)
+    await checkAndUpdateCompleteAllDailyQuests();
+    
     // Track quests page visit (after a small delay to ensure quests are loaded)
     setTimeout(() => {
         updateQuestProgress('daily_quests_visit', 1);
@@ -283,11 +313,22 @@ async function loadAvailableQuests() {
             resetPeriod: 'daily'
         },
         {
-            id: 'daily_complete_quest',
-            title: 'Quest Completer',
-            description: 'Complete 1 daily quest',
+            id: 'daily_login',
+            title: 'Daily Login',
+            description: 'Log in to the site',
             type: 'daily',
             targetValue: 1,
+            rewardPoints: 5,
+            category: 'activity',
+            isActive: true,
+            resetPeriod: 'daily'
+        },
+        {
+            id: 'daily_complete_quest',
+            title: 'Quest Completer',
+            description: 'Complete all daily quests',
+            type: 'daily',
+            targetValue: 4, // Number of other daily quests (excluding this one)
             rewardPoints: 15,
             category: 'quests',
             isActive: true,
@@ -591,9 +632,9 @@ export async function updateQuestProgress(questId, increment = 1) {
         if (isNowCompleted) {
             await awardQuestPoints(quest.rewardPoints);
             
-            // If this is a daily quest, update "complete daily quest" quest
-            if (quest.type === 'daily') {
-                await updateQuestProgress('daily_complete_quest', 1);
+            // If this is a daily quest (but not the "complete all" quest itself), check if all daily quests are completed
+            if (quest.type === 'daily' && quest.id !== 'daily_complete_quest') {
+                await checkAndUpdateCompleteAllDailyQuests();
             }
             
             // If this is a daily quest completion, update weekly "complete 5 daily quests" quest
@@ -611,6 +652,89 @@ export async function updateQuestProgress(questId, increment = 1) {
         }
     } catch (error) {
         console.error(`Error updating quest progress for ${questId}:`, error);
+    }
+}
+
+// Check and update "complete all daily quests" quest
+async function checkAndUpdateCompleteAllDailyQuests() {
+    if (!currentUser || !userProfile) return;
+    
+    // Make sure quests are loaded
+    if (availableQuests.length === 0) {
+        loadAvailableQuests();
+    }
+    
+    // Get all daily quests (excluding the "complete all" quest itself)
+    const dailyQuests = availableQuests.filter(q => 
+        q.type === 'daily' && q.id !== 'daily_complete_quest' && q.isActive
+    );
+    
+    if (dailyQuests.length === 0) return; // No daily quests loaded yet
+    
+    // Count how many are completed
+    let completedCount = 0;
+    for (const quest of dailyQuests) {
+        const userQuest = userQuests[quest.id];
+        if (userQuest && userQuest.completed) {
+            completedCount++;
+        }
+    }
+    
+    // Update the "complete all daily quests" quest
+    // Get current progress
+    const completeQuest = availableQuests.find(q => q.id === 'daily_complete_quest');
+    if (!completeQuest) return;
+    
+    const userQuestId = `${currentUser.uid}_daily_complete_quest`;
+    const userQuestRef = doc(db, 'userQuests', userQuestId);
+    const userQuestDoc = await getDoc(userQuestRef);
+    
+    // Only update if not already completed
+    if (userQuestDoc.exists()) {
+        const data = userQuestDoc.data();
+        if (data.completed) return; // Already completed
+    }
+    
+    // Set progress to completed count (up to target value)
+    const newProgress = Math.min(completedCount, completeQuest.targetValue);
+    const isNowCompleted = newProgress >= completeQuest.targetValue;
+    
+    let resetAt = null;
+    if (userQuestDoc.exists()) {
+        resetAt = userQuestDoc.data().resetAt;
+    } else {
+        resetAt = Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod));
+    }
+    
+    await setDoc(userQuestRef, {
+        userId: currentUser.uid,
+        questId: 'daily_complete_quest',
+        progress: newProgress,
+        completed: isNowCompleted,
+        completedAt: isNowCompleted ? serverTimestamp() : null,
+        resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+    
+    // Update local state
+    userQuests['daily_complete_quest'] = {
+        userId: currentUser.uid,
+        questId: 'daily_complete_quest',
+        progress: newProgress,
+        completed: isNowCompleted,
+        completedAt: isNowCompleted ? Timestamp.now() : null,
+        resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod))
+    };
+    
+    // If completed, award points and show notification
+    if (isNowCompleted) {
+        await awardQuestPoints(completeQuest.rewardPoints);
+        displayQuests();
+        updateUserStats();
+        showQuestCompletionNotification(completeQuest);
+    } else {
+        displayQuests();
     }
 }
 
