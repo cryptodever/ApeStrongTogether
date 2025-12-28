@@ -1438,15 +1438,10 @@ async function showUserProfile(userId) {
         
         const userData = userDoc.data();
         
-        // Update popup with user data - get elements fresh to ensure they exist
-        const nameEl = document.getElementById('userProfilePopupName');
+        // Get banner image element (not declared above)
         const bannerImgEl = document.getElementById('userProfilePopupBannerImg');
-        const countryEl = document.getElementById('userProfilePopupCountryValue');
-        const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
-        const bioEl = document.getElementById('userProfilePopupBio');
-        const verifiedEl = document.getElementById('userProfilePopupVerified');
         
-        // Check if all elements exist
+        // Check if all elements exist (reuse variables from loading state above)
         if (!nameEl || !bannerImgEl || !countryEl || !xAccountEl || !bioEl || !verifiedEl) {
             console.error('User profile popup elements not found:', {
                 nameEl: !!nameEl,
