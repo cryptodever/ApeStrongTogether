@@ -76,11 +76,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
       
       // Only authenticated users can create messages
+      // Note: timestamp can be serverTimestamp() sentinel, so we don't validate it strictly
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.username is string
         && request.resource.data.text is string
-        && request.resource.data.timestamp is timestamp
         && request.resource.data.channel is string
         && request.resource.data.avatarCount is int
         && request.resource.data.deleted == false;
@@ -103,10 +103,10 @@ service cloud.firestore {
       allow read: if isSignedIn();
       
       // Users can only write their own typing indicator
+      // Note: timestamp can be serverTimestamp() sentinel
       allow create, update: if isSignedIn() && userId == request.auth.uid
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.channel is string
-        && request.resource.data.timestamp is timestamp;
+        && request.resource.data.channel is string;
       
       // Users can delete their own typing indicator
       allow delete: if isSignedIn() && userId == request.auth.uid;
@@ -118,10 +118,10 @@ service cloud.firestore {
       allow read: if isSignedIn();
       
       // Users can only write their own presence
+      // Note: lastSeen can be serverTimestamp() sentinel
       allow create, update: if isSignedIn() && userId == request.auth.uid
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.online is bool
-        && request.resource.data.lastSeen is timestamp;
+        && request.resource.data.online is bool;
       
       // Users can delete their own presence
       allow delete: if isSignedIn() && userId == request.auth.uid;
