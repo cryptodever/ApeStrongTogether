@@ -47,7 +47,7 @@ let messageContextMenuMessageId = null;
 let chatMessagesEl, chatInputEl, sendBtn, chatLoadingEl, chatEmptyEl;
 let chatTypingEl, typingTextEl, charCountEl, rateLimitInfoEl;
 let chatUserListEl, onlineCountEl;
-let messageContextMenuEl, reactionPickerEl;
+let messageContextMenuEl, reactionPickerEl, emojiPickerEl;
 
 // Initialize auth gate for chat page
 (async () => {
@@ -110,6 +110,7 @@ function initializeChat() {
     onlineCountEl = document.getElementById('onlineCount');
     messageContextMenuEl = document.getElementById('messageContextMenu');
     reactionPickerEl = document.getElementById('reactionPicker');
+    emojiPickerEl = document.getElementById('emojiPicker');
 
     if (!chatMessagesEl || !chatInputEl || !sendBtn) {
         console.error('Chat DOM elements not found');
@@ -155,19 +156,38 @@ function setupEventListeners() {
         }
     });
 
-    // Emoji button
+    // Emoji button - show emoji picker
     const emojiBtn = document.getElementById('emojiBtn');
-    if (emojiBtn) {
+    if (emojiBtn && emojiPickerEl) {
         emojiBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Simple emoji picker - just insert common emojis
-            const emojis = ['😀', '😂', '❤️', '🔥', '💎', '🚀', '🦍', '👍', '🎉', '💬'];
-            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-            insertTextAtCursor(chatInputEl, randomEmoji);
-            chatInputEl.focus();
-            // Trigger input event to update character count
-            chatInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+            // Toggle emoji picker
+            if (emojiPickerEl.classList.contains('hide')) {
+                showEmojiPicker(emojiBtn);
+            } else {
+                emojiPickerEl.classList.add('hide');
+            }
+        });
+    }
+    
+    // Setup emoji picker options
+    if (emojiPickerEl) {
+        const emojiOptions = emojiPickerEl.querySelectorAll('.emoji-picker-option');
+        emojiOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const emoji = option.dataset.emoji;
+                if (emoji) {
+                    insertTextAtCursor(chatInputEl, emoji);
+                    chatInputEl.focus();
+                    // Trigger input event to update character count
+                    chatInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    // Close picker
+                    emojiPickerEl.classList.add('hide');
+                }
+            });
         });
     }
 
@@ -184,6 +204,9 @@ function setupEventListeners() {
         }
         if (!reactionPickerEl.contains(e.target) && !e.target.closest('.message-reactions')) {
             reactionPickerEl.classList.add('hide');
+        }
+        if (emojiPickerEl && !emojiPickerEl.contains(e.target) && !e.target.closest('.chat-emoji-btn')) {
+            emojiPickerEl.classList.add('hide');
         }
     });
 
@@ -916,6 +939,18 @@ function showReactionPicker(messageId, button) {
     reactionPickerEl.classList.remove('hide');
     reactionPickerEl.style.left = rect.left + 'px';
     reactionPickerEl.style.top = (rect.top - 60) + 'px';
+}
+
+// Show emoji picker for chat input
+function showEmojiPicker(button) {
+    if (!emojiPickerEl) return;
+    
+    // Position the picker above the input container
+    const inputContainer = button.closest('.chat-input-container');
+    if (inputContainer) {
+        emojiPickerEl.classList.remove('hide');
+        // The picker is positioned relative to the input container using CSS
+    }
 }
 
 // Report a message
