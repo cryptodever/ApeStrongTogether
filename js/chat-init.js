@@ -31,6 +31,30 @@ const EDIT_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const TYPING_TIMEOUT = 3000; // 3 seconds
 const PRESENCE_TIMEOUT = 30000; // 30 seconds
 
+// Profanity filter - list of explicit words to censor
+const PROFANITY_WORDS = [
+    // Common profanity
+    'fuck', 'fucking', 'fucked', 'fucker', 'fucks',
+    'shit', 'shitting', 'shitted', 'shits',
+    'damn', 'damned', 'damning',
+    'hell', 'hells',
+    'ass', 'asses', 'asshole', 'assholes',
+    'bitch', 'bitches', 'bitching',
+    'bastard', 'bastards',
+    'crap', 'craps',
+    'piss', 'pissing', 'pissed',
+    'dick', 'dicks', 'dickhead',
+    'cock', 'cocks',
+    'pussy', 'pussies',
+    'slut', 'sluts',
+    'whore', 'whores',
+    'nigger', 'niggers', 'nigga', 'niggas',
+    'retard', 'retards', 'retarded',
+    'gay', 'gays', // Context-dependent, but included for safety
+    'lesbian', 'lesbians',
+    // Add more as needed
+];
+
 // State
 let currentUser = null;
 let userProfile = null;
@@ -546,11 +570,35 @@ function renderReactions(messageId, reactions) {
 }
 
 // Format message text (links, mentions, basic formatting)
+// Filter profanity from text
+function filterProfanity(text) {
+    if (!text) return text;
+    
+    let filtered = text;
+    
+    // Create regex pattern for each profanity word (case-insensitive, word boundaries)
+    PROFANITY_WORDS.forEach(word => {
+        // Escape special regex characters in the word
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Match word boundaries to avoid partial matches
+        const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+        // Replace with asterisks (same length as original word)
+        filtered = filtered.replace(regex, (match) => {
+            return '*'.repeat(match.length);
+        });
+    });
+    
+    return filtered;
+}
+
 function formatMessageText(text) {
     if (!text) return '';
     
-    // Escape HTML first
-    let formatted = escapeHtml(text);
+    // Filter profanity first (before HTML escaping)
+    let formatted = filterProfanity(text);
+    
+    // Escape HTML
+    formatted = escapeHtml(formatted);
     
     // Convert URLs to links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
