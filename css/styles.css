@@ -7294,6 +7294,178 @@ body.chat-body > * {
     transform: scale(1.15);
 }
 
+/* User Profile Popup */
+.user-profile-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.user-profile-popup:not(.hide) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.user-profile-popup-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.user-profile-popup-content {
+    position: relative;
+    background: rgba(20, 20, 20, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: 10002;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.user-profile-popup:not(.hide) .user-profile-popup-content {
+    transform: scale(1);
+}
+
+.user-profile-popup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10003;
+    transition: all 0.2s ease;
+}
+
+.user-profile-popup-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.user-profile-popup-banner {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+    position: relative;
+}
+
+.user-profile-popup-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.user-profile-popup-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.user-profile-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.user-profile-popup-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.user-profile-popup-verified {
+    color: #4ade80;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.user-profile-popup-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.user-profile-popup-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-profile-popup-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.user-profile-popup-value {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.user-profile-popup-bio {
+    margin-top: 20px;
+}
+
+.user-profile-popup-bio .user-profile-popup-label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.user-profile-popup-bio-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.clickable-username {
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+}
+
+.clickable-username:hover {
+    color: #4ade80;
+    text-decoration-color: #4ade80;
+}
+
 /* Reaction Picker (for message reactions) */
 .reaction-picker {
     position: fixed;
@@ -7347,6 +7519,38 @@ body.chat-body > * {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    .user-profile-popup-content {
+        width: 95%;
+        max-width: none;
+        max-height: 85vh;
+    }
+
+    .user-profile-popup-banner {
+        height: 120px;
+    }
+
+    .user-profile-popup-body {
+        padding: 20px;
+    }
+
+    .user-profile-popup-name {
+        font-size: 20px;
+    }
+
+    .user-profile-popup-info {
+        gap: 10px;
+    }
+
+    .user-profile-popup-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .user-profile-popup-label {
+        min-width: auto;
+    }
+
     .chat-content {
         flex-direction: column;
         height: calc(100vh - 240px);

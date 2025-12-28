@@ -72,6 +72,7 @@ let chatMessagesEl, chatInputEl, sendBtn, chatLoadingEl, chatEmptyEl;
 let chatTypingEl, typingTextEl, charCountEl, rateLimitInfoEl;
 let chatUserListEl, onlineCountEl;
 let messageContextMenuEl, reactionPickerEl, emojiPickerEl;
+let userProfilePopupEl, userProfilePopupOverlayEl, userProfilePopupCloseEl;
 
 // Initialize auth gate for chat page
 (async () => {
@@ -162,6 +163,9 @@ function initializeChat() {
     messageContextMenuEl = document.getElementById('messageContextMenu');
     reactionPickerEl = document.getElementById('reactionPicker');
     emojiPickerEl = document.getElementById('emojiPicker');
+    userProfilePopupEl = document.getElementById('userProfilePopup');
+    userProfilePopupOverlayEl = document.getElementById('userProfilePopupOverlay');
+    userProfilePopupCloseEl = document.getElementById('userProfilePopupClose');
 
     if (!chatMessagesEl || !chatInputEl || !sendBtn) {
         console.error('Chat DOM elements not found');
@@ -257,6 +261,9 @@ function setupEventListeners() {
     
     // Reaction picker
     setupReactionPicker();
+    
+    // User profile popup
+    setupUserProfilePopup();
     
     // Close menus on click outside
     document.addEventListener('click', (e) => {
@@ -490,7 +497,7 @@ function displayMessage(messageId, messageData) {
         </div>
         <div class="message-content">
             <div class="message-header">
-                <span class="message-username">${escapeHtml(messageData.username)}</span>
+                <span class="message-username clickable-username" data-user-id="${messageData.userId}" data-username="${escapeHtml(messageData.username)}" title="Click to view profile">${escapeHtml(messageData.username)}</span>
                 ${messageData.xAccountVerified ? '<span class="verified-badge" title="Verified X account">✓</span>' : ''}
                 <span class="message-time" title="${dateStr}">${timeStr}</span>
                 ${messageData.editedAt ? '<span class="message-edited">(edited)</span>' : ''}
@@ -520,6 +527,19 @@ function displayMessage(messageId, messageData) {
     
     // Add event listeners for message actions
     setupMessageActions(messageEl, messageId, messageData, canEdit, canDelete);
+    
+    // Add event listener for clickable username
+    const usernameEl = messageEl.querySelector('.clickable-username');
+    if (usernameEl) {
+        usernameEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const userId = usernameEl.dataset.userId;
+            if (userId) {
+                showUserProfile(userId);
+            }
+        });
+    }
 }
 
 // Update message display (for edits, reactions)
@@ -1256,6 +1276,117 @@ function insertTextAtCursor(textarea, text) {
 function scrollToBottom() {
     if (chatMessagesEl) {
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+}
+
+// Setup user profile popup
+function setupUserProfilePopup() {
+    if (!userProfilePopupEl || !userProfilePopupOverlayEl || !userProfilePopupCloseEl) return;
+    
+    // Close on overlay click
+    userProfilePopupOverlayEl.addEventListener('click', () => {
+        userProfilePopupEl.classList.add('hide');
+    });
+    
+    // Close on close button click
+    userProfilePopupCloseEl.addEventListener('click', () => {
+        userProfilePopupEl.classList.add('hide');
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !userProfilePopupEl.classList.contains('hide')) {
+            userProfilePopupEl.classList.add('hide');
+        }
+    });
+}
+
+// Show user profile popup
+async function showUserProfile(userId) {
+    if (!userProfilePopupEl || !currentUser) return;
+    
+    // Don't show profile for current user (they can use their own profile page)
+    if (userId === currentUser.uid) {
+        window.location.href = '/generator/';
+        return;
+    }
+    
+    try {
+        // Show loading state
+        userProfilePopupEl.classList.remove('hide');
+        document.getElementById('userProfilePopupName').textContent = 'Loading...';
+        document.getElementById('userProfilePopupCountryValue').textContent = '—';
+        document.getElementById('userProfilePopupXAccountValue').textContent = '—';
+        document.getElementById('userProfilePopupBio').textContent = 'Loading profile...';
+        document.getElementById('userProfilePopupVerified').classList.add('hide');
+        
+        // Fetch user profile from Firestore
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+            document.getElementById('userProfilePopupName').textContent = 'User not found';
+            document.getElementById('userProfilePopupBio').textContent = 'This user profile could not be loaded.';
+            return;
+        }
+        
+        const userData = userDoc.data();
+        
+        // Update popup with user data
+        const nameEl = document.getElementById('userProfilePopupName');
+        const bannerImgEl = document.getElementById('userProfilePopupBannerImg');
+        const countryEl = document.getElementById('userProfilePopupCountryValue');
+        const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
+        const bioEl = document.getElementById('userProfilePopupBio');
+        const verifiedEl = document.getElementById('userProfilePopupVerified');
+        
+        // Name
+        nameEl.textContent = userData.username || 'Anonymous';
+        
+        // Banner
+        const bannerImage = userData.bannerImage || '/pfp_apes/bg1.png';
+        bannerImgEl.src = bannerImage;
+        bannerImgEl.dataset.fallback = '/pfp_apes/bg1.png';
+        
+        // Add error handling for banner image
+        bannerImgEl.addEventListener('error', function() {
+            const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+            if (this.src !== fallback) {
+                this.src = fallback;
+            }
+        });
+        
+        // Country
+        if (userData.country) {
+            countryEl.textContent = userData.country;
+        } else {
+            countryEl.textContent = '—';
+        }
+        
+        // X Account - check both xAccount and profileXAccount field names
+        const xAccount = userData.xAccount || userData.profileXAccount || '';
+        if (xAccount && userData.xAccountVerified) {
+            xAccountEl.textContent = `@${xAccount}`;
+            verifiedEl.classList.remove('hide');
+        } else if (xAccount) {
+            xAccountEl.textContent = `@${xAccount} (not verified)`;
+            verifiedEl.classList.add('hide');
+        } else {
+            xAccountEl.textContent = '—';
+            verifiedEl.classList.add('hide');
+        }
+        
+        // Bio
+        if (userData.bio && userData.bio.trim()) {
+            bioEl.textContent = userData.bio;
+        } else {
+            bioEl.textContent = 'No bio available.';
+        }
+        
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        document.getElementById('userProfilePopupName').textContent = 'Error';
+        document.getElementById('userProfilePopupBio').textContent = 'Failed to load user profile.';
     }
 }
 
