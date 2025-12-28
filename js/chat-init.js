@@ -158,12 +158,16 @@ function setupEventListeners() {
     // Emoji button
     const emojiBtn = document.getElementById('emojiBtn');
     if (emojiBtn) {
-        emojiBtn.addEventListener('click', () => {
+        emojiBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             // Simple emoji picker - just insert common emojis
             const emojis = ['😀', '😂', '❤️', '🔥', '💎', '🚀', '🦍', '👍', '🎉', '💬'];
             const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
             insertTextAtCursor(chatInputEl, randomEmoji);
             chatInputEl.focus();
+            // Trigger input event to update character count
+            chatInputEl.dispatchEvent(new Event('input', { bubbles: true }));
         });
     }
 
