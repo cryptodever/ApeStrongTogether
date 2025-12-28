@@ -460,13 +460,31 @@ function setupRealtimeListeners() {
 
     // Setup presence listener for online users
     const presenceRef = collection(db, 'presence');
-    presenceListener = onSnapshot(presenceRef, (snapshot) => {
+    presenceListener = onSnapshot(presenceRef, async (snapshot) => {
         const onlineUsers = [];
         const now = Date.now();
         
+        // Add current user first
+        if (currentUser && userProfile) {
+            // Get current user's presence data
+            const currentUserPresenceRef = doc(db, 'presence', currentUser.uid);
+            const currentUserPresenceDoc = await getDoc(currentUserPresenceRef);
+            const currentUserPresence = currentUserPresenceDoc.exists() ? currentUserPresenceDoc.data() : null;
+            
+            onlineUsers.push({
+                userId: currentUser.uid,
+                username: userProfile.username || currentUser.email?.split('@')[0] || 'You',
+                bannerImage: userProfile.bannerImage || '/pfp_apes/bg1.png',
+                xAccountVerified: userProfile.xAccountVerified || false,
+                online: true,
+                lastSeen: currentUserPresence?.lastSeen || Timestamp.now(),
+                isOnline: true
+            });
+        }
+        
         snapshot.forEach((doc) => {
             const data = doc.data();
-            if (data.userId === currentUser.uid) return; // Skip current user
+            if (data.userId === currentUser.uid) return; // Skip current user (already added above)
             
             // Check if user is online (either explicitly online or recently active)
             let lastSeenMillis = 0;
@@ -514,7 +532,7 @@ function setupRealtimeListeners() {
 
         currentOnlineUsers = onlineUsers; // Store for periodic updates
         updateOnlineUsersList(onlineUsers);
-        onlineCountEl.textContent = onlineUsers.length + 1; // +1 for current user
+        onlineCountEl.textContent = onlineUsers.length; // Count includes current user now
         
         // Update last seen times every minute for real-time updates
         if (!lastSeenUpdateInterval) {
