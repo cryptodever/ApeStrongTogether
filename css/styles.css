@@ -7258,20 +7258,22 @@ body.chat-body > * {
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
-    padding: 12px;
+    padding: 16px;
     z-index: 10000; /* Very high z-index to ensure it's above everything */
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     max-width: 90vw; /* Prevent it from being too wide on small screens */
     max-height: 90vh; /* Prevent it from being too tall */
     overflow: visible; /* Ensure content isn't clipped */
+    min-width: 320px; /* Ensure minimum width for proper display */
 }
 
 .emoji-picker-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    max-width: 300px;
+    gap: 8px;
+    width: 100%;
+    min-width: 280px; /* Ensure grid has minimum width */
 }
 
 .emoji-picker-option {
