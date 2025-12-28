@@ -26,7 +26,7 @@ import {
 // Constants
 const MESSAGES_PER_PAGE = 50;
 const MAX_MESSAGE_LENGTH = 1000;
-const RATE_LIMIT_SECONDS = 2; // Max 1 message per 2 seconds
+const RATE_LIMIT_SECONDS = 10; // Max 1 message per 10 seconds
 const EDIT_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const TYPING_TIMEOUT = 3000; // 3 seconds
 const PRESENCE_TIMEOUT = 30000; // 30 seconds
@@ -326,12 +326,13 @@ function displayMessage(messageId, messageData) {
     const canEdit = isOwnMessage && (Date.now() - timestamp.getTime() < EDIT_TIME_LIMIT);
     const canDelete = isOwnMessage || isAdmin;
 
-    // Avatar
-    const avatarUrl = `/api/avatar/${messageData.userId}/${messageData.avatarCount || 0}`;
+    // Banner image (fallback to avatar if no banner)
+    const bannerImage = messageData.bannerImage || `/api/avatar/${messageData.userId}/${messageData.avatarCount || 0}`;
+    const fallbackImage = `/api/avatar/${messageData.userId}/${messageData.avatarCount || 0}`;
     
     messageEl.innerHTML = `
         <div class="message-avatar">
-            <img src="${avatarUrl}" alt="${messageData.username}" onerror="this.src='/api/avatar/default/0'">
+            <img src="${bannerImage}" alt="${messageData.username}" onerror="this.src='${fallbackImage}'">
         </div>
         <div class="message-content">
             <div class="message-header">
@@ -496,16 +497,34 @@ async function handleSendMessage() {
     const text = chatInputEl.value.trim();
     if (!text) return;
 
-    // Rate limiting
+    // Rate limiting with countdown timer
     const now = Date.now();
     const timeSinceLastMessage = now - lastMessageTime;
     if (timeSinceLastMessage < RATE_LIMIT_SECONDS * 1000) {
         const remaining = Math.ceil((RATE_LIMIT_SECONDS * 1000 - timeSinceLastMessage) / 1000);
         rateLimitInfoEl.textContent = `Please wait ${remaining} second${remaining > 1 ? 's' : ''} before sending another message`;
         rateLimitInfoEl.style.display = 'block';
+        rateLimitInfoEl.classList.add('warning');
+        
+        // Update countdown every second
+        const countdownInterval = setInterval(() => {
+            const timeLeft = Math.ceil((RATE_LIMIT_SECONDS * 1000 - (Date.now() - lastMessageTime)) / 1000);
+            if (timeLeft > 0) {
+                rateLimitInfoEl.textContent = `Please wait ${timeLeft} second${timeLeft > 1 ? 's' : ''} before sending another message`;
+            } else {
+                rateLimitInfoEl.style.display = 'none';
+                rateLimitInfoEl.classList.remove('warning');
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+        
+        // Clear interval after cooldown period
         setTimeout(() => {
+            clearInterval(countdownInterval);
             rateLimitInfoEl.style.display = 'none';
-        }, 3000);
+            rateLimitInfoEl.classList.remove('warning');
+        }, (RATE_LIMIT_SECONDS * 1000) - timeSinceLastMessage);
+        
         return;
     }
 
@@ -529,6 +548,7 @@ async function handleSendMessage() {
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
             avatarCount: userProfile.avatarCount || 0,
+            bannerImage: userProfile.bannerImage || '',
             timestamp: serverTimestamp(),
             channel: currentChannel,
             deleted: false,
@@ -542,6 +562,7 @@ async function handleSendMessage() {
         charCountEl.textContent = `0/${MAX_MESSAGE_LENGTH}`;
         lastMessageTime = now;
         rateLimitInfoEl.style.display = 'none';
+        rateLimitInfoEl.classList.remove('warning');
 
         // Clear typing indicator
         clearTypingIndicator();
@@ -719,6 +740,7 @@ async function updatePresence(online) {
             userId: currentUser.uid,
             username: userProfile?.username || 'Anonymous',
             avatarCount: userProfile?.avatarCount || 0,
+            bannerImage: userProfile?.bannerImage || '',
             xAccountVerified: userProfile?.xAccountVerified || false,
             online: online,
             lastSeen: serverTimestamp(),
@@ -739,10 +761,11 @@ function updateOnlineUsersList(users) {
     }
 
     chatUserListEl.innerHTML = users.map(user => {
-        const avatarUrl = `/api/avatar/${user.userId}/${user.avatarCount || 0}`;
+        const bannerImage = user.bannerImage || `/api/avatar/${user.userId}/${user.avatarCount || 0}`;
+        const fallbackImage = `/api/avatar/${user.userId}/${user.avatarCount || 0}`;
         return `
             <div class="chat-user-item">
-                <img src="${avatarUrl}" alt="${user.username}" onerror="this.src='/api/avatar/default/0'">
+                <img src="${bannerImage}" alt="${user.username}" onerror="this.src='${fallbackImage}'">
                 <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
                 ${user.xAccountVerified ? '<span class="verified-badge-small">✓</span>' : ''}
             </div>
