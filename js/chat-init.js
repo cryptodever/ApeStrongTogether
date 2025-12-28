@@ -180,10 +180,10 @@ function setupEventListeners() {
     // Close menus on click outside
     document.addEventListener('click', (e) => {
         if (!messageContextMenuEl.contains(e.target) && !e.target.closest('.message-actions')) {
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         }
         if (!reactionPickerEl.contains(e.target) && !e.target.closest('.message-reactions')) {
-            reactionPickerEl.style.display = 'none';
+            reactionPickerEl.classList.add('hide');
         }
     });
 
@@ -208,14 +208,14 @@ function loadMessages() {
     );
 
     getDocs(q).then((snapshot) => {
-        chatLoadingEl.style.display = 'none';
+        chatLoadingEl.classList.add('hide');
         
         if (snapshot.empty) {
-            chatEmptyEl.style.display = 'flex';
+            chatEmptyEl.classList.remove('hide');
             return;
         }
 
-        chatEmptyEl.style.display = 'none';
+        chatEmptyEl.classList.add('hide');
         
         // Reverse to show oldest first
         const messages = snapshot.docs.reverse();
@@ -286,9 +286,9 @@ function setupRealtimeListeners() {
                 text = `${usernames[0]}, ${usernames[1]}, and others are typing...`;
             }
             typingTextEl.textContent = text;
-            chatTypingEl.style.display = 'flex';
+            chatTypingEl.classList.remove('hide');
         } else {
-            chatTypingEl.style.display = 'none';
+            chatTypingEl.classList.add('hide');
         }
     });
 
@@ -518,7 +518,7 @@ async function handleSendMessage() {
     if (timeSinceLastMessage < RATE_LIMIT_SECONDS * 1000) {
         const remaining = Math.ceil((RATE_LIMIT_SECONDS * 1000 - timeSinceLastMessage) / 1000);
         rateLimitInfoEl.textContent = `Please wait ${remaining} second${remaining > 1 ? 's' : ''} before sending another message`;
-        rateLimitInfoEl.style.display = 'block';
+        rateLimitInfoEl.classList.remove('hide');
         rateLimitInfoEl.classList.add('warning');
         
         // Update countdown every second
@@ -527,7 +527,7 @@ async function handleSendMessage() {
             if (timeLeft > 0) {
                 rateLimitInfoEl.textContent = `Please wait ${timeLeft} second${timeLeft > 1 ? 's' : ''} before sending another message`;
             } else {
-                rateLimitInfoEl.style.display = 'none';
+                rateLimitInfoEl.classList.add('hide');
                 rateLimitInfoEl.classList.remove('warning');
                 clearInterval(countdownInterval);
             }
@@ -536,7 +536,7 @@ async function handleSendMessage() {
         // Clear interval after cooldown period
         setTimeout(() => {
             clearInterval(countdownInterval);
-            rateLimitInfoEl.style.display = 'none';
+            rateLimitInfoEl.classList.add('hide');
             rateLimitInfoEl.classList.remove('warning');
         }, (RATE_LIMIT_SECONDS * 1000) - timeSinceLastMessage);
         
@@ -576,7 +576,7 @@ async function handleSendMessage() {
         chatInputEl.style.height = 'auto';
         charCountEl.textContent = `0/${MAX_MESSAGE_LENGTH}`;
         lastMessageTime = now;
-        rateLimitInfoEl.style.display = 'none';
+        rateLimitInfoEl.classList.add('hide');
         rateLimitInfoEl.classList.remove('warning');
 
         // Clear typing indicator
@@ -819,7 +819,7 @@ function setupMessageContextMenu() {
                     }
                 }
             }
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         });
     }
 
@@ -832,7 +832,7 @@ function setupMessageContextMenu() {
                     showReactionPicker(messageContextMenuMessageId, actionBtn);
                 }
             }
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         });
     }
 
@@ -845,7 +845,7 @@ function setupMessageContextMenu() {
                     editMessage(messageContextMenuMessageId, textEl.textContent);
                 }
             }
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         });
     }
 
@@ -854,7 +854,7 @@ function setupMessageContextMenu() {
             if (messageContextMenuMessageId) {
                 deleteMessage(messageContextMenuMessageId);
             }
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         });
     }
 
@@ -863,7 +863,7 @@ function setupMessageContextMenu() {
             if (messageContextMenuMessageId) {
                 reportMessage(messageContextMenuMessageId);
             }
-            messageContextMenuEl.style.display = 'none';
+            messageContextMenuEl.classList.add('hide');
         });
     }
 }
@@ -875,10 +875,22 @@ function showMessageContextMenu(event, messageId, messageData, canEdit, canDelet
     const editBtn = document.getElementById('editMessageBtn');
     const deleteBtn = document.getElementById('deleteMessageBtn');
     
-    if (editBtn) editBtn.style.display = canEdit ? 'block' : 'none';
-    if (deleteBtn) deleteBtn.style.display = canDelete ? 'block' : 'none';
+    if (editBtn) {
+        if (canEdit) {
+            editBtn.classList.remove('hide');
+        } else {
+            editBtn.classList.add('hide');
+        }
+    }
+    if (deleteBtn) {
+        if (canDelete) {
+            deleteBtn.classList.remove('hide');
+        } else {
+            deleteBtn.classList.add('hide');
+        }
+    }
 
-    messageContextMenuEl.style.display = 'block';
+    messageContextMenuEl.classList.remove('hide');
     messageContextMenuEl.style.left = event.pageX + 'px';
     messageContextMenuEl.style.top = event.pageY + 'px';
 }
@@ -892,7 +904,7 @@ function setupReactionPicker() {
             if (messageContextMenuMessageId) {
                 toggleReaction(messageContextMenuMessageId, emoji);
             }
-            reactionPickerEl.style.display = 'none';
+            reactionPickerEl.classList.add('hide');
         });
     });
 }
@@ -901,7 +913,7 @@ function setupReactionPicker() {
 function showReactionPicker(messageId, button) {
     messageContextMenuMessageId = messageId;
     const rect = button.getBoundingClientRect();
-    reactionPickerEl.style.display = 'flex';
+    reactionPickerEl.classList.remove('hide');
     reactionPickerEl.style.left = rect.left + 'px';
     reactionPickerEl.style.top = (rect.top - 60) + 'px';
 }

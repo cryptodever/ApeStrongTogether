@@ -51,7 +51,7 @@
                             <div class="loading-spinner"></div>
                             <p>Loading messages...</p>
                         </div>
-                        <div class="chat-empty" id="chatEmpty" style="display: none;">
+                        <div class="chat-empty hide" id="chatEmpty">
                             <div class="chat-empty-icon">💬</div>
                             <h3>No messages yet</h3>
                             <p>Be the first to say something!</p>
@@ -59,7 +59,7 @@
                     </div>
 
                     <!-- Typing Indicator -->
-                    <div class="chat-typing" id="chatTyping" style="display: none;">
+                    <div class="chat-typing hide" id="chatTyping">
                         <span class="typing-dots">
                             <span></span><span></span><span></span>
                         </span>
@@ -85,23 +85,23 @@
                         </div>
                         <div class="chat-input-footer">
                             <span class="char-count" id="charCount">0/1000</span>
-                            <span class="rate-limit-info" id="rateLimitInfo" style="display: none;"></span>
+                            <span class="rate-limit-info hide" id="rateLimitInfo"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Message Context Menu -->
-            <div class="message-context-menu" id="messageContextMenu" style="display: none;">
+            <div class="message-context-menu hide" id="messageContextMenu">
                 <button class="context-menu-item" id="copyMessageBtn">Copy text</button>
                 <button class="context-menu-item" id="reactMessageBtn">Add reaction</button>
-                <button class="context-menu-item" id="editMessageBtn" style="display: none;">Edit</button>
-                <button class="context-menu-item" id="deleteMessageBtn" style="display: none;">Delete</button>
+                <button class="context-menu-item hide" id="editMessageBtn">Edit</button>
+                <button class="context-menu-item hide" id="deleteMessageBtn">Delete</button>
                 <button class="context-menu-item context-menu-danger" id="reportMessageBtn">Report</button>
             </div>
 
             <!-- Reaction Picker -->
-            <div class="reaction-picker" id="reactionPicker" style="display: none;">
+            <div class="reaction-picker hide" id="reactionPicker">
                 <button class="reaction-option" data-emoji="👍">👍</button>
                 <button class="reaction-option" data-emoji="❤️">❤️</button>
                 <button class="reaction-option" data-emoji="🔥">🔥</button>
