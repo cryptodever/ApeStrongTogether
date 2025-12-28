@@ -370,11 +370,11 @@ function displayMessage(messageId, messageData) {
             </div>
             <div class="message-text">${formatMessageText(messageData.text)}</div>
             ${messageData.reactions && Object.keys(messageData.reactions).length > 0 ? renderReactions(messageId, messageData.reactions) : ''}
-        </div>
-        <div class="message-actions">
-            <button class="message-action-btn" data-message-id="${messageId}" title="React">😀</button>
-            ${canEdit ? `<button class="message-action-btn edit-btn" data-message-id="${messageId}" title="Edit">✏️</button>` : ''}
-            ${canDelete ? `<button class="message-action-btn delete-btn" data-message-id="${messageId}" title="Delete">🗑️</button>` : ''}
+            <div class="message-actions">
+                <button class="message-action-btn" data-message-id="${messageId}" title="React">😀</button>
+                ${canEdit ? `<button class="message-action-btn edit-btn" data-message-id="${messageId}" title="Edit">✏️</button>` : ''}
+                ${canDelete ? `<button class="message-action-btn delete-btn" data-message-id="${messageId}" title="Delete">🗑️</button>` : ''}
+            </div>
         </div>
     `;
 
