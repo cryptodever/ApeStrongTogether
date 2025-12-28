@@ -6712,6 +6712,8 @@ body.chat-body > * {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+    /* Banner images are typically wider, so we crop to center */
+    object-position: center;
 }
 
 .chat-username {
@@ -6825,6 +6827,7 @@ body.chat-body > * {
     height: 40px;
     border-radius: 50%;
     object-fit: cover;
+    object-position: center;
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -7099,6 +7102,21 @@ body.chat-body > * {
 .rate-limit-info {
     color: #fbbf24;
     font-weight: 500;
+}
+
+.rate-limit-info.warning {
+    color: #f87171;
+    font-weight: 600;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 /* Context Menu */
