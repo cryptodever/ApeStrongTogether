@@ -21,6 +21,12 @@ export function initAuthGate() {
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             // User is logged in - check email verification
+            // Skip verification check on verify page itself
+            if (window.location.pathname.includes('/verify/')) {
+                hideOverlay();
+                return;
+            }
+            
             try {
                 // Reload user to get latest verification status
                 await user.reload();
