@@ -1105,7 +1105,7 @@ function updateOnlineUsersList(users) {
                         ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
                     </div>
                     <div class="chat-user-last-seen">
-                        ${isOnline ? `<span class="online-text">Online</span> • <span class="last-seen-text">Active ${lastSeen}</span>` : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
+                        ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
                     </div>
                 </div>
             </div>
