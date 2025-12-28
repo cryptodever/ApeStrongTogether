@@ -330,13 +330,13 @@ function displayMessage(messageId, messageData) {
     const canEdit = isOwnMessage && (Date.now() - timestamp.getTime() < EDIT_TIME_LIMIT);
     const canDelete = isOwnMessage || isAdmin;
 
-    // Banner image (fallback to avatar if no banner)
-    const bannerImage = messageData.bannerImage || `/api/avatar/${messageData.userId}/${messageData.avatarCount || 0}`;
-    const fallbackImage = `/api/avatar/${messageData.userId}/${messageData.avatarCount || 0}`;
+    // Banner image (fallback to default if no banner)
+    const bannerImage = messageData.bannerImage || '/pfp_apes/bg1.png';
+    const defaultImage = '/pfp_apes/bg1.png';
     
     messageEl.innerHTML = `
         <div class="message-avatar">
-            <img src="${bannerImage}" alt="${messageData.username}" onerror="this.src='${fallbackImage}'">
+            <img src="${bannerImage}" alt="${messageData.username}" data-fallback="${defaultImage}">
         </div>
         <div class="message-content">
             <div class="message-header">
@@ -356,6 +356,17 @@ function displayMessage(messageId, messageData) {
     `;
 
     chatMessagesEl.appendChild(messageEl);
+    
+    // Add image error handling (CSP-compliant)
+    const avatarImg = messageEl.querySelector('.message-avatar img');
+    if (avatarImg) {
+        avatarImg.addEventListener('error', function() {
+            const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+            if (this.src !== fallback) {
+                this.src = fallback;
+            }
+        });
+    }
     
     // Add event listeners for message actions
     setupMessageActions(messageEl, messageId, messageData, canEdit, canDelete);
@@ -765,16 +776,26 @@ function updateOnlineUsersList(users) {
     }
 
     chatUserListEl.innerHTML = users.map(user => {
-        const bannerImage = user.bannerImage || `/api/avatar/${user.userId}/${user.avatarCount || 0}`;
-        const fallbackImage = `/api/avatar/${user.userId}/${user.avatarCount || 0}`;
+        const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
+        const defaultImage = '/pfp_apes/bg1.png';
         return `
             <div class="chat-user-item">
-                <img src="${bannerImage}" alt="${user.username}" onerror="this.src='${fallbackImage}'">
+                <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
                 <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
                 ${user.xAccountVerified ? '<span class="verified-badge-small">✓</span>' : ''}
             </div>
         `;
     }).join('');
+    
+    // Add image error handling for user list (CSP-compliant)
+    chatUserListEl.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', function() {
+            const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+            if (this.src !== fallback) {
+                this.src = fallback;
+            }
+        });
+    });
 }
 
 // Setup message context menu
