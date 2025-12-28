@@ -20,7 +20,8 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 // Constants
-const POINTS_PER_LEVEL = 100; // 100 points = 1 level
+const MAX_LEVEL = 100;
+const BASE_XP = 10; // Level 1 requires 10 XP
 
 // State
 let currentUser = null;
@@ -29,7 +30,8 @@ let userQuests = {}; // Map of questId -> userQuest data
 let availableQuests = [];
 
 // DOM Elements
-let dailyQuestsEl, weeklyQuestsEl, userRankEl, userPointsEl;
+let dailyQuestsEl, weeklyQuestsEl, userLevelEl, userPointsEl;
+let levelProgressBarEl, levelProgressFillEl, levelProgressTextEl;
 
 // Initialize auth gate for quests page
 (async () => {
@@ -64,12 +66,12 @@ async function loadUserProfile() {
         
         if (userDoc.exists()) {
             userProfile = userDoc.data();
-            // Initialize points and rank if they don't exist
+            // Initialize points and level if they don't exist
             if (userProfile.points === undefined) {
                 userProfile.points = 0;
             }
-            if (userProfile.rank === undefined) {
-                userProfile.rank = calculateRank(userProfile.points);
+            if (userProfile.level === undefined) {
+                userProfile.level = calculateLevel(userProfile.points);
             }
         } else {
             // Create default profile with points/rank
@@ -81,7 +83,7 @@ async function loadUserProfile() {
                 bannerImage: '/pfp_apes/bg1.png',
                 xAccountVerified: false,
                 points: 0,
-                rank: 1,
+                level: 1,
                 totalQuestsCompleted: 0
             };
             try {
@@ -95,15 +97,54 @@ async function loadUserProfile() {
         // Use defaults on error
         userProfile = {
             points: 0,
-            rank: 1,
+            level: 1,
             totalQuestsCompleted: 0
         };
     }
 }
 
-// Calculate rank from points
-function calculateRank(points) {
-    return Math.floor(points / POINTS_PER_LEVEL) + 1;
+// Calculate XP needed for a specific level
+function calculateXPForLevel(level) {
+    if (level <= 1) return BASE_XP;
+    let xp = BASE_XP;
+    for (let i = 2; i <= level; i++) {
+        xp = Math.round(xp * 1.2); // 20% increase, rounded to whole number
+    }
+    return xp;
+}
+
+// Get level progress information from total points
+function getLevelProgress(points) {
+    if (points < 0) points = 0;
+    
+    let level = 1;
+    let cumulativeXP = 0;
+    
+    // Calculate which level the user is at
+    while (level < MAX_LEVEL) {
+        const xpForNextLevel = calculateXPForLevel(level + 1);
+        if (points < cumulativeXP + xpForNextLevel) {
+            break;
+        }
+        cumulativeXP += xpForNextLevel;
+        level++;
+    }
+    
+    const xpInCurrentLevel = points - cumulativeXP;
+    const xpNeededForNextLevel = level < MAX_LEVEL ? calculateXPForLevel(level + 1) : 0;
+    
+    return {
+        level: Math.min(level, MAX_LEVEL),
+        xpInCurrentLevel,
+        xpNeededForNextLevel,
+        cumulativeXP,
+        isMaxLevel: level >= MAX_LEVEL
+    };
+}
+
+// Calculate level from points (for backward compatibility)
+function calculateLevel(points) {
+    return getLevelProgress(points).level;
 }
 
 // Initialize quests page
@@ -116,10 +157,13 @@ async function initializeQuests() {
     // Get DOM elements
     dailyQuestsEl = document.getElementById('dailyQuests');
     weeklyQuestsEl = document.getElementById('weeklyQuests');
-    userRankEl = document.getElementById('userRank');
+    userLevelEl = document.getElementById('userLevel');
     userPointsEl = document.getElementById('userPoints');
+    levelProgressBarEl = document.getElementById('levelProgressBar');
+    levelProgressFillEl = document.getElementById('levelProgressFill');
+    levelProgressTextEl = document.getElementById('levelProgressText');
 
-    if (!dailyQuestsEl || !weeklyQuestsEl || !userRankEl || !userPointsEl) {
+    if (!dailyQuestsEl || !weeklyQuestsEl || !userLevelEl || !userPointsEl) {
         console.error('Quests DOM elements not found');
         return;
     }
@@ -398,11 +442,33 @@ function createQuestCard(quest) {
 
 // Update user stats display
 function updateUserStats() {
-    if (userRankEl) {
-        userRankEl.textContent = userProfile?.rank || 1;
+    const points = userProfile?.points || 0;
+    const levelProgress = getLevelProgress(points);
+    
+    // Update level display
+    if (userLevelEl) {
+        if (levelProgress.isMaxLevel) {
+            userLevelEl.textContent = 'MAX';
+        } else {
+            userLevelEl.textContent = levelProgress.level;
+        }
     }
+    
+    // Update points display
     if (userPointsEl) {
-        userPointsEl.textContent = userProfile?.points || 0;
+        userPointsEl.textContent = points;
+    }
+    
+    // Update level progress bar
+    if (levelProgressBarEl && levelProgressFillEl && levelProgressTextEl) {
+        if (levelProgress.isMaxLevel) {
+            levelProgressFillEl.style.width = '100%';
+            levelProgressTextEl.textContent = 'MAX LEVEL';
+        } else {
+            const progressPercent = (levelProgress.xpInCurrentLevel / levelProgress.xpNeededForNextLevel) * 100;
+            levelProgressFillEl.style.width = `${Math.min(progressPercent, 100)}%`;
+            levelProgressTextEl.textContent = `${levelProgress.xpInCurrentLevel} / ${levelProgress.xpNeededForNextLevel} XP`;
+        }
     }
 }
 
@@ -498,17 +564,17 @@ async function awardQuestPoints(points) {
             const userDoc = await transaction.get(userDocRef);
             const currentPoints = userDoc.data()?.points || 0;
             const newPoints = currentPoints + points;
-            const newRank = calculateRank(newPoints);
+            const newLevel = calculateLevel(newPoints);
 
             transaction.update(userDocRef, {
                 points: newPoints,
-                rank: newRank,
+                level: newLevel,
                 totalQuestsCompleted: (userDoc.data()?.totalQuestsCompleted || 0) + 1
             });
 
             // Update local state
             userProfile.points = newPoints;
-            userProfile.rank = newRank;
+            userProfile.level = newLevel;
         });
     } catch (error) {
         console.error('Error awarding quest points:', error);
