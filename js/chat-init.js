@@ -486,7 +486,8 @@ function setupRealtimeListeners() {
             const data = doc.data();
             if (data.userId === currentUser.uid) return; // Skip current user (already added above)
             
-            // Check if user is online (either explicitly online or recently active)
+            // Check if user is online (only if explicitly marked as online AND recently updated)
+            // Also check if they were recently active (within 2 minutes) to show in list
             let lastSeenMillis = 0;
             if (data.lastSeen) {
                 if (data.lastSeen.toMillis) {
@@ -498,13 +499,20 @@ function setupRealtimeListeners() {
                 }
             }
             const timeSinceLastSeen = now - lastSeenMillis;
-            const isRecentlyActive = timeSinceLastSeen < PRESENCE_TIMEOUT * 2; // 60 seconds
+            const isRecentlyActive = timeSinceLastSeen < PRESENCE_TIMEOUT * 4; // 2 minutes - show in list if recently active
             
-            if (data.online || isRecentlyActive) {
+            // Only mark as online if:
+            // 1. Explicitly set to true in data.online
+            // 2. AND last seen is within the presence timeout (30 seconds)
+            // This prevents showing users as online if their browser crashed or they closed the tab
+            const isOnline = data.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
+            
+            // Show in list if online OR recently active (but mark online status correctly)
+            if (isOnline || isRecentlyActive) {
                 onlineUsers.push({
                     ...data,
                     lastSeen: data.lastSeen,
-                    isOnline: data.online || isRecentlyActive
+                    isOnline: isOnline // Only true if explicitly online AND recently seen
                 });
             }
         });
