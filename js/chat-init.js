@@ -82,10 +82,37 @@ async function loadUserProfile() {
         if (userDoc.exists()) {
             userProfile = userDoc.data();
         } else {
-            console.error('User profile not found');
+            console.warn('User profile not found, creating default profile');
+            // Create a default profile if it doesn't exist
+            const defaultUsername = currentUser.email?.split('@')[0] || 'User';
+            userProfile = {
+                username: defaultUsername,
+                usernameLower: defaultUsername.toLowerCase(),
+                avatarCount: 0,
+                bannerImage: '/pfp_apes/bg1.png',
+                xAccountVerified: false
+            };
+            // Try to create it (but don't block if it fails)
+            try {
+                await setDoc(userDocRef, userProfile, { merge: true });
+                console.log('Default user profile created');
+            } catch (createError) {
+                console.error('Error creating user profile:', createError);
+                // Continue anyway with default profile
+            }
         }
     } catch (error) {
         console.error('Error loading user profile:', error);
+        // Create a default profile on error so chat can still work
+        const defaultUsername = currentUser.email?.split('@')[0] || 'User';
+        userProfile = {
+            username: defaultUsername,
+            usernameLower: defaultUsername.toLowerCase(),
+            avatarCount: 0,
+            bannerImage: '/pfp_apes/bg1.png',
+            xAccountVerified: false
+        };
+        console.log('Using default profile due to error');
     }
 }
 
@@ -221,6 +248,20 @@ function setupEventListeners() {
 function loadMessages() {
     if (!currentUser) return;
 
+    // Always hide loading after a timeout, even if query fails
+    const loadingTimeout = setTimeout(() => {
+        if (chatLoadingEl && !chatLoadingEl.classList.contains('hide')) {
+            console.warn('Message loading taking too long, showing error');
+            chatLoadingEl.classList.add('hide');
+            chatEmptyEl.classList.remove('hide');
+            chatEmptyEl.innerHTML = `
+                <div class="chat-empty-icon">⏱️</div>
+                <h3>Loading is taking longer than expected</h3>
+                <p>Please check your connection and refresh the page.</p>
+            `;
+        }
+    }, 15000); // 15 second timeout
+
     const messagesRef = collection(db, 'messages');
     const q = query(
         messagesRef,
@@ -231,6 +272,7 @@ function loadMessages() {
     );
 
     getDocs(q).then((snapshot) => {
+        clearTimeout(loadingTimeout);
         chatLoadingEl.classList.add('hide');
         
         if (snapshot.empty) {
@@ -248,8 +290,16 @@ function loadMessages() {
 
         scrollToBottom();
     }).catch((error) => {
+        clearTimeout(loadingTimeout);
         console.error('Error loading messages:', error);
-        chatLoadingEl.innerHTML = '<p>Error loading messages. Please refresh.</p>';
+        chatLoadingEl.classList.add('hide');
+        chatEmptyEl.classList.remove('hide');
+        chatEmptyEl.innerHTML = `
+            <div class="chat-empty-icon">⚠️</div>
+            <h3>Unable to load messages</h3>
+            <p>There was an error loading messages. Please check your connection and refresh the page.</p>
+            <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px;">Error: ${error.message}</p>
+        `;
     });
 }
 
