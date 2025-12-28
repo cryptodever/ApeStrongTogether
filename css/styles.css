@@ -7405,46 +7405,6 @@ body.quests-body > * {
     margin: 0 0 2rem 0;
 }
 
-.quests-stats {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    padding: 1.5rem 2rem;
-    min-width: 150px;
-    text-align: center;
-    backdrop-filter: blur(20px);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(74, 222, 128, 0.3);
-    transform: translateY(-2px);
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.stat-value {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #4ade80;
-    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
-}
-
 .level-progress-container {
     width: 100%;
     max-width: 600px;
@@ -7461,15 +7421,30 @@ body.quests-body > * {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.75rem;
+    gap: 1rem;
 }
 
-.level-progress-label {
+.level-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.level-label {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.875rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.level-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
 }
 
 .level-progress-text {
