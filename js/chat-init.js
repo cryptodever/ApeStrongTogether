@@ -238,6 +238,9 @@ function initializeChat() {
     
     // Setup typing indicator
     setupTypingIndicator();
+    
+    // Setup user profile popup
+    setupUserProfilePopup();
 }
 
 // Setup event listeners
@@ -1411,11 +1414,17 @@ async function showUserProfile(userId) {
     try {
         // Show loading state
         userProfilePopupEl.classList.remove('hide');
-        document.getElementById('userProfilePopupName').textContent = 'Loading...';
-        document.getElementById('userProfilePopupCountryValue').textContent = '—';
-        document.getElementById('userProfilePopupXAccountValue').textContent = '—';
-        document.getElementById('userProfilePopupBio').textContent = 'Loading profile...';
-        document.getElementById('userProfilePopupVerified').classList.add('hide');
+        const nameEl = document.getElementById('userProfilePopupName');
+        const countryEl = document.getElementById('userProfilePopupCountryValue');
+        const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
+        const bioEl = document.getElementById('userProfilePopupBio');
+        const verifiedEl = document.getElementById('userProfilePopupVerified');
+        
+        if (nameEl) nameEl.textContent = 'Loading...';
+        if (countryEl) countryEl.textContent = '—';
+        if (xAccountEl) xAccountEl.textContent = '—';
+        if (bioEl) bioEl.textContent = 'Loading profile...';
+        if (verifiedEl) verifiedEl.classList.add('hide');
         
         // Fetch user profile from Firestore
         const userDocRef = doc(db, 'users', userId);
@@ -1429,7 +1438,7 @@ async function showUserProfile(userId) {
         
         const userData = userDoc.data();
         
-        // Update popup with user data
+        // Update popup with user data - get elements fresh to ensure they exist
         const nameEl = document.getElementById('userProfilePopupName');
         const bannerImgEl = document.getElementById('userProfilePopupBannerImg');
         const countryEl = document.getElementById('userProfilePopupCountryValue');
@@ -1437,21 +1446,41 @@ async function showUserProfile(userId) {
         const bioEl = document.getElementById('userProfilePopupBio');
         const verifiedEl = document.getElementById('userProfilePopupVerified');
         
+        // Check if all elements exist
+        if (!nameEl || !bannerImgEl || !countryEl || !xAccountEl || !bioEl || !verifiedEl) {
+            console.error('User profile popup elements not found:', {
+                nameEl: !!nameEl,
+                bannerImgEl: !!bannerImgEl,
+                countryEl: !!countryEl,
+                xAccountEl: !!xAccountEl,
+                bioEl: !!bioEl,
+                verifiedEl: !!verifiedEl
+            });
+            return;
+        }
+        
         // Name
         nameEl.textContent = userData.username || 'Anonymous';
         
-        // Banner
+        // Banner - handle image loading with error fallback
         const bannerImage = userData.bannerImage || '/pfp_apes/bg1.png';
-        bannerImgEl.src = bannerImage;
-        bannerImgEl.dataset.fallback = '/pfp_apes/bg1.png';
+        const fallbackImage = '/pfp_apes/bg1.png';
+        
+        // Remove any existing error listeners
+        const newImg = bannerImgEl.cloneNode(false);
+        bannerImgEl.parentNode.replaceChild(newImg, bannerImgEl);
+        const updatedBannerImg = document.getElementById('userProfilePopupBannerImg');
+        
+        updatedBannerImg.src = bannerImage;
+        updatedBannerImg.dataset.fallback = fallbackImage;
         
         // Add error handling for banner image
-        bannerImgEl.addEventListener('error', function() {
-            const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+        updatedBannerImg.addEventListener('error', function handleError() {
+            const fallback = this.dataset.fallback || fallbackImage;
             if (this.src !== fallback) {
                 this.src = fallback;
             }
-        });
+        }, { once: true });
         
         // Country
         if (userData.country) {
@@ -1480,10 +1509,22 @@ async function showUserProfile(userId) {
             bioEl.textContent = 'No bio available.';
         }
         
+        // Ensure popup is visible after data is loaded
+        userProfilePopupEl.classList.remove('hide');
+        
+        // Force a reflow to ensure CSS transition works
+        void userProfilePopupEl.offsetWidth;
+        
     } catch (error) {
         console.error('Error loading user profile:', error);
-        document.getElementById('userProfilePopupName').textContent = 'Error';
-        document.getElementById('userProfilePopupBio').textContent = 'Failed to load user profile.';
+        const nameEl = document.getElementById('userProfilePopupName');
+        const bioEl = document.getElementById('userProfilePopupBio');
+        if (nameEl) nameEl.textContent = 'Error';
+        if (bioEl) bioEl.textContent = 'Failed to load user profile.';
+        // Still show popup even on error
+        if (userProfilePopupEl) {
+            userProfilePopupEl.classList.remove('hide');
+        }
     }
 }
 
