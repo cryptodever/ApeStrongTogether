@@ -353,14 +353,19 @@ async function createUserProfileAfterVerification(uid, usernameLower, email) {
     console.log('  - Email:', email);
     
     try {
-        // Create user profile
+        // Create user profile - MUST match Firestore rules exactly
+        // Rules require: username, email, avatarCount, createdAt (only these fields on create)
+        // Username must match: ^[a-z0-9_]{3,20}$ (lowercase alphanumeric + underscore, 3-20 chars)
         const userData = {
-            username: usernameLower,
+            username: usernameLower,  // Must be lowercase to match isValidUsername rule
             email: email,
             createdAt: Timestamp.now(),
             avatarCount: 0
         };
         console.log('  - Setting users/' + uid + ' with data:', userData);
+        console.log('  - Validating username format:', usernameLower, 'matches pattern:', /^[a-z0-9_]{3,20}$/.test(usernameLower));
+        
+        // Use setDoc (not merge) to ensure clean creation that matches rules
         await setDoc(userRef, userData);
         
         console.log(`✅ User profile created successfully for uid ${uid}`);
@@ -369,10 +374,18 @@ async function createUserProfileAfterVerification(uid, usernameLower, email) {
         console.error('❌ User profile creation error:', error);
         console.error('  - Error code:', error.code);
         console.error('  - Error message:', error.message);
+        console.error('  - Full error object:', error);
+        
+        // Check if it's a permission error
         if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
             console.error('  - PERMISSION_DENIED: Check Firestore rules');
             console.error('    * users/{uid}: Ensure request.auth.uid == uid');
+            console.error('    * Required fields: username, email, avatarCount, createdAt');
+            console.error('    * Username must match: ^[a-z0-9_]{3,20}$');
+            console.error('    * Current username:', usernameLower, 'valid:', /^[a-z0-9_]{3,20}$/.test(usernameLower));
         }
+        
+        // Don't silently fail - return error so caller can handle it
         return { success: false, reason: 'error', error: error };
     }
 }
@@ -635,11 +648,25 @@ if (signupFormEl && signupBtn) {
                 signupBtn.textContent = 'Create Account';
                 return;
             } else {
-                console.log('✅ Username reserved successfully (profile will be created after email verification)');
+                console.log('✅ Username reserved successfully');
                 
-                // Store username in localStorage for retrieval after email verification
-                localStorage.setItem('pending_username', usernameLower);
-                console.log('  - Username stored in localStorage for profile creation');
+                // Step 3: Create user profile immediately (not waiting for email verification)
+                console.log('📝 Step 3: Creating user profile immediately...');
+                const profileResult = await createUserProfileAfterVerification(uid, usernameLower, email);
+                
+                if (!profileResult.success) {
+                    // Profile creation failed - but username is reserved, so we should still proceed
+                    // The profile can be created later when user verifies email or visits profile page
+                    console.error('⚠️ Profile creation failed, but username is reserved. Profile will be created later.');
+                    console.error('  - Error:', profileResult.error);
+                    
+                    // Store username in localStorage as fallback
+                    localStorage.setItem('pending_username', usernameLower);
+                } else {
+                    console.log('✅ User profile created successfully during signup');
+                    // Clear any pending username since profile is already created
+                    localStorage.removeItem('pending_username');
+                }
                 
                 // Success - send verification email immediately after user creation
                 // IMPORTANT: Use userCredential.user (the newly created user) and await the call

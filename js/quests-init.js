@@ -161,21 +161,40 @@ async function loadUserProfile() {
             }
         } else {
             // Create default profile with points/rank
-            const defaultUsername = currentUser.email?.split('@')[0] || 'User';
-            userProfile = {
-                username: defaultUsername,
-                usernameLower: defaultUsername.toLowerCase(),
+            // Must match Firestore rules: username, email, avatarCount, createdAt (on create)
+            const defaultUsername = currentUser.email?.split('@')[0] || 'user';
+            // Normalize username to match Firestore rules
+            const normalizedUsername = defaultUsername.toLowerCase()
+                .replace(/[^a-z0-9_]/g, '_')
+                .substring(0, 20)
+                .replace(/^_+|_+$/g, '');
+            const finalUsername = normalizedUsername.length >= 3 ? normalizedUsername : 'user_' + Date.now().toString(36).substring(0, 10);
+            
+            const userData = {
+                username: finalUsername,
+                email: currentUser.email || '',
                 avatarCount: 0,
+                createdAt: Timestamp.now()
+            };
+            
+            userProfile = {
+                ...userData,
+                usernameLower: finalUsername.toLowerCase(),
                 bannerImage: '/pfp_apes/bg1.png',
                 xAccountVerified: false,
                 points: 0,
                 level: 1,
                 totalQuestsCompleted: 0
             };
+            
             try {
-                await setDoc(userDocRef, userProfile, { merge: true });
+                // Use setDoc (not merge) for initial creation to match Firestore rules
+                await setDoc(userDocRef, userData);
+                console.log('Default user profile created in quests with username:', finalUsername);
             } catch (createError) {
                 console.error('Error creating user profile:', createError);
+                console.error('  - Error code:', createError.code);
+                console.error('  - Error message:', createError.message);
             }
         }
     } catch (error) {
