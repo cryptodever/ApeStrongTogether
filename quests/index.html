@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <title>Quests 🎯 | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="quests-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="quests-page">
+        <div class="quests-container">
+            <header class="quests-header">
+                <div class="quests-header-content">
+                    <h1>Quests 🎯</h1>
+                    <p>Complete quests to earn points and level up!</p>
+                </div>
+                <div class="quests-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Level</div>
+                        <div class="stat-value" id="userRank">1</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Points</div>
+                        <div class="stat-value" id="userPoints">0</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="quests-content">
+                <!-- Daily Quests Section -->
+                <section class="quest-section">
+                    <div class="quest-section-header">
+                        <h2>Daily Quests</h2>
+                        <span class="quest-section-subtitle">Resets every day</span>
+                    </div>
+                    <div class="quests-grid" id="dailyQuests">
+                        <div class="quest-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading daily quests...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Weekly Quests Section -->
+                <section class="quest-section">
+                    <div class="quest-section-header">
+                        <h2>Weekly Quests</h2>
+                        <span class="quest-section-subtitle">Resets every week</span>
+                    </div>
+                    <div class="quests-grid" id="weeklyQuests">
+                        <div class="quest-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading weekly quests...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/quests-init.js?v=1"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>
+

@@ -49,7 +49,8 @@ service cloud.firestore {
         && request.resource.data.avatarCount >= 0
         && request.resource.data.createdAt is timestamp;
 
-      // Allow updates to profile fields (bio, country, bannerImage, bannerBackground, updatedAt)
+      // Allow updates to profile fields (bio, country, bannerImage, bannerBackground, updatedAt, points, rank, totalQuestsCompleted)
+      // Points, rank, and totalQuestsCompleted can be updated via transactions (for quest completion)
       allow update: if isOwner(uid)
         && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.username == resource.data.username)
@@ -136,6 +137,40 @@ service cloud.firestore {
       allow create, update: if isAdminOrMod(request.auth.uid);
       
       allow delete: if false;
+    }
+
+    // Quests collection (read-only for authenticated users)
+    match /quests/{questId} {
+      // Anyone authenticated can read quests
+      allow read: if isSignedIn();
+      
+      // Only admins can create/update quests
+      allow create, update: if isAdminOrMod(request.auth.uid);
+      
+      allow delete: if false;
+    }
+
+    // User quests progress
+    match /userQuests/{userQuestId} {
+      // Users can read their own quest progress
+      allow read: if isSignedIn() && 
+        resource.data.userId == request.auth.uid;
+      
+      // Users can create/update their own quest progress
+      // Note: timestamp fields can be serverTimestamp() sentinel
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.questId is string
+        && request.resource.data.progress is int
+        && request.resource.data.progress >= 0
+        && request.resource.data.completed is bool;
+      
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.questId == resource.data.questId;
+      
+      allow delete: if false; // Don't allow deletion, use reset instead
     }
 
     // Default deny
