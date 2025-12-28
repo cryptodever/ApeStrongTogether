@@ -30,7 +30,7 @@ let userQuests = {}; // Map of questId -> userQuest data
 let availableQuests = [];
 
 // DOM Elements
-let dailyQuestsEl, weeklyQuestsEl, userLevelEl, userPointsEl;
+let dailyQuestsEl, weeklyQuestsEl, userLevelEl;
 let levelProgressBarEl, levelProgressFillEl, levelProgressTextEl;
 
 // Initialize auth gate for quests page
@@ -158,12 +158,11 @@ async function initializeQuests() {
     dailyQuestsEl = document.getElementById('dailyQuests');
     weeklyQuestsEl = document.getElementById('weeklyQuests');
     userLevelEl = document.getElementById('userLevel');
-    userPointsEl = document.getElementById('userPoints');
     levelProgressBarEl = document.getElementById('levelProgressBar');
     levelProgressFillEl = document.getElementById('levelProgressFill');
     levelProgressTextEl = document.getElementById('levelProgressText');
 
-    if (!dailyQuestsEl || !weeklyQuestsEl || !userLevelEl || !userPointsEl) {
+    if (!dailyQuestsEl || !weeklyQuestsEl || !userLevelEl) {
         console.error('Quests DOM elements not found');
         return;
     }
@@ -452,11 +451,6 @@ function updateUserStats() {
         } else {
             userLevelEl.textContent = levelProgress.level;
         }
-    }
-    
-    // Update points display
-    if (userPointsEl) {
-        userPointsEl.textContent = points;
     }
     
     // Update level progress bar
