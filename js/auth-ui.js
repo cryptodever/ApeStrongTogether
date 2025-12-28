@@ -402,7 +402,17 @@ if (loginFormEl && loginBtn) {
         loginBtn.textContent = 'Loading...';
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // Check if email is verified
+            await userCredential.user.reload();
+            if (!userCredential.user.emailVerified) {
+                // Email not verified - redirect to verify page
+                showMessage('login', 'error', 'Please verify your email before logging in. Redirecting to verification page...');
+                setTimeout(() => {
+                    window.location.href = '/verify/';
+                }, 2000);
+                return;
+            }
             // Success - onAuthStateChanged will handle redirect
             showMessage('login', 'success', 'Login successful! Redirecting...');
         } catch (error) {
