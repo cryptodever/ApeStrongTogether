@@ -288,8 +288,12 @@ async function initializeQuests() {
     await checkAndUpdateCompleteAllDailyQuests();
     
     // Track quests page visit (after a small delay to ensure quests are loaded)
-    setTimeout(() => {
-        updateQuestProgress('daily_quests_visit', 1);
+    setTimeout(async () => {
+        try {
+            await updateQuestProgress('daily_quests_visit', 1);
+        } catch (error) {
+            console.error('Error tracking quests page visit:', error);
+        }
     }, 500);
 }
 
@@ -612,7 +616,7 @@ export async function updateQuestProgress(questId, increment = 1) {
 
     // Ensure quests are loaded
     if (availableQuests.length === 0) {
-        loadAvailableQuests();
+        await loadAvailableQuests();
     }
 
     const quest = availableQuests.find(q => q.id === questId);
@@ -705,7 +709,7 @@ async function checkAndUpdateCompleteAllDailyQuests() {
     
     // Make sure quests are loaded
     if (availableQuests.length === 0) {
-        loadAvailableQuests();
+        await loadAvailableQuests();
     }
     
     // Get all daily quests (excluding the "complete all" quest itself)
