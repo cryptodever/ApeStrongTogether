@@ -596,14 +596,14 @@ function updateUserStats() {
         }
     }
     
-    // Update level progress bar
+    // Update level progress bar using setProperty (CSP-safe)
     if (levelProgressBarEl && levelProgressFillEl && levelProgressTextEl) {
         if (levelProgress.isMaxLevel) {
-            levelProgressFillEl.style.width = '100%';
+            levelProgressFillEl.style.setProperty('width', '100%');
             levelProgressTextEl.textContent = 'MAX LEVEL';
         } else {
             const progressPercent = (levelProgress.xpInCurrentLevel / levelProgress.xpNeededForNextLevel) * 100;
-            levelProgressFillEl.style.width = `${Math.min(progressPercent, 100)}%`;
+            levelProgressFillEl.style.setProperty('width', `${Math.min(progressPercent, 100)}%`);
             levelProgressTextEl.textContent = `${levelProgress.xpInCurrentLevel} / ${levelProgress.xpNeededForNextLevel} XP`;
         }
     }

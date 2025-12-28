@@ -152,9 +152,12 @@ service cloud.firestore {
 
     // User quests progress
     match /userQuests/{userQuestId} {
-      // Users can read their own quest progress
-      allow read: if isSignedIn() && 
+      // Users can read their own quest progress (both get and list/query)
+      // For queries, Firestore checks this rule against each document
+      allow get: if isSignedIn() && 
         resource.data.userId == request.auth.uid;
+      
+      allow list: if isSignedIn();
       
       // Users can create/update their own quest progress
       // Note: timestamp fields can be serverTimestamp() sentinel
