@@ -3,7 +3,7 @@
  * Handles real-time chat functionality with Firestore
  */
 
-import { auth, db } from './firebase.js';
+import { auth, db, app } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
     collection,
@@ -1379,6 +1379,118 @@ function scrollToBottom() {
     }
 }
 
+// Create a default user profile for a user ID (helper function)
+async function createDefaultUserProfile(userId) {
+    if (!userId || !currentUser) return false;
+    
+    try {
+        // Check if profile already exists
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+            return true; // Profile already exists
+        }
+        
+        // Try to create profile using Cloud Function
+        // This allows creating profiles for other users (if admin) or for current user
+        try {
+            const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js');
+            const functions = getFunctions(app, 'us-central1');
+            const createDefaultProfile = httpsCallable(functions, 'createDefaultUserProfile');
+            
+            const result = await createDefaultProfile({ uid: userId });
+            
+            if (result.data && result.data.success) {
+                console.log('✅ Created default profile via Cloud Function for userId:', userId, 'username:', result.data.username);
+                return true;
+            } else {
+                console.warn('⚠️ Cloud Function returned success=false for userId:', userId);
+                return false;
+            }
+        } catch (cloudFunctionError) {
+            console.error('❌ Error calling Cloud Function to create profile:', cloudFunctionError);
+            
+            // Fallback: Try to create profile directly (only works for current user due to Firestore rules)
+            if (userId === currentUser.uid) {
+                // Try to get user info from presence collection
+                let email = '';
+                let username = '';
+                
+                const presenceRef = doc(db, 'presence', userId);
+                const presenceDoc = await getDoc(presenceRef);
+                
+                if (presenceDoc.exists()) {
+                    const presenceData = presenceDoc.data();
+                    username = presenceData.username || '';
+                    email = presenceData.email || '';
+                }
+                
+                // Generate default username if not found
+                if (!username || username.trim() === '') {
+                    if (email) {
+                        username = email.split('@')[0] || 'user';
+                    } else {
+                        username = 'user_' + Date.now().toString(36).substring(0, 10);
+                    }
+                }
+                
+                // Normalize username to match Firestore rules
+                const normalizedUsername = username.toLowerCase()
+                    .replace(/[^a-z0-9_]/g, '_')
+                    .substring(0, 20)
+                    .replace(/^_+|_+$/g, '');
+                
+                const finalUsername = normalizedUsername.length >= 3 
+                    ? normalizedUsername 
+                    : 'user_' + Date.now().toString(36).substring(0, 10);
+                
+                // Create user profile with required fields
+                const userData = {
+                    username: finalUsername,
+                    email: email || '',
+                    avatarCount: 0,
+                    createdAt: Timestamp.now()
+                };
+                
+                await setDoc(userDocRef, userData);
+                console.log('✅ Created default profile directly for current user:', userId, 'with username:', finalUsername);
+                return true;
+            } else {
+                // Can't create profile for other users without Cloud Function
+                return false;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error creating default profile for userId:', userId, error);
+        return false;
+    }
+}
+
+// Get profile data from presence collection as fallback
+async function getProfileFromPresence(userId) {
+    try {
+        const presenceRef = doc(db, 'presence', userId);
+        const presenceDoc = await getDoc(presenceRef);
+        
+        if (presenceDoc.exists()) {
+            const presenceData = presenceDoc.data();
+            return {
+                username: presenceData.username || 'Anonymous',
+                bannerImage: presenceData.bannerImage || '/pfp_apes/bg1.png',
+                xAccountVerified: presenceData.xAccountVerified || false,
+                country: null,
+                bio: null,
+                xAccount: null,
+                email: presenceData.email || ''
+            };
+        }
+    } catch (error) {
+        console.error('Error getting profile from presence:', error);
+    }
+    return null;
+}
+
 // Setup user profile popup
 function setupUserProfilePopup() {
     if (!userProfilePopupEl || !userProfilePopupOverlayEl || !userProfilePopupCloseEl) return;
@@ -1405,6 +1517,12 @@ function setupUserProfilePopup() {
 async function showUserProfile(userId) {
     if (!userProfilePopupEl || !currentUser) return;
     
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+        console.error('showUserProfile: Invalid userId:', userId);
+        return;
+    }
+    
     // Don't show profile for current user (they can use their own profile page)
     if (userId === currentUser.uid) {
         window.location.href = '/generator/';
@@ -1427,16 +1545,43 @@ async function showUserProfile(userId) {
         if (verifiedEl) verifiedEl.classList.add('hide');
         
         // Fetch user profile from Firestore
+        console.log('Fetching user profile for userId:', userId);
         const userDocRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userDocRef);
         
-        if (!userDoc.exists()) {
-            document.getElementById('userProfilePopupName').textContent = 'User not found';
-            document.getElementById('userProfilePopupBio').textContent = 'This user profile could not be loaded.';
-            return;
-        }
+        let userData = null;
         
-        const userData = userDoc.data();
+        if (userDoc.exists()) {
+            userData = userDoc.data();
+            console.log('User profile found in users collection:', userData);
+        } else {
+            console.log('User not found in users collection, attempting to create default profile...');
+            // Try to create a default profile for this user
+            const created = await createDefaultUserProfile(userId);
+            
+            if (created) {
+                // Retry fetching the profile
+                const retryDoc = await getDoc(userDocRef);
+                if (retryDoc.exists()) {
+                    userData = retryDoc.data();
+                    console.log('Default profile created and loaded:', userData);
+                } else {
+                    // Still not found, try presence collection as fallback
+                    userData = await getProfileFromPresence(userId);
+                }
+            } else {
+                // Couldn't create profile, try presence collection as fallback
+                userData = await getProfileFromPresence(userId);
+            }
+            
+            if (!userData) {
+                // User not found in any collection
+                console.error('User not found in users or presence collection for userId:', userId);
+                if (nameEl) nameEl.textContent = 'User not found';
+                if (bioEl) bioEl.textContent = 'This user profile could not be loaded.';
+                return;
+            }
+        }
         
         // Get banner image element (not declared above)
         const bannerImgEl = document.getElementById('userProfilePopupBannerImg');

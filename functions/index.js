@@ -275,3 +275,126 @@ exports.verifyUserEmail = functions.region('us-central1').https.onCall(async (da
     }
 });
 
+/**
+ * Create a default user profile for a user who doesn't have one
+ * 
+ * This function:
+ * 1. Checks if a user profile exists in Firestore
+ * 2. If not, creates a default profile with username, email, avatarCount, and createdAt
+ * 3. Can be called by any authenticated user to create their own profile, or by admins for any user
+ * 
+ * Parameters:
+ * - uid: User ID to create profile for (optional, defaults to caller's uid)
+ * 
+ * Returns:
+ * - success: boolean indicating if profile was created
+ * - alreadyExists: boolean indicating if profile already existed
+ * - username: the username assigned to the profile
+ */
+exports.createDefaultUserProfile = functions.region('us-central1').https.onCall(async (data, context) => {
+    // Verify user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { uid } = data;
+    const targetUid = uid || context.auth.uid;
+
+    // If creating profile for another user, check if caller is admin
+    if (targetUid !== context.auth.uid) {
+        try {
+            const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+            const callerData = callerDoc.exists ? callerDoc.data() : {};
+            const isAdmin = callerData.role === 'admin' || callerData.role === 'moderator';
+
+            if (!isAdmin) {
+                throw new functions.https.HttpsError('permission-denied', 'Only admins can create profiles for other users');
+            }
+        } catch (error) {
+            if (error instanceof functions.https.HttpsError) {
+                throw error;
+            }
+            throw new functions.https.HttpsError('internal', `Failed to check admin status: ${error.message}`);
+        }
+    }
+
+    try {
+        // Check if profile already exists
+        const userDocRef = db.collection('users').doc(targetUid);
+        const userDoc = await userDocRef.get();
+
+        if (userDoc.exists) {
+            const existingData = userDoc.data();
+            return {
+                success: true,
+                alreadyExists: true,
+                username: existingData.username || 'Unknown',
+                message: 'Profile already exists'
+            };
+        }
+
+        // Get user info from Firebase Auth
+        let email = '';
+        let username = '';
+        
+        try {
+            const authUser = await admin.auth().getUser(targetUid);
+            email = authUser.email || '';
+            username = email ? email.split('@')[0] : 'user';
+        } catch (authError) {
+            console.warn(`[createDefaultUserProfile:${targetUid}] Could not get user from Auth:`, authError.message);
+            // Try to get from presence collection as fallback
+            const presenceRef = db.collection('presence').doc(targetUid);
+            const presenceDoc = await presenceRef.get();
+            
+            if (presenceDoc.exists) {
+                const presenceData = presenceDoc.data();
+                username = presenceData.username || '';
+                email = presenceData.email || '';
+            }
+            
+            if (!username || username.trim() === '') {
+                username = 'user_' + Date.now().toString(36).substring(0, 10);
+            }
+        }
+
+        // Normalize username to match Firestore rules
+        const normalizedUsername = username.toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .substring(0, 20)
+            .replace(/^_+|_+$/g, '');
+
+        const finalUsername = normalizedUsername.length >= 3 
+            ? normalizedUsername 
+            : 'user_' + Date.now().toString(36).substring(0, 10);
+
+        // Create user profile with required fields
+        const userData = {
+            username: finalUsername,
+            email: email || '',
+            avatarCount: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        await userDocRef.set(userData);
+
+        console.log(`[createDefaultUserProfile:${targetUid}] Created default profile with username: ${finalUsername}`);
+
+        return {
+            success: true,
+            alreadyExists: false,
+            username: finalUsername,
+            message: 'Default profile created successfully'
+        };
+
+    } catch (error) {
+        console.error(`[createDefaultUserProfile:${targetUid}] Error:`, error);
+        
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+
+        throw new functions.https.HttpsError('internal', `Failed to create default profile: ${error.message}`);
+    }
+});
+
