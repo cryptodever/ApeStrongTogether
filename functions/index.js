@@ -208,3 +208,70 @@ exports.verifyXAccount = functions.region('us-central1').https.onCall(async (dat
     }
 });
 
+/**
+ * Manually verify a user's email address (Admin only)
+ * 
+ * This function allows admins to manually verify user emails when verification emails fail to arrive.
+ * 
+ * Usage: Call from Firebase Console or via HTTP request
+ * 
+ * Parameters:
+ * - uid: User ID to verify (required)
+ * 
+ * Security: Only users with admin role in Firestore can call this function
+ */
+exports.verifyUserEmail = functions.region('us-central1').https.onCall(async (data, context) => {
+    // Verify user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { uid } = data;
+
+    // Validate input
+    if (!uid) {
+        throw new functions.https.HttpsError('invalid-argument', 'User ID (uid) is required');
+    }
+
+    try {
+        // Check if caller is admin
+        const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+        const callerData = callerDoc.exists ? callerDoc.data() : {};
+        const isAdmin = callerData.role === 'admin' || callerData.role === 'moderator';
+
+        if (!isAdmin) {
+            throw new functions.https.HttpsError('permission-denied', 'Only admins can verify user emails');
+        }
+
+        // Get the user to verify
+        const userToVerify = await admin.auth().getUser(uid);
+        
+        if (!userToVerify) {
+            throw new functions.https.HttpsError('not-found', 'User not found');
+        }
+
+        // Verify the email using Admin SDK
+        await admin.auth().updateUser(uid, {
+            emailVerified: true
+        });
+
+        console.log(`[verifyUserEmail] Email verified for user: ${uid} (${userToVerify.email}) by admin: ${context.auth.uid}`);
+
+        return {
+            success: true,
+            message: `Email verified for user ${userToVerify.email}`,
+            uid: uid,
+            email: userToVerify.email
+        };
+
+    } catch (error) {
+        console.error('[verifyUserEmail] Error:', error);
+        
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+
+        throw new functions.https.HttpsError('internal', `Failed to verify email: ${error.message}`);
+    }
+});
+
