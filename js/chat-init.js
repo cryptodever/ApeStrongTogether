@@ -109,35 +109,85 @@ async function loadUserProfile() {
         } else {
             console.warn('User profile not found, creating default profile');
             // Create a default profile if it doesn't exist
-            const defaultUsername = currentUser.email?.split('@')[0] || 'User';
-            userProfile = {
-                username: defaultUsername,
-                usernameLower: defaultUsername.toLowerCase(),
+            // Must match Firestore rules: username, email, avatarCount, createdAt (on create)
+            const defaultUsername = currentUser.email?.split('@')[0] || 'user';
+            // Normalize username to match Firestore rules: lowercase, alphanumeric + underscore, 3-20 chars
+            const normalizedUsername = defaultUsername.toLowerCase()
+                .replace(/[^a-z0-9_]/g, '_')  // Replace invalid chars with underscore
+                .substring(0, 20)             // Max 20 chars
+                .replace(/^_+|_+$/g, '');     // Remove leading/trailing underscores
+            
+            // Ensure minimum length
+            const finalUsername = normalizedUsername.length >= 3 ? normalizedUsername : 'user_' + Date.now().toString(36).substring(0, 10);
+            
+            const userData = {
+                username: finalUsername,
+                email: currentUser.email || '',
                 avatarCount: 0,
+                createdAt: Timestamp.now()
+            };
+            
+            userProfile = {
+                ...userData,
+                usernameLower: finalUsername.toLowerCase(),
                 bannerImage: '/pfp_apes/bg1.png',
                 xAccountVerified: false
             };
+            
             // Try to create it (but don't block if it fails)
             try {
-                await setDoc(userDocRef, userProfile, { merge: true });
-                console.log('Default user profile created');
+                // Use setDoc (not merge) for initial creation to match Firestore rules
+                await setDoc(userDocRef, userData);
+                console.log('Default user profile created with username:', finalUsername);
             } catch (createError) {
                 console.error('Error creating user profile:', createError);
+                console.error('  - Error code:', createError.code);
+                console.error('  - Error message:', createError.message);
+                if (createError.code === 'permission-denied') {
+                    console.error('  - PERMISSION_DENIED: Profile creation blocked by Firestore rules');
+                    console.error('    * Check that request.auth.uid == uid');
+                    console.error('    * Username format:', finalUsername, 'valid:', /^[a-z0-9_]{3,20}$/.test(finalUsername));
+                }
                 // Continue anyway with default profile
             }
         }
     } catch (error) {
         console.error('Error loading user profile:', error);
         // Create a default profile on error so chat can still work
-        const defaultUsername = currentUser.email?.split('@')[0] || 'User';
+        const defaultUsername = currentUser.email?.split('@')[0] || 'user';
+        // Normalize username to match Firestore rules
+        const normalizedUsername = defaultUsername.toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .substring(0, 20)
+            .replace(/^_+|_+$/g, '');
+        const finalUsername = normalizedUsername.length >= 3 ? normalizedUsername : 'user_' + Date.now().toString(36).substring(0, 10);
+        
         userProfile = {
-            username: defaultUsername,
-            usernameLower: defaultUsername.toLowerCase(),
+            username: finalUsername,
+            usernameLower: finalUsername.toLowerCase(),
+            email: currentUser.email || '',
             avatarCount: 0,
             bannerImage: '/pfp_apes/bg1.png',
             xAccountVerified: false
         };
         console.log('Using default profile due to error');
+        
+        // Try to create the profile one more time with proper format
+        try {
+            const userData = {
+                username: finalUsername,
+                email: currentUser.email || '',
+                avatarCount: 0,
+                createdAt: Timestamp.now()
+            };
+            
+            await setDoc(doc(db, 'users', currentUser.uid), userData);
+            console.log('Successfully created user profile after error');
+        } catch (retryError) {
+            console.error('Failed to create profile on retry:', retryError);
+            console.error('  - Error code:', retryError.code);
+            console.error('  - Error message:', retryError.message);
+        }
     }
 }
 

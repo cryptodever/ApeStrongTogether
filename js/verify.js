@@ -3,11 +3,12 @@
  * Handles resend verification email and checking verification status
  */
 
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { 
     sendEmailVerification,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 import { createUserProfileAfterVerification } from './auth-ui.js';
 
 const resendBtn = document.getElementById('resendBtn');
@@ -94,24 +95,37 @@ if (continueBtn) {
                     if (pendingUsername) {
                         console.log(`Found reserved username in localStorage: ${pendingUsername}`);
                         
-                        // Create profile with the reserved username
-                        const profileResult = await createUserProfileAfterVerification(
-                            currentUser.uid,
-                            pendingUsername,
-                            currentUser.email
-                        );
+                        // Check if profile already exists (it should have been created during signup)
+                        const userDocRef = doc(db, 'users', currentUser.uid);
+                        const userDoc = await getDoc(userDocRef);
                         
-                        // Clear the pending username from localStorage
-                        localStorage.removeItem('pending_username');
-                        
-                        if (profileResult.success) {
-                            console.log('✅ User profile created successfully');
+                        if (userDoc.exists()) {
+                            console.log('✅ User profile already exists (created during signup)');
+                            // Clear the pending username since profile exists
+                            localStorage.removeItem('pending_username');
                             // Redirect to generator
                             window.location.href = '/generator/';
                         } else {
-                            showMessage('error', 'Profile creation failed. Please try again.');
-                            continueBtn.disabled = false;
-                            continueBtn.textContent = 'I Verified, Continue';
+                            // Profile doesn't exist - create it now (fallback for edge cases)
+                            console.log('⚠️ Profile not found, creating now...');
+                            const profileResult = await createUserProfileAfterVerification(
+                                currentUser.uid,
+                                pendingUsername,
+                                currentUser.email
+                            );
+                            
+                            // Clear the pending username from localStorage
+                            localStorage.removeItem('pending_username');
+                            
+                            if (profileResult.success) {
+                                console.log('✅ User profile created successfully');
+                                // Redirect to generator
+                                window.location.href = '/generator/';
+                            } else {
+                                showMessage('error', 'Profile creation failed. Please try again.');
+                                continueBtn.disabled = false;
+                                continueBtn.textContent = 'I Verified, Continue';
+                            }
                         }
                     } else {
                         console.warn('⚠️ No pending username found - profile may already exist');
