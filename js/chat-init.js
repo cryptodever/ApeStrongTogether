@@ -1525,7 +1525,7 @@ async function showUserProfile(userId) {
     
     // Don't show profile for current user (they can use their own profile page)
     if (userId === currentUser.uid) {
-        window.location.href = '/generator/';
+        window.location.href = '/profile/';
         return;
     }
     

@@ -504,12 +504,12 @@ nav {
     font-weight: 500;
 }
 
-/* Generator-specific utilities */
+/* Profile-specific utilities */
 .debug-btn-active {
     background: rgba(74, 222, 128, 0.3) !important;
 }
 
-/* Generator background option */
+/* Profile background option */
 .bg-option {
     width: 80px;
     height: 80px;
@@ -525,7 +525,7 @@ nav {
     }
 }
 
-/* Generator background thumbnail */
+/* Profile background thumbnail */
 .bg-thumb {
     width: 100%;
     height: 100%;
@@ -536,7 +536,7 @@ nav {
     user-select: none;
 }
 
-/* Generator color swatches */
+/* Profile color swatches */
 .color-white {
     background: #ffffff;
 }
@@ -559,8 +559,8 @@ nav {
    Homepage Styles (extracted from index.html)
    ============================================ */
 
-/* Homepage-specific body styles - only apply when NOT on login/generator/roadmap/chat pages */
-body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) {
+/* Homepage-specific body styles - only apply when NOT on login/profile/roadmap/chat pages */
+body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background-color: #1a1a1a;
     background-image: url('/background_homepage.png');
@@ -576,7 +576,7 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) {
     overflow-x: hidden;
         }
 
-body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::before {
+body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body)::before {
             content: '';
             position: fixed;
             top: 0;
@@ -591,7 +591,7 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::b
             z-index: 0;
         }
 
-body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::after {
+body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body)::after {
             content: '';
             position: fixed;
             top: 0;
@@ -604,27 +604,27 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body)::a
             opacity: 0.3;
         }
 
-body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > * {
+body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) > * {
             position: relative;
             z-index: 1;
         }
         
         /* Ensure page content doesn't sit above mobile menu on mobile */
         @media (max-width: 768px) {
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > *:not(nav):not(#site-header):not(.mobile-menu-overlay) {
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) > *:not(nav):not(#site-header):not(.mobile-menu-overlay) {
                 z-index: 1 !important;
             }
             
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .container,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .page-container,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .hero,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .card,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) section,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) main,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .token-address-section,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .thesis-statement,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .what-is-this,
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .whats-coming {
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .container,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .page-container,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .hero,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .card,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) section,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) main,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .token-address-section,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .thesis-statement,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .what-is-this,
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .whats-coming {
                 z-index: 1 !important;
                 position: relative;
             }
@@ -632,8 +632,8 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) > 
 
         /* Navigation styles are now in /partials/header.html */
 
-/* Homepage-specific styles - only apply when NOT on login/generator/roadmap/chat pages */
-body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
+/* Homepage-specific styles - only apply when NOT on login/profile/roadmap/chat pages */
+body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
             width: 100%;
             background: rgba(15, 15, 15, 0.7);
             backdrop-filter: blur(8px);
@@ -646,7 +646,7 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
         
         /* Ensure ticker-bar doesn't sit above mobile menu */
         @media (max-width: 768px) {
-    body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
+    body:not(.login-body):not(.profile-body):not(.roadmap-body):not(.chat-body) .ticker-bar {
                 z-index: 1 !important;
             }
         }
@@ -2488,7 +2488,7 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
         .nav-container .nav-links.is-open,
         .nav-links.is-open,
         body.login-body .nav-links.is-open,
-        body.generator-body .nav-links.is-open,
+        body.profile-body .nav-links.is-open,
         body.roadmap-body .nav-links.is-open,
         body.tokenomics-body .nav-links.is-open,
         body.verify-body .nav-links.is-open {
@@ -2520,8 +2520,8 @@ body:not(.login-body):not(.generator-body):not(.roadmap-body):not(.chat-body) .t
         body::after,
         body.login-body::before,
         body.login-body::after,
-        body.generator-body::before,
-        body.generator-body::after,
+        body.profile-body::before,
+        body.profile-body::after,
         body.roadmap-body::before,
         body.roadmap-body::after,
         body.tokenomics-body::before,
@@ -4642,10 +4642,10 @@ body.tokenomics-body > * {
     }
 }
 
-/* ===================== Generator Page Styles ===================== */
+/* ===================== Profile Page Styles ===================== */
 
-/* Generator page body styles - scoped to .generator-body */
-body.generator-body {
+/* Profile page body styles - scoped to .profile-body */
+body.profile-body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background-color: #1a1a1a !important;
     background-image: url('/background_homepage.png') !important;
@@ -4661,7 +4661,7 @@ body.generator-body {
     overflow-x: hidden;
 }
 
-body.generator-body::before {
+body.profile-body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -4676,7 +4676,7 @@ body.generator-body::before {
     z-index: 0;
 }
 
-body.generator-body::after {
+body.profile-body::after {
     content: '';
     position: fixed;
     top: 0;
@@ -4689,7 +4689,7 @@ body.generator-body::after {
     opacity: 0.3;
 }
 
-body.generator-body > * {
+body.profile-body > * {
     position: relative;
     z-index: 1;
 }
@@ -4798,26 +4798,26 @@ body.generator-body > * {
     }
 }
 
-.generator-page {
+.profile-page {
     position: relative;
 }
 
-/* Generator Page - Layout */
-.generator-shell {
+/* Profile Page - Layout */
+.profile-shell {
     max-width: 1200px;
     margin: 0 auto;
     padding: 32px 24px 80px;
 }
 
-.generator-header,
-.generator-hero {
+.profile-header,
+.profile-hero {
     text-align: center;
     margin-bottom: 24px;
     padding-top: 0;
 }
 
-.generator-header h1,
-.generator-hero h1 {
+.profile-header h1,
+.profile-hero h1 {
     font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(32px, 5vw, 64px);
     font-weight: 400;
@@ -4834,8 +4834,8 @@ body.generator-body > * {
     position: relative;
 }
 
-.generator-header h1::before,
-.generator-hero h1::before {
+.profile-header h1::before,
+.profile-hero h1::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -4848,8 +4848,8 @@ body.generator-body > * {
     filter: blur(25px);
 }
 
-.generator-header p,
-.generator-hero p {
+.profile-header p,
+.profile-hero p {
     font-size: 1.3rem;
     color: #d0d0d0;
     font-style: italic;
@@ -4861,8 +4861,8 @@ body.generator-body > * {
     margin: 0 auto;
 }
 
-/* Generator Page - Premium Layout */
-.generator-stage {
+/* Profile Page - Premium Layout */
+.profile-stage {
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -4875,7 +4875,7 @@ body.generator-body > * {
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.generator-stage-inner {
+.profile-stage-inner {
     padding: 24px;
     display: grid;
     grid-template-columns: 1fr;
@@ -4886,17 +4886,17 @@ body.generator-body > * {
 /* Desktop Layout Improvements */
 @media (min-width: 768px) {
     /* Hero area cleanup */
-    .generator-hero {
+    .profile-hero {
         margin-bottom: 32px;
         padding-top: 24px;
     }
 
-    .generator-hero h1 {
+    .profile-hero h1 {
         font-size: clamp(40px, 4vw, 56px);
         margin-bottom: 1rem;
     }
 
-    .generator-hero p {
+    .profile-hero p {
         font-size: 1.2rem;
         max-width: 700px;
     }
@@ -4904,29 +4904,29 @@ body.generator-body > * {
 
 @media (min-width: 1024px) {
     /* Top spacing - prevent header collision */
-    .generator-shell {
+    .profile-shell {
         padding-top: 48px;
         padding-bottom: 80px;
     }
 
     /* Hero improvements */
-    .generator-hero {
+    .profile-hero {
         margin-bottom: 40px;
         padding-top: 32px;
     }
 
-    .generator-hero h1 {
+    .profile-hero h1 {
         font-size: clamp(44px, 3.5vw, 52px);
     }
 
-    .generator-hero p {
+    .profile-hero p {
         font-size: 1.25rem;
         max-width: 900px;
         margin: 0 auto;
     }
 
-    /* Generator stage - centered and tighter */
-    .generator-stage {
+    /* Profile stage - centered and tighter */
+    .profile-stage {
         max-width: 1150px;
         margin: 0 auto;
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -4938,7 +4938,7 @@ body.generator-body > * {
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .generator-stage-inner {
+    .profile-stage-inner {
         padding: 32px;
         display: grid;
         grid-template-columns: 400px 1fr;
@@ -5083,29 +5083,29 @@ body.generator-body > * {
 
 @media (min-width: 1280px) {
     /* Wide desktop adjustments */
-    .generator-shell {
+    .profile-shell {
         padding-top: 56px;
         max-width: 1400px;
     }
 
-    .generator-hero {
+    .profile-hero {
         margin-bottom: 48px;
     }
 
-    .generator-hero h1 {
+    .profile-hero h1 {
         font-size: clamp(48px, 3vw, 56px);
     }
 
-    .generator-hero p {
+    .profile-hero p {
         max-width: 1000px;
         font-size: 1.3rem;
     }
 
-    .generator-stage {
+    .profile-stage {
         max-width: 1200px;
     }
 
-    .generator-stage-inner {
+    .profile-stage-inner {
         padding: 40px;
         grid-template-columns: 420px 1fr;
         gap: 40px;
@@ -5156,16 +5156,16 @@ body.generator-body > * {
     }
 }
 
-.generator-container {
+.profile-container {
     display: contents;
 }
 
 /* Desktop: controls left, preview right */
-.generator-stage-inner > .controls-section {
+.profile-stage-inner > .controls-section {
     order: 1;
 }
 
-.generator-stage-inner > .preview-section {
+.profile-stage-inner > .preview-section {
     order: 2;
 }
 
@@ -5285,7 +5285,7 @@ body.generator-body > * {
     margin-bottom: 1rem;
 }
 
-.generator-page .btn {
+.profile-page .btn {
     padding: 0.875rem 2rem;
     font-size: 1rem;
     font-weight: 600;
@@ -5300,24 +5300,24 @@ body.generator-body > * {
     white-space: nowrap;
 }
 
-.generator-page .btn-primary {
+.profile-page .btn-primary {
     background: linear-gradient(135deg, #4ade80, #22c55e);
     color: #000;
     box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
 }
 
-.generator-page .btn-primary:hover {
+.profile-page .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 24px rgba(74, 222, 128, 0.5);
 }
 
-.generator-page .btn-secondary {
+.profile-page .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.generator-page .btn-secondary:hover {
+.profile-page .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
 }
@@ -5551,7 +5551,7 @@ body.generator-body > * {
 }
 
 @media (max-width: 1024px) {
-    .generator-container {
+    .profile-container {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
@@ -5590,29 +5590,29 @@ body.generator-body > * {
         margin-bottom: 1.75rem;
     }
 
-    .generator-shell {
+    .profile-shell {
         padding: 2rem 1rem 6rem;
     }
 
-    .generator-stage {
+    .profile-stage {
         border-radius: 16px;
         margin: 0;
     }
 
-    .generator-stage-inner {
+    .profile-stage-inner {
         padding: 20px;
         grid-template-columns: 1fr;
         gap: 20px;
     }
 
-    .generator-header,
-    .generator-hero {
+    .profile-header,
+    .profile-hero {
         margin-bottom: 2rem;
         padding-top: 1rem;
     }
 
-    .generator-header h1,
-    .generator-hero h1 {
+    .profile-header h1,
+    .profile-hero h1 {
         font-size: clamp(1.75rem, 5vw, 2.5rem);
     }
 
@@ -5730,14 +5730,14 @@ body.generator-body > * {
         gap: 0.75rem;
     }
 
-    .generator-page .btn {
+    .profile-page .btn {
         width: 100%;
         padding: 1rem 1.5rem;
         font-size: 1rem;
         min-height: 48px;
     }
 
-    .trait-option, .bg-option, .color-option, .lock-toggle, .generator-page .btn {
+    .trait-option, .bg-option, .color-option, .lock-toggle, .profile-page .btn {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;

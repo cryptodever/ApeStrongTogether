@@ -103,8 +103,8 @@ if (continueBtn) {
                             console.log('✅ User profile already exists (created during signup)');
                             // Clear the pending username since profile exists
                             localStorage.removeItem('pending_username');
-                            // Redirect to generator
-                            window.location.href = '/generator/';
+                            // Redirect to profile
+                            window.location.href = '/profile/';
                         } else {
                             // Profile doesn't exist - create it now (fallback for edge cases)
                             console.log('⚠️ Profile not found, creating now...');
@@ -119,8 +119,8 @@ if (continueBtn) {
                             
                             if (profileResult.success) {
                                 console.log('✅ User profile created successfully');
-                                // Redirect to generator
-                                window.location.href = '/generator/';
+                                // Redirect to profile
+                                window.location.href = '/profile/';
                             } else {
                                 showMessage('error', 'Profile creation failed. Please try again.');
                                 continueBtn.disabled = false;
@@ -130,7 +130,7 @@ if (continueBtn) {
                     } else {
                         console.warn('⚠️ No pending username found - profile may already exist');
                         // Still redirect - profile might already exist or user may have logged in previously
-                        window.location.href = '/generator/';
+                        window.location.href = '/profile/';
                     }
                 } catch (profileError) {
                     console.error('Error creating user profile:', profileError);
