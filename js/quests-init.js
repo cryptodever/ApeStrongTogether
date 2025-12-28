@@ -576,10 +576,35 @@ function updateUserStats() {
 
 // Update quest progress (called from other modules)
 export async function updateQuestProgress(questId, increment = 1) {
-    if (!currentUser || !userProfile) return;
+    // Get current user from auth if not set
+    if (!currentUser) {
+        const currentAuthUser = auth.currentUser;
+        if (!currentAuthUser) {
+            console.warn('updateQuestProgress: No user authenticated');
+            return;
+        }
+        currentUser = currentAuthUser;
+    }
+
+    // Ensure user profile is loaded
+    if (!userProfile) {
+        await loadUserProfile();
+    }
+
+    // Ensure quests are loaded
+    if (availableQuests.length === 0) {
+        loadAvailableQuests();
+    }
 
     const quest = availableQuests.find(q => q.id === questId);
-    if (!quest || !quest.isActive) return;
+    if (!quest) {
+        console.warn(`updateQuestProgress: Quest ${questId} not found`);
+        return;
+    }
+    if (!quest.isActive) {
+        console.warn(`updateQuestProgress: Quest ${questId} is not active`);
+        return;
+    }
 
     try {
         const userQuestId = `${currentUser.uid}_${quest.id}`;
