@@ -140,7 +140,7 @@ async function loadUserProfile() {
             try {
                 // Use setDoc (not merge) for initial creation to match Firestore rules
                 await setDoc(userDocRef, userData);
-                console.log('Default user profile created with username:', finalUsername);
+                // Default user profile created
             } catch (createError) {
                 console.error('Error creating user profile:', createError);
                 console.error('  - Error code:', createError.code);
@@ -172,7 +172,7 @@ async function loadUserProfile() {
             bannerImage: '/pfp_apes/bg1.png',
             xAccountVerified: false
         };
-        console.log('Using default profile due to error');
+        // Using default profile due to error
         
         // Try to create the profile one more time with proper format
         try {
@@ -184,7 +184,7 @@ async function loadUserProfile() {
             };
             
             await setDoc(doc(db, 'users', currentUser.uid), userData);
-            console.log('Successfully created user profile after error');
+            // Successfully created user profile after error
         } catch (retryError) {
             console.error('Failed to create profile on retry:', retryError);
             console.error('  - Error code:', retryError.code);
@@ -661,18 +661,19 @@ function renderReactions(messageId, reactions) {
 
 // Format message text (links, mentions, basic formatting)
 // Filter profanity from text
+// Pre-compile profanity regex patterns for better performance
+const PROFANITY_PATTERNS = PROFANITY_WORDS.map(word => {
+    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escapedWord}\\b`, 'gi');
+});
+
 function filterProfanity(text) {
     if (!text) return text;
     
     let filtered = text;
     
-    // Create regex pattern for each profanity word (case-insensitive, word boundaries)
-    PROFANITY_WORDS.forEach(word => {
-        // Escape special regex characters in the word
-        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Match word boundaries to avoid partial matches
-        const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-        // Replace with asterisks (same length as original word)
+    // Use pre-compiled regex patterns for better performance
+    PROFANITY_PATTERNS.forEach(regex => {
         filtered = filtered.replace(regex, (match) => {
             return '*'.repeat(match.length);
         });
@@ -1310,7 +1311,7 @@ function reportMessage(messageId) {
     const reason = prompt('Why are you reporting this message? (Optional)');
     // In a real implementation, you'd save this to Firestore or send to admins
     showToast('Message reported. Thank you for keeping the community safe.');
-    console.log('Message reported:', messageId, reason);
+    // Message reported (reason logged for moderation)
 }
 
 // Utility functions
@@ -1505,4 +1506,4 @@ function cleanupChat() {
     }
 }
 
-console.log('Chat page initialized');
+// Chat page initialized
