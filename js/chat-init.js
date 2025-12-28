@@ -654,6 +654,15 @@ async function handleSendMessage() {
 
         // Clear typing indicator
         clearTypingIndicator();
+
+        // Update quest progress for chat messages
+        try {
+            const { updateQuestProgress } = await import('/js/quests-init.js');
+            await updateQuestProgress('daily_chat_5', 1);
+            await updateQuestProgress('weekly_chat_50', 1);
+        } catch (error) {
+            // Quest module might not be loaded, ignore silently
+        }
     } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
