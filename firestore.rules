@@ -34,7 +34,9 @@ service cloud.firestore {
 
     // Private user profiles
     match /users/{uid} {
-      allow get: if isOwner(uid);
+      // Allow users to read their own profile
+      // Allow authenticated users to read other profiles (for role checks in chat)
+      allow get: if isSignedIn();
       allow list: if false;
 
       // createdAt is required and must be a timestamp (set via Timestamp.now())
@@ -58,6 +60,81 @@ service cloud.firestore {
         && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
             || request.resource.data.createdAt == resource.data.createdAt);
 
+      allow delete: if false;
+    }
+
+    // Helper function to check if user is admin/moderator
+    function isAdminOrMod(uid) {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(uid)) &&
+        get(/databases/$(database)/documents/users/$(uid)).data.role in ['admin', 'moderator'];
+    }
+
+    // Chat messages
+    match /messages/{messageId} {
+      // Anyone authenticated can read messages
+      allow read: if isSignedIn();
+      
+      // Only authenticated users can create messages
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.username is string
+        && request.resource.data.text is string
+        && request.resource.data.timestamp is timestamp
+        && request.resource.data.channel is string
+        && request.resource.data.avatarCount is int
+        && request.resource.data.deleted == false;
+      
+      // Users can update their own messages (for editing, reactions)
+      // Admins can update any message (for moderation)
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid) ||
+        isAdminOrMod(request.auth.uid)
+      );
+      
+      // Users can delete their own messages (soft delete)
+      // Admins can delete any message
+      allow delete: if false; // Use soft delete (update deleted flag) instead
+    }
+
+    // Typing indicators
+    match /typing/{userId} {
+      // Anyone authenticated can read typing indicators
+      allow read: if isSignedIn();
+      
+      // Users can only write their own typing indicator
+      allow create, update: if isSignedIn() && userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.channel is string
+        && request.resource.data.timestamp is timestamp;
+      
+      // Users can delete their own typing indicator
+      allow delete: if isSignedIn() && userId == request.auth.uid;
+    }
+
+    // User presence (online/offline status)
+    match /presence/{userId} {
+      // Anyone authenticated can read presence
+      allow read: if isSignedIn();
+      
+      // Users can only write their own presence
+      allow create, update: if isSignedIn() && userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.online is bool
+        && request.resource.data.lastSeen is timestamp;
+      
+      // Users can delete their own presence
+      allow delete: if isSignedIn() && userId == request.auth.uid;
+    }
+
+    // Channels (for future multi-channel support)
+    match /channels/{channelId} {
+      // Anyone authenticated can read channels
+      allow read: if isSignedIn();
+      
+      // Only admins can create/update channels
+      allow create, update: if isAdminOrMod(request.auth.uid);
+      
       allow delete: if false;
     }
 
