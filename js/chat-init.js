@@ -369,11 +369,54 @@ function setupRealtimeListeners() {
     const presenceRef = collection(db, 'presence');
     presenceListener = onSnapshot(presenceRef, (snapshot) => {
         const onlineUsers = [];
+        const now = Date.now();
+        
         snapshot.forEach((doc) => {
             const data = doc.data();
-            if (data.online && data.userId !== currentUser.uid) {
-                onlineUsers.push(data);
+            if (data.userId === currentUser.uid) return; // Skip current user
+            
+            // Check if user is online (either explicitly online or recently active)
+            let lastSeenMillis = 0;
+            if (data.lastSeen) {
+                if (data.lastSeen.toMillis) {
+                    lastSeenMillis = data.lastSeen.toMillis();
+                } else if (data.lastSeen.toDate) {
+                    lastSeenMillis = data.lastSeen.toDate().getTime();
+                } else if (typeof data.lastSeen === 'number') {
+                    lastSeenMillis = data.lastSeen;
+                }
             }
+            const timeSinceLastSeen = now - lastSeenMillis;
+            const isRecentlyActive = timeSinceLastSeen < PRESENCE_TIMEOUT * 2; // 60 seconds
+            
+            if (data.online || isRecentlyActive) {
+                onlineUsers.push({
+                    ...data,
+                    lastSeen: data.lastSeen,
+                    isOnline: data.online || isRecentlyActive
+                });
+            }
+        });
+
+        // Sort by online status (online first) then by last seen (most recent first)
+        onlineUsers.sort((a, b) => {
+            if (a.isOnline !== b.isOnline) {
+                return a.isOnline ? -1 : 1;
+            }
+            // Get lastSeen timestamps
+            let aLastSeen = 0;
+            let bLastSeen = 0;
+            if (a.lastSeen) {
+                if (a.lastSeen.toMillis) aLastSeen = a.lastSeen.toMillis();
+                else if (a.lastSeen.toDate) aLastSeen = a.lastSeen.toDate().getTime();
+                else if (typeof a.lastSeen === 'number') aLastSeen = a.lastSeen;
+            }
+            if (b.lastSeen) {
+                if (b.lastSeen.toMillis) bLastSeen = b.lastSeen.toMillis();
+                else if (b.lastSeen.toDate) bLastSeen = b.lastSeen.toDate().getTime();
+                else if (typeof b.lastSeen === 'number') bLastSeen = b.lastSeen;
+            }
+            return bLastSeen - aLastSeen;
         });
 
         updateOnlineUsersList(onlineUsers);
@@ -655,6 +698,9 @@ async function handleSendMessage() {
         // Clear typing indicator
         clearTypingIndicator();
 
+        // Update presence when sending a message (mark as online)
+        updatePresence(true);
+
         // Update quest progress for chat messages
         try {
             const { updateQuestProgress } = await import('/js/quests-init.js');
@@ -848,6 +894,41 @@ async function updatePresence(online) {
     }
 }
 
+// Format relative time (e.g., "2 minutes ago", "just now")
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return 'Unknown';
+    
+    try {
+        const now = Date.now();
+        let time;
+        
+        // Handle Firestore Timestamp
+        if (timestamp.toMillis) {
+            time = timestamp.toMillis();
+        } else if (timestamp.toDate) {
+            time = timestamp.toDate().getTime();
+        } else if (typeof timestamp === 'number') {
+            time = timestamp;
+        } else if (timestamp instanceof Date) {
+            time = timestamp.getTime();
+        } else {
+            return 'Unknown';
+        }
+        
+        const diff = now - time;
+        
+        if (diff < 0) return 'just now'; // Future timestamp (shouldn't happen)
+        if (diff < 1000) return 'just now';
+        if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+        return `${Math.floor(diff / 86400000)}d ago`;
+    } catch (error) {
+        console.error('Error formatting relative time:', error);
+        return 'Unknown';
+    }
+}
+
 // Update online users list
 function updateOnlineUsersList(users) {
     if (!chatUserListEl) return;
@@ -860,11 +941,24 @@ function updateOnlineUsersList(users) {
     chatUserListEl.innerHTML = users.map(user => {
         const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
         const defaultImage = '/pfp_apes/bg1.png';
+        const lastSeen = user.lastSeen ? formatRelativeTime(user.lastSeen) : 'Unknown';
+        const isOnline = user.isOnline !== false; // Default to true if not specified
+        
         return `
             <div class="chat-user-item">
-                <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
-                <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
-                ${user.xAccountVerified ? '<span class="verified-badge-small">✓</span>' : ''}
+                <div class="chat-user-avatar">
+                    <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
+                    ${isOnline ? '<span class="online-indicator" title="Online"></span>' : ''}
+                </div>
+                <div class="chat-user-info">
+                    <div class="chat-user-name-row">
+                        <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
+                        ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
+                    </div>
+                    <div class="chat-user-last-seen">
+                        ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last seen: ${lastSeen}</span>`}
+                    </div>
+                </div>
             </div>
         `;
     }).join('');
