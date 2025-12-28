@@ -398,3 +398,167 @@ exports.createDefaultUserProfile = functions.region('us-central1').https.onCall(
     }
 });
 
+/**
+ * Sync missing user profiles - creates default profiles for users who have usernames but no profile
+ * 
+ * This function:
+ * 1. Gets all usernames from the usernames collection
+ * 2. For each username, checks if a user profile exists in the users collection
+ * 3. Creates default profiles for any missing users
+ * 
+ * Security: Only admins can call this function
+ * 
+ * Returns:
+ * - totalUsernames: number of usernames found
+ * - existingProfiles: number of profiles that already existed
+ * - createdProfiles: number of profiles created
+ * - results: array of results for each username
+ */
+exports.syncMissingUserProfiles = functions.region('us-central1').https.onCall(async (data, context) => {
+    // Verify user is authenticated
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    try {
+        // Check if caller is admin
+        const callerDoc = await db.collection('users').doc(context.auth.uid).get();
+        const callerData = callerDoc.exists ? callerDoc.data() : {};
+        const isAdmin = callerData.role === 'admin' || callerData.role === 'moderator';
+
+        if (!isAdmin) {
+            throw new functions.https.HttpsError('permission-denied', 'Only admins can sync user profiles');
+        }
+
+        console.log(`[syncMissingUserProfiles] Starting sync by admin: ${context.auth.uid}`);
+
+        // Get all usernames from usernames collection
+        const usernamesSnapshot = await db.collection('usernames').get();
+        
+        if (usernamesSnapshot.empty) {
+            return {
+                success: true,
+                totalUsernames: 0,
+                existingProfiles: 0,
+                createdProfiles: 0,
+                results: [],
+                message: 'No usernames found in database'
+            };
+        }
+
+        const results = [];
+        let existingCount = 0;
+        let createdCount = 0;
+        let errorCount = 0;
+
+        // Process each username
+        for (const usernameDoc of usernamesSnapshot.docs) {
+            const username = usernameDoc.id;
+            const usernameData = usernameDoc.data();
+            const uid = usernameData.uid;
+
+            if (!uid) {
+                console.warn(`[syncMissingUserProfiles] Username ${username} has no uid, skipping`);
+                results.push({
+                    username: username,
+                    uid: null,
+                    status: 'skipped',
+                    reason: 'No uid in username document'
+                });
+                continue;
+            }
+
+            try {
+                // Check if user profile exists
+                const userDocRef = db.collection('users').doc(uid);
+                const userDoc = await userDocRef.get();
+
+                if (userDoc.exists) {
+                    existingCount++;
+                    results.push({
+                        username: username,
+                        uid: uid,
+                        status: 'exists',
+                        message: 'Profile already exists'
+                    });
+                    continue;
+                }
+
+                // Profile doesn't exist, create it
+                let email = '';
+                let finalUsername = username;
+
+                // Try to get user info from Firebase Auth
+                try {
+                    const authUser = await admin.auth().getUser(uid);
+                    email = authUser.email || '';
+                    // Use the username from usernames collection (already normalized)
+                    finalUsername = username;
+                } catch (authError) {
+                    console.warn(`[syncMissingUserProfiles] Could not get user ${uid} from Auth:`, authError.message);
+                    // Try to get from presence collection as fallback
+                    const presenceRef = db.collection('presence').doc(uid);
+                    const presenceDoc = await presenceRef.get();
+                    
+                    if (presenceDoc.exists) {
+                        const presenceData = presenceDoc.data();
+                        email = presenceData.email || '';
+                        finalUsername = presenceData.username || username;
+                    }
+                }
+
+                // Create user profile with required fields
+                const userData = {
+                    username: finalUsername,
+                    email: email || '',
+                    avatarCount: 0,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+
+                await userDocRef.set(userData);
+                createdCount++;
+                
+                console.log(`[syncMissingUserProfiles] Created profile for ${username} (uid: ${uid})`);
+                results.push({
+                    username: username,
+                    uid: uid,
+                    status: 'created',
+                    message: 'Profile created successfully'
+                });
+
+            } catch (error) {
+                errorCount++;
+                console.error(`[syncMissingUserProfiles] Error processing ${username} (uid: ${uid}):`, error);
+                results.push({
+                    username: username,
+                    uid: uid,
+                    status: 'error',
+                    error: error.message
+                });
+            }
+        }
+
+        const summary = {
+            success: true,
+            totalUsernames: usernamesSnapshot.size,
+            existingProfiles: existingCount,
+            createdProfiles: createdCount,
+            errors: errorCount,
+            results: results,
+            message: `Sync complete: ${createdCount} profiles created, ${existingCount} already existed, ${errorCount} errors`
+        };
+
+        console.log(`[syncMissingUserProfiles] Sync complete:`, summary);
+        return summary;
+
+    } catch (error) {
+        console.error('[syncMissingUserProfiles] Error:', error);
+        
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+
+        throw new functions.https.HttpsError('internal', `Failed to sync user profiles: ${error.message}`);
+    }
+});
+

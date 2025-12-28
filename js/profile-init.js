@@ -993,5 +993,67 @@ function handleBannerBgClick(event) {
     }
 }
 
+// Admin utility: Sync missing user profiles
+// This function can be called from the browser console by admins
+// Usage: await syncMissingUserProfiles()
+window.syncMissingUserProfiles = async function() {
+    if (!currentUser) {
+        console.error('❌ Not authenticated');
+        return { error: 'Not authenticated' };
+    }
+
+    try {
+        // Check if user is admin
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const isAdmin = userData.role === 'admin' || userData.role === 'moderator';
+
+        if (!isAdmin) {
+            console.error('❌ Only admins can sync user profiles');
+            return { error: 'Permission denied: Only admins can sync user profiles' };
+        }
+
+        console.log('🔄 Starting sync of missing user profiles...');
+        
+        const functions = getFunctions(app, 'us-central1');
+        const syncProfiles = httpsCallable(functions, 'syncMissingUserProfiles');
+        
+        const result = await syncProfiles({});
+        
+        if (result.data && result.data.success) {
+            console.log('✅ Sync complete!', result.data);
+            console.log(`   - Total usernames: ${result.data.totalUsernames}`);
+            console.log(`   - Existing profiles: ${result.data.existingProfiles}`);
+            console.log(`   - Created profiles: ${result.data.createdProfiles}`);
+            console.log(`   - Errors: ${result.data.errors}`);
+            
+            if (result.data.results) {
+                console.log('📋 Detailed results:');
+                result.data.results.forEach(r => {
+                    if (r.status === 'created') {
+                        console.log(`   ✅ Created: ${r.username} (${r.uid})`);
+                    } else if (r.status === 'exists') {
+                        console.log(`   ℹ️  Exists: ${r.username} (${r.uid})`);
+                    } else if (r.status === 'error') {
+                        console.log(`   ❌ Error: ${r.username} (${r.uid}) - ${r.error}`);
+                    }
+                });
+            }
+            
+            alert(`Sync complete!\n\nCreated: ${result.data.createdProfiles} profiles\nAlready existed: ${result.data.existingProfiles}\nErrors: ${result.data.errors}`);
+            
+            return result.data;
+        } else {
+            console.error('❌ Sync failed:', result.data);
+            return { error: 'Sync failed', data: result.data };
+        }
+    } catch (error) {
+        console.error('❌ Error syncing profiles:', error);
+        alert(`Error: ${error.message}`);
+        return { error: error.message };
+    }
+};
+
 console.log('Profile page initialized');
 
