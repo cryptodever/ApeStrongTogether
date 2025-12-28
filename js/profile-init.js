@@ -548,12 +548,18 @@ async function updateXVerificationUI(userData) {
 
 // Copy verification code to clipboard
 async function copyVerificationCode() {
-    const codeElement = document.getElementById('xVerificationCode');
-    if (!codeElement) return;
+    // Get the code directly from Firestore to ensure accuracy
+    const code = await getOrCreateVerificationCode();
+    if (!code) {
+        console.error('No verification code available');
+        return;
+    }
     
-    const code = codeElement.textContent;
     try {
+        // Copy the code to clipboard
         await navigator.clipboard.writeText(code);
+        
+        // Update button text to show success
         const copyBtn = document.getElementById('copyVerificationCode');
         if (copyBtn) {
             const originalText = copyBtn.textContent;
@@ -562,13 +568,35 @@ async function copyVerificationCode() {
                 copyBtn.textContent = originalText;
             }, 2000);
         }
+        
+        console.log('[copyVerificationCode] Copied code:', code);
     } catch (error) {
         console.error('Failed to copy code:', error);
-        // Fallback: select text
-        const range = document.createRange();
-        range.selectNode(codeElement);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
+        
+        // Fallback: try to get from DOM element and select text
+        const codeElement = document.getElementById('xVerificationCode');
+        if (codeElement) {
+            const codeFromElement = codeElement.textContent.trim();
+            if (codeFromElement && codeFromElement !== 'Loading...') {
+                try {
+                    await navigator.clipboard.writeText(codeFromElement);
+                    const copyBtn = document.getElementById('copyVerificationCode');
+                    if (copyBtn) {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = '✓ Copied';
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                        }, 2000);
+                    }
+                } catch (fallbackError) {
+                    // Last resort: select text
+                    const range = document.createRange();
+                    range.selectNode(codeElement);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                }
+            }
+        }
     }
 }
 
