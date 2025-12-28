@@ -56,6 +56,65 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Track daily activity for "weekly_active_3_days" quest
+async function trackDailyActivity() {
+    if (!currentUser) return;
+    
+    try {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) return;
+        
+        const userData = userDoc.data();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayTimestamp = Timestamp.fromDate(today);
+        
+        // Get last activity date
+        let lastActivityDate = null;
+        if (userData.lastActivityDate) {
+            lastActivityDate = userData.lastActivityDate.toDate();
+            lastActivityDate.setHours(0, 0, 0, 0);
+        }
+        
+        // Check if user was active today
+        const wasActiveToday = lastActivityDate && 
+            lastActivityDate.getTime() === today.getTime();
+        
+        // Check the quest's current state to see if it was reset (new week)
+        const questId = 'weekly_active_3_days';
+        const userQuest = userQuests[questId];
+        let isNewWeek = false;
+        
+        if (userQuest && userQuest.resetAt) {
+            const resetAt = userQuest.resetAt.toDate();
+            // If reset date is in the past or today, it's a new week
+            // (checkAndResetQuests should have already reset it, but check anyway)
+            if (resetAt <= today) {
+                isNewWeek = true;
+            }
+        } else {
+            // Quest doesn't exist yet, treat as new week
+            isNewWeek = true;
+        }
+        
+        // If it's a new week OR user wasn't active today, increment
+        if (isNewWeek || !wasActiveToday) {
+            // Update user profile with today's activity
+            await updateDoc(userDocRef, {
+                lastActivityDate: todayTimestamp
+            });
+            
+            // Update the weekly_active_3_days quest
+            // This will increment by 1 for each unique day the user is active
+            await updateQuestProgress('weekly_active_3_days', 1);
+        }
+    } catch (error) {
+        console.error('Error tracking daily activity:', error);
+    }
+}
+
 // Load user profile data
 async function loadUserProfile() {
     if (!currentUser) return;
@@ -178,6 +237,11 @@ async function initializeQuests() {
 
     // Display quests
     displayQuests();
+    
+    // Track quests page visit (after a small delay to ensure quests are loaded)
+    setTimeout(() => {
+        updateQuestProgress('daily_quests_visit', 1);
+    }, 500);
 }
 
 // Load available quests (hardcoded initially)
@@ -294,6 +358,9 @@ async function loadUserQuestProgress() {
 
         // Check for quests that need reset (daily/weekly)
         await checkAndResetQuests();
+        
+        // Track daily activity after quests are loaded and reset
+        await trackDailyActivity();
     } catch (error) {
         console.error('Error loading user quest progress:', error);
         userQuests = {};
@@ -686,15 +753,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Track quests page visit
-if (window.location.pathname.includes('/quests/')) {
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            // Small delay to ensure quests are loaded
-            setTimeout(() => {
-                updateQuestProgress('daily_quests_visit', 1);
-            }, 1000);
-        }
-    });
-}
 
