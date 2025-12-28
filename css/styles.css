@@ -7108,6 +7108,7 @@ body.chat-body > * {
 }
 
 .rate-limit-info {
+    display: block;
     color: #fbbf24;
     font-weight: 500;
 }
@@ -7130,6 +7131,7 @@ body.chat-body > * {
 /* Context Menu */
 .message-context-menu {
     position: fixed;
+    display: block;
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
