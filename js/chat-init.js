@@ -64,6 +64,8 @@ let presenceListener = null;
 let lastMessageTime = 0;
 let typingTimeout = null;
 let presenceUpdateInterval = null;
+let lastSeenUpdateInterval = null;
+let currentOnlineUsers = []; // Store current online users for periodic updates
 let currentChannel = 'general';
 let messageContextMenuMessageId = null;
 
@@ -510,8 +512,16 @@ function setupRealtimeListeners() {
             return bLastSeen - aLastSeen;
         });
 
+        currentOnlineUsers = onlineUsers; // Store for periodic updates
         updateOnlineUsersList(onlineUsers);
         onlineCountEl.textContent = onlineUsers.length + 1; // +1 for current user
+        
+        // Update last seen times every minute for real-time updates
+        if (!lastSeenUpdateInterval) {
+            lastSeenUpdateInterval = setInterval(() => {
+                updateOnlineUsersList(currentOnlineUsers);
+            }, 60000); // Update every minute
+        }
     });
 }
 
@@ -1047,10 +1057,20 @@ function formatRelativeTime(timestamp) {
         
         if (diff < 0) return 'just now'; // Future timestamp (shouldn't happen)
         if (diff < 1000) return 'just now';
-        if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
-        if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        return `${Math.floor(diff / 86400000)}d ago`;
+        if (diff < 60000) {
+            const seconds = Math.floor(diff / 1000);
+            return seconds === 1 ? '1 second ago' : `${seconds} seconds ago`;
+        }
+        if (diff < 3600000) {
+            const minutes = Math.floor(diff / 60000);
+            return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+        }
+        if (diff < 86400000) {
+            const hours = Math.floor(diff / 3600000);
+            return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+        }
+        const days = Math.floor(diff / 86400000);
+        return days === 1 ? '1 day ago' : `${days} days ago`;
     } catch (error) {
         console.error('Error formatting relative time:', error);
         return 'Unknown';
@@ -1084,7 +1104,7 @@ function updateOnlineUsersList(users) {
                         ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
                     </div>
                     <div class="chat-user-last-seen">
-                        ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last seen: ${lastSeen}</span>`}
+                        ${isOnline ? `<span class="online-text">Online</span> • <span class="last-seen-text">Active ${lastSeen}</span>` : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
                     </div>
                 </div>
             </div>
@@ -1474,6 +1494,10 @@ function cleanupChat() {
     if (presenceUpdateInterval) {
         clearInterval(presenceUpdateInterval);
         presenceUpdateInterval = null;
+    }
+    if (lastSeenUpdateInterval) {
+        clearInterval(lastSeenUpdateInterval);
+        lastSeenUpdateInterval = null;
     }
     clearTypingIndicator();
     if (currentUser) {
