@@ -5160,6 +5160,15 @@ body.profile-body > * {
     display: contents;
 }
 
+/* Dim profile page content when auth gate overlay is shown */
+/* Since profile-container uses display: contents, we need to target profile-page */
+.profile-page.blocked .profile-container > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
 /* Desktop: controls left, preview right */
 .profile-stage-inner > .controls-section {
     order: 1;
@@ -6533,6 +6542,14 @@ body.chat-body > * {
     margin: 0 auto;
     padding: 32px 24px 80px;
     position: relative;
+}
+
+/* Dim chat container content when auth gate overlay is shown */
+.chat-container.blocked > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
 }
 
 .chat-header {
@@ -8125,6 +8142,14 @@ body.quests-body > * {
     position: relative;
 }
 
+/* Dim quests container content when auth gate overlay is shown */
+.quests-container.blocked > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
 .quests-header {
     text-align: center;
     margin-bottom: 3rem;
@@ -8410,10 +8435,12 @@ body.quests-body > * {
     width: 90%;
     overflow: hidden;
     pointer-events: auto;
+    /* Ensure it's centered on all screen sizes */
+    margin: 0;
 }
 
 .quest-notification.show {
-    transform: translate(-50%, -50%) scale(1) translateX(0);
+    transform: translate(-50%, -50%) scale(1) translateX(0) !important;
     opacity: 1;
 }
 
