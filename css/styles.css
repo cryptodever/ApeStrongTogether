@@ -6704,21 +6704,135 @@ body.chat-body > * {
 /* Mobile styles for chat page */
 @media (max-width: 768px) {
     .chat-container {
-        padding: 24px 16px 60px;
+        padding: 20px 12px 60px;
     }
 
     .chat-header {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
+    }
+    
+    .chat-header h1 {
+        font-size: clamp(28px, 6vw, 48px);
+        margin-bottom: 1rem;
+    }
+    
+    .chat-header p {
+        font-size: clamp(14px, 2.5vw, 18px);
     }
 
     .chat-content {
-        padding: 32px 16px;
+        padding: 0;
         min-height: 300px;
+        height: calc(100vh - 320px);
+        max-height: none;
+    }
+    
+    .chat-channels {
+        margin-top: 16px;
+    }
+    
+    .channel-switcher {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .channel-label {
+        font-size: 11px;
+        text-align: center;
+        margin-bottom: 4px;
+    }
+    
+    .channel-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .channel-button {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 12px;
+        justify-content: center;
+        gap: 6px;
+    }
+    
+    .channel-name {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .channel-emoji {
+        font-size: 16px;
+        flex-shrink: 0;
     }
 
     .chat-placeholder-icon {
         font-size: 48px;
         margin-bottom: 20px;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .chat-container {
+        padding: 16px 8px 60px;
+    }
+    
+    .chat-header {
+        margin-bottom: 20px;
+    }
+    
+    .chat-header h1 {
+        font-size: clamp(24px, 7vw, 36px);
+        margin-bottom: 0.75rem;
+    }
+    
+    .chat-header p {
+        font-size: 14px;
+    }
+    
+    .chat-channels {
+        margin-top: 12px;
+    }
+    
+    .channel-switcher {
+        gap: 8px;
+    }
+    
+    .channel-label {
+        font-size: 10px;
+        margin-bottom: 2px;
+    }
+    
+    .channel-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .channel-button {
+        padding: 8px 6px;
+        font-size: 11px;
+        gap: 4px;
+        min-height: 40px; /* Touch-friendly minimum height */
+    }
+    
+    .channel-name {
+        font-size: 10px;
+    }
+    
+    .channel-emoji {
+        font-size: 14px;
+    }
+    
+    .chat-content {
+        height: calc(100vh - 280px);
+        border-radius: 12px;
+        max-height: none;
     }
 }
 
@@ -7724,7 +7838,16 @@ body.chat-body > * {
     }
 
     .chat-header {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
+    }
+    
+    .chat-header h1 {
+        font-size: clamp(28px, 6vw, 48px);
+        margin-bottom: 1rem;
+    }
+    
+    .chat-header p {
+        font-size: clamp(14px, 2.5vw, 18px);
     }
     
     .chat-channels {
@@ -7733,37 +7856,50 @@ body.chat-body > * {
     
     .channel-switcher {
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
+        align-items: stretch;
     }
     
     .channel-label {
-        font-size: 12px;
+        font-size: 11px;
+        text-align: center;
+        margin-bottom: 4px;
     }
     
     .channel-buttons {
-        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 8px;
+        width: 100%;
     }
     
     .channel-button {
         flex: 1;
         min-width: 0;
-        padding: 8px 12px;
-        font-size: 13px;
+        padding: 10px 8px;
+        font-size: 12px;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px; /* Touch-friendly minimum height */
     }
     
     .channel-name {
-        font-size: 12px;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .channel-emoji {
         font-size: 16px;
+        flex-shrink: 0;
     }
 
     .chat-content {
         flex-direction: column;
-        height: calc(100vh - 240px);
-        max-height: 600px;
+        height: calc(100vh - 320px);
+        max-height: none;
+        border-radius: 12px;
     }
 
     .chat-sidebar {
