@@ -47,7 +47,18 @@
                     </div>
                     <div class="rank-progress-bar">
                         <div class="rank-progress-fill" id="rankProgressFill"></div>
-                </div>
+                    </div>
+                    <!-- Followers/Following Stats -->
+                    <div class="profile-follow-stats">
+                        <button class="follow-stat-btn" id="followersBtn" type="button">
+                            <span class="follow-stat-number" id="followersCount">0</span>
+                            <span class="follow-stat-label">Followers</span>
+                        </button>
+                        <button class="follow-stat-btn" id="followingBtn" type="button">
+                            <span class="follow-stat-number" id="followingCount">0</span>
+                            <span class="follow-stat-label">Following</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -447,6 +458,35 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" id="closeXInstructionsBtn2">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Followers/Following Modals -->
+    <div class="modal-overlay hide" id="followersModal">
+        <div class="modal-content follow-modal">
+            <div class="modal-header">
+                <h3>Followers</h3>
+                <button type="button" class="modal-close" id="closeFollowersModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="follow-list" id="followersList">
+                    <div class="follow-list-loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hide" id="followingModal">
+        <div class="modal-content follow-modal">
+            <div class="modal-header">
+                <h3>Following</h3>
+                <button type="button" class="modal-close" id="closeFollowingModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="follow-list" id="followingList">
+                    <div class="follow-list-loading">Loading...</div>
+                </div>
             </div>
         </div>
     </div>

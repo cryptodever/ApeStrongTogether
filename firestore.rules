@@ -197,6 +197,32 @@ service cloud.firestore {
       allow delete: if false; // Don't allow deletion, use reset instead
     }
 
+    // Followers collection
+    match /followers/{userId}/followers/{followerId} {
+      // Anyone authenticated can read followers
+      allow read: if isSignedIn();
+      // Only the follower themselves can create/delete their follow relationship
+      allow create: if isSignedIn() 
+        && followerId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['userId', 'followedAt']);
+      allow delete: if isSignedIn() && followerId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // Following collection
+    match /following/{userId}/following/{followingId} {
+      // Anyone authenticated can read following
+      allow read: if isSignedIn();
+      // Only the user themselves can create/delete their following relationship
+      allow create: if isSignedIn() 
+        && userId == request.auth.uid
+        && request.resource.data.userId == followingId
+        && request.resource.data.keys().hasOnly(['userId', 'followedAt']);
+      allow delete: if isSignedIn() && userId == request.auth.uid;
+      allow update: if false;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
