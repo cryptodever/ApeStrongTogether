@@ -20,7 +20,8 @@ import {
     getDocs,
     where,
     Timestamp,
-    deleteDoc
+    deleteDoc,
+    writeBatch
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 // Constants
@@ -1847,6 +1848,49 @@ async function showUserProfile(userId) {
             bioEl.textContent = 'No bio available.';
         }
         
+        // Check if current user is following this user and show follow button
+        if (userId !== currentUser.uid) {
+            try {
+                const isFollowing = await checkIfFollowing(userId);
+                const followBtn = document.getElementById('chatFollowBtn');
+                if (followBtn) {
+                    followBtn.style.display = 'block';
+                    followBtn.dataset.userId = userId;
+                    followBtn.dataset.isFollowing = isFollowing ? 'true' : 'false';
+                    followBtn.innerHTML = `<span class="follow-btn-text">${isFollowing ? 'Unfollow' : 'Follow'}</span>`;
+                    followBtn.className = isFollowing ? 'btn btn-secondary follow-btn following' : 'btn btn-primary follow-btn';
+                    
+                    // Remove existing listeners and add new one
+                    const newFollowBtn = followBtn.cloneNode(true);
+                    followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
+                    newFollowBtn.addEventListener('click', async () => {
+                        const targetUserId = newFollowBtn.dataset.userId;
+                        const currentlyFollowing = newFollowBtn.dataset.isFollowing === 'true';
+                        
+                        if (currentlyFollowing) {
+                            await unfollowUser(targetUserId);
+                            newFollowBtn.dataset.isFollowing = 'false';
+                            newFollowBtn.innerHTML = '<span class="follow-btn-text">Follow</span>';
+                            newFollowBtn.className = 'btn btn-primary follow-btn';
+                        } else {
+                            await followUser(targetUserId);
+                            newFollowBtn.dataset.isFollowing = 'true';
+                            newFollowBtn.innerHTML = '<span class="follow-btn-text">Unfollow</span>';
+                            newFollowBtn.className = 'btn btn-secondary follow-btn following';
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+            }
+        } else {
+            // Hide follow button for own profile
+            const followBtn = document.getElementById('chatFollowBtn');
+            if (followBtn) {
+                followBtn.style.display = 'none';
+            }
+        }
+        
         // Ensure popup is visible after data is loaded
         userProfilePopupEl.classList.remove('hide');
         
@@ -2060,6 +2104,69 @@ async function handleClearCommand(channelName) {
     } catch (error) {
         console.error('Error clearing channel:', error);
         alert(`Failed to clear channel: ${error.message}`);
+    }
+}
+
+// Follow/Unfollow functions for chat popup
+async function followUser(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+    
+    try {
+        const batch = writeBatch(db);
+        
+        // Add to current user's following list
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        batch.set(followingRef, {
+            userId: targetUserId,
+            followedAt: serverTimestamp()
+        });
+        
+        // Add to target user's followers list
+        const followersRef = doc(db, 'followers', targetUserId, 'followers', currentUser.uid);
+        batch.set(followersRef, {
+            userId: currentUser.uid,
+            followedAt: serverTimestamp()
+        });
+        
+        await batch.commit();
+        console.log(`Followed user: ${targetUserId}`);
+    } catch (error) {
+        console.error('Error following user:', error);
+        alert('Failed to follow user. Please try again.');
+    }
+}
+
+async function unfollowUser(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+    
+    try {
+        const batch = writeBatch(db);
+        
+        // Remove from current user's following list
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        batch.delete(followingRef);
+        
+        // Remove from target user's followers list
+        const followersRef = doc(db, 'followers', targetUserId, 'followers', currentUser.uid);
+        batch.delete(followersRef);
+        
+        await batch.commit();
+        console.log(`Unfollowed user: ${targetUserId}`);
+    } catch (error) {
+        console.error('Error unfollowing user:', error);
+        alert('Failed to unfollow user. Please try again.');
+    }
+}
+
+async function checkIfFollowing(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return false;
+    
+    try {
+        const followDoc = await getDoc(doc(db, 'following', currentUser.uid, 'following', targetUserId));
+        return followDoc.exists();
+    } catch (error) {
+        console.error('Error checking follow status:', error);
+        return false;
     }
 }
 

@@ -8902,6 +8902,143 @@ body.quests-body > * {
     letter-spacing: -0.02em;
 }
 
+/* Followers/Following Stats */
+.profile-follow-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    justify-content: center;
+}
+
+.follow-stat-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.follow-stat-btn:hover {
+    background: rgba(74, 222, 128, 0.1);
+    transform: translateY(-2px);
+}
+
+.follow-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4ade80;
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 1;
+}
+
+.follow-stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Follow Modals */
+.follow-modal {
+    max-width: 500px;
+    max-height: 80vh;
+}
+
+.follow-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.follow-list-loading,
+.follow-list-empty,
+.follow-list-error {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.follow-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.follow-list-item:hover {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateX(4px);
+}
+
+.follow-item-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid rgba(74, 222, 128, 0.3);
+}
+
+.follow-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.follow-item-username {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.follow-item-bio {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Follow button in chat popup */
+.user-profile-popup-body .follow-btn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.user-profile-popup-body .follow-btn.following {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.user-profile-popup-body .follow-btn.following:hover {
+    background: rgba(255, 0, 0, 0.1);
+    border-color: rgba(255, 0, 0, 0.3);
+    color: #ff6b6b;
+}
+
 .profile-rank {
     display: flex;
     align-items: center;
