@@ -51,15 +51,34 @@ service cloud.firestore {
 
       // Allow updates to profile fields (bio, country, bannerImage, bannerBackground, updatedAt, points, rank, totalQuestsCompleted)
       // Points, rank, and totalQuestsCompleted can be updated via transactions (for quest completion)
-      allow update: if isOwner(uid)
-        && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.username == resource.data.username)
-        && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.email == resource.data.email)
-        && (!('avatarCount' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.avatarCount == resource.data.avatarCount)
-        && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.createdAt == resource.data.createdAt);
+      // Admins/moderators can update role and mutedUntil fields for moderation
+      allow update: if (
+        // User updating their own profile (with restrictions)
+        (isOwner(uid)
+          && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.username == resource.data.username)
+          && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.email == resource.data.email)
+          && (!('avatarCount' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.avatarCount == resource.data.avatarCount)
+          && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.createdAt == resource.data.createdAt)
+          && (!('role' in request.resource.data.diff(resource.data).affectedKeys()))
+          && (!('mutedUntil' in request.resource.data.diff(resource.data).affectedKeys())))
+        ||
+        // Admin/moderator updating role or mutedUntil (for moderation)
+        (isAdminOrMod(request.auth.uid)
+          && ('role' in request.resource.data.diff(resource.data).affectedKeys()
+              || 'mutedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+          && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.username == resource.data.username)
+          && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.email == resource.data.email)
+          && (!('avatarCount' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.avatarCount == resource.data.avatarCount)
+          && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.createdAt == resource.data.createdAt))
+      );
 
       allow delete: if false;
     }

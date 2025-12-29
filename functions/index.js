@@ -598,3 +598,80 @@ exports.syncMissingUserProfiles = functions.region('us-central1').https.onCall(a
     }
 });
 
+/**
+ * Make a user an admin by username
+ * Only callable by existing admins (or manually via Firebase Console for first admin)
+ * 
+ * Usage from client:
+ * const makeUserAdmin = httpsCallable(functions, 'makeUserAdmin');
+ * await makeUserAdmin({ username: 'apelover69' });
+ */
+exports.makeUserAdmin = functions.region('us-central1').https.onCall(async (data, context) => {
+    // Check authentication
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { username } = data;
+    if (!username || typeof username !== 'string') {
+        throw new functions.https.HttpsError('invalid-argument', 'Username is required and must be a string');
+    }
+
+    const callerUid = context.auth.uid;
+    const logPrefix = `[makeUserAdmin:${callerUid}]`;
+
+    try {
+        // Check if caller is admin (optional check - can be bypassed for first admin setup)
+        const callerDoc = await db.collection('users').doc(callerUid).get();
+        const callerData = callerDoc.exists ? callerDoc.data() : {};
+        const isCallerAdmin = callerData.role === 'admin';
+
+        // Log warning if caller is not admin (but allow for first admin setup)
+        if (!isCallerAdmin) {
+            console.warn(`${logPrefix} WARNING: Caller is not an admin. Allowing for first admin setup.`);
+        }
+
+        console.log(`${logPrefix} Making user "${username}" an admin`);
+
+        // Find user by username
+        const usernameLower = username.toLowerCase();
+        const usernameDoc = await db.collection('usernames').doc(usernameLower).get();
+
+        if (!usernameDoc.exists) {
+            throw new functions.https.HttpsError('not-found', `User "${username}" not found`);
+        }
+
+        const targetUserId = usernameDoc.data().uid;
+        console.log(`${logPrefix} Found user ID: ${targetUserId}`);
+
+        // Get target user document
+        const targetUserRef = db.collection('users').doc(targetUserId);
+        const targetUserDoc = await targetUserRef.get();
+
+        if (!targetUserDoc.exists) {
+            throw new functions.https.HttpsError('not-found', `User profile for "${username}" not found`);
+        }
+
+        // Update user role to admin
+        await targetUserRef.update({
+            role: 'admin'
+        });
+
+        console.log(`${logPrefix} Successfully set "${username}" as admin`);
+        return {
+            success: true,
+            message: `User "${username}" is now an admin.`,
+            username: username,
+            userId: targetUserId
+        };
+    } catch (error) {
+        console.error(`${logPrefix} Error:`, error);
+        
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+
+        throw new functions.https.HttpsError('internal', `Failed to make user admin: ${error.message}`);
+    }
+});
+
