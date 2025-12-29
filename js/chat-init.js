@@ -2045,10 +2045,10 @@ async function handleMuteCommand(username, minutes) {
         // Calculate mute expiration time
         const muteExpiration = Timestamp.fromMillis(Date.now() + (minutes * 60 * 1000));
         
-        // Set mute (use setDoc with merge to handle case where field doesn't exist)
-        await setDoc(targetUserRef, {
+        // Set mute using updateDoc
+        await updateDoc(targetUserRef, {
             mutedUntil: muteExpiration
-        }, { merge: true });
+        });
         
         alert(`Successfully muted "${username}" for ${minutes} minute${minutes > 1 ? 's' : ''}.`);
         console.log(`Admin ${userProfile.username} muted ${username} for ${minutes} minutes`);
