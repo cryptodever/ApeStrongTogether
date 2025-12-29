@@ -655,58 +655,63 @@ export async function updateQuestProgress(questId, increment = 1) {
     try {
         const userQuestId = `${currentUser.uid}_${quest.id}`;
         const userQuestRef = doc(db, 'userQuests', userQuestId);
-        const userQuestDoc = await getDoc(userQuestRef);
         
         // Reload user quest progress if not already loaded (important when called from other pages)
+        // Do this outside transaction for initial state check only
+        const userQuestDoc = await getDoc(userQuestRef);
         if (!userQuests[questId] && userQuestDoc.exists()) {
             const data = userQuestDoc.data();
             userQuests[questId] = data;
         }
 
-        let currentProgress = 0;
-        let completed = false;
-        let resetAt = null;
-
-        if (userQuestDoc.exists()) {
-            const data = userQuestDoc.data();
-            currentProgress = data.progress || 0;
-            completed = data.completed || false;
-            resetAt = data.resetAt;
-            
-            // Check if quest needs reset before updating
-            if (resetAt) {
-                let resetAtMillis = 0;
-                if (resetAt.toMillis) {
-                    resetAtMillis = resetAt.toMillis();
-                } else if (resetAt.toDate) {
-                    resetAtMillis = resetAt.toDate().getTime();
-                } else if (typeof resetAt === 'number') {
-                    resetAtMillis = resetAt;
-                }
-                
-                // If reset time has passed, reset the quest first
-                if (resetAtMillis > 0 && Date.now() >= resetAtMillis) {
-                    const nextReset = getNextResetTime(quest.resetPeriod);
-                    currentProgress = 0;
-                    completed = false;
-                    resetAt = Timestamp.fromDate(nextReset);
-                }
-            }
-        } else {
-            // Create new user quest entry
-            resetAt = Timestamp.fromDate(getNextResetTime(quest.resetPeriod));
-        }
-
-        // Don't update if already completed (after potential reset)
-        if (completed) return;
-
-        // Update progress
-        const newProgress = Math.min(currentProgress + increment, quest.targetValue);
-        const isNowCompleted = newProgress >= quest.targetValue && !completed;
-
         // Use runTransaction to ensure atomicity and proper rule evaluation
+        // All logic that depends on document state should be inside the transaction
         await runTransaction(db, async (transaction) => {
             const questDoc = await transaction.get(userQuestRef);
+            
+            let currentProgress = 0;
+            let completed = false;
+            let resetAt = null;
+
+            if (questDoc.exists()) {
+                const data = questDoc.data();
+                currentProgress = data.progress || 0;
+                completed = data.completed || false;
+                resetAt = data.resetAt;
+                
+                // Check if quest needs reset before updating (inside transaction)
+                if (resetAt) {
+                    let resetAtMillis = 0;
+                    if (resetAt.toMillis) {
+                        resetAtMillis = resetAt.toMillis();
+                    } else if (resetAt.toDate) {
+                        resetAtMillis = resetAt.toDate().getTime();
+                    } else if (typeof resetAt === 'number') {
+                        resetAtMillis = resetAt;
+                    }
+                    
+                    // If reset time has passed, reset the quest first
+                    if (resetAtMillis > 0 && Date.now() >= resetAtMillis) {
+                        const nextReset = getNextResetTime(quest.resetPeriod);
+                        currentProgress = 0;
+                        completed = false;
+                        resetAt = Timestamp.fromDate(nextReset);
+                    }
+                }
+            } else {
+                // Create new user quest entry
+                resetAt = Timestamp.fromDate(getNextResetTime(quest.resetPeriod));
+            }
+
+            // Don't update if already completed (after potential reset)
+            if (completed) {
+                // Return early but don't throw - just skip the update
+                return;
+            }
+
+            // Update progress
+            const newProgress = Math.min(currentProgress + increment, quest.targetValue);
+            const isNowCompleted = newProgress >= quest.targetValue && !completed;
             
             const questData = {
                 userId: currentUser.uid,
@@ -732,17 +737,27 @@ export async function updateQuestProgress(questId, increment = 1) {
                     updatedAt: serverTimestamp()
                 });
             }
+            
         });
 
-        // Update local state
-        userQuests[quest.id] = {
-            userId: currentUser.uid,
-            questId: quest.id,
-            progress: newProgress,
-            completed: isNowCompleted,
-            completedAt: isNowCompleted ? Timestamp.now() : null,
-            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod))
-        };
+        // Read the updated document to get the final state
+        const updatedQuestDoc = await getDoc(userQuestRef);
+        let isNowCompleted = false;
+        
+        if (updatedQuestDoc.exists()) {
+            const data = updatedQuestDoc.data();
+            isNowCompleted = data.completed || false;
+            
+            // Update local state with actual data from Firestore
+            userQuests[quest.id] = {
+                userId: currentUser.uid,
+                questId: quest.id,
+                progress: data.progress || 0,
+                completed: data.completed || false,
+                completedAt: data.completedAt || null,
+                resetAt: data.resetAt || null
+            };
+        }
 
         // If quest completed, award points
         if (isNowCompleted) {
