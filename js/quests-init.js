@@ -581,7 +581,7 @@ function createQuestCard(quest) {
         <p class="quest-description">${escapeHtml(quest.description)}</p>
         <div class="quest-progress">
             <div class="quest-progress-bar">
-                <div class="quest-progress-fill" style="width: ${progressPercent}%"></div>
+                <div class="quest-progress-fill"></div>
             </div>
             <div class="quest-progress-text">
                 <span>${progress} / ${quest.targetValue}</span>
@@ -589,6 +589,12 @@ function createQuestCard(quest) {
             </div>
         </div>
     `;
+
+    // Set progress width using setProperty (CSP-compliant)
+    const progressFill = card.querySelector('.quest-progress-fill');
+    if (progressFill) {
+        progressFill.style.setProperty('width', `${progressPercent}%`);
+    }
 
     return card;
 }

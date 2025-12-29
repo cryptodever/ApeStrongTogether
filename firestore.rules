@@ -68,8 +68,9 @@ service cloud.firestore {
         ||
         // Admin/moderator updating role or mutedUntil (for moderation)
         (isAdminOrMod(request.auth.uid)
-          && ('role' in request.resource.data.diff(resource.data).affectedKeys()
-              || 'mutedUntil' in request.resource.data.diff(resource.data).affectedKeys())
+          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+              || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mutedUntil'])
+              || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'mutedUntil']))
           && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
               || request.resource.data.username == resource.data.username)
           && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
