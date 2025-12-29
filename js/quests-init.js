@@ -693,24 +693,35 @@ export async function updateQuestProgress(questId, increment = 1) {
         const newProgress = Math.min(currentProgress + increment, quest.targetValue);
         const isNowCompleted = newProgress >= quest.targetValue && !completed;
 
-        // Use setDoc with merge for both create and update (more reliable)
-        // This handles race conditions where document might be created between check and write
-        const questData = {
-            userId: currentUser.uid,
-            questId: quest.id,
-            progress: newProgress,
-            completed: isNowCompleted,
-            completedAt: isNowCompleted ? serverTimestamp() : null,
-            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
-            updatedAt: serverTimestamp()
-        };
-        
-        // Only add createdAt if document doesn't exist (merge won't overwrite existing createdAt)
-        if (!userQuestDoc.exists()) {
-            questData.createdAt = serverTimestamp();
-        }
-        
-        await setDoc(userQuestRef, questData, { merge: true });
+        // Use runTransaction to ensure atomicity and proper rule evaluation
+        await runTransaction(db, async (transaction) => {
+            const questDoc = await transaction.get(userQuestRef);
+            
+            const questData = {
+                userId: currentUser.uid,
+                questId: quest.id,
+                progress: newProgress,
+                completed: isNowCompleted,
+                completedAt: isNowCompleted ? serverTimestamp() : null,
+                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                updatedAt: serverTimestamp()
+            };
+            
+            if (!questDoc.exists()) {
+                // Document doesn't exist - create it
+                questData.createdAt = serverTimestamp();
+                transaction.set(userQuestRef, questData);
+            } else {
+                // Document exists - update it (don't overwrite createdAt)
+                transaction.update(userQuestRef, {
+                    progress: newProgress,
+                    completed: isNowCompleted,
+                    completedAt: isNowCompleted ? serverTimestamp() : null,
+                    resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                    updatedAt: serverTimestamp()
+                });
+            }
+        });
 
         // Update local state
         userQuests[quest.id] = {
