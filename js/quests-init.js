@@ -267,8 +267,11 @@ async function initializeQuests() {
     levelProgressFillEl = document.getElementById('levelProgressFill');
     levelProgressTextEl = document.getElementById('levelProgressText');
 
+    // Only initialize if we're on the quests page (elements exist)
+    // If not on quests page, still allow quest progress updates from other pages
     if (!dailyQuestsEl || !weeklyQuestsEl || !userLevelEl) {
-        console.error('Quests DOM elements not found');
+        // Not on quests page - this is fine, quest progress can still be updated
+        // Don't log as error, just return early
         return;
     }
 
