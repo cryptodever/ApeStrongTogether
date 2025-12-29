@@ -26,7 +26,7 @@ import {
 // Constants
 const MESSAGES_PER_PAGE = 50;
 const MAX_MESSAGE_LENGTH = 1000;
-const RATE_LIMIT_SECONDS = 10; // Max 1 message per 10 seconds
+const RATE_LIMIT_SECONDS = 15; // Max 1 message per 15 seconds
 const EDIT_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const TYPING_TIMEOUT = 3000; // 3 seconds
 const PRESENCE_TIMEOUT = 30000; // 30 seconds
@@ -66,7 +66,16 @@ let typingTimeout = null;
 let presenceUpdateInterval = null;
 let lastSeenUpdateInterval = null;
 let currentOnlineUsers = []; // Store current online users for periodic updates
-let currentChannel = 'general';
+// Available channels
+const AVAILABLE_CHANNELS = [
+    { id: 'general', name: 'General Chat', emoji: '💬' },
+    { id: 'raid', name: 'Raid Chat', emoji: '⚔️' },
+    { id: 'trading', name: 'Trading Chat', emoji: '📈' },
+    { id: 'support', name: 'Support Chat', emoji: '🆘' }
+];
+
+// Get channel from localStorage or default to 'general'
+let currentChannel = localStorage.getItem('selectedChannel') || 'general';
 let messageContextMenuMessageId = null;
 
 // DOM Elements
@@ -224,6 +233,12 @@ function initializeChat() {
         return;
     }
 
+    // Setup channel switcher
+    setupChannelSwitcher();
+    
+    // Setup channel switcher
+    setupChannelSwitcher();
+    
     // Setup event listeners
     setupEventListeners();
     
@@ -241,6 +256,78 @@ function initializeChat() {
     
     // Setup user profile popup
     setupUserProfilePopup();
+}
+
+// Setup channel switcher UI
+function setupChannelSwitcher() {
+    const channelButtonsEl = document.getElementById('channelButtons');
+    if (!channelButtonsEl) return;
+    
+    // Clear existing buttons
+    channelButtonsEl.innerHTML = '';
+    
+    // Create buttons for each channel
+    AVAILABLE_CHANNELS.forEach(channel => {
+        const button = document.createElement('button');
+        button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
+        button.setAttribute('data-channel', channel.id);
+        button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
+        button.addEventListener('click', () => switchChannel(channel.id));
+        channelButtonsEl.appendChild(button);
+    });
+}
+
+// Switch to a different channel
+function switchChannel(channelId) {
+    if (channelId === currentChannel) return;
+    
+    // Validate channel exists
+    const channel = AVAILABLE_CHANNELS.find(c => c.id === channelId);
+    if (!channel) {
+        console.error('Invalid channel:', channelId);
+        return;
+    }
+    
+    // Update current channel
+    currentChannel = channelId;
+    localStorage.setItem('selectedChannel', channelId);
+    
+    // Update UI
+    setupChannelSwitcher();
+    
+    // Clear current messages
+    if (chatMessagesEl) {
+        chatMessagesEl.innerHTML = '';
+    }
+    
+    // Remove old listeners
+    if (messagesListener) {
+        messagesListener();
+        messagesListener = null;
+    }
+    if (typingListener) {
+        typingListener();
+        typingListener = null;
+    }
+    
+    // Clear typing indicator
+    clearTypingIndicator();
+    
+    // Show loading
+    if (chatLoadingEl) {
+        chatLoadingEl.classList.remove('hide');
+    }
+    if (chatEmptyEl) {
+        chatEmptyEl.classList.add('hide');
+    }
+    
+    // Reload messages and setup listeners for new channel
+    loadMessages();
+    setupRealtimeListeners();
+    setupTypingIndicator();
+    
+    // Update presence with new channel
+    updatePresence(true);
 }
 
 // Setup event listeners

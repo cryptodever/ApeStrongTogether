@@ -6541,6 +6541,81 @@ body.chat-body > * {
     padding-top: 0;
 }
 
+.chat-header-top {
+    margin-bottom: 24px;
+}
+
+.chat-channels {
+    margin-top: 24px;
+}
+
+.channel-switcher {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.channel-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.channel-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.channel-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.channel-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.channel-button.active {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #4ade80;
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+}
+
+.channel-button.active:hover {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.channel-emoji {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.channel-name {
+    white-space: nowrap;
+}
+
 .chat-header h1 {
     font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(32px, 5vw, 64px);
@@ -7646,6 +7721,43 @@ body.chat-body > * {
 
     .user-profile-popup-bio-text {
         font-size: 14px;
+    }
+
+    .chat-header {
+        margin-bottom: 32px;
+    }
+    
+    .chat-channels {
+        margin-top: 16px;
+    }
+    
+    .channel-switcher {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .channel-label {
+        font-size: 12px;
+    }
+    
+    .channel-buttons {
+        width: 100%;
+        gap: 8px;
+    }
+    
+    .channel-button {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .channel-name {
+        font-size: 12px;
+    }
+    
+    .channel-emoji {
+        font-size: 16px;
     }
 
     .chat-content {
