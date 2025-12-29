@@ -137,6 +137,9 @@ function showOverlay() {
         const container = profileContainer || chatContainer || questsContainer;
         
         if (container) {
+            // Add blocked class to container for CSS styling
+            container.classList.add('blocked');
+            
             // Disable pointer events on all children except the overlay
             Array.from(container.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
@@ -157,6 +160,17 @@ function hideOverlay() {
         const container = profileContainer || chatContainer || questsContainer;
         
         if (container) {
+            // Remove blocked class from container
+            container.classList.remove('blocked');
+            
+            // For profile page, also remove blocked class from profile-page
+            if (profileContainer) {
+                const profilePage = document.querySelector('.profile-page');
+                if (profilePage) {
+                    profilePage.classList.remove('blocked');
+                }
+            }
+            
             Array.from(container.children).forEach(child => {
                 child.classList.remove('pointer-events-none');
                 child.classList.add('pointer-events-auto');
