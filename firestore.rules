@@ -159,7 +159,7 @@ service cloud.firestore {
       
       allow list: if isSignedIn();
       
-      // Users can create/update their own quest progress
+      // Users can create their own quest progress
       // Note: timestamp fields can be serverTimestamp() sentinel
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
@@ -168,10 +168,15 @@ service cloud.firestore {
         && request.resource.data.progress >= 0
         && request.resource.data.completed is bool;
       
+      // Users can update their own quest progress
+      // Note: Using setDoc with merge:true may update existing documents
+      // We allow updates if the document belongs to the user and userId/questId remain consistent
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.questId == resource.data.questId;
+        && (!('userId' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.userId == resource.data.userId)
+        && (!('questId' in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.questId == resource.data.questId);
       
       allow delete: if false; // Don't allow deletion, use reset instead
     }
