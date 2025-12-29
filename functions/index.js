@@ -18,6 +18,12 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+// Rate limiting for X API verification (in-memory cache)
+// In production, consider using Redis or Firestore for distributed rate limiting
+const rateLimitCache = new Map();
+const RATE_LIMIT_WINDOW = 30000; // 30 seconds
+const RATE_LIMIT_MAX_REQUESTS = 1; // 1 request per user per 30 seconds
+
 /**
  * Triggered when a Firebase Auth user is deleted
  * Automatically cleans up associated Firestore documents
@@ -122,6 +128,36 @@ exports.verifyXAccount = functions.region('us-central1').https.onCall(async (dat
     // Verify the uid matches the authenticated user
     if (uid !== context.auth.uid) {
         throw new functions.https.HttpsError('permission-denied', 'UID mismatch');
+    }
+
+    // Rate limiting: prevent abuse of X API
+    const rateLimitKey = `${context.auth.uid}_${username}`;
+    const now = Date.now();
+    const userRateLimit = rateLimitCache.get(rateLimitKey);
+    
+    if (userRateLimit) {
+        const timeSinceLastRequest = now - userRateLimit.lastRequest;
+        if (timeSinceLastRequest < RATE_LIMIT_WINDOW) {
+            const waitTime = Math.ceil((RATE_LIMIT_WINDOW - timeSinceLastRequest) / 1000);
+            throw new functions.https.HttpsError(
+                'resource-exhausted',
+                `Please wait ${waitTime} second${waitTime !== 1 ? 's' : ''} before trying again`
+            );
+        }
+    }
+    
+    // Update rate limit cache
+    rateLimitCache.set(rateLimitKey, { lastRequest: now });
+    
+    // Clean up old entries (keep cache size manageable)
+    if (rateLimitCache.size > 10000) {
+        const entriesToDelete = [];
+        for (const [key, value] of rateLimitCache.entries()) {
+            if (now - value.lastRequest > RATE_LIMIT_WINDOW * 10) {
+                entriesToDelete.push(key);
+            }
+        }
+        entriesToDelete.forEach(key => rateLimitCache.delete(key));
     }
 
     // Get X API Bearer Token from config

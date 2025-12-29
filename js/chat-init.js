@@ -461,9 +461,17 @@ function setupRealtimeListeners() {
         }
     });
 
-    // Setup presence listener for online users
+    // Setup presence listener for online users (optimized: only load recently active users)
+    // This reduces Firestore reads significantly by limiting to users active in last 5 minutes
     const presenceRef = collection(db, 'presence');
-    presenceListener = onSnapshot(presenceRef, async (snapshot) => {
+    const fiveMinutesAgo = Timestamp.fromDate(new Date(Date.now() - 5 * 60 * 1000));
+    const presenceQuery = query(
+        presenceRef,
+        where('lastSeen', '>=', fiveMinutesAgo),
+        orderBy('lastSeen', 'desc'),
+        limit(100) // Cap at 100 most recently active users
+    );
+    presenceListener = onSnapshot(presenceQuery, async (snapshot) => {
         const onlineUsers = [];
         const now = Date.now();
         
@@ -1021,10 +1029,11 @@ function setupPresence() {
     // Set online status
     updatePresence(true);
 
-    // Update presence periodically
+    // Update presence periodically (optimized: every 120 seconds / 2 minutes)
+    // This reduces Firestore writes from ~2.88M/day to ~360K/day for 500 users
     presenceUpdateInterval = setInterval(() => {
         updatePresence(true);
-    }, PRESENCE_TIMEOUT / 2);
+    }, 120000); // 120 seconds (2 minutes)
 
     // Set offline when page unloads
     window.addEventListener('beforeunload', () => {
