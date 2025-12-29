@@ -140,6 +140,22 @@ function showOverlay() {
             // Add blocked class to container for CSS styling
             container.classList.add('blocked');
             
+            // For profile page, also add blocked class to profile-page
+            if (profileContainer) {
+                const profilePage = document.querySelector('.profile-page');
+                if (profilePage) {
+                    profilePage.classList.add('blocked');
+                }
+            }
+            
+            // For quests page, also add blocked class to quests-page
+            if (questsContainer) {
+                const questsPage = document.querySelector('.quests-page');
+                if (questsPage) {
+                    questsPage.classList.add('blocked');
+                }
+            }
+            
             // Disable pointer events on all children except the overlay
             Array.from(container.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
@@ -168,6 +184,14 @@ function hideOverlay() {
                 const profilePage = document.querySelector('.profile-page');
                 if (profilePage) {
                     profilePage.classList.remove('blocked');
+                }
+            }
+            
+            // For quests page, also remove blocked class from quests-page
+            if (questsContainer) {
+                const questsPage = document.querySelector('.quests-page');
+                if (questsPage) {
+                    questsPage.classList.remove('blocked');
                 }
             }
             
