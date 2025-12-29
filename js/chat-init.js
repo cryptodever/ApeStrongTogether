@@ -26,7 +26,18 @@ import {
 // Constants
 const MESSAGES_PER_PAGE = 50;
 const MAX_MESSAGE_LENGTH = 1000;
-const RATE_LIMIT_SECONDS = 15; // Max 1 message per 15 seconds
+// Rate limits per channel (in seconds)
+const RATE_LIMITS = {
+    'general': 15,
+    'raid': 15,
+    'trading': 15,
+    'support': 30 // Support chat has longer cooldown to prevent spam
+};
+
+// Get rate limit for current channel
+function getRateLimitSeconds() {
+    return RATE_LIMITS[currentChannel] || 15; // Default to 15 seconds
+}
 const EDIT_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
 const TYPING_TIMEOUT = 3000; // 3 seconds
 const PRESENCE_TIMEOUT = 30000; // 30 seconds
@@ -891,18 +902,19 @@ async function handleSendMessage() {
     const text = chatInputEl.value.trim();
     if (!text) return;
 
-    // Rate limiting with countdown timer
+    // Rate limiting with countdown timer (channel-specific)
+    const rateLimitSeconds = getRateLimitSeconds();
     const now = Date.now();
     const timeSinceLastMessage = now - lastMessageTime;
-    if (timeSinceLastMessage < RATE_LIMIT_SECONDS * 1000) {
-        const remaining = Math.ceil((RATE_LIMIT_SECONDS * 1000 - timeSinceLastMessage) / 1000);
+    if (timeSinceLastMessage < rateLimitSeconds * 1000) {
+        const remaining = Math.ceil((rateLimitSeconds * 1000 - timeSinceLastMessage) / 1000);
         rateLimitInfoEl.textContent = `Please wait ${remaining} second${remaining > 1 ? 's' : ''} before sending another message`;
         rateLimitInfoEl.classList.remove('hide');
         rateLimitInfoEl.classList.add('warning');
         
         // Update countdown every second
         const countdownInterval = setInterval(() => {
-            const timeLeft = Math.ceil((RATE_LIMIT_SECONDS * 1000 - (Date.now() - lastMessageTime)) / 1000);
+            const timeLeft = Math.ceil((rateLimitSeconds * 1000 - (Date.now() - lastMessageTime)) / 1000);
             if (timeLeft > 0) {
                 rateLimitInfoEl.textContent = `Please wait ${timeLeft} second${timeLeft > 1 ? 's' : ''} before sending another message`;
             } else {
@@ -917,7 +929,7 @@ async function handleSendMessage() {
             clearInterval(countdownInterval);
             rateLimitInfoEl.classList.add('hide');
             rateLimitInfoEl.classList.remove('warning');
-        }, (RATE_LIMIT_SECONDS * 1000) - timeSinceLastMessage);
+        }, (rateLimitSeconds * 1000) - timeSinceLastMessage);
         
         return;
     }
@@ -964,7 +976,8 @@ async function handleSendMessage() {
         // Update presence when sending a message (mark as online)
         updatePresence(true);
 
-        // Update quest progress for chat messages
+        // Update quest progress for chat messages (works across all channels)
+        // Tracks messages sent in any channel: General, Raid, Trading, or Support
         try {
             const { updateQuestProgress } = await import('/js/quests-init.js');
             await updateQuestProgress('daily_chat_5', 1);
