@@ -1533,12 +1533,14 @@ async function showUserProfile(userId) {
         // Show loading state
         userProfilePopupEl.classList.remove('hide');
         const nameEl = document.getElementById('userProfilePopupName');
+        const levelEl = document.getElementById('userProfilePopupLevelValue');
         const countryEl = document.getElementById('userProfilePopupCountryValue');
         const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
         const bioEl = document.getElementById('userProfilePopupBio');
         const verifiedEl = document.getElementById('userProfilePopupVerified');
         
         if (nameEl) nameEl.textContent = 'Loading...';
+        if (levelEl) levelEl.textContent = '—';
         if (countryEl) countryEl.textContent = '—';
         if (xAccountEl) xAccountEl.textContent = '—';
         if (bioEl) bioEl.textContent = 'Loading profile...';
@@ -1587,10 +1589,11 @@ async function showUserProfile(userId) {
         const bannerImgEl = document.getElementById('userProfilePopupBannerImg');
         
         // Check if all elements exist (reuse variables from loading state above)
-        if (!nameEl || !bannerImgEl || !countryEl || !xAccountEl || !bioEl || !verifiedEl) {
+        if (!nameEl || !bannerImgEl || !levelEl || !countryEl || !xAccountEl || !bioEl || !verifiedEl) {
             console.error('User profile popup elements not found:', {
                 nameEl: !!nameEl,
                 bannerImgEl: !!bannerImgEl,
+                levelEl: !!levelEl,
                 countryEl: !!countryEl,
                 xAccountEl: !!xAccountEl,
                 bioEl: !!bioEl,
@@ -1601,6 +1604,22 @@ async function showUserProfile(userId) {
         
         // Name
         nameEl.textContent = userData.username || 'Anonymous';
+        
+        // Level - calculate from points if level not set, or use stored level
+        let userLevel = userData.level;
+        if (userLevel === undefined && userData.points !== undefined) {
+            // Import level calculation from quests system
+            try {
+                const { calculateLevel } = await import('/js/quests-init.js');
+                userLevel = calculateLevel(userData.points || 0);
+            } catch (error) {
+                console.error('Error importing calculateLevel:', error);
+                userLevel = 1; // Default fallback
+            }
+        }
+        if (levelEl) {
+            levelEl.textContent = userLevel || 1;
+        }
         
         // Banner - handle image loading with error fallback
         const bannerImage = userData.bannerImage || '/pfp_apes/bg1.png';

@@ -100,6 +100,56 @@ async function loadProfile() {
                     usernameElement.textContent = userData.username;
                 }
                 
+                // Load and sync level from quests system
+                const profileRankEl = document.getElementById('profileRank');
+                const rankProgressFillEl = document.getElementById('rankProgressFill');
+                
+                if (profileRankEl || rankProgressFillEl) {
+                    try {
+                        // Import level calculation functions from quests system
+                        const { calculateLevel, getLevelProgress } = await import('/js/quests-init.js');
+                        
+                        // Calculate level from points (sync with quests system)
+                        const points = userData.points || 0;
+                        const levelProgress = getLevelProgress(points);
+                        const calculatedLevel = levelProgress.level;
+                        
+                        // Update stored level if it's different (sync)
+                        if (userData.level !== calculatedLevel) {
+                            const userDocRef = doc(db, 'users', currentUser.uid);
+                            await setDoc(userDocRef, {
+                                level: calculatedLevel
+                            }, { merge: true });
+                            userData.level = calculatedLevel;
+                        }
+                        
+                        // Update level display
+                        if (profileRankEl) {
+                            if (levelProgress.isMaxLevel) {
+                                profileRankEl.textContent = 'MAX';
+                            } else {
+                                profileRankEl.textContent = calculatedLevel;
+                            }
+                        }
+                        
+                        // Update level progress bar
+                        if (rankProgressFillEl) {
+                            if (levelProgress.isMaxLevel) {
+                                rankProgressFillEl.style.setProperty('width', '100%');
+                            } else {
+                                const progressPercent = (levelProgress.xpInCurrentLevel / levelProgress.xpNeededForNextLevel) * 100;
+                                rankProgressFillEl.style.setProperty('width', `${Math.min(progressPercent, 100)}%`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error syncing level from quests system:', error);
+                        // Fallback to stored level or default
+                        if (profileRankEl) {
+                            profileRankEl.textContent = userData.level || 1;
+                        }
+                    }
+                }
+                
                 // Load bio
                 const bioTextarea = document.getElementById('profileBio');
                 if (bioTextarea && userData.bio) {
