@@ -161,19 +161,18 @@ service cloud.firestore {
       
       // Users can create their own quest progress
       // Note: setDoc with merge:true on non-existent doc triggers create
-      // Allow any fields as long as userId matches and questId is a string
+      // Be very permissive - only check userId matches
       allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.questId is string;
+        && request.resource.data.userId == request.auth.uid;
       
       // Users can update their own quest progress
       // Note: setDoc with merge:true on existing doc triggers update
       // Allow updates if the document belongs to the user
-      // Prevent changing userId or questId
+      // With merge:true, userId and questId should always be present and match
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
-        && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
-        && (!('questId' in request.resource.data) || request.resource.data.questId == resource.data.questId);
+        && (request.resource.data.userId == resource.data.userId || !('userId' in request.resource.data))
+        && (request.resource.data.questId == resource.data.questId || !('questId' in request.resource.data));
       
       allow delete: if false; // Don't allow deletion, use reset instead
     }
