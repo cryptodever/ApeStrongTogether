@@ -488,7 +488,15 @@ async function checkAndResetQuests() {
     // Batch update
     for (const update of updates) {
         try {
-            await setDoc(update.ref, update.data, { merge: true });
+            // Use transaction for quest reset to ensure proper rule evaluation
+            await runTransaction(db, async (transaction) => {
+                const questDoc = await transaction.get(update.ref);
+                if (questDoc.exists()) {
+                    transaction.update(update.ref, update.data);
+                } else {
+                    transaction.set(update.ref, update.data);
+                }
+            });
         } catch (error) {
             console.error(`Error resetting quest ${update.ref.id}:`, error);
         }
@@ -818,16 +826,33 @@ async function checkAndUpdateCompleteAllDailyQuests() {
         resetAt = Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod));
     }
     
-    await setDoc(userQuestRef, {
-        userId: currentUser.uid,
-        questId: 'daily_complete_quest',
-        progress: newProgress,
-        completed: isNowCompleted,
-        completedAt: isNowCompleted ? serverTimestamp() : null,
-        resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    }, { merge: true });
+    // Use transaction for quest update to ensure proper rule evaluation
+    await runTransaction(db, async (transaction) => {
+        const questDoc = await transaction.get(userQuestRef);
+        
+        const questData = {
+            userId: currentUser.uid,
+            questId: 'daily_complete_quest',
+            progress: newProgress,
+            completed: isNowCompleted,
+            completedAt: isNowCompleted ? serverTimestamp() : null,
+            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
+            updatedAt: serverTimestamp()
+        };
+        
+        if (!questDoc.exists()) {
+            questData.createdAt = serverTimestamp();
+            transaction.set(userQuestRef, questData);
+        } else {
+            transaction.update(userQuestRef, {
+                progress: newProgress,
+                completed: isNowCompleted,
+                completedAt: isNowCompleted ? serverTimestamp() : null,
+                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
+                updatedAt: serverTimestamp()
+            });
+        }
+    });
     
     // Update local state
     userQuests['daily_complete_quest'] = {

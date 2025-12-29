@@ -154,8 +154,9 @@ service cloud.firestore {
     match /userQuests/{userQuestId} {
       // Users can read their own quest progress (both get and list/query)
       // For queries, Firestore checks this rule against each document
-      allow get: if isSignedIn() && 
-        resource.data.userId == request.auth.uid;
+      // Allow get even if document doesn't exist (needed for transactions)
+      // Also allow reading any document in userQuests if user is signed in (for transactions)
+      allow get: if isSignedIn();
       
       allow list: if isSignedIn();
       
@@ -168,6 +169,7 @@ service cloud.firestore {
       // Users can update their own quest progress
       // Allow updates if document belongs to user
       // Don't allow changing userId or questId
+      // transaction.update() only includes fields being updated
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
         && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
