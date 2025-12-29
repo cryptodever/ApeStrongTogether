@@ -67,18 +67,15 @@ service cloud.firestore {
           && (!('mutedUntil' in request.resource.data.diff(resource.data).affectedKeys())))
         ||
         // Admin/moderator updating role or mutedUntil (for moderation)
+        // updateDoc only sends changed fields in request.resource.data
         (isAdminOrMod(request.auth.uid)
-          && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
-              || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mutedUntil'])
-              || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'mutedUntil']))
-          && (!('username' in request.resource.data.diff(resource.data).affectedKeys())
-              || request.resource.data.username == resource.data.username)
-          && (!('email' in request.resource.data.diff(resource.data).affectedKeys())
-              || request.resource.data.email == resource.data.email)
-          && (!('avatarCount' in request.resource.data.diff(resource.data).affectedKeys())
-              || request.resource.data.avatarCount == resource.data.avatarCount)
-          && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
-              || request.resource.data.createdAt == resource.data.createdAt))
+          && (request.resource.data.keys().hasOnly(['role'])
+              || request.resource.data.keys().hasOnly(['mutedUntil'])
+              || request.resource.data.keys().hasOnly(['role', 'mutedUntil']))
+          && !('username' in request.resource.data)
+          && !('email' in request.resource.data)
+          && !('avatarCount' in request.resource.data)
+          && !('createdAt' in request.resource.data))
       );
 
       allow delete: if false;
@@ -200,8 +197,10 @@ service cloud.firestore {
 
     // Followers collection
     match /followers/{userId}/followers/{followerId} {
-      // Anyone authenticated can read followers
-      allow read: if isSignedIn();
+      // Anyone authenticated can read individual follower documents
+      allow get: if isSignedIn();
+      // Anyone authenticated can list followers (for queries)
+      allow list: if isSignedIn();
       // Only the follower themselves can create/delete their follow relationship
       allow create: if isSignedIn() 
         && followerId == request.auth.uid
@@ -213,8 +212,10 @@ service cloud.firestore {
 
     // Following collection
     match /following/{userId}/following/{followingId} {
-      // Anyone authenticated can read following
-      allow read: if isSignedIn();
+      // Anyone authenticated can read individual following documents
+      allow get: if isSignedIn();
+      // Anyone authenticated can list following (for queries)
+      allow list: if isSignedIn();
       // Only the user themselves can create/delete their following relationship
       allow create: if isSignedIn() 
         && userId == request.auth.uid
