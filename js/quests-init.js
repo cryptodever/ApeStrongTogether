@@ -693,27 +693,22 @@ export async function updateQuestProgress(questId, increment = 1) {
         const newProgress = Math.min(currentProgress + increment, quest.targetValue);
         const isNowCompleted = newProgress >= quest.targetValue && !completed;
 
-        // Use setDoc for create, updateDoc for update to avoid permission issues
-        if (userQuestDoc.exists()) {
-            // Document exists - use updateDoc
+        // Use setDoc with merge for both create and update (more reliable)
+        // This handles race conditions where document might be created between check and write
+        await setDoc(userQuestRef, {
+            userId: currentUser.uid,
+            questId: quest.id,
+            progress: newProgress,
+            completed: isNowCompleted,
+            completedAt: isNowCompleted ? serverTimestamp() : null,
+            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        
+        // Only set createdAt if document is new (merge won't overwrite existing createdAt)
+        if (!userQuestDoc.exists()) {
             await updateDoc(userQuestRef, {
-                progress: newProgress,
-                completed: isNowCompleted,
-                completedAt: isNowCompleted ? serverTimestamp() : null,
-                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
-                updatedAt: serverTimestamp()
-            });
-        } else {
-            // Document doesn't exist - use setDoc to create
-            await setDoc(userQuestRef, {
-                userId: currentUser.uid,
-                questId: quest.id,
-                progress: newProgress,
-                completed: isNowCompleted,
-                completedAt: isNowCompleted ? serverTimestamp() : null,
-                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: serverTimestamp()
             });
         }
 
