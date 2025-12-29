@@ -434,8 +434,8 @@ function setupEventListeners() {
 
     // Auto-resize textarea
     chatInputEl.addEventListener('input', () => {
-        chatInputEl.style.height = 'auto';
-        chatInputEl.style.height = Math.min(chatInputEl.scrollHeight, 150) + 'px';
+        chatInputEl.style.setProperty('height', 'auto');
+        chatInputEl.style.setProperty('height', Math.min(chatInputEl.scrollHeight, 150) + 'px');
     });
 }
 
@@ -493,7 +493,7 @@ function loadMessages() {
             <div class="chat-empty-icon">⚠️</div>
             <h3>Unable to load messages</h3>
             <p>There was an error loading messages. Please check your connection and refresh the page.</p>
-            <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px;">Error: ${error.message}</p>
+            <p class="chat-error-detail">Error: ${escapeHtml(error.message)}</p>
         `;
     });
 }
@@ -1035,7 +1035,7 @@ async function handleSendMessage() {
 
         // Clear input
         chatInputEl.value = '';
-        chatInputEl.style.height = 'auto';
+        chatInputEl.style.setProperty('height', 'auto');
         charCountEl.textContent = `0/${MAX_MESSAGE_LENGTH}`;
         lastMessageTime = now;
         rateLimitInfoEl.classList.add('hide');
@@ -1425,8 +1425,8 @@ function showMessageContextMenu(event, messageId, messageData, canEdit, canDelet
     }
 
     messageContextMenuEl.classList.remove('hide');
-    messageContextMenuEl.style.left = event.pageX + 'px';
-    messageContextMenuEl.style.top = event.pageY + 'px';
+    messageContextMenuEl.style.setProperty('left', event.pageX + 'px');
+    messageContextMenuEl.style.setProperty('top', event.pageY + 'px');
 }
 
 // Setup reaction picker
@@ -1448,8 +1448,8 @@ function showReactionPicker(messageId, button) {
     messageContextMenuMessageId = messageId;
     const rect = button.getBoundingClientRect();
     reactionPickerEl.classList.remove('hide');
-    reactionPickerEl.style.left = rect.left + 'px';
-    reactionPickerEl.style.top = (rect.top - 60) + 'px';
+    reactionPickerEl.style.setProperty('left', rect.left + 'px');
+    reactionPickerEl.style.setProperty('top', (rect.top - 60) + 'px');
 }
 
 // Show emoji picker for chat input
@@ -1509,10 +1509,10 @@ function showEmojiPicker(button) {
     top = Math.max(padding, Math.min(top, viewportHeight - pickerHeight - padding));
     
     // Apply the calculated position using fixed positioning
-    emojiPickerEl.style.left = left + 'px';
-    emojiPickerEl.style.top = top + 'px';
-    emojiPickerEl.style.right = 'auto';
-    emojiPickerEl.style.bottom = 'auto';
+    emojiPickerEl.style.setProperty('left', left + 'px');
+    emojiPickerEl.style.setProperty('top', top + 'px');
+    emojiPickerEl.style.setProperty('right', 'auto');
+    emojiPickerEl.style.setProperty('bottom', 'auto');
 }
 
 // Report a message
@@ -1854,7 +1854,7 @@ async function showUserProfile(userId) {
                 const isFollowing = await checkIfFollowing(userId);
                 const followBtn = document.getElementById('chatFollowBtn');
                 if (followBtn) {
-                    followBtn.style.display = 'block';
+                    followBtn.style.setProperty('display', 'block');
                     followBtn.dataset.userId = userId;
                     followBtn.dataset.isFollowing = isFollowing ? 'true' : 'false';
                     followBtn.innerHTML = `<span class="follow-btn-text">${isFollowing ? 'Unfollow' : 'Follow'}</span>`;
@@ -1887,7 +1887,7 @@ async function showUserProfile(userId) {
             // Hide follow button for own profile
             const followBtn = document.getElementById('chatFollowBtn');
             if (followBtn) {
-                followBtn.style.display = 'none';
+                followBtn.style.setProperty('display', 'none');
             }
         }
         
@@ -2045,10 +2045,10 @@ async function handleMuteCommand(username, minutes) {
         // Calculate mute expiration time
         const muteExpiration = Timestamp.fromMillis(Date.now() + (minutes * 60 * 1000));
         
-        // Set mute
-        await updateDoc(targetUserRef, {
+        // Set mute (use setDoc with merge to handle case where field doesn't exist)
+        await setDoc(targetUserRef, {
             mutedUntil: muteExpiration
-        });
+        }, { merge: true });
         
         alert(`Successfully muted "${username}" for ${minutes} minute${minutes > 1 ? 's' : ''}.`);
         console.log(`Admin ${userProfile.username} muted ${username} for ${minutes} minutes`);

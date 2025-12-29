@@ -226,7 +226,7 @@ async function loadProfile() {
                     const bgPath = userData.bannerBackground.startsWith('/')
                         ? userData.bannerBackground
                         : '/' + userData.bannerBackground;
-                    bannerBg.style.backgroundImage = `url(${bgPath})`;
+                    bannerBg.style.setProperty('background-image', `url(${bgPath})`);
                 }
                 
                 // Update selected banner in grid (only if bannerImage exists)
@@ -523,7 +523,7 @@ function selectBannerBg(bgPath) {
     // Update banner background
     const bannerBg = document.getElementById('profileBannerBg');
     if (bannerBg) {
-        bannerBg.style.backgroundImage = `url(${bgPath})`;
+        bannerBg.style.setProperty('background-image', `url(${bgPath})`);
     }
     
     // Update selection in grid
