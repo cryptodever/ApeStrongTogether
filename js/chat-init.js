@@ -1854,7 +1854,7 @@ async function showUserProfile(userId) {
                 const isFollowing = await checkIfFollowing(userId);
                 const followBtn = document.getElementById('chatFollowBtn');
                 if (followBtn) {
-                    followBtn.style.setProperty('display', 'block');
+                    followBtn.classList.remove('hide');
                     followBtn.dataset.userId = userId;
                     followBtn.dataset.isFollowing = isFollowing ? 'true' : 'false';
                     followBtn.innerHTML = `<span class="follow-btn-text">${isFollowing ? 'Unfollow' : 'Follow'}</span>`;
@@ -1887,7 +1887,7 @@ async function showUserProfile(userId) {
             // Hide follow button for own profile
             const followBtn = document.getElementById('chatFollowBtn');
             if (followBtn) {
-                followBtn.style.setProperty('display', 'none');
+                followBtn.classList.add('hide');
             }
         }
         
