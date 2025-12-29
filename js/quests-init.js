@@ -620,6 +620,9 @@ function updateUserStats() {
     }
 }
 
+// Track ongoing quest updates to prevent duplicate processing
+const questUpdateLocks = new Map();
+
 // Update quest progress (called from other modules)
 export async function updateQuestProgress(questId, increment = 1) {
     // Get current user from auth if not set
@@ -632,25 +635,40 @@ export async function updateQuestProgress(questId, increment = 1) {
         currentUser = currentAuthUser;
     }
 
-    // Ensure user profile is loaded
-    if (!userProfile) {
-        await loadUserProfile();
-    }
-
-    // Ensure quests are loaded
-    if (availableQuests.length === 0) {
-        await loadAvailableQuests();
-    }
-
-    const quest = availableQuests.find(q => q.id === questId);
-    if (!quest) {
-        console.warn(`updateQuestProgress: Quest ${questId} not found in available quests`);
+    // Create a unique lock key for this user + quest combination
+    const lockKey = `${currentUser.uid}_${questId}`;
+    
+    // Check if this quest is already being processed
+    if (questUpdateLocks.has(lockKey)) {
+        console.log(`updateQuestProgress: Quest ${questId} is already being processed, skipping duplicate call`);
         return;
     }
-    if (!quest.isActive) {
-        console.warn(`updateQuestProgress: Quest ${questId} is not active`);
-        return;
-    }
+    
+    // Set lock
+    questUpdateLocks.set(lockKey, true);
+
+    try {
+        // Ensure user profile is loaded
+        if (!userProfile) {
+            await loadUserProfile();
+        }
+
+        // Ensure quests are loaded
+        if (availableQuests.length === 0) {
+            await loadAvailableQuests();
+        }
+
+        const quest = availableQuests.find(q => q.id === questId);
+        if (!quest) {
+            console.warn(`updateQuestProgress: Quest ${questId} not found in available quests`);
+            questUpdateLocks.delete(lockKey);
+            return;
+        }
+        if (!quest.isActive) {
+            console.warn(`updateQuestProgress: Quest ${questId} is not active`);
+            questUpdateLocks.delete(lockKey);
+            return;
+        }
 
     try {
         const userQuestId = `${currentUser.uid}_${quest.id}`;
@@ -666,6 +684,8 @@ export async function updateQuestProgress(questId, increment = 1) {
 
         // Use runTransaction to ensure atomicity and proper rule evaluation
         // All logic that depends on document state should be inside the transaction
+        let wasNewlyCompleted = false;
+        
         await runTransaction(db, async (transaction) => {
             const questDoc = await transaction.get(userQuestRef);
             
@@ -713,6 +733,9 @@ export async function updateQuestProgress(questId, increment = 1) {
             const newProgress = Math.min(currentProgress + increment, quest.targetValue);
             const isNowCompleted = newProgress >= quest.targetValue && !completed;
             
+            // Track if this transaction newly completed the quest
+            wasNewlyCompleted = isNowCompleted;
+            
             const questData = {
                 userId: currentUser.uid,
                 questId: quest.id,
@@ -740,13 +763,11 @@ export async function updateQuestProgress(questId, increment = 1) {
             
         });
 
-        // Read the updated document to get the final state
+        // Read the updated document to get the final state for local cache
         const updatedQuestDoc = await getDoc(userQuestRef);
-        let isNowCompleted = false;
         
         if (updatedQuestDoc.exists()) {
             const data = updatedQuestDoc.data();
-            isNowCompleted = data.completed || false;
             
             // Update local state with actual data from Firestore
             userQuests[quest.id] = {
@@ -759,8 +780,9 @@ export async function updateQuestProgress(questId, increment = 1) {
             };
         }
 
-        // If quest completed, award points
-        if (isNowCompleted) {
+        // Only award points if the quest was newly completed in THIS transaction
+        // This prevents duplicate rewards from race conditions
+        if (wasNewlyCompleted) {
             await awardQuestPoints(quest.rewardPoints);
             
             // Reload user profile to get updated points/level
@@ -790,6 +812,9 @@ export async function updateQuestProgress(questId, increment = 1) {
         }
     } catch (error) {
         console.error(`Error updating quest progress for ${questId}:`, error);
+    } finally {
+        // Always remove lock, even if there was an error or early return
+        questUpdateLocks.delete(lockKey);
     }
 }
 
@@ -900,24 +925,51 @@ async function awardQuestPoints(points) {
     try {
         const userDocRef = doc(db, 'users', currentUser.uid);
         
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userDocRef);
-            const currentPoints = userDoc.data()?.points || 0;
-            const newPoints = currentPoints + points;
-            const newLevel = calculateLevel(newPoints);
+        // Retry transaction up to 3 times if it fails due to conflicts
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userDocRef);
+                    if (!userDoc.exists()) {
+                        throw new Error('User document does not exist');
+                    }
+                    
+                    const currentPoints = userDoc.data()?.points || 0;
+                    const newPoints = currentPoints + points;
+                    const newLevel = calculateLevel(newPoints);
 
-            transaction.update(userDocRef, {
-                points: newPoints,
-                level: newLevel,
-                totalQuestsCompleted: (userDoc.data()?.totalQuestsCompleted || 0) + 1
-            });
+                    transaction.update(userDocRef, {
+                        points: newPoints,
+                        level: newLevel,
+                        totalQuestsCompleted: (userDoc.data()?.totalQuestsCompleted || 0) + 1
+                    });
 
-            // Update local state
-            userProfile.points = newPoints;
-            userProfile.level = newLevel;
-        });
+                    // Update local state
+                    userProfile.points = newPoints;
+                    userProfile.level = newLevel;
+                });
+                
+                // Transaction succeeded, break out of retry loop
+                break;
+            } catch (error) {
+                retries++;
+                if (error.code === 'failed-precondition' && retries < maxRetries) {
+                    // Wait a bit before retrying (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, 50 * retries));
+                    continue;
+                } else {
+                    // Either not a retryable error or max retries reached
+                    throw error;
+                }
+            }
+        }
     } catch (error) {
         console.error('Error awarding quest points:', error);
+        // Don't throw - we don't want to break the quest completion flow
+        // The points will be synced when the user profile is reloaded
     }
 }
 
