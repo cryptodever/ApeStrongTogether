@@ -2044,10 +2044,13 @@ async function handleClearCommand(channelName) {
             return;
         }
         
-        // Delete all messages (batch delete)
+        // Soft delete all messages (set deleted flag to true)
         const deletePromises = [];
         messagesSnapshot.forEach((messageDoc) => {
-            deletePromises.push(deleteDoc(doc(db, 'messages', messageDoc.id)));
+            const messageRef = doc(db, 'messages', messageDoc.id);
+            deletePromises.push(updateDoc(messageRef, {
+                deleted: true
+            }));
         });
         
         await Promise.all(deletePromises);
