@@ -693,16 +693,29 @@ export async function updateQuestProgress(questId, increment = 1) {
         const newProgress = Math.min(currentProgress + increment, quest.targetValue);
         const isNowCompleted = newProgress >= quest.targetValue && !completed;
 
-        await setDoc(userQuestRef, {
-            userId: currentUser.uid,
-            questId: quest.id,
-            progress: newProgress,
-            completed: isNowCompleted,
-            completedAt: isNowCompleted ? serverTimestamp() : null,
-            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        // Use setDoc for create, updateDoc for update to avoid permission issues
+        if (userQuestDoc.exists()) {
+            // Document exists - use updateDoc
+            await updateDoc(userQuestRef, {
+                progress: newProgress,
+                completed: isNowCompleted,
+                completedAt: isNowCompleted ? serverTimestamp() : null,
+                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            // Document doesn't exist - use setDoc to create
+            await setDoc(userQuestRef, {
+                userId: currentUser.uid,
+                questId: quest.id,
+                progress: newProgress,
+                completed: isNowCompleted,
+                completedAt: isNowCompleted ? serverTimestamp() : null,
+                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
 
         // Update local state
         userQuests[quest.id] = {
