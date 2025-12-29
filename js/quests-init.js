@@ -252,6 +252,9 @@ function calculateLevel(points) {
     return getLevelProgress(points).level;
 }
 
+// Export level calculation functions for use in other modules
+export { calculateLevel, getLevelProgress, calculateXPForLevel };
+
 // Initialize quests page
 async function initializeQuests() {
     if (!currentUser || !userProfile) {
