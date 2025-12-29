@@ -8150,6 +8150,14 @@ body.quests-body > * {
     transition: opacity 0.25s ease, filter 0.25s ease;
 }
 
+/* Since quests-container uses position: relative, we need to target quests-page for consistent styling */
+.quests-page.blocked .quests-container > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
 .quests-header {
     text-align: center;
     margin-bottom: 3rem;
