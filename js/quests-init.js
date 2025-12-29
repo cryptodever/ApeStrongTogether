@@ -375,9 +375,9 @@ async function loadAvailableQuests() {
         {
             id: 'weekly_complete_daily_5',
             title: 'Daily Grinder',
-            description: 'Complete 5 daily quests',
+            description: 'Complete 20 daily quests',
             type: 'weekly',
-            targetValue: 5,
+            targetValue: 20,
             rewardPoints: 75,
             category: 'quests',
             isActive: true,
@@ -792,7 +792,7 @@ export async function updateQuestProgress(questId, increment = 1) {
                 await checkAndUpdateCompleteAllDailyQuests();
             }
             
-            // If this is a daily quest completion, update weekly "complete 5 daily quests" quest
+            // If this is a daily quest completion, update weekly "complete 20 daily quests" quest
             if (quest.type === 'daily') {
                 await updateQuestProgress('weekly_complete_daily_5', 1);
             }
