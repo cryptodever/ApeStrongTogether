@@ -121,6 +121,21 @@ async function loadProfile() {
                     updateXVerificationUI(userData);
                 }
                 
+                // Check if user is already verified and update quest if needed
+                // Use setTimeout to ensure quest system is fully initialized
+                if (userData.xAccountVerified === true) {
+                    setTimeout(async () => {
+                        try {
+                            const { updateQuestProgress } = await import('/js/quests-init.js');
+                            console.log('[loadProfile] User is verified, updating quest progress...');
+                            await updateQuestProgress('weekly_verify_x', 1);
+                            console.log('[loadProfile] Quest progress updated for verified user');
+                        } catch (error) {
+                            console.error('[loadProfile] Error updating quest for verified user:', error);
+                        }
+                    }, 1000);
+                }
+                
                 // Load banner image
                 const bannerImg = document.getElementById('profileBannerImg');
                 if (bannerImg && userData.bannerImage) {
@@ -739,8 +754,11 @@ async function verifyXAccount() {
             // Update quest progress for X verification
             try {
                 const { updateQuestProgress } = await import('/js/quests-init.js');
+                console.log('[verifyXAccount] Updating quest progress for weekly_verify_x');
                 await updateQuestProgress('weekly_verify_x', 1);
+                console.log('[verifyXAccount] Quest progress updated successfully');
             } catch (error) {
+                console.error('[verifyXAccount] Error updating quest progress:', error);
                 // Quest module might not be loaded, ignore silently
             }
         } else {
@@ -996,6 +1014,37 @@ function handleBannerBgClick(event) {
 // Admin utility: Sync missing user profiles
 // This function can be called from the browser console by admins
 // Usage: await syncMissingUserProfiles()
+// Manual function to check and update X verification quest
+window.checkXVerificationQuest = async function() {
+    if (!currentUser) {
+        console.error('No user logged in');
+        return;
+    }
+    
+    try {
+        // Check if user is verified
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (!userDoc.exists()) {
+            console.error('User profile not found');
+            return;
+        }
+        
+        const userData = userDoc.data();
+        if (!userData.xAccountVerified) {
+            console.log('User is not verified on X');
+            return;
+        }
+        
+        // Update quest progress
+        const { updateQuestProgress } = await import('/js/quests-init.js');
+        console.log('Checking and updating X verification quest...');
+        await updateQuestProgress('weekly_verify_x', 1);
+        console.log('Quest progress updated successfully');
+    } catch (error) {
+        console.error('Error checking X verification quest:', error);
+    }
+};
+
 window.syncMissingUserProfiles = async function() {
     if (!currentUser) {
         console.error('❌ Not authenticated');
