@@ -695,7 +695,7 @@ export async function updateQuestProgress(questId, increment = 1) {
 
         // Use setDoc with merge for both create and update (more reliable)
         // This handles race conditions where document might be created between check and write
-        await setDoc(userQuestRef, {
+        const questData = {
             userId: currentUser.uid,
             questId: quest.id,
             progress: newProgress,
@@ -703,14 +703,14 @@ export async function updateQuestProgress(questId, increment = 1) {
             completedAt: isNowCompleted ? serverTimestamp() : null,
             resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
             updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
         
-        // Only set createdAt if document is new (merge won't overwrite existing createdAt)
+        // Only add createdAt if document doesn't exist (merge won't overwrite existing createdAt)
         if (!userQuestDoc.exists()) {
-            await updateDoc(userQuestRef, {
-                createdAt: serverTimestamp()
-            });
+            questData.createdAt = serverTimestamp();
         }
+        
+        await setDoc(userQuestRef, questData, { merge: true });
 
         // Update local state
         userQuests[quest.id] = {
