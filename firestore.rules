@@ -161,22 +161,22 @@ service cloud.firestore {
       
       // Users can create their own quest progress
       // Note: timestamp fields can be serverTimestamp() sentinel
+      // When using setDoc with merge:true on non-existent doc, it creates
+      // Make completed optional to handle merge operations
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.questId is string
         && request.resource.data.progress is int
         && request.resource.data.progress >= 0
-        && request.resource.data.completed is bool;
+        && (request.resource.data.completed is bool || !('completed' in request.resource.data));
       
       // Users can update their own quest progress
       // Note: Using setDoc with merge:true may update existing documents
-      // We allow updates if the document belongs to the user and userId/questId remain consistent
+      // Allow updates if the document belongs to the user and userId/questId don't change
       allow update: if isSignedIn()
         && resource.data.userId == request.auth.uid
-        && (!('userId' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.userId == resource.data.userId)
-        && (!('questId' in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.questId == resource.data.questId);
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.questId == resource.data.questId;
       
       allow delete: if false; // Don't allow deletion, use reset instead
     }
