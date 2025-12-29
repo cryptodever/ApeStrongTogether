@@ -670,7 +670,6 @@ export async function updateQuestProgress(questId, increment = 1) {
             return;
         }
 
-    try {
         const userQuestId = `${currentUser.uid}_${quest.id}`;
         const userQuestRef = doc(db, 'userQuests', userQuestId);
         
