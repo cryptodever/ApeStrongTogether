@@ -7329,19 +7329,20 @@ body.chat-body > * {
 
 .user-profile-popup-content {
     position: relative;
-    background: rgba(20, 20, 20, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(20, 20, 25, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
     width: 90%;
-    max-width: 500px;
+    max-width: 480px;
     max-height: 90vh;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     z-index: 10002;
     display: flex;
     flex-direction: column;
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(20px);
 }
 
 .user-profile-popup:not(.hide) .user-profile-popup-content {
@@ -7350,33 +7351,49 @@ body.chat-body > * {
 
 .user-profile-popup-close {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     color: #ffffff;
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 300;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10003;
     transition: all 0.2s ease;
+    line-height: 1;
 }
 
 .user-profile-popup-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1) rotate(90deg);
 }
 
 .user-profile-popup-banner {
     width: 100%;
-    height: 150px;
+    height: 180px;
     overflow: hidden;
     position: relative;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+.user-profile-popup-banner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(15, 15, 20, 0.3) 100%);
+    pointer-events: none;
 }
 
 .user-profile-popup-banner img {
@@ -7384,76 +7401,129 @@ body.chat-body > * {
     height: 100%;
     object-fit: cover;
     object-position: center;
+    filter: brightness(0.9) contrast(1.1);
 }
 
 .user-profile-popup-body {
-    padding: 24px;
+    padding: 28px;
     overflow-y: auto;
     flex: 1;
+    background: rgba(15, 15, 20, 0.5);
 }
 
 .user-profile-popup-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-profile-popup-name {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
     color: #ffffff;
     margin: 0;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .user-profile-popup-verified {
     color: #4ade80;
-    font-size: 18px;
+    font-size: 20px;
     flex-shrink: 0;
+    background: rgba(74, 222, 128, 0.15);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(74, 222, 128, 0.3);
 }
 
 .user-profile-popup-info {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 14px;
+    margin-bottom: 24px;
 }
 
 .user-profile-popup-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.user-profile-popup-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateX(2px);
 }
 
 .user-profile-popup-label {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 500;
-    min-width: 80px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    min-width: 90px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
 }
 
 .user-profile-popup-value {
-    font-size: 14px;
+    font-size: 15px;
     color: #ffffff;
+    font-weight: 500;
+    flex: 1;
+}
+
+/* Special styling for level value */
+#userProfilePopupLevelValue {
+    font-weight: 700;
+    color: #4ade80;
+    font-size: 16px;
+    background: rgba(74, 222, 128, 0.1);
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    display: inline-block;
 }
 
 .user-profile-popup-bio {
-    margin-top: 20px;
+    margin-top: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
 }
 
 .user-profile-popup-bio .user-profile-popup-label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
 }
 
 .user-profile-popup-bio-text {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.6;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.7;
     margin: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
+    font-family: 'Inter', sans-serif;
 }
 
 .clickable-username {
@@ -7528,7 +7598,7 @@ body.chat-body > * {
     }
 
     .user-profile-popup-banner {
-        height: 120px;
+        height: 140px;
     }
 
     .user-profile-popup-body {
@@ -7536,21 +7606,46 @@ body.chat-body > * {
     }
 
     .user-profile-popup-name {
-        font-size: 20px;
+        font-size: 22px;
+    }
+
+    .user-profile-popup-header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
     }
 
     .user-profile-popup-info {
-        gap: 10px;
+        gap: 12px;
+        margin-bottom: 20px;
     }
 
     .user-profile-popup-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
     }
 
     .user-profile-popup-label {
-        min-width: auto;
+        min-width: 70px;
+        font-size: 12px;
+    }
+
+    .user-profile-popup-value {
+        font-size: 14px;
+    }
+
+    #userProfilePopupLevelValue {
+        font-size: 15px;
+        padding: 3px 10px;
+    }
+
+    .user-profile-popup-bio {
+        padding: 14px;
+    }
+
+    .user-profile-popup-bio-text {
+        font-size: 14px;
     }
 
     .chat-content {
