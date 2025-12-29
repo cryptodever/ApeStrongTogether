@@ -902,6 +902,76 @@ async function handleSendMessage() {
     const text = chatInputEl.value.trim();
     if (!text) return;
 
+    // Check if user is muted
+    if (userProfile.mutedUntil) {
+        const mutedUntil = userProfile.mutedUntil.toMillis ? userProfile.mutedUntil.toMillis() : new Date(userProfile.mutedUntil).getTime();
+        const now = Date.now();
+        if (mutedUntil > now) {
+            const remainingMinutes = Math.ceil((mutedUntil - now) / (1000 * 60));
+            alert(`You are muted. You cannot send messages for ${remainingMinutes} more minute${remainingMinutes > 1 ? 's' : ''}.`);
+            chatInputEl.value = '';
+            return;
+        } else {
+            // Mute expired, clear it
+            try {
+                const userDocRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userDocRef, {
+                    mutedUntil: null
+                });
+                // Reload user profile
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    userProfile = { ...userProfile, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error('Error clearing expired mute:', error);
+            }
+        }
+    }
+
+    // Check for admin commands (must start with /)
+    if (text.startsWith('/')) {
+        const commandParts = text.split(' ');
+        const command = commandParts[0].toLowerCase();
+        
+        // Check if user is admin or moderator
+        const isAdmin = userProfile.role === 'admin' || userProfile.role === 'moderator';
+        
+        if (!isAdmin) {
+            alert('You do not have permission to use admin commands.');
+            chatInputEl.value = '';
+            return;
+        }
+
+        // Handle admin commands
+        if (command === '/promote' && commandParts.length === 2) {
+            const targetUsername = commandParts[1];
+            await handlePromoteCommand(targetUsername);
+            chatInputEl.value = '';
+            return;
+        } else if (command === '/mute' && commandParts.length === 3) {
+            const targetUsername = commandParts[1];
+            const minutes = parseInt(commandParts[2]);
+            if (isNaN(minutes) || minutes <= 0) {
+                alert('Invalid mute duration. Please provide a positive number of minutes.');
+                chatInputEl.value = '';
+                return;
+            }
+            await handleMuteCommand(targetUsername, minutes);
+            chatInputEl.value = '';
+            return;
+        } else if (command === '/clear' && commandParts.length === 2) {
+            const channelName = commandParts[1].toLowerCase();
+            await handleClearCommand(channelName);
+            chatInputEl.value = '';
+            return;
+        } else {
+            alert('Unknown command. Available commands: /promote username, /mute username minutes, /clear chatname');
+            chatInputEl.value = '';
+            return;
+        }
+    }
+
     // Rate limiting with countdown timer (channel-specific)
     const rateLimitSeconds = getRateLimitSeconds();
     const now = Date.now();
@@ -1838,6 +1908,155 @@ function cleanupChat() {
     clearTypingIndicator();
     if (currentUser) {
         updatePresence(false);
+    }
+}
+
+// Admin command: Promote user to moderator
+async function handlePromoteCommand(username) {
+    try {
+        // Find user by username
+        const usernamesRef = collection(db, 'usernames');
+        const usernameDoc = await getDoc(doc(usernamesRef, username.toLowerCase()));
+        
+        if (!usernameDoc.exists()) {
+            alert(`User "${username}" not found.`);
+            return;
+        }
+        
+        const targetUserId = usernameDoc.data().uid;
+        
+        // Check if trying to promote self
+        if (targetUserId === currentUser.uid) {
+            alert('You cannot promote yourself.');
+            return;
+        }
+        
+        // Get target user document
+        const targetUserRef = doc(db, 'users', targetUserId);
+        const targetUserDoc = await getDoc(targetUserRef);
+        
+        if (!targetUserDoc.exists()) {
+            alert(`User profile for "${username}" not found.`);
+            return;
+        }
+        
+        const targetUserData = targetUserDoc.data();
+        
+        // Check if already moderator or admin
+        if (targetUserData.role === 'moderator' || targetUserData.role === 'admin') {
+            alert(`User "${username}" is already a ${targetUserData.role}.`);
+            return;
+        }
+        
+        // Promote to moderator
+        await updateDoc(targetUserRef, {
+            role: 'moderator'
+        });
+        
+        alert(`Successfully promoted "${username}" to moderator.`);
+        console.log(`Admin ${userProfile.username} promoted ${username} to moderator`);
+    } catch (error) {
+        console.error('Error promoting user:', error);
+        alert(`Failed to promote user: ${error.message}`);
+    }
+}
+
+// Admin command: Mute user for specified minutes
+async function handleMuteCommand(username, minutes) {
+    try {
+        // Find user by username
+        const usernamesRef = collection(db, 'usernames');
+        const usernameDoc = await getDoc(doc(usernamesRef, username.toLowerCase()));
+        
+        if (!usernameDoc.exists()) {
+            alert(`User "${username}" not found.`);
+            return;
+        }
+        
+        const targetUserId = usernameDoc.data().uid;
+        
+        // Check if trying to mute self
+        if (targetUserId === currentUser.uid) {
+            alert('You cannot mute yourself.');
+            return;
+        }
+        
+        // Get target user document
+        const targetUserRef = doc(db, 'users', targetUserId);
+        const targetUserDoc = await getDoc(targetUserRef);
+        
+        if (!targetUserDoc.exists()) {
+            alert(`User profile for "${username}" not found.`);
+            return;
+        }
+        
+        const targetUserData = targetUserDoc.data();
+        
+        // Check if target is admin (can't mute admins)
+        if (targetUserData.role === 'admin') {
+            alert('You cannot mute an admin.');
+            return;
+        }
+        
+        // Calculate mute expiration time
+        const muteExpiration = Timestamp.fromMillis(Date.now() + (minutes * 60 * 1000));
+        
+        // Set mute
+        await updateDoc(targetUserRef, {
+            mutedUntil: muteExpiration
+        });
+        
+        alert(`Successfully muted "${username}" for ${minutes} minute${minutes > 1 ? 's' : ''}.`);
+        console.log(`Admin ${userProfile.username} muted ${username} for ${minutes} minutes`);
+    } catch (error) {
+        console.error('Error muting user:', error);
+        alert(`Failed to mute user: ${error.message}`);
+    }
+}
+
+// Admin command: Clear all messages in a channel
+async function handleClearCommand(channelName) {
+    try {
+        // Validate channel name
+        const validChannels = ['general', 'raid', 'trading', 'support'];
+        if (!validChannels.includes(channelName)) {
+            alert(`Invalid channel name. Valid channels: ${validChannels.join(', ')}`);
+            return;
+        }
+        
+        // Confirm action
+        if (!confirm(`Are you sure you want to clear all messages in ${channelName} chat? This action cannot be undone.`)) {
+            return;
+        }
+        
+        // Get all messages for this channel
+        const messagesRef = collection(db, 'messages');
+        const messagesQuery = query(
+            messagesRef,
+            where('channel', '==', channelName),
+            where('deleted', '==', false)
+        );
+        
+        const messagesSnapshot = await getDocs(messagesQuery);
+        
+        if (messagesSnapshot.empty) {
+            alert(`No messages found in ${channelName} chat.`);
+            return;
+        }
+        
+        // Delete all messages (batch delete)
+        const deletePromises = [];
+        messagesSnapshot.forEach((messageDoc) => {
+            deletePromises.push(deleteDoc(doc(db, 'messages', messageDoc.id)));
+        });
+        
+        await Promise.all(deletePromises);
+        
+        alert(`Successfully cleared ${messagesSnapshot.size} message${messagesSnapshot.size > 1 ? 's' : ''} from ${channelName} chat.`);
+        console.log(`Admin ${userProfile.username} cleared ${messagesSnapshot.size} messages from ${channelName} channel`);
+    } catch (error) {
+        console.error('Error clearing channel:', error);
+        alert(`Failed to clear channel: ${error.message}`);
     }
 }
 
