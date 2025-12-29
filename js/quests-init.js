@@ -209,7 +209,7 @@ async function loadUserProfile() {
 }
 
 // Calculate XP needed for a specific level
-function calculateXPForLevel(level) {
+export function calculateXPForLevel(level) {
     if (level <= 1) return BASE_XP;
     let xp = BASE_XP;
     for (let i = 2; i <= level; i++) {
@@ -219,7 +219,7 @@ function calculateXPForLevel(level) {
 }
 
 // Get level progress information from total points
-function getLevelProgress(points) {
+export function getLevelProgress(points) {
     if (points < 0) points = 0;
     
     let level = 1;
@@ -248,12 +248,9 @@ function getLevelProgress(points) {
 }
 
 // Calculate level from points (for backward compatibility)
-function calculateLevel(points) {
+export function calculateLevel(points) {
     return getLevelProgress(points).level;
 }
-
-// Export level calculation functions for use in other modules
-export { calculateLevel, getLevelProgress, calculateXPForLevel };
 
 // Initialize quests page
 async function initializeQuests() {
