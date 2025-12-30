@@ -808,6 +808,11 @@ export async function updateQuestProgress(questId, increment = 1) {
                 completedAt: data.completedAt || null,
                 resetAt: data.resetAt || null
             };
+            
+            // Refresh quest display if on quests page
+            if (dailyQuestsEl && weeklyQuestsEl) {
+                displayQuests();
+            }
         }
 
         // Only award points if the quest was newly completed in THIS transaction
