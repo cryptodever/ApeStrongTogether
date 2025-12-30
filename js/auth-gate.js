@@ -19,6 +19,11 @@ export function initAuthGate() {
     
     // Listen for auth state changes
     onAuthStateChanged(auth, async (user) => {
+        // Skip auth gate on homepage (it's public)
+        if (document.querySelector('.home-container')) {
+            return;
+        }
+        
         if (user) {
             // User is logged in - check email verification
             // Skip verification check on verify page itself
@@ -61,6 +66,11 @@ export function initAuthGate() {
 }
 
 function createOverlay() {
+    // Skip auth gate on homepage (it's public)
+    if (document.querySelector('.home-container')) {
+        return;
+    }
+    
     // Find the container (profile, chat, quests, or leaderboard)
     const profileContainer = document.querySelector('.profile-container');
     const chatContainer = document.querySelector('.chat-container');
@@ -69,7 +79,7 @@ function createOverlay() {
     const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
     
     if (!container) {
-        console.error('AuthGate: Could not find .profile-container, .chat-container, .quests-container, or .leaderboard-container');
+        // Silently return if no container found (might be homepage or other public page)
         return;
     }
     
@@ -132,6 +142,11 @@ function setupOverlayButtons() {
 }
 
 function showOverlay() {
+    // Skip auth gate on homepage (it's public)
+    if (document.querySelector('.home-container')) {
+        return;
+    }
+    
     if (authGateOverlay) {
         authGateOverlay.classList.add('show');
         // Disable pointer events on container content (but not header)
@@ -180,6 +195,11 @@ function showOverlay() {
 }
 
 function hideOverlay() {
+    // Skip auth gate on homepage (it's public)
+    if (document.querySelector('.home-container')) {
+        return;
+    }
+    
     if (authGateOverlay) {
         authGateOverlay.classList.remove('show');
         // Re-enable pointer events on container content
