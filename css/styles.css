@@ -5526,9 +5526,7 @@ body.profile-body > * {
     }
 }
 
-.profile-container {
-    display: contents;
-}
+/* Profile container - removed display: contents to fix horizontal stretching */
 
 /* Dim profile page content when auth gate overlay is shown */
 /* Since profile-container uses display: contents, we need to target profile-page */
