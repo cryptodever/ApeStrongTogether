@@ -10,7 +10,11 @@ import {
     query,
     orderBy,
     limit,
-    getDocs
+    getDocs,
+    doc,
+    getDoc,
+    writeBatch,
+    serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 // Initialize auth gate for leaderboard page
@@ -24,16 +28,50 @@ import {
 })();
 
 let currentUser = null;
+let userProfilePopupEl, userProfilePopupOverlayEl, userProfilePopupCloseEl;
 
 // Initialize leaderboard page
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
+        initializeLeaderboard();
         await loadLeaderboards();
     } else {
         currentUser = null;
     }
 });
+
+// Initialize leaderboard DOM elements
+function initializeLeaderboard() {
+    userProfilePopupEl = document.getElementById('userProfilePopup');
+    userProfilePopupOverlayEl = document.getElementById('userProfilePopupOverlay');
+    userProfilePopupCloseEl = document.getElementById('userProfilePopupClose');
+    
+    // Setup user profile popup
+    setupUserProfilePopup();
+}
+
+// Setup user profile popup
+function setupUserProfilePopup() {
+    if (!userProfilePopupEl || !userProfilePopupOverlayEl || !userProfilePopupCloseEl) return;
+    
+    // Close on overlay click
+    userProfilePopupOverlayEl.addEventListener('click', () => {
+        userProfilePopupEl.classList.add('hide');
+    });
+    
+    // Close on close button click
+    userProfilePopupCloseEl.addEventListener('click', () => {
+        userProfilePopupEl.classList.add('hide');
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !userProfilePopupEl.classList.contains('hide')) {
+            userProfilePopupEl.classList.add('hide');
+        }
+    });
+}
 
 // Load top users by level
 async function loadTopByLevel() {
@@ -178,13 +216,253 @@ function createLeaderboardItem(rank, userData, userId, type, followersCount = nu
         </div>
     `;
     
-    // Make clickable to view profile
+    // Make clickable to show profile popup
     item.style.cursor = 'pointer';
-    item.addEventListener('click', () => {
-        window.location.href = `/profile/?user=${userId}`;
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        showUserProfile(userId);
     });
     
     return item;
+}
+
+// Show user profile popup
+async function showUserProfile(userId) {
+    if (!userProfilePopupEl || !currentUser) return;
+    
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+        console.error('showUserProfile: Invalid userId:', userId);
+        return;
+    }
+    
+    // Don't show profile for current user (they can use their own profile page)
+    if (userId === currentUser.uid) {
+        window.location.href = '/profile/';
+        return;
+    }
+    
+    try {
+        // Show loading state
+        userProfilePopupEl.classList.remove('hide');
+        const nameEl = document.getElementById('userProfilePopupName');
+        const levelEl = document.getElementById('userProfilePopupLevelValue');
+        const countryEl = document.getElementById('userProfilePopupCountryValue');
+        const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
+        const bioEl = document.getElementById('userProfilePopupBio');
+        const verifiedEl = document.getElementById('userProfilePopupVerified');
+        
+        if (nameEl) nameEl.textContent = 'Loading...';
+        if (levelEl) levelEl.textContent = '—';
+        if (countryEl) countryEl.textContent = '—';
+        if (xAccountEl) xAccountEl.textContent = '—';
+        if (bioEl) bioEl.textContent = 'Loading profile...';
+        if (verifiedEl) verifiedEl.classList.add('hide');
+        
+        // Fetch user profile from Firestore
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        
+        let userData = null;
+        
+        if (userDoc.exists()) {
+            userData = userDoc.data();
+        } else {
+            console.error('User not found for userId:', userId);
+            if (nameEl) nameEl.textContent = 'User not found';
+            if (bioEl) bioEl.textContent = 'This user profile could not be loaded.';
+            return;
+        }
+        
+        const bannerImgEl = document.getElementById('userProfilePopupBannerImg');
+        
+        if (!nameEl || !bannerImgEl || !levelEl || !countryEl || !xAccountEl || !bioEl || !verifiedEl) {
+            console.error('User profile popup elements not found');
+            return;
+        }
+        
+        // Name
+        nameEl.textContent = userData.username || 'Anonymous';
+        
+        // Level - calculate from points if level not set
+        let userLevel = userData.level;
+        if (userLevel === undefined && userData.points !== undefined) {
+            try {
+                const { calculateLevel } = await import('/js/quests-init.js');
+                userLevel = calculateLevel(userData.points || 0);
+            } catch (error) {
+                console.error('Error importing calculateLevel:', error);
+                userLevel = 1;
+            }
+        }
+        if (levelEl) {
+            levelEl.textContent = userLevel || 1;
+        }
+        
+        // Banner
+        const bannerImage = userData.bannerImage || '/pfp_apes/bg1.png';
+        const fallbackImage = '/pfp_apes/bg1.png';
+        
+        const newImg = bannerImgEl.cloneNode(false);
+        bannerImgEl.parentNode.replaceChild(newImg, bannerImgEl);
+        const updatedBannerImg = document.getElementById('userProfilePopupBannerImg');
+        
+        updatedBannerImg.src = bannerImage;
+        updatedBannerImg.dataset.fallback = fallbackImage;
+        
+        updatedBannerImg.addEventListener('error', function handleError() {
+            const fallback = this.dataset.fallback || fallbackImage;
+            if (this.src !== fallback) {
+                this.src = fallback;
+            }
+        }, { once: true });
+        
+        // Country
+        if (userData.country) {
+            countryEl.textContent = userData.country;
+        } else {
+            countryEl.textContent = '—';
+        }
+        
+        // X Account
+        const xAccount = userData.xAccount || userData.profileXAccount || '';
+        if (xAccount && userData.xAccountVerified) {
+            xAccountEl.textContent = `@${xAccount}`;
+            verifiedEl.classList.remove('hide');
+        } else if (xAccount) {
+            xAccountEl.textContent = `@${xAccount} (not verified)`;
+            verifiedEl.classList.add('hide');
+        } else {
+            xAccountEl.textContent = '—';
+            verifiedEl.classList.add('hide');
+        }
+        
+        // Bio
+        if (userData.bio && userData.bio.trim()) {
+            bioEl.textContent = userData.bio;
+        } else {
+            bioEl.textContent = 'No bio available.';
+        }
+        
+        // Check if current user is following this user and show follow button
+        if (userId !== currentUser.uid) {
+            try {
+                const isFollowing = await checkIfFollowing(userId);
+                const followBtn = document.getElementById('leaderboardFollowBtn');
+                if (followBtn) {
+                    followBtn.classList.remove('hide');
+                    followBtn.dataset.userId = userId;
+                    followBtn.dataset.isFollowing = isFollowing ? 'true' : 'false';
+                    followBtn.innerHTML = `<span class="follow-btn-text">${isFollowing ? 'Unfollow' : 'Follow'}</span>`;
+                    followBtn.className = isFollowing ? 'btn btn-secondary follow-btn following' : 'btn btn-primary follow-btn';
+                    
+                    // Remove existing listeners and add new one
+                    const newFollowBtn = followBtn.cloneNode(true);
+                    followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
+                    newFollowBtn.addEventListener('click', async () => {
+                        const targetUserId = newFollowBtn.dataset.userId;
+                        const currentlyFollowing = newFollowBtn.dataset.isFollowing === 'true';
+                        
+                        if (currentlyFollowing) {
+                            await unfollowUser(targetUserId);
+                            newFollowBtn.dataset.isFollowing = 'false';
+                            newFollowBtn.innerHTML = '<span class="follow-btn-text">Follow</span>';
+                            newFollowBtn.className = 'btn btn-primary follow-btn';
+                        } else {
+                            await followUser(targetUserId);
+                            newFollowBtn.dataset.isFollowing = 'true';
+                            newFollowBtn.innerHTML = '<span class="follow-btn-text">Unfollow</span>';
+                            newFollowBtn.className = 'btn btn-secondary follow-btn following';
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+            }
+        } else {
+            // Hide follow button for own profile
+            const followBtn = document.getElementById('leaderboardFollowBtn');
+            if (followBtn) {
+                followBtn.classList.add('hide');
+            }
+        }
+        
+        // Ensure popup is visible after data is loaded
+        userProfilePopupEl.classList.remove('hide');
+        void userProfilePopupEl.offsetWidth;
+        
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        const nameEl = document.getElementById('userProfilePopupName');
+        const bioEl = document.getElementById('userProfilePopupBio');
+        if (nameEl) nameEl.textContent = 'Error';
+        if (bioEl) bioEl.textContent = 'Failed to load user profile.';
+        if (userProfilePopupEl) {
+            userProfilePopupEl.classList.remove('hide');
+        }
+    }
+}
+
+// Follow/Unfollow functions (from profile-init.js)
+async function checkIfFollowing(targetUserId) {
+    if (!currentUser) return false;
+    
+    try {
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        const followingDoc = await getDoc(followingRef);
+        return followingDoc.exists();
+    } catch (error) {
+        console.error('Error checking follow status:', error);
+        return false;
+    }
+}
+
+async function followUser(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+    
+    try {
+        const batch = writeBatch(db);
+        
+        // Add to current user's following list
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        batch.set(followingRef, {
+            userId: targetUserId,
+            followedAt: serverTimestamp()
+        });
+        
+        // Add to target user's followers list
+        const followersRef = doc(db, 'followers', targetUserId, 'followers', currentUser.uid);
+        batch.set(followersRef, {
+            userId: currentUser.uid,
+            followedAt: serverTimestamp()
+        });
+        
+        await batch.commit();
+    } catch (error) {
+        console.error('Error following user:', error);
+        throw error;
+    }
+}
+
+async function unfollowUser(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+    
+    try {
+        const batch = writeBatch(db);
+        
+        // Remove from current user's following list
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        batch.delete(followingRef);
+        
+        // Remove from target user's followers list
+        const followersRef = doc(db, 'followers', targetUserId, 'followers', currentUser.uid);
+        batch.delete(followersRef);
+        
+        await batch.commit();
+    } catch (error) {
+        console.error('Error unfollowing user:', error);
+        throw error;
+    }
 }
 
 // Escape HTML to prevent XSS

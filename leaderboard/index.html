@@ -58,6 +58,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- User Profile Popup (same as chat) -->
+        <div class="user-profile-popup hide" id="userProfilePopup">
+            <div class="user-profile-popup-overlay" id="userProfilePopupOverlay"></div>
+            <div class="user-profile-popup-content">
+                <button class="user-profile-popup-close" id="userProfilePopupClose" aria-label="Close">&times;</button>
+                <div class="user-profile-popup-banner" id="userProfilePopupBanner">
+                    <img id="userProfilePopupBannerImg" src="/pfp_apes/bg1.png" alt="User banner" data-fallback="/pfp_apes/bg1.png">
+                </div>
+                <div class="user-profile-popup-body">
+                    <div class="user-profile-popup-header">
+                        <h3 class="user-profile-popup-name" id="userProfilePopupName">Loading...</h3>
+                        <span class="user-profile-popup-verified hide" id="userProfilePopupVerified" title="Verified X account">✓</span>
+                    </div>
+                    <div class="user-profile-popup-info">
+                        <div class="user-profile-popup-item" id="userProfilePopupLevel">
+                            <span class="user-profile-popup-label">Level:</span>
+                            <span class="user-profile-popup-value" id="userProfilePopupLevelValue">—</span>
+                        </div>
+                        <div class="user-profile-popup-item" id="userProfilePopupCountry">
+                            <span class="user-profile-popup-label">Country:</span>
+                            <span class="user-profile-popup-value" id="userProfilePopupCountryValue">—</span>
+                        </div>
+                        <div class="user-profile-popup-item" id="userProfilePopupXAccount">
+                            <span class="user-profile-popup-label">X Account:</span>
+                            <span class="user-profile-popup-value" id="userProfilePopupXAccountValue">—</span>
+                        </div>
+                    </div>
+                    <div class="user-profile-popup-bio">
+                        <span class="user-profile-popup-label">Bio:</span>
+                        <p class="user-profile-popup-bio-text" id="userProfilePopupBio">No bio available.</p>
+                    </div>
+                    <button class="btn btn-primary follow-btn hide" id="leaderboardFollowBtn">
+                        <span class="follow-btn-text">Follow</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script type="module" src="/js/leaderboard-init.js?v=1"></script>
