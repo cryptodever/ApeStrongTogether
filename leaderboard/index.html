@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <title>Leaderboard 🏆 | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="leaderboard-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="leaderboard-page">
+        <div class="leaderboard-container">
+            <header class="leaderboard-header">
+                <div class="leaderboard-header-content">
+                    <h1>Leaderboard 🏆</h1>
+                    <p>Top Apes by Level and Followers</p>
+                </div>
+            </header>
+
+            <div class="leaderboard-content">
+                <div class="leaderboard-grid">
+                    <!-- Top by Level Column -->
+                    <section class="leaderboard-column">
+                        <div class="leaderboard-column-header">
+                            <h2>🏅 Top by Level</h2>
+                            <p>Highest level Apes</p>
+                        </div>
+                        <div class="leaderboard-list" id="levelLeaderboard">
+                            <div class="leaderboard-loading">Loading...</div>
+                        </div>
+                    </section>
+
+                    <!-- Top by Followers Column -->
+                    <section class="leaderboard-column">
+                        <div class="leaderboard-column-header">
+                            <h2>👥 Top by Followers</h2>
+                            <p>Most followed Apes</p>
+                        </div>
+                        <div class="leaderboard-list" id="followersLeaderboard">
+                            <div class="leaderboard-loading">Loading...</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/leaderboard-init.js?v=1"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>
+
