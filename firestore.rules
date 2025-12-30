@@ -35,9 +35,10 @@ service cloud.firestore {
     // Private user profiles
     match /users/{uid} {
       // Allow users to read their own profile
-      // Allow authenticated users to read other profiles (for role checks in chat)
+      // Allow authenticated users to read other profiles (for role checks in chat, leaderboard)
       allow get: if isSignedIn();
-      allow list: if false;
+      // Allow authenticated users to query users collection (for leaderboard)
+      allow list: if isSignedIn();
 
       // createdAt is required and must be a timestamp (set via Timestamp.now())
       allow create: if isOwner(uid)
