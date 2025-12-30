@@ -523,13 +523,35 @@ async function loadFeatureStats() {
             today.setHours(0, 0, 0, 0);
             const todayTimestamp = Timestamp.fromDate(today);
             
-            const questsQuery = query(
-                collection(db, 'userQuests'),
-                where('completed', '==', true),
-                where('completedAt', '>=', todayTimestamp),
-                limit(1000) // Just to count
-            );
-            const questsSnapshot = await getDocs(questsQuery);
+            let questsSnapshot;
+            try {
+                // Try with index first
+                const questsQuery = query(
+                    collection(db, 'userQuests'),
+                    where('completed', '==', true),
+                    where('completedAt', '>=', todayTimestamp),
+                    limit(1000) // Just to count
+                );
+                questsSnapshot = await getDocs(questsQuery);
+            } catch (indexError) {
+                // Fallback: get all completed quests and filter
+                console.warn('Index not found for quest count, using fallback:', indexError);
+                const questsQuery = query(
+                    collection(db, 'userQuests'),
+                    where('completed', '==', true),
+                    orderBy('completedAt', 'desc'),
+                    limit(500)
+                );
+                const allQuests = await getDocs(questsQuery);
+                // Filter by date
+                const todayTime = todayTimestamp.toMillis();
+                const recentQuests = allQuests.docs.filter(doc => {
+                    const data = doc.data();
+                    return data.completedAt && data.completedAt.toMillis() >= todayTime;
+                });
+                questsSnapshot = { size: recentQuests.length, docs: recentQuests };
+            }
+            
             if (questsCompletedCountEl) {
                 questsCompletedCountEl.textContent = questsSnapshot.size;
             }

@@ -338,6 +338,8 @@ async function updateHeaderUI(user) {
     const navDivider = document.getElementById('navDivider');
     const navProfileLink = document.getElementById('navProfileLink');
     const navChatLink = document.getElementById('navChatLink');
+    const navQuestsLink = document.getElementById('navQuestsLink');
+    const navLeaderboardLink = document.getElementById('navLeaderboardLink');
     
     if (user) {
         if (authLoggedOut) {
@@ -360,6 +362,12 @@ async function updateHeaderUI(user) {
         }
         if (navChatLink) {
             navChatLink.classList.remove('logged-out');
+        }
+        if (navQuestsLink) {
+            navQuestsLink.classList.remove('logged-out');
+        }
+        if (navLeaderboardLink) {
+            navLeaderboardLink.classList.remove('logged-out');
         }
     } else {
         // Clean up listener when user logs out
@@ -385,6 +393,12 @@ async function updateHeaderUI(user) {
         }
         if (navChatLink) {
             navChatLink.classList.add('logged-out');
+        }
+        if (navQuestsLink) {
+            navQuestsLink.classList.add('logged-out');
+        }
+        if (navLeaderboardLink) {
+            navLeaderboardLink.classList.add('logged-out');
         }
     }
 }
