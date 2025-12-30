@@ -33,83 +33,154 @@
         </div>
     </div>
 
-    <div class="container page-container">
-        <div class="hero card">
-            <h1 class="hero-title">APES TOGETHER STRONG</h1>
-            <div class="hero-badge">
-                <span>Meme</span> • Community • Education
+    <main class="home-page">
+        <div class="home-container">
+            <!-- Compact Hero Section -->
+            <section class="home-hero">
+                <div class="hero-content">
+                    <h1 class="hero-title">APES TOGETHER STRONG</h1>
+                    <div class="hero-badge">
+                        <span>Meme</span> • Community • Education
+                    </div>
+                    <p class="subtitle">Meme education. Community strength.</p>
+                </div>
+                <div class="hero-actions">
+                    <a href="/chat/" class="hero-action-btn">💬 Chat</a>
+                    <a href="/quests/" class="hero-action-btn">🎯 Quests</a>
+                    <a href="/leaderboard/" class="hero-action-btn">🏆 Leaderboard</a>
+                </div>
+            </section>
+
+            <!-- User Stats Card (if logged in) -->
+            <section class="user-stats-section hide" id="userStatsSection">
+                <div class="user-stats-card">
+                    <div class="user-stats-header">
+                        <h3>Your Stats</h3>
+                        <a href="/profile/" class="view-profile-link">View Profile →</a>
+                    </div>
+                    <div class="user-stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Level</span>
+                            <span class="stat-value" id="userLevelStat">—</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">XP</span>
+                            <span class="stat-value" id="userXPStat">—</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Quests Today</span>
+                            <span class="stat-value" id="userQuestsTodayStat">—</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Followers</span>
+                            <span class="stat-value" id="userFollowersStat">—</span>
+                        </div>
+                    </div>
+                    <div class="user-level-progress">
+                        <div class="level-progress-bar">
+                            <div class="level-progress-fill" id="userLevelProgressFill"></div>
+                        </div>
+                        <span class="level-progress-text" id="userLevelProgressText">—</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Feed Layout -->
+            <div class="home-feed-layout">
+                <!-- Activity Feed (Main Content) -->
+                <section class="activity-feed-section">
+                    <div class="activity-feed-header">
+                        <h2>Community Activity</h2>
+                        <div class="feed-controls">
+                            <span class="last-updated" id="lastUpdated">Loading...</span>
+                            <button class="refresh-btn" id="refreshFeedBtn" title="Refresh">🔄</button>
+                        </div>
+                    </div>
+                    <div class="activity-feed" id="activityFeed">
+                        <div class="activity-loading">Loading activity...</div>
+                    </div>
+                </section>
+
+                <!-- Sidebar -->
+                <aside class="home-sidebar">
+                    <!-- Token Address Widget -->
+                    <div class="sidebar-widget token-widget">
+                        <div class="widget-header">
+                            <h3>💎 Token Address</h3>
+                        </div>
+                        <div class="token-address-wrapper">
+                            <div class="token-address-box" id="tokenAddress">COMING SOON</div>
+                            <button class="copy-button" id="copyButton">Copy</button>
+                        </div>
+                        <div class="token-address-warning"><strong>Always verify the address.</strong> Scammers post fake contracts.</div>
+                        <div class="token-network-badge">Network: Solana</div>
+                    </div>
+
+                    <!-- Quick Stats Widget (if logged in) -->
+                    <div class="sidebar-widget quick-stats-widget hide" id="quickStatsWidget">
+                        <div class="widget-header">
+                            <h3>Quick Stats</h3>
+                        </div>
+                        <div class="quick-stats-content" id="quickStatsContent">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Trending Users Widget -->
+                    <div class="sidebar-widget trending-widget">
+                        <div class="widget-header">
+                            <h3>🏅 Trending Apes</h3>
+                        </div>
+                        <div class="trending-content" id="trendingUsers">
+                            <div class="trending-loading">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Cards -->
+                    <div class="sidebar-widget features-widget">
+                        <div class="widget-header">
+                            <h3>Explore</h3>
+                        </div>
+                        <div class="feature-cards">
+                            <a href="/chat/" class="feature-card">
+                                <div class="feature-icon">💬</div>
+                                <div class="feature-info">
+                                    <div class="feature-name">Live Chat</div>
+                                    <div class="feature-desc">Connect with the community</div>
+                                </div>
+                                <div class="feature-stat" id="chatOnlineCount">—</div>
+                            </a>
+                            <a href="/quests/" class="feature-card">
+                                <div class="feature-icon">🎯</div>
+                                <div class="feature-info">
+                                    <div class="feature-name">Quests</div>
+                                    <div class="feature-desc">Earn XP and level up</div>
+                                </div>
+                                <div class="feature-stat" id="questsCompletedCount">—</div>
+                            </a>
+                            <a href="/leaderboard/" class="feature-card">
+                                <div class="feature-icon">🏆</div>
+                                <div class="feature-info">
+                                    <div class="feature-name">Leaderboard</div>
+                                    <div class="feature-desc">Top Apes by level</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Active Channels Widget -->
+                    <div class="sidebar-widget channels-widget">
+                        <div class="widget-header">
+                            <h3>Active Channels</h3>
+                        </div>
+                        <div class="channels-content" id="activeChannels">
+                            <div class="channels-loading">Loading...</div>
+                        </div>
+                    </div>
+                </aside>
             </div>
-            <p class="subtitle">Meme education. Community strength.</p>
-            <p class="meme-line">💎🙌 Smooth brain energy.</p>
-            <a href="/roadmap/" class="hero-cta">EXPLORE THE THESIS</a>
         </div>
-
-        <section class="token-address-section">
-            <div class="token-address-card">
-                <div class="token-address-title">💎 Token Address </div>
-                <div class="token-address-wrapper">
-                    <div class="token-address-box" id="tokenAddress">  COMING SOON  </div>
-                    <button class="copy-button" id="copyButton">Copy</button>
-                </div>
-                <div class="token-address-warning"><strong>Always verify the address.</strong> Scammers post fake contracts.</div>
-                <div class="token-network-badge">Network: Solana</div>
-            </div>
-        </section>
-
-        <section class="thesis-statement">
-            <p>Meme culture is financial culture. Understanding it matters.</p>
-        </section>
-
-        <section class="what-is-this">
-            <h2>The Ape Thesis</h2>
-            <div class="manifesto-statements">
-                <div class="manifesto-item">
-                    <span class="manifesto-emoji">🦍</span>
-                    <span class="manifesto-text">Meme-first. Community-powered.</span>
-                </div>
-                <div class="manifesto-item">
-                    <span class="manifesto-emoji">📊</span>
-                    <span class="manifesto-text">Simple math. Zero predictions.</span>
-                </div>
-                <div class="manifesto-item">
-                    <span class="manifesto-emoji">💎</span>
-                    <span class="manifesto-text">Built for vibes, not wallets.</span>
-                </div>
-                <div class="manifesto-item">
-                    <span class="manifesto-emoji">🚫</span>
-                    <span class="manifesto-text">No transactions. Pure APE energy.</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="whats-coming">
-            <h2>What we're cooking 🍌</h2>
-            <div class="cards-grid">
-                <div class="card">
-                    <div class="card-emoji">🦍</div>
-                    <div class="card-title">Booting the Troop 🦍</div>
-                    <div class="card-description">Launching the Ape Together Strong hub, locking the meme identity, and gathering the first apes.</div>
-                    <span class="card-status-badge status-live">LIVE ✅</span>
-                </div>
-                <div class="card card-featured">
-                    <div class="card-emoji">🔥</div>
-                    <div class="card-title">Lore & Tools 🔥</div>
-                    <div class="card-description">Ape Lore, meme walls, and simple "what if" tools for smooth brains.</div>
-                    <span class="card-status-badge status-cooking">COOKING 🔥</span>
-                </div>
-                <div class="card">
-                    <div class="card-emoji">🍌</div>
-                    <div class="card-title">Community Chaos 🍌</div>
-                    <div class="card-description">Meme battles, raids, badges, leaderboards, and pure community energy.</div>
-                    <span class="card-status-badge status-soon">SOON 🍌</span>
-                </div>
-            </div>
-        </section>
-
-        <main class="main-content">
-            <!-- Content placeholder -->
-        </main>
-    </div>
+    </main>
 
     <footer>
         <div class="footer-content">
