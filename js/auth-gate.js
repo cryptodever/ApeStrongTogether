@@ -61,14 +61,15 @@ export function initAuthGate() {
 }
 
 function createOverlay() {
-    // Find the container (profile, chat, or quests)
+    // Find the container (profile, chat, quests, or leaderboard)
     const profileContainer = document.querySelector('.profile-container');
     const chatContainer = document.querySelector('.chat-container');
     const questsContainer = document.querySelector('.quests-container');
-    const container = profileContainer || chatContainer || questsContainer;
+    const leaderboardContainer = document.querySelector('.leaderboard-container');
+    const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
     
     if (!container) {
-        console.error('AuthGate: Could not find .profile-container, .chat-container, or .quests-container');
+        console.error('AuthGate: Could not find .profile-container, .chat-container, .quests-container, or .leaderboard-container');
         return;
     }
     
@@ -76,12 +77,15 @@ function createOverlay() {
     const isChatPage = !!chatContainer;
     const isProfilePage = !!profileContainer;
     const isQuestsPage = !!questsContainer;
+    const isLeaderboardPage = !!leaderboardContainer;
     const pageMessage = isChatPage 
         ? 'Sign up / Log in to access live chat.' 
         : isProfilePage
         ? 'Sign up / Log in to access your profile.'
         : isQuestsPage
         ? 'Sign up / Log in to access quests.'
+        : isLeaderboardPage
+        ? 'Sign up / Log in to view the leaderboard.'
         : 'Sign up / Log in to generate your Ape.';
     
     // Note: Both containers already have position: relative in CSS, so no need to add class
@@ -134,7 +138,8 @@ function showOverlay() {
         const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
-        const container = profileContainer || chatContainer || questsContainer;
+        const leaderboardContainer = document.querySelector('.leaderboard-container');
+        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
         
         if (container) {
             // Add blocked class to container for CSS styling
@@ -156,6 +161,14 @@ function showOverlay() {
                 }
             }
             
+            // For leaderboard page, also add blocked class to leaderboard-page
+            if (leaderboardContainer) {
+                const leaderboardPage = document.querySelector('.leaderboard-page');
+                if (leaderboardPage) {
+                    leaderboardPage.classList.add('blocked');
+                }
+            }
+            
             // Disable pointer events on all children except the overlay
             Array.from(container.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
@@ -173,7 +186,8 @@ function hideOverlay() {
         const profileContainer = document.querySelector('.profile-container');
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
-        const container = profileContainer || chatContainer || questsContainer;
+        const leaderboardContainer = document.querySelector('.leaderboard-container');
+        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
         
         if (container) {
             // Remove blocked class from container
@@ -192,6 +206,14 @@ function hideOverlay() {
                 const questsPage = document.querySelector('.quests-page');
                 if (questsPage) {
                     questsPage.classList.remove('blocked');
+                }
+            }
+            
+            // For leaderboard page, also remove blocked class from leaderboard-page
+            if (leaderboardContainer) {
+                const leaderboardPage = document.querySelector('.leaderboard-page');
+                if (leaderboardPage) {
+                    leaderboardPage.classList.remove('blocked');
                 }
             }
             

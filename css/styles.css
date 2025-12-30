@@ -8711,6 +8711,322 @@ body.quests-body > * {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* ============================================
+   LEADERBOARD PAGE STYLES
+   ============================================ */
+
+body.leaderboard-body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background-color: #1a1a1a !important;
+    background-image: url('/background_homepage.png') !important;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+body.leaderboard-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.4) 80%, rgba(0, 0, 0, 0.5) 100%),
+        radial-gradient(ellipse at center 30%, rgba(74, 222, 128, 0.03) 0%, transparent 60%),
+        radial-gradient(ellipse at center 70%, rgba(255, 215, 0, 0.03) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+body.leaderboard-body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+}
+
+body.leaderboard-body > * {
+    position: relative;
+    z-index: 1;
+}
+
+.leaderboard-page {
+    position: relative;
+    min-height: calc(100vh - 80px);
+    padding-top: 80px;
+}
+
+.leaderboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    position: relative;
+}
+
+/* Dim leaderboard container content when auth gate overlay is shown */
+.leaderboard-container.blocked > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.leaderboard-page.blocked .leaderboard-container > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.leaderboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.leaderboard-header-content h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.leaderboard-header-content p {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.leaderboard-content {
+    width: 100%;
+}
+
+.leaderboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.leaderboard-column {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.leaderboard-column-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-column-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.25rem 0;
+}
+
+.leaderboard-column-header p {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.leaderboard-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+.leaderboard-item.current-user {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: rgba(74, 222, 128, 0.3);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
+}
+
+.leaderboard-rank {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    min-width: 40px;
+    text-align: center;
+}
+
+.leaderboard-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.leaderboard-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.leaderboard-username {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.leaderboard-subtext {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.leaderboard-value-container {
+    display: flex;
+    align-items: center;
+}
+
+.leaderboard-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 215, 0, 0.9);
+    padding: 0.375rem 0.75rem;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.leaderboard-loading,
+.leaderboard-empty,
+.leaderboard-error {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+}
+
+.leaderboard-error {
+    color: rgba(239, 68, 68, 0.9);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .leaderboard-container {
+        padding: 20px 12px 60px;
+    }
+
+    .leaderboard-header-content h1 {
+        font-size: 2rem;
+    }
+
+    .leaderboard-header-content p {
+        font-size: 1rem;
+    }
+
+    .leaderboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .leaderboard-column {
+        padding: 1rem;
+    }
+
+    .leaderboard-column-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .leaderboard-item {
+        padding: 0.625rem;
+        gap: 0.75rem;
+    }
+
+    .leaderboard-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .leaderboard-rank {
+        font-size: 1rem;
+        min-width: 32px;
+    }
+
+    .leaderboard-username {
+        font-size: 0.875rem;
+    }
+
+    .leaderboard-subtext {
+        font-size: 0.75rem;
+    }
+
+    .leaderboard-value {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .leaderboard-container {
+        padding: 16px 8px 60px;
+    }
+
+    .leaderboard-header {
+        margin-bottom: 2rem;
+    }
+
+    .leaderboard-header-content h1 {
+        font-size: 1.75rem;
+    }
+
+    .leaderboard-grid {
+        gap: 1rem;
+    }
+
+    .leaderboard-column {
+        padding: 0.875rem;
+    }
+
+    .leaderboard-item {
+        padding: 0.5rem;
+    }
+    }
 
     .stat-card {
         min-width: auto;
