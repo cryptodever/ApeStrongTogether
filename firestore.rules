@@ -36,9 +36,10 @@ service cloud.firestore {
     match /users/{uid} {
       // Allow users to read their own profile
       // Allow authenticated users to read other profiles (for role checks in chat, leaderboard)
-      allow get: if isSignedIn();
-      // Allow authenticated users to query users collection (for leaderboard)
-      allow list: if isSignedIn();
+      // Allow public read for homepage/leaderboard (public data)
+      allow get: if true;
+      // Allow public queries for leaderboard/homepage (public data)
+      allow list: if true;
 
       // createdAt is required and must be a timestamp (set via Timestamp.now())
       allow create: if isOwner(uid)
@@ -91,8 +92,9 @@ service cloud.firestore {
 
     // Chat messages
     match /messages/{messageId} {
-      // Anyone authenticated can read messages
-      allow read: if isSignedIn();
+      // Allow public read for homepage activity feed (public data)
+      // Authenticated users can read all messages
+      allow read: if true;
       
       // Only authenticated users can create messages
       // Note: timestamp can be serverTimestamp() sentinel, so we don't validate it strictly
@@ -133,8 +135,8 @@ service cloud.firestore {
 
     // User presence (online/offline status)
     match /presence/{userId} {
-      // Anyone authenticated can read presence
-      allow read: if isSignedIn();
+      // Allow public read for homepage online count (public data)
+      allow read: if true;
       
       // Users can only write their own presence
       // Note: lastSeen can be serverTimestamp() sentinel

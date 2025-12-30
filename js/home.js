@@ -417,8 +417,10 @@ async function loadTrendingUsers() {
         });
         
     } catch (error) {
-        console.error('Error loading trending users:', error);
-        trendingUsersEl.innerHTML = '<div class="trending-error">Error loading trending users</div>';
+        // Silently handle permission errors - show empty state
+        if (trendingUsersEl) {
+            trendingUsersEl.innerHTML = '<div class="trending-empty">Sign in to view trending users</div>';
+        }
     }
 }
 
@@ -469,8 +471,7 @@ async function loadActiveChannels() {
                     hasActivity: countSnapshot.size > 0
                 });
             } catch (error) {
-                console.error(`Error loading channel ${channel}:`, error);
-                // Still add the channel with 0 count
+                // Silently handle permission errors - add channel with 0 count
                 channelStats.push({
                     name: channel.charAt(0).toUpperCase() + channel.slice(1),
                     count: 0,
@@ -515,7 +516,7 @@ async function loadFeatureStats() {
                 chatOnlineCountEl.textContent = presenceSnapshot.size;
             }
         } catch (error) {
-            console.error('Error loading online count:', error);
+            // Silently handle permission errors - show default value
             if (chatOnlineCountEl) chatOnlineCountEl.textContent = '—';
         }
         
