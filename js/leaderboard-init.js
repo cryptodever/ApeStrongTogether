@@ -247,6 +247,8 @@ async function showUserProfile(userId) {
         userProfilePopupEl.classList.remove('hide');
         const nameEl = document.getElementById('userProfilePopupName');
         const levelEl = document.getElementById('userProfilePopupLevelValue');
+        const followersEl = document.getElementById('userProfilePopupFollowersValue');
+        const followingEl = document.getElementById('userProfilePopupFollowingValue');
         const countryEl = document.getElementById('userProfilePopupCountryValue');
         const xAccountEl = document.getElementById('userProfilePopupXAccountValue');
         const bioEl = document.getElementById('userProfilePopupBio');
@@ -254,6 +256,8 @@ async function showUserProfile(userId) {
         
         if (nameEl) nameEl.textContent = 'Loading...';
         if (levelEl) levelEl.textContent = '—';
+        if (followersEl) followersEl.textContent = '—';
+        if (followingEl) followingEl.textContent = '—';
         if (countryEl) countryEl.textContent = '—';
         if (xAccountEl) xAccountEl.textContent = '—';
         if (bioEl) bioEl.textContent = 'Loading profile...';
@@ -342,6 +346,21 @@ async function showUserProfile(userId) {
             bioEl.textContent = userData.bio;
         } else {
             bioEl.textContent = 'No bio available.';
+        }
+        
+        // Load followers/following counts
+        try {
+            const [followersCount, followingCount] = await Promise.all([
+                getFollowersCount(userId),
+                getFollowingCount(userId)
+            ]);
+            
+            if (followersEl) followersEl.textContent = followersCount || 0;
+            if (followingEl) followingEl.textContent = followingCount || 0;
+        } catch (error) {
+            console.error('Error loading follow stats:', error);
+            if (followersEl) followersEl.textContent = '0';
+            if (followingEl) followingEl.textContent = '0';
         }
         
         // Check if current user is following this user and show follow button
@@ -438,6 +457,14 @@ async function followUser(targetUserId) {
         });
         
         await batch.commit();
+        
+        // Track quest progress: daily_follow_3
+        try {
+            const { updateQuestProgress } = await import('/js/quests-init.js');
+            await updateQuestProgress('daily_follow_3', 1);
+        } catch (error) {
+            console.error('Error updating follow quest progress:', error);
+        }
     } catch (error) {
         console.error('Error following user:', error);
         throw error;
@@ -462,6 +489,30 @@ async function unfollowUser(targetUserId) {
     } catch (error) {
         console.error('Error unfollowing user:', error);
         throw error;
+    }
+}
+
+// Get followers count for a user
+async function getFollowersCount(userId) {
+    try {
+        const followersRef = collection(db, 'followers', userId, 'followers');
+        const snapshot = await getDocs(followersRef);
+        return snapshot.size;
+    } catch (error) {
+        console.error('Error getting followers count:', error);
+        return 0;
+    }
+}
+
+// Get following count for a user
+async function getFollowingCount(userId) {
+    try {
+        const followingRef = collection(db, 'following', userId, 'following');
+        const snapshot = await getDocs(followingRef);
+        return snapshot.size;
+    } catch (error) {
+        console.error('Error getting following count:', error);
+        return 0;
     }
 }
 

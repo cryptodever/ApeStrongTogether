@@ -9447,11 +9447,13 @@ body.leaderboard-body > * {
    ============================================ */
 
 .profile-page {
-    max-width: 1200px;
+    max-width: 1000px;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 2rem clamp(1rem, 4vw, 2rem);
     position: relative;
     z-index: 1;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .profile-container {
@@ -10502,16 +10504,19 @@ body.leaderboard-body > * {
         flex-direction: row;
         gap: 1.5rem;
         align-items: stretch;
+        max-width: 100%;
     }
 
     .profile-banner {
-        width: 50%;
+        width: 45%;
+        max-width: 450px;
         height: 350px;
         flex-shrink: 0;
     }
-
+    
     .profile-banner-bio-row .profile-rank-section {
-        width: 50%;
+        flex: 1;
+        min-width: 0;
     }
 
     .profile-settings-card {
