@@ -9447,23 +9447,19 @@ body.leaderboard-body > * {
    ============================================ */
 
 .profile-page {
+    position: relative;
+    min-height: calc(100vh - 80px);
+    padding-top: 80px;
+}
+
+.profile-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 32px 24px 80px;
     position: relative;
-    z-index: 1;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.profile-container {
-    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
 }
 
 /* Banner and Bio Row */
@@ -10545,10 +10541,6 @@ body.leaderboard-body > * {
 
 /* Desktop Styles */
 @media (min-width: 768px) {
-    .profile-page {
-        padding: 32px 24px 80px;
-    }
-
     .profile-container {
         gap: 2rem;
     }
@@ -10597,10 +10589,6 @@ body.leaderboard-body > * {
 }
 
 @media (min-width: 1024px) {
-    .profile-page {
-        padding: 2.5rem 2rem;
-    }
-
     .profile-banner {
         height: 380px;
     }
