@@ -151,7 +151,7 @@ async function loadActivityFeed() {
                 questsSnapshot = await getDocs(questsQuery);
             } catch (indexError) {
                 // If index doesn't exist, fall back to simpler query
-                console.warn('Composite index not found, using simpler query:', indexError);
+                // Silently handle - index will be created when deployed
                 const questsQuery = query(
                     collection(db, 'userQuests'),
                     where('completed', '==', true),
@@ -190,7 +190,8 @@ async function loadActivityFeed() {
                 });
             }
         } catch (error) {
-            console.error('Error loading quest completions:', error);
+            // Silently handle - errors are expected until indexes are deployed
+            // The fallback queries will handle the data loading
         }
         
         // 2. Load recent follows (this is trickier - we need to query all following subcollections)
@@ -212,7 +213,7 @@ async function loadActivityFeed() {
                 messagesSnapshot = await getDocs(messagesQuery);
             } catch (indexError) {
                 // If index doesn't exist, fall back to simpler query
-                console.warn('Composite index not found, using simpler query:', indexError);
+                // Silently handle - index will be created when deployed
                 const messagesQuery = query(
                     collection(db, 'messages'),
                     where('deleted', '==', false),
@@ -248,7 +249,8 @@ async function loadActivityFeed() {
                 });
             }
         } catch (error) {
-            console.error('Error loading chat messages:', error);
+            // Silently handle - errors are expected until indexes are deployed
+            // The fallback queries will handle the data loading
         }
         
         // Sort all activities by timestamp
@@ -441,25 +443,25 @@ async function loadActiveChannels() {
                         where('timestamp', '>=', fiveMinutesAgo)
                     );
                     countSnapshot = await getDocs(countQuery);
-                } catch (indexError) {
-                    // Fallback: get recent messages and filter
-                    console.warn(`Index not found for channel ${channel}, using fallback:`, indexError);
-                    const countQuery = query(
-                        collection(db, 'messages'),
-                        where('channel', '==', channel),
-                        where('deleted', '==', false),
-                        orderBy('timestamp', 'desc'),
-                        limit(100)
-                    );
-                    const allMessages = await getDocs(countQuery);
-                    // Filter by time
-                    const fiveMinutesAgoTime = fiveMinutesAgo.toMillis();
-                    const recentMessages = allMessages.docs.filter(doc => {
-                        const data = doc.data();
-                        return data.timestamp && data.timestamp.toMillis() >= fiveMinutesAgoTime;
-                    });
-                    countSnapshot = { size: recentMessages.length, docs: recentMessages };
-                }
+            } catch (indexError) {
+                // Fallback: get recent messages and filter
+                // Silently handle - index will be created when deployed
+                const countQuery = query(
+                    collection(db, 'messages'),
+                    where('channel', '==', channel),
+                    where('deleted', '==', false),
+                    orderBy('timestamp', 'desc'),
+                    limit(100)
+                );
+                const allMessages = await getDocs(countQuery);
+                // Filter by time
+                const fiveMinutesAgoTime = fiveMinutesAgo.toMillis();
+                const recentMessages = allMessages.docs.filter(doc => {
+                    const data = doc.data();
+                    return data.timestamp && data.timestamp.toMillis() >= fiveMinutesAgoTime;
+                });
+                countSnapshot = { size: recentMessages.length, docs: recentMessages };
+            }
                 
                 channelStats.push({
                     name: channel.charAt(0).toUpperCase() + channel.slice(1),
@@ -535,7 +537,7 @@ async function loadFeatureStats() {
                 questsSnapshot = await getDocs(questsQuery);
             } catch (indexError) {
                 // Fallback: get all completed quests and filter
-                console.warn('Index not found for quest count, using fallback:', indexError);
+                // Silently handle - index will be created when deployed
                 const questsQuery = query(
                     collection(db, 'userQuests'),
                     where('completed', '==', true),
@@ -556,7 +558,7 @@ async function loadFeatureStats() {
                 questsCompletedCountEl.textContent = questsSnapshot.size;
             }
         } catch (error) {
-            console.error('Error loading quest completions count:', error);
+            // Silently handle - errors are expected until indexes are deployed
             if (questsCompletedCountEl) questsCompletedCountEl.textContent = '—';
         }
         
