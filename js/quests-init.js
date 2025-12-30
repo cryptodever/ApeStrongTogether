@@ -290,6 +290,9 @@ async function initializeQuests() {
     // Check if all daily quests are completed (for the "complete all" quest)
     await checkAndUpdateCompleteAllDailyQuests();
     
+    // Sync followers quest progress
+    await syncFollowersQuestProgress();
+    
     // Track quests page visit (after a small delay to ensure quests are loaded)
     setTimeout(async () => {
         try {
@@ -360,6 +363,17 @@ async function loadAvailableQuests() {
             isActive: true,
             resetPeriod: 'daily'
         },
+        {
+            id: 'daily_follow_3',
+            title: 'Social Butterfly',
+            description: 'Follow 3 users',
+            type: 'daily',
+            targetValue: 3,
+            rewardPoints: 15,
+            category: 'social',
+            isActive: true,
+            resetPeriod: 'daily'
+        },
         // Weekly Quests
         {
             id: 'weekly_chat_50',
@@ -402,6 +416,17 @@ async function loadAvailableQuests() {
             targetValue: 3,
             rewardPoints: 50,
             category: 'activity',
+            isActive: true,
+            resetPeriod: 'weekly'
+        },
+        {
+            id: 'weekly_get_25_followers',
+            title: 'Influencer Ape',
+            description: 'Get 25 followers',
+            type: 'weekly',
+            targetValue: 25,
+            rewardPoints: 100,
+            category: 'social',
             isActive: true,
             resetPeriod: 'weekly'
         }
@@ -1087,6 +1112,36 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Sync followers quest progress with current follower count
+async function syncFollowersQuestProgress() {
+    if (!currentUser) return;
+    
+    try {
+        // Get current follower count
+        const followersRef = collection(db, 'followers', currentUser.uid, 'followers');
+        const followersSnapshot = await getDocs(followersRef);
+        const currentFollowerCount = followersSnapshot.size;
+        
+        // Get current quest progress
+        const userQuestId = `${currentUser.uid}_weekly_get_25_followers`;
+        const userQuestRef = doc(db, 'userQuests', userQuestId);
+        const userQuestDoc = await getDoc(userQuestRef);
+        
+        let currentProgress = 0;
+        if (userQuestDoc.exists()) {
+            currentProgress = userQuestDoc.data().progress || 0;
+        }
+        
+        // If follower count is higher than current progress, update it
+        if (currentFollowerCount > currentProgress) {
+            const difference = currentFollowerCount - currentProgress;
+            await updateQuestProgress('weekly_get_25_followers', difference);
+        }
+    } catch (error) {
+        console.error('Error syncing followers quest:', error);
+    }
 }
 
 

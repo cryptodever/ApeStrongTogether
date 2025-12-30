@@ -209,6 +209,16 @@ async function loadProfile() {
                 // Load followers/following counts
                 await loadFollowStats(currentUser.uid);
                 
+                // Sync followers quest progress after loading stats
+                // Wait a bit for the listener to set followersCount
+                setTimeout(async () => {
+                    try {
+                        await syncFollowersQuestProgress(followersCount);
+                    } catch (error) {
+                        console.error('Error syncing followers quest on profile load:', error);
+                    }
+                }, 1000);
+                
                 // Load banner image
                 const bannerImg = document.getElementById('profileBannerImg');
                 if (bannerImg && userData.bannerImage) {
@@ -1249,11 +1259,27 @@ async function loadFollowStats(userId) {
         // Only set up listeners if user is authenticated
         if (currentUser) {
             followersListener = onSnapshot(followersRef, 
-                (snapshot) => {
-                    followersCount = snapshot.size;
+                async (snapshot) => {
+                    const newFollowersCount = snapshot.size;
+                    const oldFollowersCount = followersCount;
+                    followersCount = newFollowersCount;
+                    
                     const followersCountEl = document.getElementById('followersCount');
                     if (followersCountEl) {
                         followersCountEl.textContent = followersCount;
+                    }
+                    
+                    // Track quest progress: weekly_get_25_followers
+                    // Update quest progress to match current follower count
+                    if (userId === currentUser?.uid && newFollowersCount > oldFollowersCount) {
+                        try {
+                            const { updateQuestProgress } = await import('/js/quests-init.js');
+                            // Update quest to current follower count (not increment)
+                            // The quest system will handle capping at targetValue
+                            await updateQuestProgress('weekly_get_25_followers', newFollowersCount);
+                        } catch (error) {
+                            console.error('Error updating followers quest progress:', error);
+                        }
                     }
                 },
                 (error) => {
@@ -1324,6 +1350,14 @@ async function followUser(targetUserId) {
         
         await batch.commit();
         console.log(`Followed user: ${targetUserId}`);
+        
+        // Track quest progress: daily_follow_3
+        try {
+            const { updateQuestProgress } = await import('/js/quests-init.js');
+            await updateQuestProgress('daily_follow_3', 1);
+        } catch (error) {
+            console.error('Error updating follow quest progress:', error);
+        }
     } catch (error) {
         console.error('Error following user:', error);
         alert('Failed to follow user. Please try again.');
@@ -1350,6 +1384,33 @@ async function unfollowUser(targetUserId) {
     } catch (error) {
         console.error('Error unfollowing user:', error);
         alert('Failed to unfollow user. Please try again.');
+    }
+}
+
+// Sync followers quest progress with current follower count
+async function syncFollowersQuestProgress(currentFollowerCount) {
+    if (!currentUser) return;
+    
+    try {
+        const { updateQuestProgress } = await import('/js/quests-init.js');
+        
+        // Get current quest progress
+        const userQuestId = `${currentUser.uid}_weekly_get_25_followers`;
+        const userQuestRef = doc(db, 'userQuests', userQuestId);
+        const userQuestDoc = await getDoc(userQuestRef);
+        
+        let currentProgress = 0;
+        if (userQuestDoc.exists()) {
+            currentProgress = userQuestDoc.data().progress || 0;
+        }
+        
+        // If follower count is higher than current progress, update it
+        if (currentFollowerCount > currentProgress) {
+            const difference = currentFollowerCount - currentProgress;
+            await updateQuestProgress('weekly_get_25_followers', difference);
+        }
+    } catch (error) {
+        console.error('Error syncing followers quest:', error);
     }
 }
 
