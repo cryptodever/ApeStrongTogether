@@ -1363,7 +1363,7 @@ async function followUser(targetUserId) {
         try {
             const { updateQuestProgress } = await import('/js/quests-init.js');
             console.log('Updating quest progress for daily_follow_3');
-            await updateQuestProgress('daily_follow_3', 1);
+            await updateQuestProgress('daily_follow_3', 1, { targetUserId: targetUserId });
             console.log('Quest progress updated successfully');
         } catch (error) {
             console.error('Error updating follow quest progress:', error);
