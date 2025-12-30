@@ -80,6 +80,7 @@ function createOverlay() {
     
     if (!container) {
         // Silently return if no container found (might be homepage or other public page)
+        // Don't log error - this is expected for public pages
         return;
     }
     
