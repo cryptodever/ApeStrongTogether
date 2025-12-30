@@ -9461,6 +9461,9 @@ body.leaderboard-body > * {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Banner and Bio Row */
@@ -9506,8 +9509,17 @@ body.leaderboard-body > * {
 }
 
 /* Bio Section (in profile settings) */
+.profile-settings {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 .profile-settings .profile-bio-section {
     margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .profile-settings .profile-bio-section .profile-bio {
@@ -9521,6 +9533,9 @@ body.leaderboard-body > * {
         0 4px 16px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
     display: flex;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     flex-direction: column;
     gap: 0.75rem;
 }
@@ -9557,6 +9572,9 @@ body.leaderboard-body > * {
     box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .profile-header-row {
@@ -9822,6 +9840,7 @@ body.leaderboard-body > * {
 
 .x-account-input {
     width: 100%;
+    max-width: 100%;
     padding: 0.625rem 1rem;
     background: rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -9829,6 +9848,7 @@ body.leaderboard-body > * {
     color: #ffffff;
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
+    box-sizing: border-box;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -10218,6 +10238,8 @@ body.leaderboard-body > * {
 .profile-bio textarea {
     flex: 1;
     min-height: 120px;
+    width: 100%;
+    max-width: 100%;
     padding: 1.25rem;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -10230,6 +10252,7 @@ body.leaderboard-body > * {
     letter-spacing: 0.01em;
     resize: vertical;
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .profile-bio textarea::placeholder {
@@ -10270,6 +10293,36 @@ body.leaderboard-body > * {
 
 .profile-country {
     margin-bottom: 1.5rem;
+}
+
+.profile-country select,
+.country-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.625rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.profile-country select:focus,
+.country-select:focus {
+    outline: none;
+    border-color: rgba(74, 222, 128, 0.4);
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+.profile-country select:hover,
+.country-select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
 }
 
     .profile-country-section .profile-country {
