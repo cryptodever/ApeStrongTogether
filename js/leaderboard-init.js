@@ -440,10 +440,18 @@ async function followUser(targetUserId) {
     if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
     
     try {
+        // Check if already following
+        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
+        const followingDoc = await getDoc(followingRef);
+        
+        if (followingDoc.exists()) {
+            console.log('Already following this user');
+            return; // Already following, don't count for quest
+        }
+        
         const batch = writeBatch(db);
         
         // Add to current user's following list
-        const followingRef = doc(db, 'following', currentUser.uid, 'following', targetUserId);
         batch.set(followingRef, {
             userId: targetUserId,
             followedAt: serverTimestamp()
@@ -457,13 +465,17 @@ async function followUser(targetUserId) {
         });
         
         await batch.commit();
+        console.log(`Followed user: ${targetUserId}`);
         
-        // Track quest progress: daily_follow_3
+        // Track quest progress: daily_follow_3 (only if this was a new follow)
         try {
             const { updateQuestProgress } = await import('/js/quests-init.js');
+            console.log('Updating quest progress for daily_follow_3');
             await updateQuestProgress('daily_follow_3', 1);
+            console.log('Quest progress updated successfully');
         } catch (error) {
             console.error('Error updating follow quest progress:', error);
+            console.error('Error details:', error.message, error.stack);
         }
     } catch (error) {
         console.error('Error following user:', error);
