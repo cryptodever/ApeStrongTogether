@@ -78,6 +78,8 @@ let typingTimeout = null;
 let presenceUpdateInterval = null;
 let lastSeenUpdateInterval = null;
 let currentOnlineUsers = []; // Store current online users for periodic updates
+let isInitialSnapshot = true; // Flag to track if we're handling the initial snapshot
+let loadedMessageIds = new Set(); // Track which messages have been loaded
 // Available channels
 const AVAILABLE_CHANNELS = [
     { id: 'general', name: 'General Chat', emoji: '💬' },
@@ -307,10 +309,12 @@ function switchChannel(channelId) {
     // Update UI
     setupChannelSwitcher();
     
-    // Clear current messages
+    // Clear current messages and tracked message IDs
     if (chatMessagesEl) {
         chatMessagesEl.innerHTML = '';
     }
+    loadedMessageIds.clear();
+    isInitialSnapshot = true;
     
     // Remove old listeners
     if (messagesListener) {
@@ -480,6 +484,7 @@ function loadMessages() {
         // Reverse to show oldest first
         const messages = snapshot.docs.reverse();
         messages.forEach((doc) => {
+            loadedMessageIds.add(doc.id);
             displayMessage(doc.id, doc.data());
         });
 
@@ -512,12 +517,26 @@ function setupRealtimeListeners() {
     );
 
     messagesListener = onSnapshot(q, (snapshot) => {
-        // Only handle new messages (not initial load)
+        // Handle initial snapshot - ignore it since loadMessages() already loaded these
+        if (isInitialSnapshot) {
+            isInitialSnapshot = false;
+            // Mark all messages in initial snapshot as loaded
+            snapshot.docs.forEach((doc) => {
+                loadedMessageIds.add(doc.id);
+            });
+            return;
+        }
+        
+        // Only handle new/modified messages after initial load
         snapshot.docChanges().forEach((change) => {
             if (change.type === 'added') {
-                // Check if message already displayed
+                // Skip if already loaded or already displayed
+                if (loadedMessageIds.has(change.doc.id)) {
+                    return;
+                }
                 const existingMsg = document.getElementById(`msg-${change.doc.id}`);
                 if (!existingMsg) {
+                    loadedMessageIds.add(change.doc.id);
                     displayMessage(change.doc.id, change.doc.data());
                     scrollToBottom();
                 }
