@@ -1257,9 +1257,15 @@ async function loadFollowStats(userId) {
                     }
                 },
                 (error) => {
-                    // Silently handle permission errors - they're expected for other users' profiles
+                    // Only suppress warnings for other users' profiles, not own profile
                     if (error.code === 'permission-denied') {
-                        console.warn('Permission denied for followers listener (this is normal for other users)');
+                        if (userId !== currentUser?.uid) {
+                            // Expected for other users' profiles
+                            console.warn('Permission denied for followers listener (viewing other user profile)');
+                        } else {
+                            // This shouldn't happen for own profile - rules might not be deployed
+                            console.error('Permission denied for own followers listener. Make sure Firestore rules are deployed.');
+                        }
                     } else {
                         console.error('Error in followers listener:', error);
                     }
@@ -1275,9 +1281,15 @@ async function loadFollowStats(userId) {
                     }
                 },
                 (error) => {
-                    // Silently handle permission errors - they're expected for other users' profiles
+                    // Only suppress warnings for other users' profiles, not own profile
                     if (error.code === 'permission-denied') {
-                        console.warn('Permission denied for following listener (this is normal for other users)');
+                        if (userId !== currentUser?.uid) {
+                            // Expected for other users' profiles
+                            console.warn('Permission denied for following listener (viewing other user profile)');
+                        } else {
+                            // This shouldn't happen for own profile - rules might not be deployed
+                            console.error('Permission denied for own following listener. Make sure Firestore rules are deployed.');
+                        }
                     } else {
                         console.error('Error in following listener:', error);
                     }
