@@ -3483,6 +3483,228 @@ body.tokenomics-body > * {
     margin: 0.5rem 0 0 0;
 }
 
+/* Distribution Table */
+.distribution-table-wrapper {
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.distribution-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.distribution-table thead {
+    background: rgba(74, 222, 128, 0.1);
+    border-bottom: 2px solid rgba(74, 222, 128, 0.3);
+}
+
+.distribution-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4ade80;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.distribution-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.distribution-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.distribution-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.distribution-table td strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Important Notice */
+.important-notice {
+    margin: 2rem 0;
+    padding: 1.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+.important-notice h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fca5a5;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.important-notice p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    margin: 0 0 1rem 0;
+}
+
+.important-notice p:last-child {
+    margin-bottom: 0;
+}
+
+.important-notice strong {
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+/* Locking Details */
+.locking-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.locking-item {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.locking-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.locking-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.locking-content {
+    flex: 1;
+}
+
+.locking-content h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+.locking-content p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.locking-content strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.locking-note {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(74, 222, 128, 0.05);
+    border-left: 3px solid rgba(74, 222, 128, 0.5);
+    border-radius: 8px;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+}
+
+.locking-note strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* Why This Matters */
+.matters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.matters-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.matters-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(74, 222, 128, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.matters-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.matters-item p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #e0e0e0;
+    margin: 0;
+}
+
+.matters-item strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.matters-closing {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    font-style: italic;
+}
+
+.matters-closing em {
+    color: #4ade80;
+    font-style: normal;
+    font-weight: 600;
+}
+
 /* Vesting Grid */
 .vesting-grid {
     display: grid;
@@ -4509,6 +4731,75 @@ body.tokenomics-body > * {
 
     .tokenomics-section h2 {
         font-size: 1.5rem;
+    }
+
+    .distribution-table-wrapper {
+        margin: 1.5rem 0;
+    }
+
+    .distribution-table {
+        font-size: 0.875rem;
+    }
+
+    .distribution-table th,
+    .distribution-table td {
+        padding: 0.875rem 1rem;
+    }
+
+    .important-notice {
+        padding: 1.25rem;
+    }
+
+    .important-notice h3 {
+        font-size: 1.1rem;
+    }
+
+    .important-notice p {
+        font-size: 0.9rem;
+    }
+
+    .locking-details {
+        gap: 1rem;
+    }
+
+    .locking-item {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .locking-icon {
+        font-size: 2rem;
+    }
+
+    .locking-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .locking-content p {
+        font-size: 0.875rem;
+    }
+
+    .matters-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .matters-item {
+        padding: 1.25rem;
+        gap: 0.875rem;
+    }
+
+    .matters-icon {
+        font-size: 1.75rem;
+    }
+
+    .matters-item p {
+        font-size: 0.9rem;
+    }
+
+    .matters-closing {
+        padding: 1.25rem;
+        font-size: 1rem;
     }
 
     .supply-badge {
