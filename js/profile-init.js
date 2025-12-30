@@ -1230,31 +1230,60 @@ let followingListener = null;
 
 // Load followers/following counts
 async function loadFollowStats(userId) {
-    if (!userId) return;
+    if (!userId || !currentUser) return;
     
     try {
         const followersRef = collection(db, 'followers', userId, 'followers');
         const followingRef = collection(db, 'following', userId, 'following');
         
         // Set up real-time listeners
-        if (followersListener) followersListener();
-        if (followingListener) followingListener();
+        if (followersListener) {
+            followersListener();
+            followersListener = null;
+        }
+        if (followingListener) {
+            followingListener();
+            followingListener = null;
+        }
         
-        followersListener = onSnapshot(followersRef, (snapshot) => {
-            followersCount = snapshot.size;
-            const followersCountEl = document.getElementById('followersCount');
-            if (followersCountEl) {
-                followersCountEl.textContent = followersCount;
-            }
-        });
-        
-        followingListener = onSnapshot(followingRef, (snapshot) => {
-            followingCount = snapshot.size;
-            const followingCountEl = document.getElementById('followingCount');
-            if (followingCountEl) {
-                followingCountEl.textContent = followingCount;
-            }
-        });
+        // Only set up listeners if user is authenticated
+        if (currentUser) {
+            followersListener = onSnapshot(followersRef, 
+                (snapshot) => {
+                    followersCount = snapshot.size;
+                    const followersCountEl = document.getElementById('followersCount');
+                    if (followersCountEl) {
+                        followersCountEl.textContent = followersCount;
+                    }
+                },
+                (error) => {
+                    // Silently handle permission errors - they're expected for other users' profiles
+                    if (error.code === 'permission-denied') {
+                        console.warn('Permission denied for followers listener (this is normal for other users)');
+                    } else {
+                        console.error('Error in followers listener:', error);
+                    }
+                }
+            );
+            
+            followingListener = onSnapshot(followingRef, 
+                (snapshot) => {
+                    followingCount = snapshot.size;
+                    const followingCountEl = document.getElementById('followingCount');
+                    if (followingCountEl) {
+                        followingCountEl.textContent = followingCount;
+                    }
+                },
+                (error) => {
+                    // Silently handle permission errors - they're expected for other users' profiles
+                    if (error.code === 'permission-denied') {
+                        console.warn('Permission denied for following listener (this is normal for other users)');
+                    } else {
+                        console.error('Error in following listener:', error);
+                    }
+                }
+            );
+        }
     } catch (error) {
         console.error('Error loading follow stats:', error);
     }
