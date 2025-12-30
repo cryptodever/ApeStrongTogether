@@ -32,6 +32,74 @@
             <p class="hero-description">We believe in <strong>full transparency</strong>, fair launches, and long-term trust with our community.</p>
         </section>
 
+        <!-- Token Address -->
+        <section class="tokenomics-section card token-address-section">
+            <h2>📋 Contract Address</h2>
+            <div class="contract-address-wrapper">
+                <div class="contract-address">
+                    <code id="contractAddress">[CONTRACT_ADDRESS]</code>
+                    <button class="copy-btn" data-copy="contractAddress" title="Copy address">📋</button>
+                </div>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="explorer-link">View on Solscan →</a>
+            </div>
+        </section>
+
+        <!-- Launchr Fee System -->
+        <section class="tokenomics-section card">
+            <h2>⚡ Launchr Automated Fee System</h2>
+            <p class="section-intro">Our token uses an automated programmable fee engine built on the Launchr system to route fees into liquidity, buybacks, burns, and creator revenue — all without manual intervention.</p>
+            
+            <div class="fee-allocation-info">
+                <div class="fee-highlight">
+                    <span class="fee-label">Creator Fee:</span>
+                    <span class="fee-value">2%</span>
+                </div>
+                <p>Every transaction automatically triggers our fee engine. The 2% creator fee is automatically split and routed to these areas:</p>
+            </div>
+
+            <div class="fee-allocation-grid">
+                <div class="fee-allocation-item">
+                    <div class="fee-icon">💧</div>
+                    <div class="fee-content">
+                        <h3>Liquidity Growth</h3>
+                        <div class="fee-percent">40%</div>
+                        <p>Automatically adds to the liquidity pool, increasing trading stability and reducing price volatility.</p>
+                    </div>
+                </div>
+                
+                <div class="fee-allocation-item">
+                    <div class="fee-icon">🔥</div>
+                    <div class="fee-content">
+                        <h3>Buyback & Burn</h3>
+                        <div class="fee-percent">25%</div>
+                        <p>Automatically buys tokens and permanently removes them from supply, creating deflationary pressure.</p>
+                    </div>
+                </div>
+                
+                <div class="fee-allocation-item">
+                    <div class="fee-icon">📊</div>
+                    <div class="fee-content">
+                        <h3>Market Making</h3>
+                        <div class="fee-percent">20%</div>
+                        <p>Supports efficient price discovery and maintains healthy bid-ask spreads for better trading conditions.</p>
+                    </div>
+                </div>
+                
+                <div class="fee-allocation-item">
+                    <div class="fee-icon">💰</div>
+                    <div class="fee-content">
+                        <h3>Creator Revenue / Treasury</h3>
+                        <div class="fee-percent">15%</div>
+                        <p>Funds development and marketing, supports ecosystem growth, and ensures long-term sustainability.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="launchr-note">
+                <p><strong>How It Works:</strong> Every trade automatically triggers the fee engine. No waiting. No manual steps. Just smart, automated economics working 24/7. All allocations happen instantly based on smart contract logic with complete transparency and on-chain verification.</p>
+            </div>
+        </section>
+
         <!-- Total Supply -->
         <section class="tokenomics-section card">
             <h2>📌 Total Supply</h2>
@@ -47,55 +115,60 @@
         <!-- Distribution Breakdown -->
         <section class="tokenomics-section card">
             <h2>📊 Distribution Breakdown</h2>
+            <p class="section-intro">Total Supply: <strong>1,000,000,000 ATES Tokens</strong></p>
             
-            <div class="distribution-table-wrapper">
-                <table class="distribution-table">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Allocation</th>
-                            <th>Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Liquidity (Locked)</strong></td>
-                            <td>~15–30%</td>
-                            <td>Automatically added and permanently locked by the Pump.fun bonding-curve launch</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Community & Rewards</strong></td>
-                            <td>40%</td>
-                            <td>Used for community incentives, airdrops, staking rewards, event giveaways</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Marketing & Growth</strong></td>
-                            <td>10%</td>
-                            <td>Used to support sustainable expansion and partnerships</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Team & Contributors (Vested)</strong></td>
-                            <td>5%</td>
-                            <td>Locked + vested over time to align long-term development goals</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Treasury & Reserves</strong></td>
-                            <td>10%</td>
-                            <td>Reserved for future development, integrations, and ecosystem support</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Founder (Purchased on Curve)</strong></td>
-                            <td>~5%</td>
-                            <td>Bought on-chain like all holders; no pre-allocated dev tokens</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="distribution-list">
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Liquidity (Locked)</strong>
+                        <span class="dist-percent">~15–30%</span>
+                    </div>
+                    <p class="dist-notes">Automatically added and permanently locked by the Pump.fun bonding-curve launch</p>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Community & Rewards</strong>
+                        <span class="dist-percent">40%</span>
+                    </div>
+                    <p class="dist-notes">Used for community incentives, airdrops, staking rewards, event giveaways</p>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Marketing & Growth</strong>
+                        <span class="dist-percent">10%</span>
+                    </div>
+                    <p class="dist-notes">Used to support sustainable expansion and partnerships</p>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Team & Contributors (Vested)</strong>
+                        <span class="dist-percent">5%</span>
+                    </div>
+                    <p class="dist-notes">Locked + vested over time to align long-term development goals</p>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Treasury & Reserves</strong>
+                        <span class="dist-percent">10%</span>
+                    </div>
+                    <p class="dist-notes">Reserved for future development, integrations, and ecosystem support</p>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="dist-category">
+                        <strong>Founder (Purchased on Curve)</strong>
+                        <span class="dist-percent">~5%</span>
+                    </div>
+                    <p class="dist-notes">Bought on-chain like all holders; no pre-allocated dev tokens</p>
+                </div>
             </div>
 
             <div class="important-notice">
-                <h3>⚠️ Important:</h3>
-                <p>There was <strong>no pre-minted dev stash</strong>. Founders did not receive leftover tokens from the bonding curve. Any founder holdings were <strong>purchased on-chain during the launch</strong>, just like everyone else.</p>
-                <p>Liquidity was created and <strong>locked permanently</strong> at migration.</p>
+                <p><strong>⚠️ Important:</strong> There was <strong>no pre-minted dev stash</strong>. Founders did not receive leftover tokens from the bonding curve. Any founder holdings were <strong>purchased on-chain during the launch</strong>, just like everyone else. Liquidity was created and <strong>locked permanently</strong> at migration.</p>
             </div>
         </section>
 
@@ -103,101 +176,53 @@
         <section class="tokenomics-section card">
             <h2>🔒 Locking & Vesting</h2>
             
-            <div class="locking-details">
-                <div class="locking-item">
-                    <div class="locking-icon">🔒</div>
-                    <div class="locking-content">
-                        <h3>Liquidity</h3>
-                        <p>Locked permanently via Pump.fun at migration.</p>
-                    </div>
+            <div class="locking-list">
+                <div class="locking-item-simple">
+                    <span class="locking-label">Liquidity:</span>
+                    <span class="locking-desc">Locked permanently via Pump.fun at migration</span>
                 </div>
                 
-                <div class="locking-item">
-                    <div class="locking-icon">⏳</div>
-                    <div class="locking-content">
-                        <h3>Team & Contributors</h3>
-                        <p>Subject to vesting schedule — locked and released gradually.</p>
-                    </div>
+                <div class="locking-item-simple">
+                    <span class="locking-label">Team & Contributors:</span>
+                    <span class="locking-desc">Subject to vesting schedule — locked and released gradually</span>
                 </div>
                 
-                <div class="locking-item">
-                    <div class="locking-icon">📊</div>
-                    <div class="locking-content">
-                        <h3>Marketing & Rewards</h3>
-                        <p>Tokens will be <strong>locked or released over time</strong> based on activity and growth needs.</p>
-                    </div>
+                <div class="locking-item-simple">
+                    <span class="locking-label">Marketing & Rewards:</span>
+                    <span class="locking-desc">Tokens will be locked or released over time based on activity and growth needs</span>
                 </div>
             </div>
 
-            <p class="locking-note">We prioritize <strong>fair access and decentralized ownership</strong>. This tokenomics model ensures no hidden allocations, no sudden dumps, and supports sustainable growth.</p>
+            <p class="section-note">We prioritize <strong>fair access and decentralized ownership</strong>. This tokenomics model ensures no hidden allocations, no sudden dumps, and supports sustainable growth.</p>
         </section>
 
         <!-- Why This Matters -->
         <section class="tokenomics-section card">
             <h2>📌 Why This Matters</h2>
             
-            <div class="matters-grid">
-                <div class="matters-item">
-                    <div class="matters-icon">✅</div>
+            <div class="matters-list">
+                <div class="matters-item-simple">
+                    <span class="matters-icon">✅</span>
                     <p><strong>Everyone has a fair chance</strong> to buy ATES during launch.</p>
                 </div>
                 
-                <div class="matters-item">
-                    <div class="matters-icon">👤</div>
+                <div class="matters-item-simple">
+                    <span class="matters-icon">👤</span>
                     <p><strong>Founders hold only what they purchased.</strong></p>
                 </div>
                 
-                <div class="matters-item">
-                    <div class="matters-icon">🔒</div>
+                <div class="matters-item-simple">
+                    <span class="matters-icon">🔒</span>
                     <p>Tokens used for LP are <strong>locked permanently</strong>.</p>
                 </div>
                 
-                <div class="matters-item">
-                    <div class="matters-icon">⏰</div>
+                <div class="matters-item-simple">
+                    <span class="matters-icon">⏰</span>
                     <p>Team tokens are <strong>vested</strong>, not dumped.</p>
                 </div>
             </div>
 
-            <p class="matters-closing">Transparency builds trust — and <em>that's how we build a real community.</em></p>
-        </section>
-
-
-        <!-- Transparency & Security Notes -->
-        <section class="tokenomics-section card transparency-section">
-            <h2>Transparency & Security</h2>
-            
-            <div class="transparency-grid">
-                <div class="transparency-item">
-                    <h3>📋 Contract Address</h3>
-                    <p class="contract-address">
-                        <code id="contractAddress">[CONTRACT_ADDRESS]</code>
-                        <button class="copy-btn" data-copy="contractAddress" title="Copy address">📋</button>
-                    </p>
-                    <a href="#" target="_blank" rel="noopener noreferrer" class="explorer-link">View on Solscan →</a>
-                </div>
-                
-                <div class="transparency-item">
-                    <h3>🔒 Audit Status</h3>
-                    <p class="audit-status">
-                        <span class="status-badge">[AUDIT_STATUS]</span>
-                    </p>
-                    <p class="audit-note">[AUDIT_DETAILS]</p>
-                </div>
-                
-                <div class="transparency-item">
-                    <h3>🔐 Liquidity Lock</h3>
-                    <p class="lock-info">
-                        <strong>Locked:</strong> [X] months via [SERVICE_NAME]
-                    </p>
-                    <p class="lock-note">Liquidity cannot be removed until [DATE]</p>
-                </div>
-                
-                <div class="transparency-item">
-                    <h3>📄 Documentation</h3>
-                    <p>Full technical details and whitepaper available:</p>
-                    <a href="#" class="docs-link">View Full Documentation →</a>
-                </div>
-            </div>
+            <p class="section-note">Transparency builds trust — and <em>that's how we build a real community.</em></p>
         </section>
 
         <!-- Closing Note -->
