@@ -655,7 +655,8 @@ function updateUserStats() {
 const questUpdateLocks = new Map();
 
 // Update quest progress (called from other modules)
-export async function updateQuestProgress(questId, increment = 1) {
+// For daily_follow_3 quest, pass the targetUserId as the third parameter to prevent duplicate follows
+export async function updateQuestProgress(questId, increment = 1, metadata = null) {
     // Get current user from auth if not set
     if (!currentUser) {
         const currentAuthUser = auth.currentUser;
@@ -723,11 +724,14 @@ export async function updateQuestProgress(questId, increment = 1) {
             let completed = false;
             let resetAt = null;
 
+            let followedUsers = [];
+            
             if (questDoc.exists()) {
                 const data = questDoc.data();
                 currentProgress = data.progress || 0;
                 completed = data.completed || false;
                 resetAt = data.resetAt;
+                followedUsers = data.followedUsers || [];
                 
                 // Check if quest needs reset before updating (inside transaction)
                 if (resetAt) {
@@ -746,11 +750,25 @@ export async function updateQuestProgress(questId, increment = 1) {
                         currentProgress = 0;
                         completed = false;
                         resetAt = Timestamp.fromDate(nextReset);
+                        // Clear followedUsers array on reset
+                        followedUsers = [];
                     }
                 }
             } else {
                 // Create new user quest entry
                 resetAt = Timestamp.fromDate(getNextResetTime(quest.resetPeriod));
+            }
+            
+            // Special handling for daily_follow_3 quest to prevent duplicate follows
+            if (questId === 'daily_follow_3' && metadata && metadata.targetUserId) {
+                // Check if this user was already followed today
+                if (followedUsers.includes(metadata.targetUserId)) {
+                    console.log(`User ${metadata.targetUserId} was already followed today, not counting for quest`);
+                    return; // Don't increment progress
+                }
+                
+                // Add this user to the followed list
+                followedUsers.push(metadata.targetUserId);
             }
 
             // Don't update if already completed (after potential reset)
@@ -776,19 +794,31 @@ export async function updateQuestProgress(questId, increment = 1) {
                 updatedAt: serverTimestamp()
             };
             
+            // Add followedUsers array for daily_follow_3 quest
+            if (questId === 'daily_follow_3') {
+                questData.followedUsers = followedUsers;
+            }
+            
             if (!questDoc.exists()) {
                 // Document doesn't exist - create it
                 questData.createdAt = serverTimestamp();
                 transaction.set(userQuestRef, questData);
             } else {
                 // Document exists - update it (don't overwrite createdAt)
-                transaction.update(userQuestRef, {
+                const updateData = {
                     progress: newProgress,
                     completed: isNowCompleted,
                     completedAt: isNowCompleted ? serverTimestamp() : null,
                     resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
                     updatedAt: serverTimestamp()
-                });
+                };
+                
+                // Include followedUsers in update if it's the follow quest
+                if (questId === 'daily_follow_3') {
+                    updateData.followedUsers = followedUsers;
+                }
+                
+                transaction.update(userQuestRef, updateData);
             }
             
         });
@@ -833,11 +863,13 @@ export async function updateQuestProgress(questId, increment = 1) {
                 await updateQuestProgress('weekly_complete_daily_5', 1);
             }
             
+            // Show notification on any page (not just quests page)
+            showQuestCompletionNotification(quest);
+            
             // Refresh display only if on quests page
             if (dailyQuestsEl && weeklyQuestsEl) {
                 displayQuests();
                 updateUserStats();
-                showQuestCompletionNotification(quest);
             }
         } else {
             // Just update the display if on quests page
@@ -1010,11 +1042,18 @@ async function awardQuestPoints(points) {
 
 // Show quest completion notification
 function showQuestCompletionNotification(quest) {
+    // Validate quest object
+    if (!quest || !quest.title || quest.rewardPoints === undefined) {
+        console.error('Invalid quest object passed to showQuestCompletionNotification:', quest);
+        return;
+    }
+    
     // Create exciting notification popup
     const notification = document.createElement('div');
     notification.className = 'quest-notification';
     
     // Get current level progress to check for level up
+    // Use userProfile if available, otherwise try to get from auth state
     const points = userProfile?.points || 0;
     const levelProgress = getLevelProgress(points);
     const newLevelProgress = getLevelProgress(points + quest.rewardPoints);
