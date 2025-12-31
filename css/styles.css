@@ -8069,6 +8069,24 @@ body.chat-body > * {
     flex: 1;
 }
 
+.user-profile-popup-clickable {
+    background: transparent;
+    border: none;
+    color: #4ade80;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    transition: all 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.user-profile-popup-clickable:hover {
+    color: #86efac;
+    text-decoration: underline;
+    transform: translateX(2px);
+}
+
 /* Special styling for level value */
 #userProfilePopupLevelValue {
     font-weight: 700;

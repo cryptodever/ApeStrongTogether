@@ -422,6 +422,7 @@ function setupEventListeners() {
     
     // User profile popup
     setupUserProfilePopup();
+    setupFollowModals();
     
     // Close menus on click outside
     document.addEventListener('click', (e) => {
@@ -1878,8 +1879,30 @@ async function showUserProfile(userId) {
                 getFollowingCount(userId)
             ]);
             
-            if (followersEl) followersEl.textContent = followersCount || 0;
-            if (followingEl) followingEl.textContent = followingCount || 0;
+            if (followersEl) {
+                followersEl.textContent = followersCount || 0;
+                followersEl.dataset.userId = userId;
+                // Remove existing listeners and add new one
+                const newFollowersEl = followersEl.cloneNode(true);
+                followersEl.parentNode.replaceChild(newFollowersEl, followersEl);
+                newFollowersEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showFollowersList(userId);
+                });
+            }
+            if (followingEl) {
+                followingEl.textContent = followingCount || 0;
+                followingEl.dataset.userId = userId;
+                // Remove existing listeners and add new one
+                const newFollowingEl = followingEl.cloneNode(true);
+                followingEl.parentNode.replaceChild(newFollowingEl, followingEl);
+                newFollowingEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showFollowingList(userId);
+                });
+            }
         } catch (error) {
             console.error('Error loading follow stats:', error);
             if (followersEl) followersEl.textContent = '0';
@@ -2248,6 +2271,285 @@ async function getFollowingCount(userId) {
     } catch (error) {
         console.error('Error getting following count:', error);
         return 0;
+    }
+}
+
+// Show followers list (same as profile page)
+async function showFollowersList(userId) {
+    const modal = document.getElementById('followersModal');
+    const listEl = document.getElementById('followersList');
+    
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
+    
+    // Remove hide first, then add show (hide has !important)
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    
+    try {
+        const followersRef = collection(db, 'followers', userId, 'followers');
+        const followersSnapshot = await getDocs(followersRef);
+        
+        if (followersSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">No followers yet</div>';
+            return;
+        }
+        
+        listEl.innerHTML = '';
+        
+        const followerPromises = followersSnapshot.docs.map(async (followerDoc) => {
+            const followerId = followerDoc.data().userId;
+            try {
+                const userDoc = await getDoc(doc(db, 'users', followerId));
+                if (userDoc.exists()) {
+                    return { id: followerId, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error(`Error loading follower ${followerId}:`, error);
+            }
+            return null;
+        });
+        
+        const followers = (await Promise.all(followerPromises)).filter(f => f !== null);
+        
+        const followingStatus = new Map();
+        if (currentUser) {
+            const followingPromises = followers.map(async (follower) => {
+                const isFollowing = await checkIfFollowing(follower.id);
+                return { id: follower.id, isFollowing };
+            });
+            const statuses = await Promise.all(followingPromises);
+            statuses.forEach(status => {
+                followingStatus.set(status.id, status.isFollowing);
+            });
+        }
+        
+        followers.forEach((follower) => {
+            const followerItem = document.createElement('div');
+            followerItem.className = 'follow-list-item';
+            const isFollowing = currentUser && follower.id !== currentUser.uid ? followingStatus.get(follower.id) : false;
+            const isOwnProfile = currentUser && follower.id === currentUser.uid;
+            const level = follower.level || 1;
+            
+            followerItem.innerHTML = `
+                <img src="${follower.bannerImage || '/pfp_apes/bg1.png'}" alt="${follower.username}" class="follow-item-avatar" />
+                <div class="follow-item-info">
+                    <div class="follow-item-info-wrapper">
+                        <div class="follow-item-username">${follower.username || 'Unknown'}</div>
+                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
+                    </div>
+                    ${follower.bio ? `<div class="follow-item-bio">${follower.bio.substring(0, 50)}${follower.bio.length > 50 ? '...' : ''}</div>` : ''}
+                </div>
+                ${currentUser && !isOwnProfile ? `
+                    <button class="follow-item-btn ${isFollowing ? 'following' : ''}" data-user-id="${follower.id}">
+                        ${isFollowing ? 'Unfollow' : 'Follow'}
+                    </button>
+                ` : ''}
+            `;
+            
+            const avatar = followerItem.querySelector('.follow-item-avatar');
+            const infoSection = followerItem.querySelector('.follow-item-info');
+            const navigateToProfile = (e) => {
+                e.stopPropagation();
+                window.location.href = `/profile/?user=${follower.id}`;
+            };
+            if (avatar) avatar.addEventListener('click', navigateToProfile);
+            if (infoSection) infoSection.addEventListener('click', navigateToProfile);
+            
+            const followBtn = followerItem.querySelector('.follow-item-btn');
+            if (followBtn) {
+                followBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const targetUserId = followBtn.dataset.userId;
+                    if (isFollowing) {
+                        await unfollowUser(targetUserId);
+                        followBtn.textContent = 'Follow';
+                        followBtn.classList.remove('following');
+                        followingStatus.set(targetUserId, false);
+                    } else {
+                        await followUser(targetUserId);
+                        followBtn.textContent = 'Unfollow';
+                        followBtn.classList.add('following');
+                        followingStatus.set(targetUserId, true);
+                    }
+                });
+            }
+            
+            listEl.appendChild(followerItem);
+        });
+    } catch (error) {
+        console.error('Error loading followers:', error);
+        listEl.innerHTML = '<div class="follow-list-error">Error loading followers</div>';
+    }
+}
+
+// Show following list (same as profile page)
+async function showFollowingList(userId) {
+    const modal = document.getElementById('followingModal');
+    const listEl = document.getElementById('followingList');
+    
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
+    
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    
+    try {
+        const followingRef = collection(db, 'following', userId, 'following');
+        const followingSnapshot = await getDocs(followingRef);
+        
+        if (followingSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">Not following anyone yet</div>';
+            return;
+        }
+        
+        listEl.innerHTML = '';
+        
+        const followingPromises = followingSnapshot.docs.map(async (followingDoc) => {
+            const followingId = followingDoc.data().userId;
+            try {
+                const userDoc = await getDoc(doc(db, 'users', followingId));
+                if (userDoc.exists()) {
+                    return { id: followingId, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error(`Error loading followed user ${followingId}:`, error);
+            }
+            return null;
+        });
+        
+        const following = (await Promise.all(followingPromises)).filter(f => f !== null);
+        
+        const followingStatus = new Map();
+        if (currentUser && userId !== currentUser.uid) {
+            const statusPromises = following.map(async (followed) => {
+                const isFollowing = await checkIfFollowing(followed.id);
+                return { id: followed.id, isFollowing };
+            });
+            const statuses = await Promise.all(statusPromises);
+            statuses.forEach(status => {
+                followingStatus.set(status.id, status.isFollowing);
+            });
+        } else if (currentUser && userId === currentUser.uid) {
+            following.forEach(f => followingStatus.set(f.id, true));
+        }
+        
+        following.forEach((followed) => {
+            const followingItem = document.createElement('div');
+            followingItem.className = 'follow-list-item';
+            const isFollowing = currentUser && followed.id !== currentUser.uid ? followingStatus.get(followed.id) : false;
+            const isOwnProfile = currentUser && followed.id === currentUser.uid;
+            const isViewingOwnProfile = currentUser && userId === currentUser.uid;
+            const level = followed.level || 1;
+            
+            followingItem.innerHTML = `
+                <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" />
+                <div class="follow-item-info">
+                    <div class="follow-item-info-wrapper">
+                        <div class="follow-item-username">${followed.username || 'Unknown'}</div>
+                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
+                    </div>
+                    ${followed.bio ? `<div class="follow-item-bio">${followed.bio.substring(0, 50)}${followed.bio.length > 50 ? '...' : ''}</div>` : ''}
+                </div>
+                ${currentUser && !isOwnProfile ? `
+                    <button class="follow-item-btn ${isFollowing || isViewingOwnProfile ? 'following' : ''}" data-user-id="${followed.id}">
+                        ${isFollowing || isViewingOwnProfile ? 'Unfollow' : 'Follow'}
+                    </button>
+                ` : ''}
+            `;
+            
+            const avatar = followingItem.querySelector('.follow-item-avatar');
+            const infoSection = followingItem.querySelector('.follow-item-info');
+            const navigateToProfile = (e) => {
+                e.stopPropagation();
+                window.location.href = `/profile/?user=${followed.id}`;
+            };
+            if (avatar) avatar.addEventListener('click', navigateToProfile);
+            if (infoSection) infoSection.addEventListener('click', navigateToProfile);
+            
+            const followBtn = followingItem.querySelector('.follow-item-btn');
+            if (followBtn) {
+                followBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const targetUserId = followBtn.dataset.userId;
+                    const currentlyFollowing = followBtn.classList.contains('following');
+                    if (currentlyFollowing) {
+                        await unfollowUser(targetUserId);
+                        followBtn.textContent = 'Follow';
+                        followBtn.classList.remove('following');
+                        followingStatus.set(targetUserId, false);
+                    } else {
+                        await followUser(targetUserId);
+                        followBtn.textContent = 'Unfollow';
+                        followBtn.classList.add('following');
+                        followingStatus.set(targetUserId, true);
+                    }
+                });
+            }
+            
+            listEl.appendChild(followingItem);
+        });
+    } catch (error) {
+        console.error('Error loading following:', error);
+        listEl.innerHTML = '<div class="follow-list-error">Error loading following</div>';
+    }
+}
+
+// Setup modal close handlers
+function setupFollowModals() {
+    const closeFollowersModal = document.getElementById('closeFollowersModal');
+    if (closeFollowersModal) {
+        closeFollowersModal.addEventListener('click', () => {
+            const modal = document.getElementById('followersModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.classList.add('hide');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    const closeFollowingModal = document.getElementById('closeFollowingModal');
+    if (closeFollowingModal) {
+        closeFollowingModal.addEventListener('click', () => {
+            const modal = document.getElementById('followingModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.classList.add('hide');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    // Close modals on overlay click
+    const followersModal = document.getElementById('followersModal');
+    if (followersModal) {
+        followersModal.addEventListener('click', (e) => {
+            if (e.target === followersModal) {
+                followersModal.classList.remove('show');
+                followersModal.classList.add('hide');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    const followingModal = document.getElementById('followingModal');
+    if (followingModal) {
+        followingModal.addEventListener('click', (e) => {
+            if (e.target === followingModal) {
+                followingModal.classList.remove('show');
+                followingModal.classList.add('hide');
+                document.body.style.overflow = '';
+            }
+        });
     }
 }
 

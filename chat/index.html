@@ -179,11 +179,11 @@
                             </div>
                             <div class="user-profile-popup-item" id="userProfilePopupFollowers">
                                 <span class="user-profile-popup-label">Followers:</span>
-                                <span class="user-profile-popup-value" id="userProfilePopupFollowersValue">—</span>
+                                <button type="button" class="user-profile-popup-value user-profile-popup-clickable" id="userProfilePopupFollowersValue" data-user-id="">—</button>
                             </div>
                             <div class="user-profile-popup-item" id="userProfilePopupFollowing">
                                 <span class="user-profile-popup-label">Following:</span>
-                                <span class="user-profile-popup-value" id="userProfilePopupFollowingValue">—</span>
+                                <button type="button" class="user-profile-popup-value user-profile-popup-clickable" id="userProfilePopupFollowingValue" data-user-id="">—</button>
                             </div>
                             <div class="user-profile-popup-item" id="userProfilePopupCountry">
                                 <span class="user-profile-popup-label">Country:</span>
@@ -201,6 +201,35 @@
                         <button class="btn btn-primary follow-btn hide" id="chatFollowBtn">
                             <span class="follow-btn-text">Follow</span>
                         </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Followers/Following Modals -->
+            <div class="modal-overlay hide" id="followersModal">
+                <div class="modal-content follow-modal">
+                    <div class="modal-header">
+                        <h3>Followers</h3>
+                        <button type="button" class="modal-close" id="closeFollowersModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="follow-list" id="followersList">
+                            <div class="follow-list-loading">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay hide" id="followingModal">
+                <div class="modal-content follow-modal">
+                    <div class="modal-header">
+                        <h3>Following</h3>
+                        <button type="button" class="modal-close" id="closeFollowingModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="follow-list" id="followingList">
+                            <div class="follow-list-loading">Loading...</div>
+                        </div>
                     </div>
                 </div>
             </div>
