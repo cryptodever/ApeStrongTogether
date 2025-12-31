@@ -1882,26 +1882,32 @@ async function showUserProfile(userId) {
             if (followersEl) {
                 followersEl.textContent = followersCount || 0;
                 followersEl.dataset.userId = userId;
-                // Remove existing listeners and add new one
+                // Remove existing listeners by cloning
                 const newFollowersEl = followersEl.cloneNode(true);
                 followersEl.parentNode.replaceChild(newFollowersEl, followersEl);
+                // Add event listener to the new element
                 newFollowersEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('Followers button clicked in chat popup, userId:', userId);
                     showFollowersList(userId);
                 });
+                console.log('Followers button listener attached');
             }
             if (followingEl) {
                 followingEl.textContent = followingCount || 0;
                 followingEl.dataset.userId = userId;
-                // Remove existing listeners and add new one
+                // Remove existing listeners by cloning
                 const newFollowingEl = followingEl.cloneNode(true);
                 followingEl.parentNode.replaceChild(newFollowingEl, followingEl);
+                // Add event listener to the new element
                 newFollowingEl.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('Following button clicked in chat popup, userId:', userId);
                     showFollowingList(userId);
                 });
+                console.log('Following button listener attached');
             }
         } catch (error) {
             console.error('Error loading follow stats:', error);
@@ -2276,6 +2282,7 @@ async function getFollowingCount(userId) {
 
 // Show followers list (same as profile page)
 async function showFollowersList(userId) {
+    console.log('showFollowersList called in chat with userId:', userId);
     const modal = document.getElementById('followersModal');
     const listEl = document.getElementById('followersList');
     
@@ -2284,11 +2291,13 @@ async function showFollowersList(userId) {
         return;
     }
     
+    console.log('Opening followers modal, classes before:', modal.className);
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    console.log('Modal classes after:', modal.className, 'display:', window.getComputedStyle(modal).display);
     
     try {
         const followersRef = collection(db, 'followers', userId, 'followers');
@@ -2389,6 +2398,7 @@ async function showFollowersList(userId) {
 
 // Show following list (same as profile page)
 async function showFollowingList(userId) {
+    console.log('showFollowingList called in chat with userId:', userId);
     const modal = document.getElementById('followingModal');
     const listEl = document.getElementById('followingList');
     
@@ -2397,10 +2407,12 @@ async function showFollowingList(userId) {
         return;
     }
     
+    console.log('Opening following modal, classes before:', modal.className);
     modal.classList.remove('hide');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    console.log('Modal classes after:', modal.className, 'display:', window.getComputedStyle(modal).display);
     
     try {
         const followingRef = collection(db, 'following', userId, 'following');
