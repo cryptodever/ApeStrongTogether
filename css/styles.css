@@ -9704,6 +9704,7 @@ body.leaderboard-body > * {
     object-fit: cover;
     border: 2px solid rgba(74, 222, 128, 0.3);
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .follow-item-avatar:hover {
@@ -9714,6 +9715,19 @@ body.leaderboard-body > * {
 .follow-item-info {
     flex: 1;
     min-width: 0;
+    cursor: pointer;
+}
+
+.follow-item-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.follow-item-level {
+    font-size: 0.75rem;
+    color: rgba(74, 222, 128, 0.8);
+    font-weight: 600;
 }
 
 .follow-item-username {
