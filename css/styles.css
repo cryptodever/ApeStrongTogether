@@ -10078,7 +10078,7 @@ body.leaderboard-body > * {
 }
 
 .modal-overlay.show {
-    display: flex;
+    display: flex !important;
 }
 
 @keyframes fadeIn {
