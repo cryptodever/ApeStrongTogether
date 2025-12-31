@@ -947,26 +947,52 @@ function setupEventListeners() {
     // Followers/Following buttons
     const followersBtn = document.getElementById('followersBtn');
     if (followersBtn) {
-        followersBtn.addEventListener('click', () => showFollowersList(currentUser.uid));
+        followersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentUser) {
+                showFollowersList(currentUser.uid);
+            }
+        });
+    } else {
+        console.warn('Followers button not found');
     }
     
     const followingBtn = document.getElementById('followingBtn');
     if (followingBtn) {
-        followingBtn.addEventListener('click', () => showFollowingList(currentUser.uid));
+        followingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentUser) {
+                showFollowingList(currentUser.uid);
+            }
+        });
+    } else {
+        console.warn('Following button not found');
     }
     
     // Modal close buttons
     const closeFollowersModal = document.getElementById('closeFollowersModal');
     if (closeFollowersModal) {
         closeFollowersModal.addEventListener('click', () => {
-            document.getElementById('followersModal').classList.add('hide');
+            const modal = document.getElementById('followersModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.classList.add('hide');
+                document.body.style.overflow = ''; // Restore scrolling
+            }
         });
     }
     
     const closeFollowingModal = document.getElementById('closeFollowingModal');
     if (closeFollowingModal) {
         closeFollowingModal.addEventListener('click', () => {
-            document.getElementById('followingModal').classList.add('hide');
+            const modal = document.getElementById('followingModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.classList.add('hide');
+                document.body.style.overflow = ''; // Restore scrolling
+            }
         });
     }
     
@@ -975,7 +1001,9 @@ function setupEventListeners() {
     if (followersModal) {
         followersModal.addEventListener('click', (e) => {
             if (e.target === followersModal) {
+                followersModal.classList.remove('show');
                 followersModal.classList.add('hide');
+                document.body.style.overflow = ''; // Restore scrolling
             }
         });
     }
@@ -984,7 +1012,9 @@ function setupEventListeners() {
     if (followingModal) {
         followingModal.addEventListener('click', (e) => {
             if (e.target === followingModal) {
+                followingModal.classList.remove('show');
                 followingModal.classList.add('hide');
+                document.body.style.overflow = ''; // Restore scrolling
             }
         });
     }
@@ -1443,9 +1473,15 @@ async function showFollowersList(userId) {
     const modal = document.getElementById('followersModal');
     const listEl = document.getElementById('followersList');
     
-    if (!modal || !listEl) return;
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
     
+    // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
     
     try {
@@ -1558,9 +1594,15 @@ async function showFollowingList(userId) {
     const modal = document.getElementById('followingModal');
     const listEl = document.getElementById('followingList');
     
-    if (!modal || !listEl) return;
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
     
+    // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
     
     try {
