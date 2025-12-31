@@ -8819,15 +8819,17 @@ body.quests-body > * {
 
 /* Quest Notification */
 .quest-notification {
-    position: fixed;
+    position: fixed !important;
     top: 50% !important;
     left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
     transform: translate(-50%, -50%) scale(0.5) translateX(400px);
     background: linear-gradient(135deg, rgba(30, 30, 30, 0.98), rgba(20, 20, 20, 0.98));
     border: 2px solid rgba(74, 222, 128, 0.6);
     border-radius: 20px;
     padding: 0;
-    z-index: 10000;
+    z-index: 100000 !important;
     box-shadow: 
         0 20px 60px rgba(0, 0, 0, 0.7),
         0 0 40px rgba(74, 222, 128, 0.3),
@@ -8839,6 +8841,7 @@ body.quests-body > * {
     width: 90%;
     overflow: hidden;
     pointer-events: auto;
+    margin: 0 !important;
     /* Ensure it's centered on all screen sizes */
     margin: 0;
     /* Force center positioning */
@@ -8853,6 +8856,7 @@ body.quests-body > * {
     left: 50% !important;
     right: auto !important;
     bottom: auto !important;
+    margin: 0 !important;
 }
 
 .quest-notification.quest-notification-bounce {
