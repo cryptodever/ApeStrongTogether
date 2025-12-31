@@ -1496,11 +1496,11 @@ async function showFollowersList(userId) {
             const level = follower.level || 1;
             
             followerItem.innerHTML = `
-                <img src="${follower.bannerImage || '/pfp_apes/bg1.png'}" alt="${follower.username}" class="follow-item-avatar" style="cursor: pointer;" />
-                <div class="follow-item-info" style="flex: 1; min-width: 0; cursor: pointer;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <img src="${follower.bannerImage || '/pfp_apes/bg1.png'}" alt="${follower.username}" class="follow-item-avatar" />
+                <div class="follow-item-info">
+                    <div class="follow-item-info-wrapper">
                         <div class="follow-item-username">${follower.username || 'Unknown'}</div>
-                        ${level ? `<span style="font-size: 0.75rem; color: rgba(74, 222, 128, 0.8); font-weight: 600;">LVL ${level}</span>` : ''}
+                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
                     </div>
                     ${follower.bio ? `<div class="follow-item-bio">${follower.bio.substring(0, 50)}${follower.bio.length > 50 ? '...' : ''}</div>` : ''}
                 </div>
@@ -1535,13 +1535,11 @@ async function showFollowersList(userId) {
                         await unfollowUser(targetUserId);
                         followBtn.textContent = 'Follow';
                         followBtn.classList.remove('following');
-                        followBtn.style.background = 'rgba(74, 222, 128, 0.2)';
                         followingStatus.set(targetUserId, false);
                     } else {
                         await followUser(targetUserId);
                         followBtn.textContent = 'Unfollow';
                         followBtn.classList.add('following');
-                        followBtn.style.background = 'rgba(255, 255, 255, 0.1)';
                         followingStatus.set(targetUserId, true);
                     }
                 });
@@ -1618,11 +1616,11 @@ async function showFollowingList(userId) {
             const level = followed.level || 1;
             
             followingItem.innerHTML = `
-                <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" style="cursor: pointer;" />
-                <div class="follow-item-info" style="flex: 1; min-width: 0; cursor: pointer;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" />
+                <div class="follow-item-info">
+                    <div class="follow-item-info-wrapper">
                         <div class="follow-item-username">${followed.username || 'Unknown'}</div>
-                        ${level ? `<span style="font-size: 0.75rem; color: rgba(74, 222, 128, 0.8); font-weight: 600;">LVL ${level}</span>` : ''}
+                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
                     </div>
                     ${followed.bio ? `<div class="follow-item-bio">${followed.bio.substring(0, 50)}${followed.bio.length > 50 ? '...' : ''}</div>` : ''}
                 </div>
@@ -1658,13 +1656,11 @@ async function showFollowingList(userId) {
                         await unfollowUser(targetUserId);
                         followBtn.textContent = 'Follow';
                         followBtn.classList.remove('following');
-                        followBtn.style.background = 'rgba(74, 222, 128, 0.2)';
                         followingStatus.set(targetUserId, false);
                     } else {
                         await followUser(targetUserId);
                         followBtn.textContent = 'Unfollow';
                         followBtn.classList.add('following');
-                        followBtn.style.background = 'rgba(255, 255, 255, 0.1)';
                         followingStatus.set(targetUserId, true);
                     }
                 });
