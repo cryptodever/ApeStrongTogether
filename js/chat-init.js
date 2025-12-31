@@ -2280,73 +2280,32 @@ async function getFollowingCount(userId) {
     }
 }
 
-// Show followers list (same as profile page)
-async function showFollowersList(userId) {
-    console.log('showFollowersList called in chat with userId:', userId);
-    const modal = document.getElementById('followersModal');
+// Store followers/following data for search (chat)
+let chatFollowersData = [];
+let chatFollowingData = [];
+
+// Filter and render followers list (chat)
+function renderChatFollowersList(followers, followingStatus, searchTerm = '') {
     const listEl = document.getElementById('followersList');
+    if (!listEl) return;
     
-    if (!modal || !listEl) {
-        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+    const filtered = searchTerm 
+        ? followers.filter(f => 
+            (f.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (f.bio || '').toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : followers;
+    
+    if (filtered.length === 0) {
+        listEl.innerHTML = searchTerm 
+            ? '<div class="follow-list-empty">No followers match your search</div>'
+            : '<div class="follow-list-empty">No followers yet</div>';
         return;
     }
     
-    console.log('Opening followers modal, classes before:', modal.className);
-    // Remove hide first, then add show (hide has !important)
-    modal.classList.remove('hide');
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    listEl.innerHTML = '';
     
-    const computedStyle = window.getComputedStyle(modal);
-    console.log('Modal after:', {
-        classes: modal.className,
-        display: computedStyle.display,
-        visibility: computedStyle.visibility,
-        opacity: computedStyle.opacity,
-        zIndex: computedStyle.zIndex,
-        position: computedStyle.position
-    });
-    
-    try {
-        const followersRef = collection(db, 'followers', userId, 'followers');
-        const followersSnapshot = await getDocs(followersRef);
-        
-        if (followersSnapshot.empty) {
-            listEl.innerHTML = '<div class="follow-list-empty">No followers yet</div>';
-            return;
-        }
-        
-        listEl.innerHTML = '';
-        
-        const followerPromises = followersSnapshot.docs.map(async (followerDoc) => {
-            const followerId = followerDoc.data().userId;
-            try {
-                const userDoc = await getDoc(doc(db, 'users', followerId));
-                if (userDoc.exists()) {
-                    return { id: followerId, ...userDoc.data() };
-                }
-            } catch (error) {
-                console.error(`Error loading follower ${followerId}:`, error);
-            }
-            return null;
-        });
-        
-        const followers = (await Promise.all(followerPromises)).filter(f => f !== null);
-        
-        const followingStatus = new Map();
-        if (currentUser) {
-            const followingPromises = followers.map(async (follower) => {
-                const isFollowing = await checkIfFollowing(follower.id);
-                return { id: follower.id, isFollowing };
-            });
-            const statuses = await Promise.all(followingPromises);
-            statuses.forEach(status => {
-                followingStatus.set(status.id, status.isFollowing);
-            });
-        }
-        
-        followers.forEach((follower) => {
+    filtered.forEach((follower) => {
             const followerItem = document.createElement('div');
             followerItem.className = 'follow-list-item';
             const isFollowing = currentUser && follower.id !== currentUser.uid ? followingStatus.get(follower.id) : false;
@@ -2405,80 +2364,34 @@ async function showFollowersList(userId) {
     }
 }
 
-// Show following list (same as profile page)
-async function showFollowingList(userId) {
-    console.log('showFollowingList called in chat with userId:', userId);
-    const modal = document.getElementById('followingModal');
+// Filter and render following list (chat)
+function renderChatFollowingList(following, followingStatus, searchTerm = '', viewingUserId = null) {
     const listEl = document.getElementById('followingList');
+    if (!listEl) return;
     
-    if (!modal || !listEl) {
-        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+    const filtered = searchTerm 
+        ? following.filter(f => 
+            (f.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (f.bio || '').toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : following;
+    
+    if (filtered.length === 0) {
+        listEl.innerHTML = searchTerm 
+            ? '<div class="follow-list-empty">No following match your search</div>'
+            : '<div class="follow-list-empty">Not following anyone yet</div>';
         return;
     }
     
-    console.log('Opening following modal, classes before:', modal.className);
-    modal.classList.remove('hide');
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    listEl.innerHTML = '';
     
-    const computedStyle = window.getComputedStyle(modal);
-    console.log('Modal after:', {
-        classes: modal.className,
-        display: computedStyle.display,
-        visibility: computedStyle.visibility,
-        opacity: computedStyle.opacity,
-        zIndex: computedStyle.zIndex,
-        position: computedStyle.position
-    });
-    
-    try {
-        const followingRef = collection(db, 'following', userId, 'following');
-        const followingSnapshot = await getDocs(followingRef);
-        
-        if (followingSnapshot.empty) {
-            listEl.innerHTML = '<div class="follow-list-empty">Not following anyone yet</div>';
-            return;
-        }
-        
-        listEl.innerHTML = '';
-        
-        const followingPromises = followingSnapshot.docs.map(async (followingDoc) => {
-            const followingId = followingDoc.data().userId;
-            try {
-                const userDoc = await getDoc(doc(db, 'users', followingId));
-                if (userDoc.exists()) {
-                    return { id: followingId, ...userDoc.data() };
-                }
-            } catch (error) {
-                console.error(`Error loading followed user ${followingId}:`, error);
-            }
-            return null;
-        });
-        
-        const following = (await Promise.all(followingPromises)).filter(f => f !== null);
-        
-        const followingStatus = new Map();
-        if (currentUser && userId !== currentUser.uid) {
-            const statusPromises = following.map(async (followed) => {
-                const isFollowing = await checkIfFollowing(followed.id);
-                return { id: followed.id, isFollowing };
-            });
-            const statuses = await Promise.all(statusPromises);
-            statuses.forEach(status => {
-                followingStatus.set(status.id, status.isFollowing);
-            });
-        } else if (currentUser && userId === currentUser.uid) {
-            following.forEach(f => followingStatus.set(f.id, true));
-        }
-        
-        following.forEach((followed) => {
-            const followingItem = document.createElement('div');
-            followingItem.className = 'follow-list-item';
-            const isFollowing = currentUser && followed.id !== currentUser.uid ? followingStatus.get(followed.id) : false;
-            const isOwnProfile = currentUser && followed.id === currentUser.uid;
-            const isViewingOwnProfile = currentUser && userId === currentUser.uid;
-            const level = followed.level || 1;
+    filtered.forEach((followed) => {
+        const followingItem = document.createElement('div');
+        followingItem.className = 'follow-list-item';
+        const isFollowing = currentUser && followed.id !== currentUser.uid ? followingStatus.get(followed.id) : false;
+        const isOwnProfile = currentUser && followed.id === currentUser.uid;
+        const isViewingOwnProfile = currentUser && viewingUserId && viewingUserId === currentUser.uid;
+        const level = followed.level || 1;
             
             followingItem.innerHTML = `
                 <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" />
@@ -2527,9 +2440,85 @@ async function showFollowingList(userId) {
             
             listEl.appendChild(followingItem);
         });
+}
+
+// Show following list (same as profile page)
+async function showFollowingList(userId) {
+    console.log('showFollowingList called in chat with userId:', userId);
+    const modal = document.getElementById('followingModal');
+    const listEl = document.getElementById('followingList');
+    const searchInput = document.getElementById('followingSearchInput');
+    
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
+    
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    if (searchInput) searchInput.value = '';
+    
+    try {
+        const followingRef = collection(db, 'following', userId, 'following');
+        const followingSnapshot = await getDocs(followingRef);
+        
+        if (followingSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">Not following anyone yet</div>';
+            chatFollowingData = [];
+            return;
+        }
+        
+        const followingPromises = followingSnapshot.docs.map(async (followingDoc) => {
+            const followingId = followingDoc.data().userId;
+            try {
+                const userDoc = await getDoc(doc(db, 'users', followingId));
+                if (userDoc.exists()) {
+                    return { id: followingId, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error(`Error loading followed user ${followingId}:`, error);
+            }
+            return null;
+        });
+        
+        const following = (await Promise.all(followingPromises)).filter(f => f !== null);
+        chatFollowingData = following;
+        
+        const followingStatus = new Map();
+        if (currentUser && userId !== currentUser.uid) {
+            const statusPromises = following.map(async (followed) => {
+                const isFollowing = await checkIfFollowing(followed.id);
+                return { id: followed.id, isFollowing };
+            });
+            const statuses = await Promise.all(statusPromises);
+            statuses.forEach(status => {
+                followingStatus.set(status.id, status.isFollowing);
+            });
+        } else if (currentUser && userId === currentUser.uid) {
+            following.forEach(f => followingStatus.set(f.id, true));
+        }
+        
+        // Setup search functionality
+        if (searchInput) {
+            // Remove existing listeners
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+            const updatedSearchInput = document.getElementById('followingSearchInput');
+            if (updatedSearchInput) {
+                updatedSearchInput.addEventListener('input', (e) => {
+                    renderChatFollowingList(chatFollowingData, followingStatus, e.target.value, userId);
+                });
+            }
+        }
+        
+        // Initial render
+        renderChatFollowingList(following, followingStatus, '', userId);
     } catch (error) {
         console.error('Error loading following:', error);
         listEl.innerHTML = '<div class="follow-list-error">Error loading following</div>';
+        chatFollowingData = [];
     }
 }
 

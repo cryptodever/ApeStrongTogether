@@ -1505,79 +1505,33 @@ async function checkIfFollowing(targetUserId) {
     }
 }
 
-// Show followers list
-async function showFollowersList(userId) {
-    console.log('showFollowersList called with userId:', userId);
-    const modal = document.getElementById('followersModal');
+// Store followers/following data for search functionality
+let currentFollowersData = [];
+let currentFollowingData = [];
+
+// Filter and render followers list
+function renderFollowersList(followers, followingStatus, searchTerm = '') {
     const listEl = document.getElementById('followersList');
+    if (!listEl) return;
     
-    if (!modal || !listEl) {
-        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+    // Filter by search term
+    const filtered = searchTerm 
+        ? followers.filter(f => 
+            (f.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (f.bio || '').toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : followers;
+    
+    if (filtered.length === 0) {
+        listEl.innerHTML = searchTerm 
+            ? '<div class="follow-list-empty">No followers match your search</div>'
+            : '<div class="follow-list-empty">No followers yet</div>';
         return;
     }
     
-    console.log('Modal before:', {
-        classes: modal.className,
-        display: window.getComputedStyle(modal).display,
-        visibility: window.getComputedStyle(modal).visibility,
-        opacity: window.getComputedStyle(modal).opacity
-    });
+    listEl.innerHTML = '';
     
-    // Remove hide first, then add show (hide has !important)
-    modal.classList.remove('hide');
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
-    
-    console.log('Modal after:', {
-        classes: modal.className,
-        display: window.getComputedStyle(modal).display,
-        visibility: window.getComputedStyle(modal).visibility,
-        opacity: window.getComputedStyle(modal).opacity,
-        zIndex: window.getComputedStyle(modal).zIndex
-    });
-    
-    try {
-        const followersRef = collection(db, 'followers', userId, 'followers');
-        const followersSnapshot = await getDocs(followersRef);
-        
-        if (followersSnapshot.empty) {
-            listEl.innerHTML = '<div class="follow-list-empty">No followers yet</div>';
-            return;
-        }
-        
-        listEl.innerHTML = '';
-        
-        // Get user data for each follower
-        const followerPromises = followersSnapshot.docs.map(async (followerDoc) => {
-            const followerId = followerDoc.data().userId;
-            try {
-                const userDoc = await getDoc(doc(db, 'users', followerId));
-                if (userDoc.exists()) {
-                    return { id: followerId, ...userDoc.data() };
-                }
-            } catch (error) {
-                console.error(`Error loading follower ${followerId}:`, error);
-            }
-            return null;
-        });
-        
-        const followers = (await Promise.all(followerPromises)).filter(f => f !== null);
-        
-        // Check which users the current user is following (if logged in)
-        const followingStatus = new Map();
-        if (currentUser) {
-            const followingPromises = followers.map(async (follower) => {
-                const isFollowing = await checkIfFollowing(follower.id);
-                return { id: follower.id, isFollowing };
-            });
-            const statuses = await Promise.all(followingPromises);
-            statuses.forEach(status => {
-                followingStatus.set(status.id, status.isFollowing);
-            });
-        }
-        
-        followers.forEach((follower) => {
+    filtered.forEach((follower) => {
             const followerItem = document.createElement('div');
             followerItem.className = 'follow-list-item';
             const isFollowing = currentUser && follower.id !== currentUser.uid ? followingStatus.get(follower.id) : false;
@@ -1636,89 +1590,106 @@ async function showFollowersList(userId) {
             
             listEl.appendChild(followerItem);
         });
-    } catch (error) {
-        console.error('Error loading followers:', error);
-        listEl.innerHTML = '<div class="follow-list-error">Error loading followers</div>';
-    }
 }
 
-// Show following list
-async function showFollowingList(userId) {
-    console.log('showFollowingList called with userId:', userId);
-    const modal = document.getElementById('followingModal');
-    const listEl = document.getElementById('followingList');
+// Show followers list
+async function showFollowersList(userId) {
+    console.log('showFollowersList called with userId:', userId);
+    const modal = document.getElementById('followersModal');
+    const listEl = document.getElementById('followersList');
+    const searchInput = document.getElementById('followersSearchInput');
     
     if (!modal || !listEl) {
         console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
         return;
     }
     
-    console.log('Modal before:', {
-        classes: modal.className,
-        display: window.getComputedStyle(modal).display,
-        visibility: window.getComputedStyle(modal).visibility,
-        opacity: window.getComputedStyle(modal).opacity
-    });
-    
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
-    
-    console.log('Modal after:', {
-        classes: modal.className,
-        display: window.getComputedStyle(modal).display,
-        visibility: window.getComputedStyle(modal).visibility,
-        opacity: window.getComputedStyle(modal).opacity,
-        zIndex: window.getComputedStyle(modal).zIndex
-    });
+    if (searchInput) searchInput.value = '';
     
     try {
-        const followingRef = collection(db, 'following', userId, 'following');
-        const followingSnapshot = await getDocs(followingRef);
+        const followersRef = collection(db, 'followers', userId, 'followers');
+        const followersSnapshot = await getDocs(followersRef);
         
-        if (followingSnapshot.empty) {
-            listEl.innerHTML = '<div class="follow-list-empty">Not following anyone yet</div>';
+        if (followersSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">No followers yet</div>';
+            currentFollowersData = [];
             return;
         }
         
-        listEl.innerHTML = '';
-        
-        // Get user data for each followed user
-        const followingPromises = followingSnapshot.docs.map(async (followingDoc) => {
-            const followingId = followingDoc.data().userId;
+        // Get user data for each follower
+        const followerPromises = followersSnapshot.docs.map(async (followerDoc) => {
+            const followerId = followerDoc.data().userId;
             try {
-                const userDoc = await getDoc(doc(db, 'users', followingId));
+                const userDoc = await getDoc(doc(db, 'users', followerId));
                 if (userDoc.exists()) {
-                    return { id: followingId, ...userDoc.data() };
+                    return { id: followerId, ...userDoc.data() };
                 }
             } catch (error) {
-                console.error(`Error loading followed user ${followingId}:`, error);
+                console.error(`Error loading follower ${followerId}:`, error);
             }
             return null;
         });
         
-        const following = (await Promise.all(followingPromises)).filter(f => f !== null);
+        const followers = (await Promise.all(followerPromises)).filter(f => f !== null);
+        currentFollowersData = followers;
         
-        // If viewing own profile, all users in following list are already being followed
-        // If viewing someone else's profile, check if current user follows them
+        // Check which users the current user is following (if logged in)
         const followingStatus = new Map();
-        if (currentUser && userId !== currentUser.uid) {
-            const statusPromises = following.map(async (followed) => {
-                const isFollowing = await checkIfFollowing(followed.id);
-                return { id: followed.id, isFollowing };
+        if (currentUser) {
+            const followingPromises = followers.map(async (follower) => {
+                const isFollowing = await checkIfFollowing(follower.id);
+                return { id: follower.id, isFollowing };
             });
-            const statuses = await Promise.all(statusPromises);
+            const statuses = await Promise.all(followingPromises);
             statuses.forEach(status => {
                 followingStatus.set(status.id, status.isFollowing);
             });
-        } else if (currentUser && userId === currentUser.uid) {
-            // Viewing own following list - all are being followed
-            following.forEach(f => followingStatus.set(f.id, true));
         }
         
-        following.forEach((followed) => {
+        // Setup search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                renderFollowersList(currentFollowersData, followingStatus, e.target.value);
+            });
+        }
+        
+        // Initial render
+        renderFollowersList(followers, followingStatus);
+    } catch (error) {
+        console.error('Error loading followers:', error);
+        listEl.innerHTML = '<div class="follow-list-error">Error loading followers</div>';
+        currentFollowersData = [];
+    }
+}
+
+// Filter and render following list
+function renderFollowingList(following, followingStatus, searchTerm = '') {
+    const listEl = document.getElementById('followingList');
+    if (!listEl) return;
+    
+    // Filter by search term
+    const filtered = searchTerm 
+        ? following.filter(f => 
+            (f.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (f.bio || '').toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : following;
+    
+    if (filtered.length === 0) {
+        listEl.innerHTML = searchTerm 
+            ? '<div class="follow-list-empty">No following match your search</div>'
+            : '<div class="follow-list-empty">Not following anyone yet</div>';
+        return;
+    }
+    
+    listEl.innerHTML = '';
+    
+    filtered.forEach((followed) => {
             const followingItem = document.createElement('div');
             followingItem.className = 'follow-list-item';
             const isFollowing = currentUser && followed.id !== currentUser.uid ? followingStatus.get(followed.id) : false;
