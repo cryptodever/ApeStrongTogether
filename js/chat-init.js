@@ -2306,61 +2306,135 @@ function renderChatFollowersList(followers, followingStatus, searchTerm = '') {
     listEl.innerHTML = '';
     
     filtered.forEach((follower) => {
-            const followerItem = document.createElement('div');
-            followerItem.className = 'follow-list-item';
-            const isFollowing = currentUser && follower.id !== currentUser.uid ? followingStatus.get(follower.id) : false;
-            const isOwnProfile = currentUser && follower.id === currentUser.uid;
-            const level = follower.level || 1;
-            
-            followerItem.innerHTML = `
-                <img src="${follower.bannerImage || '/pfp_apes/bg1.png'}" alt="${follower.username}" class="follow-item-avatar" />
-                <div class="follow-item-info">
-                    <div class="follow-item-info-wrapper">
-                        <div class="follow-item-username">${follower.username || 'Unknown'}</div>
-                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
-                    </div>
-                    ${follower.bio ? `<div class="follow-item-bio">${follower.bio.substring(0, 50)}${follower.bio.length > 50 ? '...' : ''}</div>` : ''}
+        const followerItem = document.createElement('div');
+        followerItem.className = 'follow-list-item';
+        const isFollowing = currentUser && follower.id !== currentUser.uid ? followingStatus.get(follower.id) : false;
+        const isOwnProfile = currentUser && follower.id === currentUser.uid;
+        const level = follower.level || 1;
+        
+        followerItem.innerHTML = `
+            <img src="${follower.bannerImage || '/pfp_apes/bg1.png'}" alt="${follower.username}" class="follow-item-avatar" />
+            <div class="follow-item-info">
+                <div class="follow-item-info-wrapper">
+                    <div class="follow-item-username">${follower.username || 'Unknown'}</div>
+                    ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
                 </div>
-                ${currentUser && !isOwnProfile ? `
-                    <button class="follow-item-btn ${isFollowing ? 'following' : ''}" data-user-id="${follower.id}">
-                        ${isFollowing ? 'Unfollow' : 'Follow'}
-                    </button>
-                ` : ''}
-            `;
-            
-            const avatar = followerItem.querySelector('.follow-item-avatar');
-            const infoSection = followerItem.querySelector('.follow-item-info');
-            const navigateToProfile = (e) => {
+                ${follower.bio ? `<div class="follow-item-bio">${follower.bio.substring(0, 50)}${follower.bio.length > 50 ? '...' : ''}</div>` : ''}
+            </div>
+            ${currentUser && !isOwnProfile ? `
+                <button class="follow-item-btn ${isFollowing ? 'following' : ''}" data-user-id="${follower.id}">
+                    ${isFollowing ? 'Unfollow' : 'Follow'}
+                </button>
+            ` : ''}
+        `;
+        
+        const avatar = followerItem.querySelector('.follow-item-avatar');
+        const infoSection = followerItem.querySelector('.follow-item-info');
+        const navigateToProfile = (e) => {
+            e.stopPropagation();
+            window.location.href = `/profile/?user=${follower.id}`;
+        };
+        if (avatar) avatar.addEventListener('click', navigateToProfile);
+        if (infoSection) infoSection.addEventListener('click', navigateToProfile);
+        
+        const followBtn = followerItem.querySelector('.follow-item-btn');
+        if (followBtn) {
+            followBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                window.location.href = `/profile/?user=${follower.id}`;
-            };
-            if (avatar) avatar.addEventListener('click', navigateToProfile);
-            if (infoSection) infoSection.addEventListener('click', navigateToProfile);
-            
-            const followBtn = followerItem.querySelector('.follow-item-btn');
-            if (followBtn) {
-                followBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const targetUserId = followBtn.dataset.userId;
-                    if (isFollowing) {
-                        await unfollowUser(targetUserId);
-                        followBtn.textContent = 'Follow';
-                        followBtn.classList.remove('following');
-                        followingStatus.set(targetUserId, false);
-                    } else {
-                        await followUser(targetUserId);
-                        followBtn.textContent = 'Unfollow';
-                        followBtn.classList.add('following');
-                        followingStatus.set(targetUserId, true);
-                    }
+                const targetUserId = followBtn.dataset.userId;
+                if (isFollowing) {
+                    await unfollowUser(targetUserId);
+                    followBtn.textContent = 'Follow';
+                    followBtn.classList.remove('following');
+                    followingStatus.set(targetUserId, false);
+                } else {
+                    await followUser(targetUserId);
+                    followBtn.textContent = 'Unfollow';
+                    followBtn.classList.add('following');
+                    followingStatus.set(targetUserId, true);
+                }
+            });
+        }
+        
+        listEl.appendChild(followerItem);
+    });
+}
+
+// Show followers list (same as profile page)
+async function showFollowersList(userId) {
+    console.log('showFollowersList called in chat with userId:', userId);
+    const modal = document.getElementById('followersModal');
+    const listEl = document.getElementById('followersList');
+    const searchInput = document.getElementById('followersSearchInput');
+    
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
+    
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    if (searchInput) searchInput.value = '';
+    
+    try {
+        const followersRef = collection(db, 'followers', userId, 'followers');
+        const followersSnapshot = await getDocs(followersRef);
+        
+        if (followersSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">No followers yet</div>';
+            chatFollowersData = [];
+            return;
+        }
+        
+        const followerPromises = followersSnapshot.docs.map(async (followerDoc) => {
+            const followerId = followerDoc.data().userId;
+            try {
+                const userDoc = await getDoc(doc(db, 'users', followerId));
+                if (userDoc.exists()) {
+                    return { id: followerId, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error(`Error loading follower ${followerId}:`, error);
+            }
+            return null;
+        });
+        
+        const followers = (await Promise.all(followerPromises)).filter(f => f !== null);
+        chatFollowersData = followers;
+        
+        const followingStatus = new Map();
+        if (currentUser) {
+            const followingPromises = followers.map(async (follower) => {
+                const isFollowing = await checkIfFollowing(follower.id);
+                return { id: follower.id, isFollowing };
+            });
+            const statuses = await Promise.all(followingPromises);
+            statuses.forEach(status => {
+                followingStatus.set(status.id, status.isFollowing);
+            });
+        }
+        
+        // Setup search functionality
+        if (searchInput) {
+            // Remove existing listeners
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+            const updatedSearchInput = document.getElementById('followersSearchInput');
+            if (updatedSearchInput) {
+                updatedSearchInput.addEventListener('input', (e) => {
+                    renderChatFollowersList(chatFollowersData, followingStatus, e.target.value);
                 });
             }
-            
-            listEl.appendChild(followerItem);
-        });
+        }
+        
+        // Initial render
+        renderChatFollowersList(followers, followingStatus);
     } catch (error) {
         console.error('Error loading followers:', error);
         listEl.innerHTML = '<div class="follow-list-error">Error loading followers</div>';
+        chatFollowersData = [];
     }
 }
 
