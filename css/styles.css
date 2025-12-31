@@ -5059,7 +5059,7 @@ body.profile-body::after {
     opacity: 0.3;
 }
 
-body.profile-body > * {
+body.profile-body > *:not(.modal-overlay) {
     position: relative;
     z-index: 1;
 }
@@ -10070,7 +10070,7 @@ body.leaderboard-body > * {
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
-    z-index: 10000;
+    z-index: 10000 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -10079,6 +10079,7 @@ body.leaderboard-body > * {
 
 .modal-overlay.show {
     display: flex !important;
+    z-index: 10000 !important;
 }
 
 @keyframes fadeIn {
