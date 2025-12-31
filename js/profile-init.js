@@ -944,31 +944,68 @@ function setupEventListeners() {
         bannerBgGrid.addEventListener('click', handleBannerBgClick);
     }
     
-    // Followers/Following buttons
+    // Followers/Following buttons - use event delegation on parent container
+    // This is more reliable than direct attachment
+    const followStatsContainer = document.querySelector('.profile-follow-stats');
+    if (followStatsContainer) {
+        console.log('Attaching event delegation to follow stats container');
+        followStatsContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            console.log('Button clicked:', button.id);
+            
+            if (button.id === 'followersBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Followers button clicked (via delegation)');
+                if (currentUser) {
+                    showFollowersList(currentUser.uid);
+                } else {
+                    console.warn('No current user');
+                }
+            } else if (button.id === 'followingBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Following button clicked (via delegation)');
+                if (currentUser) {
+                    showFollowingList(currentUser.uid);
+                } else {
+                    console.warn('No current user');
+                }
+            }
+        });
+        console.log('Event delegation attached successfully');
+    } else {
+        console.warn('Follow stats container not found');
+    }
+    
+    // Also try direct attachment as backup
     const followersBtn = document.getElementById('followersBtn');
+    const followingBtn = document.getElementById('followingBtn');
+    
     if (followersBtn) {
+        console.log('Directly attaching listener to followers button');
         followersBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Followers button clicked (direct)');
             if (currentUser) {
                 showFollowersList(currentUser.uid);
             }
         });
-    } else {
-        console.warn('Followers button not found');
     }
     
-    const followingBtn = document.getElementById('followingBtn');
     if (followingBtn) {
+        console.log('Directly attaching listener to following button');
         followingBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Following button clicked (direct)');
             if (currentUser) {
                 showFollowingList(currentUser.uid);
             }
         });
-    } else {
-        console.warn('Following button not found');
     }
     
     // Modal close buttons
@@ -1470,6 +1507,7 @@ async function checkIfFollowing(targetUserId) {
 
 // Show followers list
 async function showFollowersList(userId) {
+    console.log('showFollowersList called with userId:', userId);
     const modal = document.getElementById('followersModal');
     const listEl = document.getElementById('followersList');
     
@@ -1478,6 +1516,7 @@ async function showFollowersList(userId) {
         return;
     }
     
+    console.log('Opening followers modal');
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
@@ -1591,6 +1630,7 @@ async function showFollowersList(userId) {
 
 // Show following list
 async function showFollowingList(userId) {
+    console.log('showFollowingList called with userId:', userId);
     const modal = document.getElementById('followingModal');
     const listEl = document.getElementById('followingList');
     
@@ -1599,6 +1639,7 @@ async function showFollowingList(userId) {
         return;
     }
     
+    console.log('Opening following modal');
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
