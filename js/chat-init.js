@@ -2392,54 +2392,54 @@ function renderChatFollowingList(following, followingStatus, searchTerm = '', vi
         const isOwnProfile = currentUser && followed.id === currentUser.uid;
         const isViewingOwnProfile = currentUser && viewingUserId && viewingUserId === currentUser.uid;
         const level = followed.level || 1;
-            
-            followingItem.innerHTML = `
-                <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" />
-                <div class="follow-item-info">
-                    <div class="follow-item-info-wrapper">
-                        <div class="follow-item-username">${followed.username || 'Unknown'}</div>
-                        ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
-                    </div>
-                    ${followed.bio ? `<div class="follow-item-bio">${followed.bio.substring(0, 50)}${followed.bio.length > 50 ? '...' : ''}</div>` : ''}
+        
+        followingItem.innerHTML = `
+            <img src="${followed.bannerImage || '/pfp_apes/bg1.png'}" alt="${followed.username}" class="follow-item-avatar" />
+            <div class="follow-item-info">
+                <div class="follow-item-info-wrapper">
+                    <div class="follow-item-username">${followed.username || 'Unknown'}</div>
+                    ${level ? `<span class="follow-item-level">LVL ${level}</span>` : ''}
                 </div>
-                ${currentUser && !isOwnProfile ? `
-                    <button class="follow-item-btn ${isFollowing || isViewingOwnProfile ? 'following' : ''}" data-user-id="${followed.id}">
-                        ${isFollowing || isViewingOwnProfile ? 'Unfollow' : 'Follow'}
-                    </button>
-                ` : ''}
-            `;
-            
-            const avatar = followingItem.querySelector('.follow-item-avatar');
-            const infoSection = followingItem.querySelector('.follow-item-info');
-            const navigateToProfile = (e) => {
+                ${followed.bio ? `<div class="follow-item-bio">${followed.bio.substring(0, 50)}${followed.bio.length > 50 ? '...' : ''}</div>` : ''}
+            </div>
+            ${currentUser && !isOwnProfile ? `
+                <button class="follow-item-btn ${isFollowing || isViewingOwnProfile ? 'following' : ''}" data-user-id="${followed.id}">
+                    ${isFollowing || isViewingOwnProfile ? 'Unfollow' : 'Follow'}
+                </button>
+            ` : ''}
+        `;
+        
+        const avatar = followingItem.querySelector('.follow-item-avatar');
+        const infoSection = followingItem.querySelector('.follow-item-info');
+        const navigateToProfile = (e) => {
+            e.stopPropagation();
+            window.location.href = `/profile/?user=${followed.id}`;
+        };
+        if (avatar) avatar.addEventListener('click', navigateToProfile);
+        if (infoSection) infoSection.addEventListener('click', navigateToProfile);
+        
+        const followBtn = followingItem.querySelector('.follow-item-btn');
+        if (followBtn) {
+            followBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                window.location.href = `/profile/?user=${followed.id}`;
-            };
-            if (avatar) avatar.addEventListener('click', navigateToProfile);
-            if (infoSection) infoSection.addEventListener('click', navigateToProfile);
-            
-            const followBtn = followingItem.querySelector('.follow-item-btn');
-            if (followBtn) {
-                followBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const targetUserId = followBtn.dataset.userId;
-                    const currentlyFollowing = followBtn.classList.contains('following');
-                    if (currentlyFollowing) {
-                        await unfollowUser(targetUserId);
-                        followBtn.textContent = 'Follow';
-                        followBtn.classList.remove('following');
-                        followingStatus.set(targetUserId, false);
-                    } else {
-                        await followUser(targetUserId);
-                        followBtn.textContent = 'Unfollow';
-                        followBtn.classList.add('following');
-                        followingStatus.set(targetUserId, true);
-                    }
-                });
-            }
-            
-            listEl.appendChild(followingItem);
-        });
+                const targetUserId = followBtn.dataset.userId;
+                const currentlyFollowing = followBtn.classList.contains('following');
+                if (currentlyFollowing) {
+                    await unfollowUser(targetUserId);
+                    followBtn.textContent = 'Follow';
+                    followBtn.classList.remove('following');
+                    followingStatus.set(targetUserId, false);
+                } else {
+                    await followUser(targetUserId);
+                    followBtn.textContent = 'Unfollow';
+                    followBtn.classList.add('following');
+                    followingStatus.set(targetUserId, true);
+                }
+            });
+        }
+        
+        listEl.appendChild(followingItem);
+    });
 }
 
 // Show following list (same as profile page)
