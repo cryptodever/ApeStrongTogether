@@ -1516,12 +1516,26 @@ async function showFollowersList(userId) {
         return;
     }
     
-    console.log('Opening followers modal');
+    console.log('Modal before:', {
+        classes: modal.className,
+        display: window.getComputedStyle(modal).display,
+        visibility: window.getComputedStyle(modal).visibility,
+        opacity: window.getComputedStyle(modal).opacity
+    });
+    
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    
+    console.log('Modal after:', {
+        classes: modal.className,
+        display: window.getComputedStyle(modal).display,
+        visibility: window.getComputedStyle(modal).visibility,
+        opacity: window.getComputedStyle(modal).opacity,
+        zIndex: window.getComputedStyle(modal).zIndex
+    });
     
     try {
         const followersRef = collection(db, 'followers', userId, 'followers');
@@ -1639,12 +1653,26 @@ async function showFollowingList(userId) {
         return;
     }
     
-    console.log('Opening following modal');
+    console.log('Modal before:', {
+        classes: modal.className,
+        display: window.getComputedStyle(modal).display,
+        visibility: window.getComputedStyle(modal).visibility,
+        opacity: window.getComputedStyle(modal).opacity
+    });
+    
     // Remove hide first, then add show (hide has !important)
     modal.classList.remove('hide');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    
+    console.log('Modal after:', {
+        classes: modal.className,
+        display: window.getComputedStyle(modal).display,
+        visibility: window.getComputedStyle(modal).visibility,
+        opacity: window.getComputedStyle(modal).opacity,
+        zIndex: window.getComputedStyle(modal).zIndex
+    });
     
     try {
         const followingRef = collection(db, 'following', userId, 'following');
