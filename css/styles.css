@@ -10088,7 +10088,7 @@ body.leaderboard-body > * {
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
-    z-index: 10000 !important;
+    z-index: 100000 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -10097,7 +10097,7 @@ body.leaderboard-body > * {
 
 .modal-overlay.show {
     display: flex !important;
-    z-index: 10000 !important;
+    z-index: 100000 !important;
 }
 
 @keyframes fadeIn {
