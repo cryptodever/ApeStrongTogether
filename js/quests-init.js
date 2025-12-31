@@ -1079,7 +1079,17 @@ function showQuestCompletionNotification(quest) {
         <div class="quest-notification-particles"></div>
     `;
     
+    // Append to body and ensure it's positioned correctly
     document.body.appendChild(notification);
+    
+    // Force correct positioning by setting styles directly
+    notification.style.position = 'fixed';
+    notification.style.top = '50%';
+    notification.style.left = '50%';
+    notification.style.right = 'auto';
+    notification.style.bottom = 'auto';
+    notification.style.margin = '0';
+    notification.style.zIndex = '100000';
 
     // Add close button handler
     const closeBtn = notification.querySelector('.quest-notification-close');
@@ -1096,6 +1106,12 @@ function showQuestCompletionNotification(quest) {
     setTimeout(() => {
         notification.classList.add('show');
         notification.classList.add('quest-notification-bounce');
+        // Re-enforce positioning after class is added
+        notification.style.top = '50%';
+        notification.style.left = '50%';
+        notification.style.right = 'auto';
+        notification.style.bottom = 'auto';
+        notification.style.margin = '0';
     }, 10);
 
     // Remove bounce animation after initial animation
