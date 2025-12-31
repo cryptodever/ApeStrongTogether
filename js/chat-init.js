@@ -2297,7 +2297,16 @@ async function showFollowersList(userId) {
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
-    console.log('Modal classes after:', modal.className, 'display:', window.getComputedStyle(modal).display);
+    
+    const computedStyle = window.getComputedStyle(modal);
+    console.log('Modal after:', {
+        classes: modal.className,
+        display: computedStyle.display,
+        visibility: computedStyle.visibility,
+        opacity: computedStyle.opacity,
+        zIndex: computedStyle.zIndex,
+        position: computedStyle.position
+    });
     
     try {
         const followersRef = collection(db, 'followers', userId, 'followers');
@@ -2412,7 +2421,16 @@ async function showFollowingList(userId) {
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
-    console.log('Modal classes after:', modal.className, 'display:', window.getComputedStyle(modal).display);
+    
+    const computedStyle = window.getComputedStyle(modal);
+    console.log('Modal after:', {
+        classes: modal.className,
+        display: computedStyle.display,
+        visibility: computedStyle.visibility,
+        opacity: computedStyle.opacity,
+        zIndex: computedStyle.zIndex,
+        position: computedStyle.position
+    });
     
     try {
         const followingRef = collection(db, 'following', userId, 'following');
