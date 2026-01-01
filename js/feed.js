@@ -555,14 +555,78 @@ async function loadComments(postId) {
     const commentsListEl = document.getElementById(`commentsList_${postId}`);
     if (!commentsListEl) return;
     
-    try {
-        const commentsQuery = query(
-            collection(db, 'posts', postId, 'comments'),
-            where('deleted', '==', false),
-            orderBy('createdAt', 'asc')
-        );
+        let commentsSnapshot;
         
-        const commentsSnapshot = await getDocs(commentsQuery);
+        try {
+            // Try with composite query first (requires index: deleted, createdAt)
+            const commentsQuery = query(
+                collection(db, 'posts', postId, 'comments'),
+                where('deleted', '==', false),
+                orderBy('createdAt', 'asc')
+            );
+            
+            commentsSnapshot = await getDocs(commentsQuery);
+        } catch (indexError) {
+            console.warn('Index not found for comments, using fallback query:', indexError);
+            // Fallback: simpler query, filter and sort in JavaScript
+            try {
+                const commentsQuery = query(
+                    collection(db, 'posts', postId, 'comments'),
+                    where('deleted', '==', false)
+                );
+                
+                commentsSnapshot = await getDocs(commentsQuery);
+                
+                // Sort by createdAt in JavaScript
+                const commentsArray = Array.from(commentsSnapshot.docs);
+                commentsArray.sort((a, b) => {
+                    const aData = a.data();
+                    const bData = b.data();
+                    const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                    const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                    return aTime - bTime; // ASC order
+                });
+                
+                // Create a new QuerySnapshot-like object with sorted docs
+                commentsSnapshot = {
+                    docs: commentsArray,
+                    empty: commentsArray.length === 0,
+                    size: commentsArray.length,
+                    forEach: (callback) => commentsArray.forEach(callback),
+                    query: commentsSnapshot.query
+                };
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                // Final fallback: get all comments and filter/sort in JavaScript
+                const allCommentsQuery = query(
+                    collection(db, 'posts', postId, 'comments')
+                );
+                
+                commentsSnapshot = await getDocs(allCommentsQuery);
+                
+                // Filter and sort in JavaScript
+                const commentsArray = Array.from(commentsSnapshot.docs)
+                    .filter(doc => {
+                        const data = doc.data();
+                        return data.deleted !== true;
+                    })
+                    .sort((a, b) => {
+                        const aData = a.data();
+                        const bData = b.data();
+                        const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                        const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                        return aTime - bTime; // ASC order
+                    });
+                
+                commentsSnapshot = {
+                    docs: commentsArray,
+                    empty: commentsArray.length === 0,
+                    size: commentsArray.length,
+                    forEach: (callback) => commentsArray.forEach(callback),
+                    query: commentsSnapshot.query
+                };
+            }
+        }
         
         if (commentsSnapshot.empty) {
             commentsListEl.innerHTML = '<div class="post-comments-empty">No comments yet</div>';
