@@ -1667,6 +1667,83 @@ async function showFollowersList(userId) {
     }
 }
 
+// Show following list
+async function showFollowingList(userId) {
+    console.log('showFollowingList called with userId:', userId);
+    const modal = document.getElementById('followingModal');
+    const listEl = document.getElementById('followingList');
+    const searchInput = document.getElementById('followingSearchInput');
+    
+    if (!modal || !listEl) {
+        console.error('Modal elements not found:', { modal: !!modal, listEl: !!listEl });
+        return;
+    }
+    
+    // Remove hide first, then add show (hide has !important)
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
+    if (searchInput) searchInput.value = '';
+    
+    try {
+        const followingRef = collection(db, 'following', userId, 'following');
+        const followingSnapshot = await getDocs(followingRef);
+        
+        if (followingSnapshot.empty) {
+            listEl.innerHTML = '<div class="follow-list-empty">Not following anyone yet</div>';
+            currentFollowingData = [];
+            return;
+        }
+        
+        // Get user data for each followed user
+        const followingPromises = followingSnapshot.docs.map(async (followingDoc) => {
+            const followingId = followingDoc.data().userId;
+            try {
+                const userDoc = await getDoc(doc(db, 'users', followingId));
+                if (userDoc.exists()) {
+                    return { id: followingId, ...userDoc.data() };
+                }
+            } catch (error) {
+                console.error(`Error loading followed user ${followingId}:`, error);
+            }
+            return null;
+        });
+        
+        const following = (await Promise.all(followingPromises)).filter(f => f !== null);
+        currentFollowingData = following;
+        
+        // Check which users the current user is following (if logged in)
+        const followingStatus = new Map();
+        if (currentUser && userId !== currentUser.uid) {
+            const statusPromises = following.map(async (followed) => {
+                const isFollowing = await checkIfFollowing(followed.id);
+                return { id: followed.id, isFollowing };
+            });
+            const statuses = await Promise.all(statusPromises);
+            statuses.forEach(status => {
+                followingStatus.set(status.id, status.isFollowing);
+            });
+        } else if (currentUser && userId === currentUser.uid) {
+            following.forEach(f => followingStatus.set(f.id, true));
+        }
+        
+        // Setup search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                renderFollowingList(currentFollowingData, followingStatus, e.target.value);
+            });
+        }
+        
+        // Initial render
+        renderFollowingList(following, followingStatus);
+    } catch (error) {
+        console.error('Error loading following:', error);
+        listEl.innerHTML = '<div class="follow-list-error">Error loading following</div>';
+        currentFollowingData = [];
+    }
+}
+
 // Filter and render following list
 function renderFollowingList(following, followingStatus, searchTerm = '') {
     const listEl = document.getElementById('followingList');
@@ -1750,10 +1827,6 @@ function renderFollowingList(following, followingStatus, searchTerm = '') {
             
             listEl.appendChild(followingItem);
         });
-    } catch (error) {
-        console.error('Error loading following:', error);
-        listEl.innerHTML = '<div class="follow-list-error">Error loading following</div>';
-    }
 }
 
 // Export functions for use in other modules (e.g., chat popup)
