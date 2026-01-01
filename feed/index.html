@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <title>Feed 📱 | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="feed-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="feed-page">
+        <div class="feed-container">
+            <header class="feed-header">
+                <h1>Community Feed 📱</h1>
+                <p>Share your thoughts, memes, and updates with the Ape community</p>
+            </header>
+
+            <!-- Post Creation Form (only visible when logged in) -->
+            <section class="post-create-section hide" id="postCreateSection">
+                <div class="post-create-card">
+                    <form id="postCreateForm" class="post-create-form">
+                        <div class="post-create-content">
+                            <textarea 
+                                id="postContent" 
+                                class="post-content-input" 
+                                placeholder="What's on your mind, Ape? Share your thoughts, memes, or updates..."
+                                maxlength="2000"
+                                rows="4"
+                            ></textarea>
+                            <div class="post-char-count">
+                                <span id="postCharCount">0</span>/2000
+                            </div>
+                        </div>
+                        
+                        <div class="post-create-options">
+                            <div class="post-option-group">
+                                <label for="postImageUrl" class="post-option-label">Image URL (optional)</label>
+                                <input 
+                                    type="url" 
+                                    id="postImageUrl" 
+                                    class="post-option-input" 
+                                    placeholder="https://example.com/image.png"
+                                />
+                                <button type="button" class="post-option-remove" id="removeImageBtn" style="display: none;">Remove</button>
+                            </div>
+                            
+                            <div class="post-option-group">
+                                <label for="postLinkUrl" class="post-option-label">Link URL (optional)</label>
+                                <input 
+                                    type="url" 
+                                    id="postLinkUrl" 
+                                    class="post-option-input" 
+                                    placeholder="https://example.com"
+                                />
+                                <input 
+                                    type="text" 
+                                    id="postLinkTitle" 
+                                    class="post-option-input" 
+                                    placeholder="Link title (optional)"
+                                />
+                                <button type="button" class="post-option-remove" id="removeLinkBtn" style="display: none;">Remove</button>
+                            </div>
+                        </div>
+                        
+                        <div class="post-create-actions">
+                            <button type="submit" class="post-submit-btn" id="postSubmitBtn">
+                                Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Posts Feed -->
+            <section class="posts-feed-section">
+                <div class="posts-feed" id="postsFeed">
+                    <div class="posts-loading">Loading posts...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p class="footer-disclaimer"><strong>Entertainment only. Not financial advice.</strong></p>
+            <p class="footer-copyright">© 2025 Ape Together Stronger</p>
+        </div>
+    </footer>
+
+    <script type="module" src="/js/feed-init.js?v=1"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>

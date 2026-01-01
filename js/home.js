@@ -198,6 +198,69 @@ async function loadActivityFeed() {
         // For now, we'll skip follows as it requires querying many subcollections
         // TODO: Consider creating an activity log collection for better performance
         
+        // 2.5. Load trending posts (most likes in last 24 hours)
+        try {
+            const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+            const trendingPosts = [];
+            let postsSnapshot;
+            
+            try {
+                // Try with composite query first (requires index: deleted, createdAt, likesCount)
+                const postsQuery = query(
+                    collection(db, 'posts'),
+                    where('deleted', '==', false),
+                    where('createdAt', '>=', twentyFourHoursAgo),
+                    orderBy('createdAt', 'desc'),
+                    limit(100)
+                );
+                postsSnapshot = await getDocs(postsQuery);
+            } catch (indexError) {
+                // Fallback: simpler query, filter and sort in JavaScript
+                const postsQuery = query(
+                    collection(db, 'posts'),
+                    where('deleted', '==', false),
+                    orderBy('createdAt', 'desc'),
+                    limit(100)
+                );
+                postsSnapshot = await getDocs(postsQuery);
+            }
+            
+            for (const postDoc of postsSnapshot.docs) {
+                const postData = postDoc.data();
+                if (!postData.createdAt || !postData.userId) continue;
+                
+                // Filter by time if we used the fallback query
+                const postTime = postData.createdAt.toMillis();
+                const twentyFourHoursAgoTime = twentyFourHoursAgo.toMillis();
+                if (postTime < twentyFourHoursAgoTime) continue;
+                
+                // Skip posts with no likes
+                if (!postData.likesCount || postData.likesCount === 0) continue;
+                
+                // Get user info
+                const userDoc = await getDoc(doc(db, 'users', postData.userId));
+                const userData = userDoc.exists() ? userDoc.data() : null;
+                const username = userData?.username || 'Anonymous';
+                
+                trendingPosts.push({
+                    type: 'trending_post',
+                    userId: postData.userId,
+                    username: username,
+                    postId: postDoc.id,
+                    content: postData.content ? postData.content.substring(0, 100) : '',
+                    likesCount: postData.likesCount || 0,
+                    timestamp: postData.createdAt,
+                    sortTime: postTime
+                });
+            }
+            
+            // Sort trending posts by likesCount (highest first), then take top 5
+            trendingPosts.sort((a, b) => b.likesCount - a.likesCount);
+            activities.push(...trendingPosts.slice(0, 5));
+        } catch (error) {
+            // Silently handle - errors are expected until indexes are deployed
+        }
+        
         // 3. Load recent chat messages (highlights)
         try {
             // Try with composite query first (requires index)
@@ -269,6 +332,14 @@ async function loadActivityFeed() {
             activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const userId = item.dataset.userId;
+                    const postId = item.dataset.postId;
+                    
+                    // If it's a trending post, navigate to feed page
+                    if (postId) {
+                        window.location.href = `/feed/#post-${postId}`;
+                        return;
+                    }
+                    
                     if (userId && currentUser) {
                         // Show user profile popup or navigate to profile
                         // For now, navigate to profile page
@@ -336,6 +407,21 @@ function createActivityItem(activity) {
                     <div class="activity-text">
                         <span class="activity-username">@${escapeHtml(activity.username)}</span>
                         in <strong>${channelName}</strong>: "${escapeHtml(activity.text)}${activity.text.length >= 100 ? '...' : ''}"
+                    </div>
+                    <div class="activity-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    } else if (activity.type === 'trending_post') {
+        const contentPreview = activity.content ? escapeHtml(activity.content) : 'Post';
+        content = `
+            <div class="activity-item activity-post" data-user-id="${activity.userId}" data-post-id="${activity.postId}">
+                <div class="activity-icon">🔥</div>
+                <div class="activity-content">
+                    <div class="activity-text">
+                        <span class="activity-username">@${escapeHtml(activity.username)}</span>
+                        posted: "${contentPreview}${activity.content && activity.content.length >= 100 ? '...' : ''}"
+                        <span class="activity-reward">❤️ ${activity.likesCount}</span>
                     </div>
                     <div class="activity-time">${timeAgo}</div>
                 </div>
