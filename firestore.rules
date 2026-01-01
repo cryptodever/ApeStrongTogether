@@ -240,7 +240,6 @@ service cloud.firestore {
         && request.resource.data.username is string
         && request.resource.data.content is string
         && request.resource.data.images is list
-        && request.resource.data.links is list
         && request.resource.data.likes is map
         && request.resource.data.likesCount == 0
         && request.resource.data.commentsCount == 0

@@ -3,7 +3,7 @@
  * Handles post creation, display, likes, and comments
  */
 
-import { auth, db } from './firebase.js';
+import { auth, db, storage } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
     collection,
@@ -21,6 +21,11 @@ import {
     Timestamp,
     increment
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js';
 
 // State
 let currentUser = null;
@@ -29,9 +34,10 @@ let postsListener = null;
 
 // DOM Elements
 let postsFeedEl, postCreateSectionEl, postCreateFormEl;
-let postContentEl, postImageUrlEl, postLinkUrlEl, postLinkTitleEl;
+let postContentEl, postImageFileEl;
 let postCharCountEl, postSubmitBtnEl;
-let removeImageBtnEl, removeLinkBtnEl;
+let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl, imageFileNameEl;
+let selectedImageFile = null;
 
 // Initialize feed page
 export function initFeed() {
@@ -40,13 +46,13 @@ export function initFeed() {
     postCreateSectionEl = document.getElementById('postCreateSection');
     postCreateFormEl = document.getElementById('postCreateForm');
     postContentEl = document.getElementById('postContent');
-    postImageUrlEl = document.getElementById('postImageUrl');
-    postLinkUrlEl = document.getElementById('postLinkUrl');
-    postLinkTitleEl = document.getElementById('postLinkTitle');
+    postImageFileEl = document.getElementById('postImageFile');
     postCharCountEl = document.getElementById('postCharCount');
     postSubmitBtnEl = document.getElementById('postSubmitBtn');
     removeImageBtnEl = document.getElementById('removeImageBtn');
-    removeLinkBtnEl = document.getElementById('removeLinkBtn');
+    imagePreviewContainerEl = document.getElementById('imagePreviewContainer');
+    imagePreviewEl = document.getElementById('imagePreview');
+    imageFileNameEl = document.getElementById('imageFileName');
 
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
@@ -97,45 +103,18 @@ function setupEventListeners() {
         postContentEl.addEventListener('input', updateCharCount);
     }
     
+    // Image file input
+    if (postImageFileEl) {
+        postImageFileEl.addEventListener('change', handleImageFileSelect);
+    }
+    
     // Remove image button
     if (removeImageBtnEl) {
         removeImageBtnEl.addEventListener('click', () => {
-            if (postImageUrlEl) postImageUrlEl.value = '';
-            removeImageBtnEl.classList.add('hide');
-        });
-    }
-    
-    // Remove link button
-    if (removeLinkBtnEl) {
-        removeLinkBtnEl.addEventListener('click', () => {
-            if (postLinkUrlEl) postLinkUrlEl.value = '';
-            if (postLinkTitleEl) postLinkTitleEl.value = '';
-            removeLinkBtnEl.classList.add('hide');
-        });
-    }
-    
-    // Show/hide remove buttons
-    if (postImageUrlEl) {
-        postImageUrlEl.addEventListener('input', () => {
-            if (removeImageBtnEl) {
-                if (postImageUrlEl.value) {
-                    removeImageBtnEl.classList.remove('hide');
-                } else {
-                    removeImageBtnEl.classList.add('hide');
-                }
-            }
-        });
-    }
-    
-    if (postLinkUrlEl) {
-        postLinkUrlEl.addEventListener('input', () => {
-            if (removeLinkBtnEl) {
-                if (postLinkUrlEl.value) {
-                    removeLinkBtnEl.classList.remove('hide');
-                } else {
-                    removeLinkBtnEl.classList.add('hide');
-                }
-            }
+            selectedImageFile = null;
+            if (postImageFileEl) postImageFileEl.value = '';
+            if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
+            if (imageFileNameEl) imageFileNameEl.classList.add('hide');
         });
     }
 }
@@ -157,12 +136,9 @@ async function handlePostSubmit(e) {
     }
     
     const content = postContentEl?.value.trim() || '';
-    const imageUrl = postImageUrlEl?.value.trim() || '';
-    const linkUrl = postLinkUrlEl?.value.trim() || '';
-    const linkTitle = postLinkTitleEl?.value.trim() || '';
     
-    if (!content && !imageUrl && !linkUrl) {
-        alert('Please add some content, an image, or a link to your post');
+    if (!content && !selectedImageFile) {
+        alert('Please add some content or an image to your post');
         return;
     }
     
@@ -178,13 +154,38 @@ async function handlePostSubmit(e) {
     }
     
     try {
+        let imageUrl = '';
+        
+        // Upload image if selected
+        if (selectedImageFile) {
+            try {
+                // Create a unique filename
+                const timestamp = Date.now();
+                const fileName = `${currentUser.uid}_${timestamp}_${selectedImageFile.name}`;
+                const storageRef = ref(storage, `posts/${fileName}`);
+                
+                // Upload file
+                await uploadBytes(storageRef, selectedImageFile);
+                
+                // Get download URL
+                imageUrl = await getDownloadURL(storageRef);
+            } catch (uploadError) {
+                console.error('Error uploading image:', uploadError);
+                alert('Failed to upload image. Please try again.');
+                if (postSubmitBtnEl) {
+                    postSubmitBtnEl.disabled = false;
+                    postSubmitBtnEl.textContent = 'Post';
+                }
+                return;
+            }
+        }
+        
         // Prepare post data
         const postData = {
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
             content: content,
             images: imageUrl ? [imageUrl] : [],
-            links: linkUrl ? [{ url: linkUrl, title: linkTitle || linkUrl }] : [],
             likes: {},
             likesCount: 0,
             commentsCount: 0,
@@ -198,11 +199,10 @@ async function handlePostSubmit(e) {
         
         // Reset form
         if (postContentEl) postContentEl.value = '';
-        if (postImageUrlEl) postImageUrlEl.value = '';
-        if (postLinkUrlEl) postLinkUrlEl.value = '';
-        if (postLinkTitleEl) postLinkTitleEl.value = '';
-        if (removeImageBtnEl) removeImageBtnEl.classList.add('hide');
-        if (removeLinkBtnEl) removeLinkBtnEl.classList.add('hide');
+        if (postImageFileEl) postImageFileEl.value = '';
+        selectedImageFile = null;
+        if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
+        if (imageFileNameEl) imageFileNameEl.classList.add('hide');
         updateCharCount();
         
     } catch (error) {
@@ -387,17 +387,6 @@ function renderPost(post) {
                     <div class="post-images">
                         ${post.images.map(img => `
                             <img src="${escapeHtml(img)}" alt="Post image" class="post-image" data-image-src="${escapeHtml(img)}" />
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                ${post.links && post.links.length > 0 ? `
-                    <div class="post-links">
-                        ${post.links.map(link => `
-                            <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" class="post-link">
-                                <span class="post-link-icon">🔗</span>
-                                <span class="post-link-text">${escapeHtml(link.title || link.url)}</span>
-                            </a>
                         `).join('')}
                     </div>
                 ` : ''}
