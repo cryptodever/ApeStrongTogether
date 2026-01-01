@@ -675,3 +675,138 @@ exports.makeUserAdmin = functions.region('us-central1').https.onCall(async (data
     }
 });
 
+/**
+ * Cleanup old posts - marks posts older than 7 days as deleted
+ * Runs daily at 2 AM UTC
+ */
+exports.cleanupOldPosts = functions.pubsub.schedule('0 2 * * *')
+    .timeZone('UTC')
+    .onRun(async (context) => {
+        console.log('[cleanupOldPosts] Starting cleanup of posts older than 7 days');
+        
+        try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const sevenDaysAgoTimestamp = admin.firestore.Timestamp.fromDate(sevenDaysAgo);
+            
+            // Query posts that are not deleted and older than 7 days
+            const postsQuery = db.collection('posts')
+                .where('deleted', '==', false)
+                .where('createdAt', '<', sevenDaysAgoTimestamp);
+            
+            const snapshot = await postsQuery.get();
+            
+            if (snapshot.empty) {
+                console.log('[cleanupOldPosts] No old posts to clean up');
+                return null;
+            }
+            
+            console.log(`[cleanupOldPosts] Found ${snapshot.size} posts to mark as deleted`);
+            
+            const batch = db.batch();
+            let batchCount = 0;
+            const maxBatchSize = 500; // Firestore batch limit
+            
+            for (const doc of snapshot.docs) {
+                batch.update(doc.ref, {
+                    deleted: true,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                batchCount++;
+                
+                // Firestore batches are limited to 500 operations
+                if (batchCount >= maxBatchSize) {
+                    await batch.commit();
+                    console.log(`[cleanupOldPosts] Committed batch of ${batchCount} posts`);
+                    batchCount = 0;
+                }
+            }
+            
+            // Commit remaining updates
+            if (batchCount > 0) {
+                await batch.commit();
+                console.log(`[cleanupOldPosts] Committed final batch of ${batchCount} posts`);
+            }
+            
+            console.log(`[cleanupOldPosts] Successfully marked ${snapshot.size} posts as deleted`);
+            return null;
+            
+        } catch (error) {
+            console.error('[cleanupOldPosts] Error:', error);
+            throw error;
+        }
+    });
+
+/**
+ * Cleanup old messages - deletes messages older than 24 hours from all channels
+ * Runs daily at 3 AM UTC
+ */
+exports.cleanupOldMessages = functions.pubsub.schedule('0 3 * * *')
+    .timeZone('UTC')
+    .onRun(async (context) => {
+        console.log('[cleanupOldMessages] Starting cleanup of messages older than 24 hours');
+        
+        try {
+            const twentyFourHoursAgo = new Date();
+            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+            const twentyFourHoursAgoTimestamp = admin.firestore.Timestamp.fromDate(twentyFourHoursAgo);
+            
+            const channels = ['general', 'raid', 'trading', 'support'];
+            let totalDeleted = 0;
+            
+            for (const channel of channels) {
+                try {
+                    // Query messages in this channel that are not deleted and older than 24 hours
+                    const messagesQuery = db.collection('messages')
+                        .where('channel', '==', channel)
+                        .where('deleted', '==', false)
+                        .where('timestamp', '<', twentyFourHoursAgoTimestamp);
+                    
+                    const snapshot = await messagesQuery.get();
+                    
+                    if (snapshot.empty) {
+                        console.log(`[cleanupOldMessages] No old messages to delete in channel: ${channel}`);
+                        continue;
+                    }
+                    
+                    console.log(`[cleanupOldMessages] Found ${snapshot.size} messages to delete in channel: ${channel}`);
+                    
+                    const batch = db.batch();
+                    let batchCount = 0;
+                    const maxBatchSize = 500; // Firestore batch limit
+                    
+                    for (const doc of snapshot.docs) {
+                        batch.delete(doc.ref);
+                        batchCount++;
+                        
+                        // Firestore batches are limited to 500 operations
+                        if (batchCount >= maxBatchSize) {
+                            await batch.commit();
+                            console.log(`[cleanupOldMessages] Committed batch of ${batchCount} messages from channel: ${channel}`);
+                            batchCount = 0;
+                        }
+                    }
+                    
+                    // Commit remaining deletions
+                    if (batchCount > 0) {
+                        await batch.commit();
+                        console.log(`[cleanupOldMessages] Committed final batch of ${batchCount} messages from channel: ${channel}`);
+                    }
+                    
+                    totalDeleted += snapshot.size;
+                    console.log(`[cleanupOldMessages] Successfully deleted ${snapshot.size} messages from channel: ${channel}`);
+                    
+                } catch (channelError) {
+                    console.error(`[cleanupOldMessages] Error cleaning channel ${channel}:`, channelError);
+                    // Continue with other channels even if one fails
+                }
+            }
+            
+            console.log(`[cleanupOldMessages] Cleanup complete. Total messages deleted: ${totalDeleted}`);
+            return null;
+            
+        } catch (error) {
+            console.error('[cleanupOldMessages] Error:', error);
+            throw error;
+        }
+    });
