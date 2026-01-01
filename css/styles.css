@@ -6999,6 +6999,10 @@ body.chat-body > * {
 
 .channel-name {
     white-space: nowrap;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
 }
 
 .chat-header h1 {
@@ -7146,9 +7150,12 @@ body.chat-body > * {
     
     .channel-name {
         font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-transform: uppercase;
     }
     
     .channel-emoji {
@@ -7208,6 +7215,9 @@ body.chat-body > * {
     
     .channel-name {
         font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
     }
     
     .channel-emoji {
@@ -8298,9 +8308,12 @@ body.chat-body > * {
     
     .channel-name {
         font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-transform: uppercase;
     }
     
     .channel-emoji {
@@ -11292,9 +11305,11 @@ body.leaderboard-body > * {
 
 .channel-name {
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     color: #4ade80;
     font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
 }
 
 .channel-count {

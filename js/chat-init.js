@@ -82,10 +82,10 @@ let isInitialSnapshot = true; // Flag to track if we're handling the initial sna
 let loadedMessageIds = new Set(); // Track which messages have been loaded
 // Available channels
 const AVAILABLE_CHANNELS = [
-    { id: 'general', name: 'General Chat', emoji: '💬' },
-    { id: 'raid', name: 'Raid Chat', emoji: '⚔️' },
-    { id: 'trading', name: 'Trading Chat', emoji: '📈' },
-    { id: 'support', name: 'Support Chat', emoji: '🆘' }
+    { id: 'general', name: 'GENERAL', emoji: '💬' },
+    { id: 'raid', name: 'RAID', emoji: '⚔️' },
+    { id: 'trading', name: 'TRADING', emoji: '📈' },
+    { id: 'support', name: 'SUPPORT', emoji: '🆘' }
 ];
 
 // Get channel from localStorage or default to 'general'
@@ -2135,8 +2135,11 @@ async function handleClearCommand(channelName) {
             return;
         }
         
+        // Format channel name for display
+        const channelDisplayName = channelName.toUpperCase();
+        
         // Confirm action
-        if (!confirm(`Are you sure you want to clear all messages in ${channelName} chat? This action cannot be undone.`)) {
+        if (!confirm(`Are you sure you want to clear all messages in ${channelDisplayName}? This action cannot be undone.`)) {
             return;
         }
         
@@ -2151,7 +2154,7 @@ async function handleClearCommand(channelName) {
         const messagesSnapshot = await getDocs(messagesQuery);
         
         if (messagesSnapshot.empty) {
-            alert(`No messages found in ${channelName} chat.`);
+            alert(`No messages found in ${channelDisplayName}.`);
             return;
         }
         
@@ -2166,7 +2169,7 @@ async function handleClearCommand(channelName) {
         
         await Promise.all(deletePromises);
         
-        alert(`Successfully cleared ${messagesSnapshot.size} message${messagesSnapshot.size > 1 ? 's' : ''} from ${channelName} chat.`);
+        alert(`Successfully cleared ${messagesSnapshot.size} message${messagesSnapshot.size > 1 ? 's' : ''} from ${channelDisplayName}.`);
         console.log(`Admin ${userProfile.username} cleared ${messagesSnapshot.size} messages from ${channelName} channel`);
     } catch (error) {
         console.error('Error clearing channel:', error);
