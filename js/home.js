@@ -271,6 +271,11 @@ async function loadActivityFeed() {
                 const userData = userDoc.exists() ? userDoc.data() : null;
                 const username = userData?.username || 'Anonymous';
                 
+                // Calculate hot score for this post
+                const likes = postData.likesCount || 0;
+                const comments = postData.commentsCount || 0;
+                const hotScore = calculateHotScore(likes, comments, postData.createdAt);
+                
                 trendingPosts.push({
                     type: 'trending_post',
                     userId: postData.userId,
@@ -278,22 +283,19 @@ async function loadActivityFeed() {
                     postId: postDoc.id,
                     content: postData.content || '',
                     images: postData.images || [],
-                    likesCount: postData.likesCount || 0,
-                    commentsCount: postData.commentsCount || 0,
+                    likesCount: likes,
+                    commentsCount: comments,
                     timestamp: postData.createdAt,
                     sortTime: postTime,
+                    hotScore: hotScore,
                     userData: userData
                 });
             }
             
-            // Sort trending posts by likesCount (highest first), then by time (newest first), then take top 25
+            // Sort trending posts by hotScore (highest first), then take top 25
             trendingPosts.sort((a, b) => {
-                // First sort by likes (higher likes first)
-                if (b.likesCount !== a.likesCount) {
-                    return b.likesCount - a.likesCount;
-                }
-                // If likes are equal, sort by time (newer first)
-                return b.sortTime - a.sortTime;
+                // Sort by hot score (higher score first)
+                return b.hotScore - a.hotScore;
             });
             activities.push(...trendingPosts.slice(0, 25));
             console.log(`[loadActivityFeed] Loaded ${trendingPosts.length} trending posts, adding ${Math.min(trendingPosts.length, 25)} to feed`);
@@ -564,6 +566,38 @@ function getTimeAgo(timestamp) {
     const days = Math.floor(hours / 24);
     if (days === 1) return '1 day ago';
     return `${days} days ago`;
+}
+
+// Calculate Reddit-style "hot" score for trending posts
+// Formula: hot_score = (likes + comments * weight) / (age_in_hours + 2)^gravity
+function calculateHotScore(likes, comments, createdAt) {
+    // Get post age in hours
+    let postTime;
+    if (createdAt && typeof createdAt.toMillis === 'function') {
+        postTime = createdAt.toMillis();
+    } else if (createdAt && createdAt.seconds) {
+        postTime = createdAt.seconds * 1000;
+    } else {
+        // Invalid timestamp, return 0
+        return 0;
+    }
+    
+    const now = Date.now();
+    const ageInMs = Math.max(0, now - postTime); // Ensure non-negative
+    const ageInHours = ageInMs / (1000 * 60 * 60);
+    
+    // Algorithm parameters
+    const commentWeight = 1.5; // Comments count 1.5x more than likes
+    const gravity = 1.5; // Controls decay rate (higher = faster decay)
+    const timeOffset = 2; // Prevents division by zero for brand new posts
+    
+    // Calculate engagement score
+    const engagement = likes + (comments * commentWeight);
+    
+    // Calculate hot score with time decay
+    const hotScore = engagement / Math.pow(ageInHours + timeOffset, gravity);
+    
+    return hotScore;
 }
 
 // Load trending users
