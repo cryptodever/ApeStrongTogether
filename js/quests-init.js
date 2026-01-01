@@ -30,7 +30,7 @@ let userQuests = {}; // Map of questId -> userQuest data
 let availableQuests = [];
 
 // DOM Elements
-let dailyQuestsEl, weeklyQuestsEl, userLevelEl;
+let dailyQuestsEl, weeklyQuestsEl, achievementsQuestsEl, userLevelEl;
 let levelProgressBarEl, levelProgressFillEl, levelProgressTextEl;
 
 // Initialize auth gate for quests page
@@ -262,6 +262,7 @@ async function initializeQuests() {
     // Get DOM elements
     dailyQuestsEl = document.getElementById('dailyQuests');
     weeklyQuestsEl = document.getElementById('weeklyQuests');
+    achievementsQuestsEl = document.getElementById('achievementsQuests');
     userLevelEl = document.getElementById('userLevel');
     levelProgressBarEl = document.getElementById('levelProgressBar');
     levelProgressFillEl = document.getElementById('levelProgressFill');
@@ -292,6 +293,9 @@ async function initializeQuests() {
     
     // Sync followers quest progress
     await syncFollowersQuestProgress();
+    
+    // Sync achievement progress
+    await syncAchievementProgress();
     
     // Track quests page visit (after a small delay to ensure quests are loaded)
     setTimeout(async () => {
@@ -429,6 +433,95 @@ async function loadAvailableQuests() {
             category: 'social',
             isActive: true,
             resetPeriod: 'weekly'
+        },
+        // Achievements (Permanent)
+        {
+            id: 'achievement_level_10',
+            title: 'Level 10 Master',
+            description: 'Reach level 10',
+            type: 'achievement',
+            targetValue: 10,
+            rewardPoints: 50,
+            category: 'level',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_level_25',
+            title: 'Level 25 Champion',
+            description: 'Reach level 25',
+            type: 'achievement',
+            targetValue: 25,
+            rewardPoints: 150,
+            category: 'level',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_level_50',
+            title: 'Level 50 Legend',
+            description: 'Reach level 50',
+            type: 'achievement',
+            targetValue: 50,
+            rewardPoints: 500,
+            category: 'level',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_level_100',
+            title: 'Level 100 God',
+            description: 'Reach level 100',
+            type: 'achievement',
+            targetValue: 100,
+            rewardPoints: 2000,
+            category: 'level',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_complete_100_quests',
+            title: 'Quest Master',
+            description: 'Complete 100 quests total',
+            type: 'achievement',
+            targetValue: 100,
+            rewardPoints: 500,
+            category: 'quests',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_100_followers',
+            title: 'Century Club',
+            description: 'Get 100 followers',
+            type: 'achievement',
+            targetValue: 100,
+            rewardPoints: 500,
+            category: 'social',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_50_posts',
+            title: 'Content Creator',
+            description: 'Create 50 posts',
+            type: 'achievement',
+            targetValue: 50,
+            rewardPoints: 300,
+            category: 'posts',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_1000_chat_messages',
+            title: 'Chat Legend',
+            description: 'Send 1000 chat messages',
+            type: 'achievement',
+            targetValue: 1000,
+            rewardPoints: 400,
+            category: 'chat',
+            isActive: true,
+            resetPeriod: 'never'
         }
     ];
 }
@@ -533,6 +626,11 @@ async function checkAndResetQuests() {
 
 // Get next reset time based on period
 function getNextResetTime(period) {
+    // For achievements that never reset, return null
+    if (period === 'never') {
+        return null;
+    }
+    
     const now = new Date();
     const next = new Date();
 
@@ -555,10 +653,14 @@ function displayQuests() {
 
     const dailyQuests = availableQuests.filter(q => q.type === 'daily' && q.isActive);
     const weeklyQuests = availableQuests.filter(q => q.type === 'weekly' && q.isActive);
+    const achievementQuests = availableQuests.filter(q => q.type === 'achievement' && q.isActive);
 
     // Clear loading states
     dailyQuestsEl.innerHTML = '';
     weeklyQuestsEl.innerHTML = '';
+    if (achievementsQuestsEl) {
+        achievementsQuestsEl.innerHTML = '';
+    }
 
     // Display daily quests
     if (dailyQuests.length === 0) {
@@ -578,6 +680,18 @@ function displayQuests() {
             const questCard = createQuestCard(quest);
             weeklyQuestsEl.appendChild(questCard);
         });
+    }
+
+    // Display achievements
+    if (achievementsQuestsEl) {
+        if (achievementQuests.length === 0) {
+            achievementsQuestsEl.innerHTML = '<p class="quest-empty">No achievements available.</p>';
+        } else {
+            achievementQuests.forEach(quest => {
+                const questCard = createQuestCard(quest);
+                achievementsQuestsEl.appendChild(questCard);
+            });
+        }
     }
 }
 
@@ -734,7 +848,8 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
                 followedUsers = data.followedUsers || [];
                 
                 // Check if quest needs reset before updating (inside transaction)
-                if (resetAt) {
+                // Skip reset check for achievements (resetPeriod === 'never')
+                if (resetAt && quest.resetPeriod !== 'never') {
                     let resetAtMillis = 0;
                     if (resetAt.toMillis) {
                         resetAtMillis = resetAt.toMillis();
@@ -747,16 +862,24 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
                     // If reset time has passed, reset the quest first
                     if (resetAtMillis > 0 && Date.now() >= resetAtMillis) {
                         const nextReset = getNextResetTime(quest.resetPeriod);
-                        currentProgress = 0;
-                        completed = false;
-                        resetAt = Timestamp.fromDate(nextReset);
-                        // Clear followedUsers array on reset
-                        followedUsers = [];
+                        if (nextReset) {
+                            currentProgress = 0;
+                            completed = false;
+                            resetAt = Timestamp.fromDate(nextReset);
+                            // Clear followedUsers array on reset
+                            followedUsers = [];
+                        }
                     }
                 }
             } else {
                 // Create new user quest entry
-                resetAt = Timestamp.fromDate(getNextResetTime(quest.resetPeriod));
+                const nextReset = getNextResetTime(quest.resetPeriod);
+                if (nextReset) {
+                    resetAt = Timestamp.fromDate(nextReset);
+                } else {
+                    // For achievements (never reset), set resetAt to null
+                    resetAt = null;
+                }
             }
             
             // Special handling for daily_follow_3 quest to prevent duplicate follows
@@ -772,13 +895,22 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
             }
 
             // Don't update if already completed (after potential reset)
-            if (completed) {
+            // Exception: achievements can continue to track progress even after completion
+            if (completed && quest.resetPeriod !== 'never') {
                 // Return early but don't throw - just skip the update
                 return;
             }
 
             // Update progress
-            const newProgress = Math.min(currentProgress + increment, quest.targetValue);
+            // For achievements, allow progress to exceed targetValue for display purposes
+            let newProgress;
+            if (quest.resetPeriod === 'never') {
+                // Achievements: allow progress to exceed target
+                newProgress = currentProgress + increment;
+            } else {
+                // Regular quests: cap at targetValue
+                newProgress = Math.min(currentProgress + increment, quest.targetValue);
+            }
             const isNowCompleted = newProgress >= quest.targetValue && !completed;
             
             // Track if this transaction newly completed the quest
@@ -1201,6 +1333,149 @@ async function syncFollowersQuestProgress() {
         }
     } catch (error) {
         console.error('Error syncing followers quest:', error);
+    }
+}
+
+// Sync achievement progress based on current user stats
+async function syncAchievementProgress() {
+    if (!currentUser || !userProfile) return;
+    
+    try {
+        const points = userProfile.points || 0;
+        const levelProgress = getLevelProgress(points);
+        const currentLevel = levelProgress.level;
+        const totalQuestsCompleted = userProfile.totalQuestsCompleted || 0;
+        
+        // Sync level achievements
+        const levelAchievements = [
+            { id: 'achievement_level_10', target: 10 },
+            { id: 'achievement_level_25', target: 25 },
+            { id: 'achievement_level_50', target: 50 },
+            { id: 'achievement_level_100', target: 100 }
+        ];
+        
+        for (const achievement of levelAchievements) {
+            if (currentLevel >= achievement.target) {
+                const userQuestId = `${currentUser.uid}_${achievement.id}`;
+                const userQuestRef = doc(db, 'userQuests', userQuestId);
+                const userQuestDoc = await getDoc(userQuestRef);
+                
+                let currentProgress = 0;
+                if (userQuestDoc.exists()) {
+                    currentProgress = userQuestDoc.data().progress || 0;
+                }
+                
+                if (currentLevel > currentProgress) {
+                    await updateQuestProgress(achievement.id, currentLevel);
+                }
+            }
+        }
+        
+        // Sync quest completion achievement
+        if (totalQuestsCompleted > 0) {
+            const userQuestId = `${currentUser.uid}_achievement_complete_100_quests`;
+            const userQuestRef = doc(db, 'userQuests', userQuestId);
+            const userQuestDoc = await getDoc(userQuestRef);
+            
+            let currentProgress = 0;
+            if (userQuestDoc.exists()) {
+                currentProgress = userQuestDoc.data().progress || 0;
+            }
+            
+            if (totalQuestsCompleted > currentProgress) {
+                await updateQuestProgress('achievement_complete_100_quests', totalQuestsCompleted);
+            }
+        }
+        
+        // Sync followers achievement
+        try {
+            const followersRef = collection(db, 'followers', currentUser.uid, 'followers');
+            const followersSnapshot = await getDocs(followersRef);
+            const followerCount = followersSnapshot.size;
+            
+            if (followerCount > 0) {
+                const userQuestId = `${currentUser.uid}_achievement_100_followers`;
+                const userQuestRef = doc(db, 'userQuests', userQuestId);
+                const userQuestDoc = await getDoc(userQuestRef);
+                
+                let currentProgress = 0;
+                if (userQuestDoc.exists()) {
+                    currentProgress = userQuestDoc.data().progress || 0;
+                }
+                
+                if (followerCount > currentProgress) {
+                    await updateQuestProgress('achievement_100_followers', followerCount);
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing followers achievement:', error);
+        }
+        
+        // Sync posts achievement
+        try {
+            const postsQuery = query(
+                collection(db, 'posts'),
+                where('userId', '==', currentUser.uid),
+                where('deleted', '==', false)
+            );
+            const postsSnapshot = await getDocs(postsQuery);
+            const postCount = postsSnapshot.size;
+            
+            if (postCount > 0) {
+                const userQuestId = `${currentUser.uid}_achievement_50_posts`;
+                const userQuestRef = doc(db, 'userQuests', userQuestId);
+                const userQuestDoc = await getDoc(userQuestRef);
+                
+                let currentProgress = 0;
+                if (userQuestDoc.exists()) {
+                    currentProgress = userQuestDoc.data().progress || 0;
+                }
+                
+                if (postCount > currentProgress) {
+                    await updateQuestProgress('achievement_50_posts', postCount);
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing posts achievement:', error);
+        }
+        
+        // Sync chat messages achievement
+        try {
+            // Count messages across all channels
+            const channels = ['general', 'raid', 'trading', 'support'];
+            let totalMessages = 0;
+            
+            for (const channel of channels) {
+                const messagesQuery = query(
+                    collection(db, 'messages'),
+                    where('userId', '==', currentUser.uid),
+                    where('channel', '==', channel),
+                    where('deleted', '==', false)
+                );
+                const messagesSnapshot = await getDocs(messagesQuery);
+                totalMessages += messagesSnapshot.size;
+            }
+            
+            if (totalMessages > 0) {
+                const userQuestId = `${currentUser.uid}_achievement_1000_chat_messages`;
+                const userQuestRef = doc(db, 'userQuests', userQuestId);
+                const userQuestDoc = await getDoc(userQuestRef);
+                
+                let currentProgress = 0;
+                if (userQuestDoc.exists()) {
+                    currentProgress = userQuestDoc.data().progress || 0;
+                }
+                
+                if (totalMessages > currentProgress) {
+                    await updateQuestProgress('achievement_1000_chat_messages', totalMessages);
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing chat messages achievement:', error);
+        }
+        
+    } catch (error) {
+        console.error('Error syncing achievement progress:', error);
     }
 }
 

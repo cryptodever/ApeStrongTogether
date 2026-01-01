@@ -138,71 +138,8 @@ async function loadActivityFeed() {
     
     try {
         const activities = [];
-        const fiveMinutesAgo = Timestamp.fromDate(new Date(Date.now() - 5 * 60 * 1000));
         
-        // 1. Load recent quest completions
-        try {
-            // Try with composite query first (requires index)
-            let questsSnapshot;
-            try {
-                const questsQuery = query(
-                    collection(db, 'userQuests'),
-                    where('completed', '==', true),
-                    where('completedAt', '>=', fiveMinutesAgo),
-                    orderBy('completedAt', 'desc'),
-                    limit(20)
-                );
-                questsSnapshot = await getDocs(questsQuery);
-            } catch (indexError) {
-                // If index doesn't exist, fall back to simpler query
-                // Silently handle - index will be created when deployed
-                const questsQuery = query(
-                    collection(db, 'userQuests'),
-                    where('completed', '==', true),
-                    orderBy('completedAt', 'desc'),
-                    limit(50)
-                );
-                questsSnapshot = await getDocs(questsQuery);
-                // Filter by time in JavaScript
-            }
-            
-            for (const questDoc of questsSnapshot.docs) {
-                const questData = questDoc.data();
-                if (!questData.completedAt || !questData.userId) continue;
-                
-                // Filter by time if we used the fallback query
-                const completedTime = questData.completedAt.toMillis();
-                const fiveMinutesAgoTime = fiveMinutesAgo.toMillis();
-                if (completedTime < fiveMinutesAgoTime) continue;
-                
-                // Get user info
-                const userDoc = await getDoc(doc(db, 'users', questData.userId));
-                const userData = userDoc.exists() ? userDoc.data() : null;
-                const username = userData?.username || 'Anonymous';
-                
-                // Get quest info
-                const questInfo = await getQuestInfo(questData.questId);
-                
-                activities.push({
-                    type: 'quest_completion',
-                    userId: questData.userId,
-                    username: username,
-                    questTitle: questInfo.title,
-                    rewardPoints: questInfo.rewardPoints,
-                    timestamp: questData.completedAt,
-                    sortTime: completedTime
-                });
-            }
-        } catch (error) {
-            // Silently handle - errors are expected until indexes are deployed
-            // The fallback queries will handle the data loading
-        }
-        
-        // 2. Load recent follows (this is trickier - we need to query all following subcollections)
-        // For now, we'll skip follows as it requires querying many subcollections
-        // TODO: Consider creating an activity log collection for better performance
-        
-        // 2.5. Load trending posts (most likes in last 24 hours)
+        // Load trending posts (most likes in last 24 hours)
         try {
             const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
             const trendingPosts = [];
@@ -304,66 +241,8 @@ async function loadActivityFeed() {
             // Continue even if posts fail to load
         }
         
-        // 3. Load recent chat messages (highlights)
-        try {
-            // Try with composite query first (requires index)
-            let messagesSnapshot;
-            try {
-                const messagesQuery = query(
-                    collection(db, 'messages'),
-                    where('deleted', '==', false),
-                    where('timestamp', '>=', fiveMinutesAgo),
-                    orderBy('timestamp', 'desc'),
-                    limit(10)
-                );
-                messagesSnapshot = await getDocs(messagesQuery);
-            } catch (indexError) {
-                // If index doesn't exist, fall back to simpler query
-                // Silently handle - index will be created when deployed
-                const messagesQuery = query(
-                    collection(db, 'messages'),
-                    where('deleted', '==', false),
-                    orderBy('timestamp', 'desc'),
-                    limit(50)
-                );
-                messagesSnapshot = await getDocs(messagesQuery);
-                // Filter by time in JavaScript
-            }
-            
-            for (const messageDoc of messagesSnapshot.docs) {
-                const messageData = messageDoc.data();
-                if (!messageData.userId || !messageData.text || !messageData.timestamp) continue;
-                
-                // Filter by time if we used the fallback query
-                const messageTime = messageData.timestamp.toMillis();
-                const fiveMinutesAgoTime = fiveMinutesAgo.toMillis();
-                if (messageTime < fiveMinutesAgoTime) continue;
-                
-                // Get user info
-                const userDoc = await getDoc(doc(db, 'users', messageData.userId));
-                const userData = userDoc.exists() ? userDoc.data() : null;
-                const username = userData?.username || 'Anonymous';
-                
-                activities.push({
-                    type: 'chat_message',
-                    userId: messageData.userId,
-                    username: username,
-                    channel: messageData.channel || 'general',
-                    text: messageData.text.substring(0, 100),
-                    timestamp: messageData.timestamp,
-                    sortTime: messageTime
-                });
-            }
-        } catch (error) {
-            // Silently handle - errors are expected until indexes are deployed
-            // The fallback queries will handle the data loading
-        }
-        
-        // Sort all activities by timestamp
-        activities.sort((a, b) => b.sortTime - a.sortTime);
-        
-        // Limit to ACTIVITY_LIMIT
-        const displayActivities = activities.slice(0, ACTIVITY_LIMIT);
+        // Posts are already sorted by hotScore, so no need to sort again
+        const displayActivities = activities;
         
         // Render activities
         if (displayActivities.length === 0) {
@@ -469,35 +348,7 @@ function createActivityItem(activity) {
     const timeAgo = getTimeAgo(activity.timestamp);
     let content = '';
     
-    if (activity.type === 'quest_completion') {
-        content = `
-            <div class="activity-item activity-quest" data-user-id="${activity.userId}">
-                <div class="activity-icon">🎯</div>
-                <div class="activity-content">
-                    <div class="activity-text">
-                        <span class="activity-username">@${escapeHtml(activity.username)}</span>
-                        completed <strong>${escapeHtml(activity.questTitle)}</strong>
-                        <span class="activity-reward">+${activity.rewardPoints} XP</span>
-                    </div>
-                    <div class="activity-time">${timeAgo}</div>
-                </div>
-            </div>
-        `;
-    } else if (activity.type === 'chat_message') {
-        const channelName = activity.channel.charAt(0).toUpperCase() + activity.channel.slice(1);
-        content = `
-            <div class="activity-item activity-chat" data-user-id="${activity.userId}">
-                <div class="activity-icon">💬</div>
-                <div class="activity-content">
-                    <div class="activity-text">
-                        <span class="activity-username">@${escapeHtml(activity.username)}</span>
-                        in <strong>${channelName}</strong>: "${escapeHtml(activity.text)}${activity.text.length >= 100 ? '...' : ''}"
-                    </div>
-                    <div class="activity-time">${timeAgo}</div>
-                </div>
-            </div>
-        `;
-    } else if (activity.type === 'trending_post') {
+    if (activity.type === 'trending_post') {
         const userLevel = activity.userData?.level || 1;
         const bannerImage = activity.userData?.bannerImage || '/pfp_apes/bg1.png';
         const fullContent = activity.content ? escapeHtml(activity.content).replace(/\n/g, '<br>') : '';
