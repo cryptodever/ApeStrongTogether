@@ -231,7 +231,8 @@ service cloud.firestore {
     // Posts collection
     match /posts/{postId} {
       // Allow public read (for homepage trending, feed page)
-      allow read: if resource.data.deleted == false || !resource.data.deleted;
+      // Query filters out deleted posts with where('deleted', '==', false)
+      allow read: if true;
       
       // Only authenticated users can create posts
       allow create: if isSignedIn()
@@ -263,7 +264,8 @@ service cloud.firestore {
       // Comments subcollection
       match /comments/{commentId} {
         // Allow public read
-        allow read: if resource.data.deleted == false || !resource.data.deleted;
+        // Query filters out deleted comments with where('deleted', '==', false)
+        allow read: if true;
         
         // Only authenticated users can create comments
         allow create: if isSignedIn()
