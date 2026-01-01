@@ -15,6 +15,10 @@ import {
     getDocs,
     doc,
     getDoc,
+    addDoc,
+    updateDoc,
+    serverTimestamp,
+    increment,
     Timestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
@@ -275,6 +279,7 @@ async function loadActivityFeed() {
                     content: postData.content || '',
                     images: postData.images || [],
                     likesCount: postData.likesCount || 0,
+                    commentsCount: postData.commentsCount || 0,
                     timestamp: postData.createdAt,
                     sortTime: postTime,
                     userData: userData
@@ -366,7 +371,15 @@ async function loadActivityFeed() {
             
             // Add click handlers for activity items
             activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    // Don't navigate if clicking on comment button or comments section
+                    if (e.target.closest('.activity-post-comment-btn') || 
+                        e.target.closest('.activity-post-comments-section') ||
+                        e.target.closest('.activity-post-comment-input-wrapper') ||
+                        e.target.closest('.activity-post-comment-submit')) {
+                        return;
+                    }
+                    
                     const userId = item.dataset.userId;
                     const postId = item.dataset.postId;
                     
@@ -384,6 +397,40 @@ async function loadActivityFeed() {
                         // Not logged in, show login prompt
                         const loginBtn = document.getElementById('headerLoginBtn');
                         if (loginBtn) loginBtn.click();
+                    }
+                });
+            });
+            
+            // Add comment button handlers for trending posts
+            activityFeedEl.querySelectorAll('.activity-post-comment-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        toggleActivityComments(postId);
+                    }
+                });
+            });
+            
+            // Add comment submit handlers
+            activityFeedEl.querySelectorAll('.activity-post-comment-submit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    const input = document.getElementById(`activityCommentInput_${postId}`);
+                    if (postId && input) {
+                        handleActivityAddComment(postId, input);
+                    }
+                });
+            });
+            
+            // Add Enter key handler for comment inputs
+            activityFeedEl.querySelectorAll('.activity-post-comment-input').forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        const postId = input.id.replace('activityCommentInput_', '');
+                        handleActivityAddComment(postId, input);
                     }
                 });
             });
@@ -477,6 +524,18 @@ function createActivityItem(activity) {
                 </div>
                 <div class="activity-post-footer">
                     <span class="activity-post-likes">❤️ ${activity.likesCount || 0}</span>
+                    <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
+                        💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
+                    </button>
+                </div>
+                <div class="activity-post-comments-section hide" id="activityCommentsSection_${activity.postId}">
+                    <div class="activity-post-comments-list" id="activityCommentsList_${activity.postId}"></div>
+                    ${currentUser ? `
+                        <div class="activity-post-comment-input-wrapper">
+                            <input type="text" class="activity-post-comment-input" id="activityCommentInput_${activity.postId}" placeholder="Write a comment..." maxlength="500" />
+                            <button class="activity-post-comment-submit" data-post-id="${activity.postId}">Post</button>
+                        </div>
+                    ` : '<div class="activity-post-comment-login">Please log in to comment</div>'}
                 </div>
             </div>
         `;
@@ -910,4 +969,265 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Toggle comments section for activity post
+function toggleActivityComments(postId) {
+    const commentsSection = document.getElementById(`activityCommentsSection_${postId}`);
+    if (!commentsSection) return;
+    
+    const isVisible = !commentsSection.classList.contains('hide');
+    if (isVisible) {
+        commentsSection.classList.add('hide');
+    } else {
+        commentsSection.classList.remove('hide');
+        loadActivityComments(postId);
+    }
+}
+
+// Load comments for an activity post
+async function loadActivityComments(postId) {
+    const commentsListEl = document.getElementById(`activityCommentsList_${postId}`);
+    if (!commentsListEl) return;
+    
+    try {
+        let commentsSnapshot;
+        
+        try {
+            const commentsQuery = query(
+                collection(db, 'posts', postId, 'comments'),
+                where('deleted', '==', false),
+                orderBy('createdAt', 'asc')
+            );
+            
+            commentsSnapshot = await getDocs(commentsQuery);
+        } catch (indexError) {
+            console.warn('Index not found for comments, using fallback query:', indexError);
+            try {
+                const commentsQuery = query(
+                    collection(db, 'posts', postId, 'comments'),
+                    where('deleted', '==', false)
+                );
+                
+                commentsSnapshot = await getDocs(commentsQuery);
+                
+                const commentsArray = Array.from(commentsSnapshot.docs);
+                commentsArray.sort((a, b) => {
+                    const aData = a.data();
+                    const bData = b.data();
+                    const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                    const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                    return aTime - bTime;
+                });
+                
+                commentsSnapshot = {
+                    docs: commentsArray,
+                    empty: commentsArray.length === 0,
+                    size: commentsArray.length,
+                    forEach: (callback) => commentsArray.forEach(callback),
+                    query: commentsSnapshot.query
+                };
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                const allCommentsQuery = query(
+                    collection(db, 'posts', postId, 'comments')
+                );
+                
+                commentsSnapshot = await getDocs(allCommentsQuery);
+                
+                const commentsArray = Array.from(commentsSnapshot.docs)
+                    .filter(doc => {
+                        const data = doc.data();
+                        return data.deleted !== true;
+                    })
+                    .sort((a, b) => {
+                        const aData = a.data();
+                        const bData = b.data();
+                        const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                        const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                        return aTime - bTime;
+                    });
+                
+                commentsSnapshot = {
+                    docs: commentsArray,
+                    empty: commentsArray.length === 0,
+                    size: commentsArray.length,
+                    forEach: (callback) => commentsArray.forEach(callback),
+                    query: commentsSnapshot.query
+                };
+            }
+        }
+        
+        if (commentsSnapshot.empty) {
+            commentsListEl.innerHTML = '<div class="post-comments-empty">No comments yet</div>';
+            return;
+        }
+        
+        const comments = await Promise.all(commentsSnapshot.docs.map(async (commentDoc) => {
+            const commentData = commentDoc.data();
+            try {
+                const userDoc = await getDoc(doc(db, 'users', commentData.userId));
+                const userData = userDoc.exists() ? userDoc.data() : null;
+                return {
+                    id: commentDoc.id,
+                    ...commentData,
+                    userData: userData
+                };
+            } catch (error) {
+                return {
+                    id: commentDoc.id,
+                    ...commentData,
+                    userData: null
+                };
+            }
+        }));
+        
+        commentsListEl.innerHTML = comments.map(comment => renderActivityComment(comment, postId)).join('');
+        
+        // Set up delete listeners for comments
+        comments.forEach(comment => {
+            if (currentUser && comment.userId === currentUser.uid) {
+                const deleteBtn = document.querySelector(`.comment-delete-btn[data-comment-id="${comment.id}"]`);
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleActivityDeleteComment(postId, comment.id);
+                    });
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        commentsListEl.innerHTML = '<div class="post-comments-error">Error loading comments</div>';
+    }
+}
+
+// Render comment for activity post
+function renderActivityComment(comment, postId) {
+    const createdAt = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(comment.createdAt?.seconds * 1000 || Date.now());
+    const timeAgo = getTimeAgo(comment.createdAt);
+    const bannerImage = comment.userData?.bannerImage || '/pfp_apes/bg1.png';
+    const canDelete = currentUser && comment.userId === currentUser.uid;
+    
+    return `
+        <div class="post-comment" data-comment-id="${comment.id}">
+            <img src="${bannerImage}" alt="${comment.username}" class="comment-author-avatar" />
+            <div class="comment-content">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(comment.username)}</span>
+                    <span class="comment-time">${timeAgo}</span>
+                    ${canDelete ? `<button class="comment-delete-btn" data-comment-id="${comment.id}" title="Delete comment">×</button>` : ''}
+                </div>
+                <div class="comment-text">${escapeHtml(comment.content).replace(/\n/g, '<br>')}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Handle add comment for activity post
+async function handleActivityAddComment(postId, commentInputEl) {
+    if (!currentUser) {
+        alert('Please log in to comment');
+        return;
+    }
+    
+    const content = commentInputEl.value.trim();
+    if (!content) {
+        return;
+    }
+    
+    if (content.length > 500) {
+        alert('Comment must be 500 characters or less');
+        return;
+    }
+    
+    try {
+        // Get user profile
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (!userDoc.exists()) {
+            alert('User profile not found');
+            return;
+        }
+        const userData = userDoc.data();
+        
+        // Add comment
+        await addDoc(collection(db, 'posts', postId, 'comments'), {
+            userId: currentUser.uid,
+            username: userData.username || 'Anonymous',
+            content: content,
+            createdAt: serverTimestamp(),
+            deleted: false
+        });
+        
+        // Update post comments count
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            commentsCount: increment(1),
+            updatedAt: serverTimestamp()
+        });
+        
+        // Clear input
+        commentInputEl.value = '';
+        
+        // Reload comments
+        loadActivityComments(postId);
+        
+        // Update comment count in UI
+        const commentBtn = document.querySelector(`.activity-post-comment-btn[data-post-id="${postId}"]`);
+        if (commentBtn) {
+            const countEl = commentBtn.querySelector('.activity-post-comment-count');
+            if (countEl) {
+                const currentCount = parseInt(countEl.textContent) || 0;
+                countEl.textContent = currentCount + 1;
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        alert('Failed to add comment. Please try again.');
+    }
+}
+
+// Handle delete comment for activity post
+async function handleActivityDeleteComment(postId, commentId) {
+    if (!currentUser) return;
+    
+    if (!confirm('Are you sure you want to delete this comment?')) {
+        return;
+    }
+    
+    try {
+        const commentRef = doc(db, 'posts', postId, 'comments', commentId);
+        
+        // Soft delete
+        await updateDoc(commentRef, {
+            deleted: true,
+            updatedAt: serverTimestamp()
+        });
+        
+        // Update post comments count
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            commentsCount: increment(-1),
+            updatedAt: serverTimestamp()
+        });
+        
+        // Reload comments
+        loadActivityComments(postId);
+        
+        // Update comment count in UI
+        const commentBtn = document.querySelector(`.activity-post-comment-btn[data-post-id="${postId}"]`);
+        if (commentBtn) {
+            const countEl = commentBtn.querySelector('.activity-post-comment-count');
+            if (countEl) {
+                const currentCount = parseInt(countEl.textContent) || 0;
+                countEl.textContent = Math.max(0, currentCount - 1);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        alert('Failed to delete comment. Please try again.');
+    }
 }
