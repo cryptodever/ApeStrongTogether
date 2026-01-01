@@ -228,6 +228,60 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Posts collection
+    match /posts/{postId} {
+      // Allow public read (for homepage trending, feed page)
+      allow read: if resource.data.deleted == false || !resource.data.deleted;
+      
+      // Only authenticated users can create posts
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.username is string
+        && request.resource.data.content is string
+        && request.resource.data.images is list
+        && request.resource.data.links is list
+        && request.resource.data.likes is map
+        && request.resource.data.likesCount == 0
+        && request.resource.data.commentsCount == 0
+        && request.resource.data.deleted == false;
+      
+      // Post authors can update their own posts (for deleting, editing)
+      // Authenticated users can update likes map and likesCount
+      allow update: if isSignedIn() && (
+        // Post author updating their own post
+        (resource.data.userId == request.auth.uid
+          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
+        ||
+        // Any authenticated user updating likes (for liking/unliking)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likesCount', 'updatedAt'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt']))
+      );
+      
+      allow delete: if false; // Use soft delete (update deleted flag) instead
+      
+      // Comments subcollection
+      match /comments/{commentId} {
+        // Allow public read
+        allow read: if resource.data.deleted == false || !resource.data.deleted;
+        
+        // Only authenticated users can create comments
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.username is string
+          && request.resource.data.content is string
+          && request.resource.data.deleted == false;
+        
+        // Comment authors can update their own comments (for deleting)
+        allow update: if isSignedIn()
+          && resource.data.userId == request.auth.uid
+          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username);
+        
+        allow delete: if false; // Use soft delete (update deleted flag) instead
+      }
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

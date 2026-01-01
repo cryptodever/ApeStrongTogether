@@ -336,6 +336,7 @@ async function updateHeaderUI(user) {
     const authLoggedOut = document.getElementById('authLoggedOut');
     const authLoggedIn = document.getElementById('authLoggedIn');
     const navDivider = document.getElementById('navDivider');
+    const navFeedLink = document.getElementById('navFeedLink');
     const navProfileLink = document.getElementById('navProfileLink');
     const navChatLink = document.getElementById('navChatLink');
     const navQuestsLink = document.getElementById('navQuestsLink');
@@ -356,6 +357,9 @@ async function updateHeaderUI(user) {
         // Remove logged-out styling from divider and account links when logged in
         if (navDivider) {
             navDivider.classList.remove('logged-out');
+        }
+        if (navFeedLink) {
+            navFeedLink.classList.remove('logged-out');
         }
         if (navProfileLink) {
             navProfileLink.classList.remove('logged-out');
@@ -387,6 +391,9 @@ async function updateHeaderUI(user) {
         // Add logged-out styling to divider and account links when logged out
         if (navDivider) {
             navDivider.classList.add('logged-out');
+        }
+        if (navFeedLink) {
+            navFeedLink.classList.add('logged-out');
         }
         if (navProfileLink) {
             navProfileLink.classList.add('logged-out');
