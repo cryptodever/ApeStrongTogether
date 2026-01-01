@@ -281,7 +281,7 @@ async function loadActivityFeed() {
                 });
             }
             
-            // Sort trending posts by likesCount (highest first), then by time (newest first), then take top 10
+            // Sort trending posts by likesCount (highest first), then by time (newest first), then take top 25
             trendingPosts.sort((a, b) => {
                 // First sort by likes (higher likes first)
                 if (b.likesCount !== a.likesCount) {
@@ -290,8 +290,8 @@ async function loadActivityFeed() {
                 // If likes are equal, sort by time (newer first)
                 return b.sortTime - a.sortTime;
             });
-            activities.push(...trendingPosts.slice(0, 10));
-            console.log(`[loadActivityFeed] Loaded ${trendingPosts.length} trending posts`);
+            activities.push(...trendingPosts.slice(0, 25));
+            console.log(`[loadActivityFeed] Loaded ${trendingPosts.length} trending posts, adding ${Math.min(trendingPosts.length, 25)} to feed`);
         } catch (error) {
             console.error('[loadActivityFeed] Error loading trending posts:', error);
             // Continue even if posts fail to load
