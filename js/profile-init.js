@@ -14,6 +14,9 @@ import {
     writeBatch,
     collection,
     query,
+    where,
+    orderBy,
+    limit,
     serverTimestamp,
     onSnapshot,
     Timestamp
@@ -47,6 +50,7 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         await loadProfile();
         setupEventListeners();
+        loadProfilePosts();
     } else {
         // Clean up listener when user logs out
         if (profileListener) {
@@ -60,6 +64,10 @@ onAuthStateChanged(auth, async (user) => {
         if (followingListener) {
             followingListener();
             followingListener = null;
+        }
+        if (postsListener) {
+            postsListener();
+            postsListener = null;
         }
         currentUser = null;
         listenersAttached = false; // Reset flag for next login
@@ -1827,6 +1835,435 @@ function renderFollowingList(following, followingStatus, searchTerm = '', viewin
             
             listEl.appendChild(followingItem);
         });
+}
+
+// Load profile posts
+async function loadProfilePosts() {
+    if (!currentUser) return;
+    
+    const postsFeedEl = document.getElementById('profilePostsFeed');
+    if (!postsFeedEl) return;
+    
+    // Clear existing listener
+    if (postsListener) {
+        postsListener();
+        postsListener = null;
+    }
+    
+    // Set loading state
+    postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
+    
+    try {
+        // Query posts for current user
+        let postsQuery;
+        try {
+            postsQuery = query(
+                collection(db, 'posts'),
+                where('userId', '==', currentUser.uid),
+                where('deleted', '==', false),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            // Set up real-time listener
+            postsListener = onSnapshot(
+                postsQuery,
+                async (snapshot) => {
+                    await renderProfilePosts(snapshot.docs);
+                },
+                (error) => {
+                    console.error('Error loading posts:', error);
+                    if (postsFeedEl) {
+                        postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+                    }
+                }
+            );
+        } catch (indexError) {
+            console.warn('Index not found for posts, using fallback query:', indexError);
+            // Fallback: simpler query without orderBy
+            try {
+                postsQuery = query(
+                    collection(db, 'posts'),
+                    where('userId', '==', currentUser.uid),
+                    where('deleted', '==', false),
+                    limit(100)
+                );
+                
+                const snapshot = await getDocs(postsQuery);
+                await renderProfilePosts(snapshot.docs);
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                if (postsFeedEl) {
+                    postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error setting up posts listener:', error);
+        if (postsFeedEl) {
+            postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+        }
+    }
+}
+
+// Render profile posts
+async function renderProfilePosts(postDocs) {
+    const postsFeedEl = document.getElementById('profilePostsFeed');
+    if (!postsFeedEl) return;
+    
+    if (postDocs.length === 0) {
+        postsFeedEl.innerHTML = '<div class="posts-empty">No posts yet. Share your first post on the <a href="/feed/">Feed</a>!</div>';
+        return;
+    }
+    
+    // Get user data for posts
+    const posts = await Promise.all(postDocs.map(async (postDoc) => {
+        const postData = postDoc.data();
+        try {
+            const userDoc = await getDoc(doc(db, 'users', postData.userId));
+            const userData = userDoc.exists() ? userDoc.data() : null;
+            return {
+                id: postDoc.id,
+                ...postData,
+                userData: userData
+            };
+        } catch (error) {
+            return {
+                id: postDoc.id,
+                ...postData,
+                userData: null
+            };
+        }
+    }));
+    
+    // Render posts
+    postsFeedEl.innerHTML = posts.map(post => renderProfilePost(post)).join('');
+    
+    // Set up event listeners for posts
+    posts.forEach(post => {
+        setupProfilePostEventListeners(post.id, post);
+    });
+    
+    // Set up image error handling
+    posts.forEach(post => {
+        setupPostImageErrors(post.id);
+    });
+}
+
+// Render single profile post
+function renderProfilePost(post) {
+    const createdAt = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt?.seconds * 1000 || Date.now());
+    const timeAgo = getTimeAgo(createdAt);
+    const userLevel = post.userData?.level || 1;
+    const bannerImage = post.userData?.bannerImage || '/pfp_apes/bg1.png';
+    const isLiked = currentUser && post.likes && post.likes[currentUser.uid] === true;
+    const canDelete = currentUser && post.userId === currentUser.uid;
+    
+    return `
+        <div class="post-card" data-post-id="${post.id}">
+            <div class="post-header">
+                <img src="${bannerImage}" alt="${post.username}" class="post-author-avatar" />
+                <div class="post-author-info">
+                    <div class="post-author-name">${escapeHtml(post.username)}</div>
+                    <div class="post-author-meta">
+                        <span class="post-author-level">LVL ${userLevel}</span>
+                        <span class="post-time">${timeAgo}</span>
+                    </div>
+                </div>
+                ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" title="Delete post">×</button>` : ''}
+            </div>
+            
+            <div class="post-content">
+                ${post.content ? `<p class="post-text">${escapeHtml(post.content).replace(/\n/g, '<br>')}</p>` : ''}
+                
+                ${post.images && post.images.length > 0 ? `
+                    <div class="post-images">
+                        ${post.images.map(img => `
+                            <img src="${escapeHtml(img)}" alt="Post image" class="post-image" data-image-src="${escapeHtml(img)}" />
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            
+            <div class="post-actions">
+                <button class="post-action-btn like-btn ${isLiked ? 'liked' : ''}" data-post-id="${post.id}" data-liked="${isLiked}">
+                    <span class="post-action-icon">${isLiked ? '❤️' : '🤍'}</span>
+                    <span class="post-action-count" data-post-id="${post.id}" data-type="likes">${post.likesCount || 0}</span>
+                </button>
+                <button class="post-action-btn comment-btn" data-post-id="${post.id}">
+                    <span class="post-action-icon">💬</span>
+                    <span class="post-action-count">${post.commentsCount || 0}</span>
+                </button>
+            </div>
+            
+            <div class="post-comments-section hide" id="commentsSection_${post.id}">
+                <div class="post-comments-list" id="commentsList_${post.id}"></div>
+                ${currentUser ? `
+                    <div class="post-comment-input-wrapper">
+                        <input type="text" class="post-comment-input" id="commentInput_${post.id}" placeholder="Write a comment..." maxlength="500" />
+                        <button class="post-comment-submit" data-post-id="${post.id}">Post</button>
+                    </div>
+                ` : '<div class="post-comment-login">Please log in to comment</div>'}
+            </div>
+        </div>
+    `;
+}
+
+// Set up event listeners for a profile post
+function setupProfilePostEventListeners(postId, post) {
+    // Like button - import from feed.js or implement here
+    const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
+    if (likeBtn) {
+        likeBtn.addEventListener('click', () => handleProfilePostLike(postId));
+    }
+    
+    // Comment button
+    const commentBtn = document.querySelector(`.comment-btn[data-post-id="${postId}"]`);
+    const commentsSection = document.getElementById(`commentsSection_${postId}`);
+    if (commentBtn && commentsSection) {
+        commentBtn.addEventListener('click', () => {
+            const isVisible = !commentsSection.classList.contains('hide');
+            if (isVisible) {
+                commentsSection.classList.add('hide');
+            } else {
+                commentsSection.classList.remove('hide');
+                loadProfilePostComments(postId);
+            }
+        });
+    }
+    
+    // Comment submit
+    const commentSubmit = document.querySelector(`.post-comment-submit[data-post-id="${postId}"]`);
+    const commentInput = document.getElementById(`commentInput_${postId}`);
+    if (commentSubmit && commentInput) {
+        commentSubmit.addEventListener('click', () => handleProfileAddComment(postId, commentInput));
+        commentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleProfileAddComment(postId, commentInput);
+            }
+        });
+    }
+    
+    // Delete button
+    const deleteBtn = document.querySelector(`.post-delete-btn[data-post-id="${postId}"]`);
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => handleProfileDeletePost(postId));
+    }
+}
+
+// Helper functions for profile posts (simplified versions)
+async function handleProfilePostLike(postId) {
+    if (!currentUser) {
+        alert('Please log in to like posts');
+        return;
+    }
+    
+    try {
+        const { updateDoc, increment } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (!postDoc.exists()) {
+            console.error('Post not found');
+            return;
+        }
+        
+        const postData = postDoc.data();
+        const likes = postData.likes || {};
+        const isLiked = likes[currentUser.uid] === true;
+        
+        const newLikes = { ...likes };
+        if (isLiked) {
+            delete newLikes[currentUser.uid];
+        } else {
+            newLikes[currentUser.uid] = true;
+        }
+        
+        await updateDoc(postRef, {
+            likes: newLikes,
+            likesCount: isLiked ? increment(-1) : increment(1),
+            updatedAt: serverTimestamp()
+        });
+        
+    } catch (error) {
+        console.error('Error toggling like:', error);
+        alert('Failed to like post. Please try again.');
+    }
+}
+
+async function loadProfilePostComments(postId) {
+    const commentsListEl = document.getElementById(`commentsList_${postId}`);
+    if (!commentsListEl) return;
+    
+    try {
+        const commentsQuery = query(
+            collection(db, 'posts', postId, 'comments'),
+            where('deleted', '==', false),
+            orderBy('createdAt', 'asc')
+        );
+        
+        const commentsSnapshot = await getDocs(commentsQuery);
+        
+        if (commentsSnapshot.empty) {
+            commentsListEl.innerHTML = '<div class="post-comments-empty">No comments yet</div>';
+            return;
+        }
+        
+        const comments = await Promise.all(commentsSnapshot.docs.map(async (commentDoc) => {
+            const commentData = commentDoc.data();
+            try {
+                const userDoc = await getDoc(doc(db, 'users', commentData.userId));
+                const userData = userDoc.exists() ? userDoc.data() : null;
+                return {
+                    id: commentDoc.id,
+                    ...commentData,
+                    userData: userData
+                };
+            } catch (error) {
+                return {
+                    id: commentDoc.id,
+                    ...commentData,
+                    userData: null
+                };
+            }
+        }));
+        
+        commentsListEl.innerHTML = comments.map(comment => renderProfileComment(comment, postId)).join('');
+        
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        commentsListEl.innerHTML = '<div class="post-comments-error">Error loading comments</div>';
+    }
+}
+
+function renderProfileComment(comment, postId) {
+    const createdAt = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(comment.createdAt?.seconds * 1000 || Date.now());
+    const timeAgo = getTimeAgo(createdAt);
+    const bannerImage = comment.userData?.bannerImage || '/pfp_apes/bg1.png';
+    const canDelete = currentUser && comment.userId === currentUser.uid;
+    
+    return `
+        <div class="post-comment" data-comment-id="${comment.id}">
+            <img src="${bannerImage}" alt="${comment.username}" class="comment-author-avatar" />
+            <div class="comment-content">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(comment.username)}</span>
+                    <span class="comment-time">${timeAgo}</span>
+                    ${canDelete ? `<button class="comment-delete-btn" data-comment-id="${comment.id}" title="Delete comment">×</button>` : ''}
+                </div>
+                <div class="comment-text">${escapeHtml(comment.content).replace(/\n/g, '<br>')}</div>
+            </div>
+        </div>
+    `;
+}
+
+async function handleProfileAddComment(postId, commentInputEl) {
+    if (!currentUser) {
+        alert('Please log in to comment');
+        return;
+    }
+    
+    const content = commentInputEl.value.trim();
+    if (!content) {
+        return;
+    }
+    
+    if (content.length > 500) {
+        alert('Comment must be 500 characters or less');
+        return;
+    }
+    
+    try {
+        const { addDoc, updateDoc, increment } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (!userDoc.exists()) {
+            alert('User profile not found');
+            return;
+        }
+        const userData = userDoc.data();
+        
+        await addDoc(collection(db, 'posts', postId, 'comments'), {
+            userId: currentUser.uid,
+            username: userData.username || 'Anonymous',
+            content: content,
+            createdAt: serverTimestamp(),
+            deleted: false
+        });
+        
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            commentsCount: increment(1),
+            updatedAt: serverTimestamp()
+        });
+        
+        commentInputEl.value = '';
+        loadProfilePostComments(postId);
+        
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        alert('Failed to add comment. Please try again.');
+    }
+}
+
+async function handleProfileDeletePost(postId) {
+    if (!currentUser) return;
+    
+    if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const { updateDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            deleted: true,
+            updatedAt: serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Failed to delete post. Please try again.');
+    }
+}
+
+function setupPostImageErrors(postId) {
+    const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+    if (!postCard) return;
+    
+    const images = postCard.querySelectorAll('.post-image');
+    images.forEach(img => {
+        img.addEventListener('error', () => {
+            img.classList.add('post-image-error');
+        });
+    });
+}
+
+// Helper function to get time ago
+function getTimeAgo(timestamp) {
+    if (!timestamp || !timestamp.toMillis) return 'Just now';
+    
+    const now = Date.now();
+    const time = timestamp.toMillis();
+    const diff = now - time;
+    
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Just now';
+    if (minutes === 1) return '1 minute ago';
+    if (minutes < 60) return `${minutes} minutes ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours === 1) return '1 hour ago';
+    if (hours < 24) return `${hours} hours ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Export functions for use in other modules (e.g., chat popup)

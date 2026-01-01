@@ -555,6 +555,7 @@ async function loadComments(postId) {
     const commentsListEl = document.getElementById(`commentsList_${postId}`);
     if (!commentsListEl) return;
     
+    try {
         let commentsSnapshot;
         
         try {

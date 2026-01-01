@@ -826,13 +826,13 @@ async function loadUserStats() {
         
         // Update user stats section
         const levelStatEl = document.getElementById('userLevelStat');
-        const xpStatEl = document.getElementById('userXPStat');
         const followersStatEl = document.getElementById('userFollowersStat');
+        const followingStatEl = document.getElementById('userFollowingStat');
+        const postsStatEl = document.getElementById('userPostsStat');
         const levelProgressFillEl = document.getElementById('userLevelProgressFill');
         const levelProgressTextEl = document.getElementById('userLevelProgressText');
         
         if (levelStatEl) levelStatEl.textContent = levelProgress.level;
-        if (xpStatEl) xpStatEl.textContent = points;
         
         // Get followers count
         try {
@@ -843,24 +843,26 @@ async function loadUserStats() {
             if (followersStatEl) followersStatEl.textContent = '0';
         }
         
-        // Get quests completed today
+        // Get following count
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayTimestamp = Timestamp.fromDate(today);
-            
-            const questsQuery = query(
-                collection(db, 'userQuests'),
-                where('userId', '==', currentUser.uid),
-                where('completed', '==', true),
-                where('completedAt', '>=', todayTimestamp)
-            );
-            const questsSnapshot = await getDocs(questsQuery);
-            const questsTodayEl = document.getElementById('userQuestsTodayStat');
-            if (questsTodayEl) questsTodayEl.textContent = questsSnapshot.size;
+            const followingRef = collection(db, 'following', currentUser.uid, 'following');
+            const followingSnapshot = await getDocs(followingRef);
+            if (followingStatEl) followingStatEl.textContent = followingSnapshot.size;
         } catch (error) {
-            const questsTodayEl = document.getElementById('userQuestsTodayStat');
-            if (questsTodayEl) questsTodayEl.textContent = '0';
+            if (followingStatEl) followingStatEl.textContent = '0';
+        }
+        
+        // Get posts count
+        try {
+            const postsQuery = query(
+                collection(db, 'posts'),
+                where('userId', '==', currentUser.uid),
+                where('deleted', '==', false)
+            );
+            const postsSnapshot = await getDocs(postsQuery);
+            if (postsStatEl) postsStatEl.textContent = postsSnapshot.size;
+        } catch (error) {
+            if (postsStatEl) postsStatEl.textContent = '0';
         }
         
         // Update level progress bar
