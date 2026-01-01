@@ -12191,6 +12191,97 @@ body.leaderboard-body > * {
     font-weight: 500;
 }
 
+.activity-post-comment-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.activity-post-comment-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.activity-post-comment-count {
+    font-size: 0.875rem;
+}
+
+.activity-post-comments-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.activity-post-comments-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.activity-post-comment-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.activity-post-comment-input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.activity-post-comment-input:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.activity-post-comment-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.activity-post-comment-submit {
+    padding: 0.5rem 1rem;
+    background: #4ade80;
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.activity-post-comment-submit:hover {
+    background: #22c55e;
+    transform: translateY(-1px);
+}
+
+.activity-post-comment-submit:active {
+    transform: translateY(0);
+}
+
+.activity-post-comment-login {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    padding: 0.5rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .feed-page {
