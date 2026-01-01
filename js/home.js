@@ -234,9 +234,6 @@ async function loadActivityFeed() {
                 const twentyFourHoursAgoTime = twentyFourHoursAgo.toMillis();
                 if (postTime < twentyFourHoursAgoTime) continue;
                 
-                // Skip posts with no likes
-                if (!postData.likesCount || postData.likesCount === 0) continue;
-                
                 // Get user info
                 const userDoc = await getDoc(doc(db, 'users', postData.userId));
                 const userData = userDoc.exists() ? userDoc.data() : null;
@@ -254,9 +251,16 @@ async function loadActivityFeed() {
                 });
             }
             
-            // Sort trending posts by likesCount (highest first), then take top 5
-            trendingPosts.sort((a, b) => b.likesCount - a.likesCount);
-            activities.push(...trendingPosts.slice(0, 5));
+            // Sort trending posts by likesCount (highest first), then by time (newest first), then take top 10
+            trendingPosts.sort((a, b) => {
+                // First sort by likes (higher likes first)
+                if (b.likesCount !== a.likesCount) {
+                    return b.likesCount - a.likesCount;
+                }
+                // If likes are equal, sort by time (newer first)
+                return b.sortTime - a.sortTime;
+            });
+            activities.push(...trendingPosts.slice(0, 10));
         } catch (error) {
             // Silently handle - errors are expected until indexes are deployed
         }
