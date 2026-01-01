@@ -231,19 +231,67 @@ function loadPosts() {
     postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
     
     try {
-        // Query posts (non-deleted, ordered by createdAt desc)
+        // Try with composite query first (requires index)
+        let postsQuery;
+        try {
+            postsQuery = query(
+                collection(db, 'posts'),
+                where('deleted', '==', false),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            // Set up real-time listener with the composite query
+            postsListener = onSnapshot(
+                postsQuery,
+                (snapshot) => {
+                    renderPosts(snapshot.docs);
+                },
+                (error) => {
+                    // If index error, fall back to simpler query
+                    if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                        console.log('Index not found for posts, using fallback query');
+                        setupFallbackPostsListener();
+                    } else {
+                        console.error('Error loading posts:', error);
+                        postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
+                    }
+                }
+            );
+        } catch (indexError) {
+            // If query setup fails due to missing index, use fallback
+            if (indexError.code === 'failed-precondition' || indexError.message.includes('index')) {
+                console.log('Index not found for posts, using fallback query');
+                setupFallbackPostsListener();
+            } else {
+                throw indexError;
+            }
+        }
+    } catch (error) {
+        console.error('Error setting up posts listener:', error);
+        postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
+    }
+}
+
+// Fallback posts listener (simpler query, filters in JavaScript)
+function setupFallbackPostsListener() {
+    try {
         const postsQuery = query(
             collection(db, 'posts'),
-            where('deleted', '==', false),
             orderBy('createdAt', 'desc'),
-            limit(50)
+            limit(100)
         );
         
-        // Set up real-time listener
         postsListener = onSnapshot(
             postsQuery,
             (snapshot) => {
-                renderPosts(snapshot.docs);
+                // Filter out deleted posts in JavaScript
+                const nonDeletedDocs = snapshot.docs.filter(doc => {
+                    const data = doc.data();
+                    return !data.deleted || data.deleted === false;
+                });
+                // Limit to 50 after filtering
+                renderPosts(nonDeletedDocs.slice(0, 50));
             },
             (error) => {
                 console.error('Error loading posts:', error);
@@ -251,7 +299,7 @@ function loadPosts() {
             }
         );
     } catch (error) {
-        console.error('Error setting up posts listener:', error);
+        console.error('Error setting up fallback posts listener:', error);
         postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
     }
 }
