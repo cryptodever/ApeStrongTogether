@@ -11915,6 +11915,18 @@ body.leaderboard-body > * {
     font-size: 0.875rem;
 }
 
+.post-comments-section.hide {
+    display: none !important;
+}
+
+.post-option-remove.hide {
+    display: none !important;
+}
+
+.post-image-error {
+    display: none !important;
+}
+
 /* Activity Post Item */
 .activity-post {
     cursor: pointer;

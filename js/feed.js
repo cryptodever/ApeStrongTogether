@@ -101,7 +101,7 @@ function setupEventListeners() {
     if (removeImageBtnEl) {
         removeImageBtnEl.addEventListener('click', () => {
             if (postImageUrlEl) postImageUrlEl.value = '';
-            removeImageBtnEl.style.display = 'none';
+            removeImageBtnEl.classList.add('hide');
         });
     }
     
@@ -110,7 +110,7 @@ function setupEventListeners() {
         removeLinkBtnEl.addEventListener('click', () => {
             if (postLinkUrlEl) postLinkUrlEl.value = '';
             if (postLinkTitleEl) postLinkTitleEl.value = '';
-            removeLinkBtnEl.style.display = 'none';
+            removeLinkBtnEl.classList.add('hide');
         });
     }
     
@@ -118,7 +118,11 @@ function setupEventListeners() {
     if (postImageUrlEl) {
         postImageUrlEl.addEventListener('input', () => {
             if (removeImageBtnEl) {
-                removeImageBtnEl.style.display = postImageUrlEl.value ? 'block' : 'none';
+                if (postImageUrlEl.value) {
+                    removeImageBtnEl.classList.remove('hide');
+                } else {
+                    removeImageBtnEl.classList.add('hide');
+                }
             }
         });
     }
@@ -126,7 +130,11 @@ function setupEventListeners() {
     if (postLinkUrlEl) {
         postLinkUrlEl.addEventListener('input', () => {
             if (removeLinkBtnEl) {
-                removeLinkBtnEl.style.display = postLinkUrlEl.value ? 'block' : 'none';
+                if (postLinkUrlEl.value) {
+                    removeLinkBtnEl.classList.remove('hide');
+                } else {
+                    removeLinkBtnEl.classList.add('hide');
+                }
             }
         });
     }
@@ -193,8 +201,8 @@ async function handlePostSubmit(e) {
         if (postImageUrlEl) postImageUrlEl.value = '';
         if (postLinkUrlEl) postLinkUrlEl.value = '';
         if (postLinkTitleEl) postLinkTitleEl.value = '';
-        if (removeImageBtnEl) removeImageBtnEl.style.display = 'none';
-        if (removeLinkBtnEl) removeLinkBtnEl.style.display = 'none';
+        if (removeImageBtnEl) removeImageBtnEl.classList.add('hide');
+        if (removeLinkBtnEl) removeLinkBtnEl.classList.add('hide');
         updateCharCount();
         
     } catch (error) {
@@ -284,6 +292,20 @@ async function renderPosts(postDocs) {
     // Set up event listeners for each post
     posts.forEach(post => {
         setupPostEventListeners(post.id, post);
+        setupPostImageErrors(post.id);
+    });
+}
+
+// Set up image error handlers for a post
+function setupPostImageErrors(postId) {
+    const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+    if (!postCard) return;
+    
+    const images = postCard.querySelectorAll('.post-image');
+    images.forEach(img => {
+        img.addEventListener('error', () => {
+            img.classList.add('post-image-error');
+        });
     });
 }
 
@@ -316,7 +338,7 @@ function renderPost(post) {
                 ${post.images && post.images.length > 0 ? `
                     <div class="post-images">
                         ${post.images.map(img => `
-                            <img src="${escapeHtml(img)}" alt="Post image" class="post-image" onerror="this.style.display='none'" />
+                            <img src="${escapeHtml(img)}" alt="Post image" class="post-image" data-image-src="${escapeHtml(img)}" />
                         `).join('')}
                     </div>
                 ` : ''}
@@ -344,7 +366,7 @@ function renderPost(post) {
                 </button>
             </div>
             
-            <div class="post-comments-section" id="commentsSection_${post.id}" style="display: none;">
+            <div class="post-comments-section hide" id="commentsSection_${post.id}">
                 <div class="post-comments-list" id="commentsList_${post.id}"></div>
                 ${currentUser ? `
                     <div class="post-comment-input-wrapper">
@@ -370,9 +392,11 @@ function setupPostEventListeners(postId, post) {
     const commentsSection = document.getElementById(`commentsSection_${postId}`);
     if (commentBtn && commentsSection) {
         commentBtn.addEventListener('click', () => {
-            const isVisible = commentsSection.style.display !== 'none';
-            commentsSection.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) {
+            const isVisible = !commentsSection.classList.contains('hide');
+            if (isVisible) {
+                commentsSection.classList.add('hide');
+            } else {
+                commentsSection.classList.remove('hide');
                 loadComments(postId);
             }
         });
