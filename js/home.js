@@ -215,18 +215,34 @@ async function loadActivityFeed() {
                 );
                 postsSnapshot = await getDocs(postsQuery);
             } catch (indexError) {
-                // Fallback: simpler query, filter and sort in JavaScript
-                const postsQuery = query(
-                    collection(db, 'posts'),
-                    where('deleted', '==', false),
-                    orderBy('createdAt', 'desc'),
-                    limit(100)
-                );
-                postsSnapshot = await getDocs(postsQuery);
+                console.warn('[loadActivityFeed] Index error or index building, using fallback query:', indexError.message);
+                // Fallback: query without orderBy (no index needed), filter and sort in JavaScript
+                try {
+                    const postsQuery = query(
+                        collection(db, 'posts'),
+                        where('deleted', '==', false),
+                        limit(500) // Get more documents since we'll filter in JS
+                    );
+                    postsSnapshot = await getDocs(postsQuery);
+                    console.log(`[loadActivityFeed] Fallback posts query returned ${postsSnapshot.size} documents`);
+                } catch (fallbackError) {
+                    console.error('[loadActivityFeed] Fallback query also failed:', fallbackError);
+                    // If even the simple query fails, try without any filters
+                    const simpleQuery = query(
+                        collection(db, 'posts'),
+                        limit(500)
+                    );
+                    postsSnapshot = await getDocs(simpleQuery);
+                    console.log(`[loadActivityFeed] Simple query returned ${postsSnapshot.size} documents`);
+                }
             }
             
             for (const postDoc of postsSnapshot.docs) {
                 const postData = postDoc.data();
+                
+                // Skip deleted posts (if not already filtered by query)
+                if (postData.deleted === true) continue;
+                
                 if (!postData.createdAt || !postData.userId) {
                     console.warn('[loadActivityFeed] Post missing createdAt or userId:', postDoc.id);
                     continue;
