@@ -126,6 +126,46 @@ function updateCharCount() {
     }
 }
 
+// Handle image file selection
+function handleImageFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+        alert('Please select a PNG or JPEG image file');
+        e.target.value = '';
+        return;
+    }
+    
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        alert('Image file must be 5MB or smaller');
+        e.target.value = '';
+        return;
+    }
+    
+    selectedImageFile = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        if (imagePreviewEl) {
+            imagePreviewEl.src = event.target.result;
+        }
+        if (imagePreviewContainerEl) {
+            imagePreviewContainerEl.classList.remove('hide');
+        }
+        if (imageFileNameEl) {
+            imageFileNameEl.textContent = file.name;
+            imageFileNameEl.classList.remove('hide');
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 // Handle post submission
 async function handlePostSubmit(e) {
     e.preventDefault();
