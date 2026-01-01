@@ -39,7 +39,7 @@
                             <textarea 
                                 id="postContent" 
                                 class="post-content-input" 
-                                placeholder="What's on your mind, Ape? Share your thoughts, memes, or updates..."
+                                placeholder="What's on your mind, Ape?"
                                 maxlength="2000"
                                 rows="4"
                             ></textarea>
@@ -50,31 +50,23 @@
                         
                         <div class="post-create-options">
                             <div class="post-option-group">
-                                <label for="postImageUrl" class="post-option-label">Image URL (optional)</label>
-                                <input 
-                                    type="url" 
-                                    id="postImageUrl" 
-                                    class="post-option-input" 
-                                    placeholder="https://example.com/image.png"
-                                />
-                                <button type="button" class="post-option-remove hide" id="removeImageBtn">Remove</button>
-                            </div>
-                            
-                            <div class="post-option-group">
-                                <label for="postLinkUrl" class="post-option-label">Link URL (optional)</label>
-                                <input 
-                                    type="url" 
-                                    id="postLinkUrl" 
-                                    class="post-option-input" 
-                                    placeholder="https://example.com"
-                                />
-                                <input 
-                                    type="text" 
-                                    id="postLinkTitle" 
-                                    class="post-option-input" 
-                                    placeholder="Link title (optional)"
-                                />
-                                <button type="button" class="post-option-remove hide" id="removeLinkBtn">Remove</button>
+                                <label for="postImageFile" class="post-option-label">Attach Image (optional)</label>
+                                <div class="post-image-upload-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="postImageFile" 
+                                        class="post-image-file-input" 
+                                        accept="image/png,image/jpeg,image/jpg"
+                                    />
+                                    <label for="postImageFile" class="post-image-file-label">
+                                        📎 Choose PNG or JPEG
+                                    </label>
+                                    <div class="post-image-preview hide" id="imagePreviewContainer">
+                                        <img id="imagePreview" class="post-image-preview-img" alt="Preview" />
+                                        <button type="button" class="post-image-remove" id="removeImageBtn">×</button>
+                                    </div>
+                                    <div class="post-image-file-name hide" id="imageFileName"></div>
+                                </div>
                             </div>
                         </div>
                         
