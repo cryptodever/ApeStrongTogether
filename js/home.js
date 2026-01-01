@@ -272,10 +272,12 @@ async function loadActivityFeed() {
                     userId: postData.userId,
                     username: username,
                     postId: postDoc.id,
-                    content: postData.content ? postData.content.substring(0, 100) : '',
+                    content: postData.content || '',
+                    images: postData.images || [],
                     likesCount: postData.likesCount || 0,
                     timestamp: postData.createdAt,
-                    sortTime: postTime
+                    sortTime: postTime,
+                    userData: userData
                 });
             }
             
@@ -447,17 +449,34 @@ function createActivityItem(activity) {
             </div>
         `;
     } else if (activity.type === 'trending_post') {
-        const contentPreview = activity.content ? escapeHtml(activity.content) : 'Post';
+        const userLevel = activity.userData?.level || 1;
+        const bannerImage = activity.userData?.bannerImage || '/pfp_apes/bg1.png';
+        const fullContent = activity.content ? escapeHtml(activity.content).replace(/\n/g, '<br>') : '';
+        
         content = `
-            <div class="activity-item activity-post" data-user-id="${activity.userId}" data-post-id="${activity.postId}">
-                <div class="activity-icon">🔥</div>
-                <div class="activity-content">
-                    <div class="activity-text">
-                        <span class="activity-username">@${escapeHtml(activity.username)}</span>
-                        posted: "${contentPreview}${activity.content && activity.content.length >= 100 ? '...' : ''}"
-                        <span class="activity-reward">❤️ ${activity.likesCount}</span>
+            <div class="activity-item activity-post activity-post-full" data-user-id="${activity.userId}" data-post-id="${activity.postId}">
+                <div class="activity-post-header">
+                    <img src="${bannerImage}" alt="${escapeHtml(activity.username)}" class="activity-post-avatar" />
+                    <div class="activity-post-author">
+                        <div class="activity-post-username">@${escapeHtml(activity.username)}</div>
+                        <div class="activity-post-meta">
+                            <span class="activity-post-level">LVL ${userLevel}</span>
+                            <span class="activity-time">${timeAgo}</span>
+                        </div>
                     </div>
-                    <div class="activity-time">${timeAgo}</div>
+                </div>
+                <div class="activity-post-body">
+                    ${fullContent ? `<div class="activity-post-text">${fullContent}</div>` : ''}
+                    ${activity.images && activity.images.length > 0 ? `
+                        <div class="activity-post-images">
+                            ${activity.images.map(img => `
+                                <img src="${escapeHtml(img)}" alt="Post image" class="activity-post-image" />
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="activity-post-footer">
+                    <span class="activity-post-likes">❤️ ${activity.likesCount || 0}</span>
                 </div>
             </div>
         `;

@@ -10971,6 +10971,29 @@ body.leaderboard-body > * {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    padding-right: 0.5rem;
+}
+
+.activity-feed::-webkit-scrollbar {
+    width: 8px;
+}
+
+.activity-feed::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.activity-feed::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.activity-feed::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .activity-item {
@@ -12039,6 +12062,100 @@ body.leaderboard-body > * {
 
 .activity-post:hover {
     border-color: rgba(74, 222, 128, 0.4);
+}
+
+/* Full Post Display Styles */
+.activity-post-full {
+    flex-direction: column;
+    padding: 1.25rem;
+    gap: 1rem;
+}
+
+.activity-post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.activity-post-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(74, 222, 128, 0.3);
+}
+
+.activity-post-author {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-post-username {
+    color: #4ade80;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.activity-post-username:hover {
+    text-decoration: underline;
+}
+
+.activity-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.activity-post-level {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.activity-post-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-post-text {
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.activity-post-images {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.activity-post-image {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: contain;
+    max-height: 400px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.activity-post-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.activity-post-likes {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
 /* Responsive */
