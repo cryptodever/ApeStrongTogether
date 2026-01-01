@@ -93,11 +93,15 @@
       ]
     },
     {
-      "collectionGroup": "presence",
+      "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "lastSeen",
+          "fieldPath": "deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
