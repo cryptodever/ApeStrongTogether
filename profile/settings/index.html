@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <!-- iOS optimizations -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>Profile Settings ⚙️ | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=6">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <!-- TODO: Replace YOUR_RECAPTCHA_SITE_KEY with your actual reCAPTCHA v3 site key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="profile-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="profile-page">
+        <div class="profile-container">
+            <!-- Back to Profile Link -->
+            <div class="settings-header">
+                <a href="/profile/" class="btn btn-secondary">← Back to Profile</a>
+            </div>
+
+            <!-- Profile Settings -->
+            <section class="profile-settings">
+                <div class="profile-settings-card">
+                    <div class="profile-header-row">
+                        <h2>Profile Settings</h2>
+                    </div>
+                    
+                    <div class="profile-bio-section">
+                        <div class="profile-bio">
+                            <label for="profileBio">Bio</label>
+                            <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
+                            <small class="char-count"><span id="bioCharCount">0</span>/500</small>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-country-section">
+                        <div class="profile-country-x-row">
+                            <div class="profile-country">
+                                <label for="profileCountry">Country</label>
+                                <select id="profileCountry" class="country-select">
+                            <option value="">🌍</option>
+                            <option value="US">🇺🇸</option>
+                            <option value="GB">🇬🇧</option>
+                            <option value="CA">🇨🇦</option>
+                            <option value="AU">🇦🇺</option>
+                            <option value="DE">🇩🇪</option>
+                            <option value="FR">🇫🇷</option>
+                            <option value="IT">🇮🇹</option>
+                            <option value="ES">🇪🇸</option>
+                            <option value="NL">🇳🇱</option>
+                            <option value="BR">🇧🇷</option>
+                            <option value="MX">🇲🇽</option>
+                            <option value="JP">🇯🇵</option>
+                            <option value="KR">🇰🇷</option>
+                            <option value="CN">🇨🇳</option>
+                            <option value="IN">🇮🇳</option>
+                            <option value="RU">🇷🇺</option>
+                            <option value="ZA">🇿🇦</option>
+                            <option value="AR">🇦🇷</option>
+                            <option value="CH">🇨🇭</option>
+                            <option value="SE">🇸🇪</option>
+                            <option value="NO">🇳🇴</option>
+                            <option value="DK">🇩🇰</option>
+                            <option value="FI">🇫🇮</option>
+                            <option value="PL">🇵🇱</option>
+                            <option value="TR">🇹🇷</option>
+                            <option value="SA">🇸🇦</option>
+                            <option value="AE">🇦🇪</option>
+                            <option value="SG">🇸🇬</option>
+                            <option value="NZ">🇳🇿</option>
+                            <option value="IE">🇮🇪</option>
+                            <option value="PT">🇵🇹</option>
+                            <option value="GR">🇬🇷</option>
+                            <option value="BE">🇧🇪</option>
+                            <option value="AT">🇦🇹</option>
+                            <option value="IL">🇮🇱</option>
+                            <option value="TH">🇹🇭</option>
+                            <option value="MY">🇲🇾</option>
+                            <option value="PH">🇵🇭</option>
+                            <option value="ID">🇮🇩</option>
+                            <option value="VN">🇻🇳</option>
+                            <option value="CL">🇨🇱</option>
+                            <option value="CO">🇨🇴</option>
+                            <option value="PE">🇵🇪</option>
+                            <option value="VE">🇻🇪</option>
+                            <option value="EG">🇪🇬</option>
+                            <option value="NG">🇳🇬</option>
+                            <option value="KE">🇰🇪</option>
+                            <option value="GH">🇬🇭</option>
+                            <option value="ET">🇪🇹</option>
+                            <option value="TZ">🇹🇿</option>
+                            <option value="UG">🇺🇬</option>
+                            <option value="ZM">🇿🇲</option>
+                            <option value="ZW">🇿🇼</option>
+                            <option value="AO">🇦🇴</option>
+                            <option value="MZ">🇲🇿</option>
+                            <option value="MW">🇲🇼</option>
+                            <option value="MG">🇲🇬</option>
+                            <option value="CM">🇨🇲</option>
+                            <option value="CI">🇨🇮</option>
+                            <option value="SN">🇸🇳</option>
+                            <option value="ML">🇲🇱</option>
+                            <option value="BF">🇧🇫</option>
+                            <option value="NE">🇳🇪</option>
+                            <option value="TD">🇹🇩</option>
+                            <option value="SD">🇸🇩</option>
+                            <option value="SO">🇸🇴</option>
+                            <option value="ER">🇪🇷</option>
+                            <option value="DJ">🇩🇯</option>
+                            <option value="RW">🇷🇼</option>
+                            <option value="BI">🇧🇮</option>
+                            <option value="SS">🇸🇸</option>
+                            <option value="CF">🇨🇫</option>
+                            <option value="CD">🇨🇩</option>
+                            <option value="CG">🇨🇬</option>
+                            <option value="GA">🇬🇦</option>
+                            <option value="GQ">🇬🇶</option>
+                            <option value="ST">🇸🇹</option>
+                            <option value="CV">🇨🇻</option>
+                            <option value="GW">🇬🇼</option>
+                            <option value="GN">🇬🇳</option>
+                            <option value="SL">🇸🇱</option>
+                            <option value="LR">🇱🇷</option>
+                            <option value="TG">🇹🇬</option>
+                            <option value="BJ">🇧🇯</option>
+                            <option value="BW">🇧🇼</option>
+                            <option value="NA">🇳🇦</option>
+                            <option value="LS">🇱🇸</option>
+                            <option value="SZ">🇸🇿</option>
+                            <option value="MU">🇲🇺</option>
+                            <option value="SC">🇸🇨</option>
+                            <option value="KM">🇰🇲</option>
+                            <option value="MV">🇲🇻</option>
+                            <option value="LK">🇱🇰</option>
+                            <option value="BD">🇧🇩</option>
+                            <option value="PK">🇵🇰</option>
+                            <option value="AF">🇦🇫</option>
+                            <option value="IR">🇮🇷</option>
+                            <option value="IQ">🇮🇶</option>
+                            <option value="SY">🇸🇾</option>
+                            <option value="LB">🇱🇧</option>
+                            <option value="JO">🇯🇴</option>
+                            <option value="PS">🇵🇸</option>
+                            <option value="YE">🇾🇪</option>
+                            <option value="OM">🇴🇲</option>
+                            <option value="QA">🇶🇦</option>
+                            <option value="BH">🇧🇭</option>
+                            <option value="KW">🇰🇼</option>
+                            <option value="KZ">🇰🇿</option>
+                            <option value="UZ">🇺🇿</option>
+                            <option value="TM">🇹🇲</option>
+                            <option value="TJ">🇹🇯</option>
+                            <option value="KG">🇰🇬</option>
+                            <option value="MN">🇲🇳</option>
+                            <option value="KP">🇰🇵</option>
+                            <option value="TW">🇹🇼</option>
+                            <option value="HK">🇭🇰</option>
+                            <option value="MO">🇲🇴</option>
+                            <option value="BN">🇧🇳</option>
+                            <option value="KH">🇰🇭</option>
+                            <option value="LA">🇱🇦</option>
+                            <option value="MM">🇲🇲</option>
+                            <option value="BT">🇧🇹</option>
+                            <option value="NP">🇳🇵</option>
+                            <option value="FJ">🇫🇯</option>
+                            <option value="PG">🇵🇬</option>
+                            <option value="SB">🇸🇧</option>
+                            <option value="VU">🇻🇺</option>
+                            <option value="NC">🇳🇨</option>
+                            <option value="PF">🇵🇫</option>
+                            <option value="WS">🇼🇸</option>
+                            <option value="TO">🇹🇴</option>
+                            <option value="KI">🇰🇮</option>
+                            <option value="TV">🇹🇻</option>
+                            <option value="NR">🇳🇷</option>
+                            <option value="PW">🇵🇼</option>
+                            <option value="FM">🇫🇲</option>
+                            <option value="MH">🇲🇭</option>
+                            <option value="IS">🇮🇸</option>
+                            <option value="GL">🇬🇱</option>
+                            <option value="FO">🇫🇴</option>
+                            <option value="AX">🇦🇽</option>
+                            <option value="SJ">🇸🇯</option>
+                            <option value="GI">🇬🇮</option>
+                            <option value="AD">🇦🇩</option>
+                            <option value="MC">🇲🇨</option>
+                            <option value="SM">🇸🇲</option>
+                            <option value="VA">🇻🇦</option>
+                            <option value="LI">🇱🇮</option>
+                            <option value="MT">🇲🇹</option>
+                            <option value="CY">🇨🇾</option>
+                            <option value="LU">🇱🇺</option>
+                            <option value="EE">🇪🇪</option>
+                            <option value="LV">🇱🇻</option>
+                            <option value="LT">🇱🇹</option>
+                            <option value="BY">🇧🇾</option>
+                            <option value="UA">🇺🇦</option>
+                            <option value="MD">🇲🇩</option>
+                            <option value="RO">🇷🇴</option>
+                            <option value="BG">🇧🇬</option>
+                            <option value="RS">🇷🇸</option>
+                            <option value="ME">🇲🇪</option>
+                            <option value="BA">🇧🇦</option>
+                            <option value="HR">🇭🇷</option>
+                            <option value="SI">🇸🇮</option>
+                            <option value="SK">🇸🇰</option>
+                            <option value="CZ">🇨🇿</option>
+                            <option value="HU">🇭🇺</option>
+                            <option value="AL">🇦🇱</option>
+                            <option value="MK">🇲🇰</option>
+                            <option value="XK">🇽🇰</option>
+                            <option value="GE">🇬🇪</option>
+                            <option value="AM">🇦🇲</option>
+                            <option value="AZ">🇦🇿</option>
+                            <option value="UY">🇺🇾</option>
+                            <option value="PY">🇵🇾</option>
+                            <option value="BO">🇧🇴</option>
+                            <option value="EC">🇪🇨</option>
+                            <option value="GY">🇬🇾</option>
+                            <option value="SR">🇸🇷</option>
+                            <option value="GF">🇬🇫</option>
+                            <option value="FK">🇫🇰</option>
+                            <option value="GS">🇬🇸</option>
+                            <option value="BZ">🇧🇿</option>
+                            <option value="GT">🇬🇹</option>
+                            <option value="HN">🇭🇳</option>
+                            <option value="SV">🇸🇻</option>
+                            <option value="NI">🇳🇮</option>
+                            <option value="CR">🇨🇷</option>
+                            <option value="PA">🇵🇦</option>
+                            <option value="CU">🇨🇺</option>
+                            <option value="JM">🇯🇲</option>
+                            <option value="HT">🇭🇹</option>
+                            <option value="DO">🇩🇴</option>
+                            <option value="PR">🇵🇷</option>
+                            <option value="TT">🇹🇹</option>
+                            <option value="BB">🇧🇧</option>
+                            <option value="BS">🇧🇸</option>
+                            <option value="AG">🇦🇬</option>
+                            <option value="DM">🇩🇲</option>
+                            <option value="LC">🇱🇨</option>
+                            <option value="VC">🇻🇨</option>
+                            <option value="GD">🇬🇩</option>
+                            <option value="KN">🇰🇳</option>
+                        </select>
+                            </div>
+                            
+                            <div class="profile-x-account">
+                                <label for="profileXAccount">
+                                    X Account
+                                    <button type="button" class="info-icon" id="showXInstructionsBtn" title="How to verify your X account">ℹ️</button>
+                                </label>
+                                <div class="x-account-input-wrapper">
+                                    <input type="text" id="profileXAccount" class="x-account-input" placeholder="@username" />
+                                    <span class="x-verification-status" id="xVerificationStatus"></span>
+                                </div>
+                                <div class="x-verification-section hide" id="xVerificationSection">
+                                    <div class="x-verification-code-display">
+                                        <label>Verification Code:</label>
+                                        <div class="verification-code-box">
+                                            <code id="xVerificationCode">Loading...</code>
+                                            <button class="btn-copy-code" id="copyVerificationCode" title="Copy code">📋</button>
+                                        </div>
+                                        <p class="verification-instructions">Add this code to your X bio, then click Verify</p>
+                                    </div>
+                                    <button class="btn btn-secondary" id="verifyXAccountBtn">Verify X Account</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+                </div>
+            </section>
+            
+            <!-- Banner Selection -->
+            <section class="banner-selection">
+                <div class="banner-selection-card">
+                    <h3>Select Banner</h3>
+                    <div class="banner-grid" id="bannerGrid">
+                        <!-- First 4: Unlocked -->
+                        <div class="banner-item" data-banner="/pfp_apes/bg1.png">
+                            <img src="/pfp_apes/bg1.png" alt="Banner 1" />
+                        </div>
+                        <div class="banner-item" data-banner="/pfp_apes/bg2.png">
+                            <img src="/pfp_apes/bg2.png" alt="Banner 2" />
+                        </div>
+                        <div class="banner-item" data-banner="/pfp_apes/bg3.png">
+                            <img src="/pfp_apes/bg3.png" alt="Banner 3" />
+                        </div>
+                        <div class="banner-item" data-banner="/pfp_apes/bg4.png">
+                            <img src="/pfp_apes/bg4.png" alt="Banner 4" />
+                        </div>
+                        <!-- Second row: Locked -->
+                        <div class="banner-item locked" data-banner="/pfp_apes/tg_1.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_apes/tg_1.png" alt="Banner 5" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_apes/tg_2.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_apes/tg_2.png" alt="Banner 6" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_apes/tg_3.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_apes/tg_3.png" alt="Banner 7" />
+                        </div>
+                        <div class="banner-item locked" data-banner="/pfp_apes/tg_4.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_apes/tg_4.png" alt="Banner 8" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary view-more-btn" id="viewMoreBannersBtn">View More</button>
+                </div>
+            </section>
+            
+            <!-- Banner Background Selection -->
+            <section class="banner-selection">
+                <div class="banner-selection-card">
+                    <h3>Select Banner Background</h3>
+                    <div class="banner-grid" id="bannerBgGrid">
+                        <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg1.png">
+                            <img src="/pfp_generator_images/pfp_bg1.png" alt="Background 1" />
+                        </div>
+                        <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg2.png">
+                            <img src="/pfp_generator_images/pfp_bg2.png" alt="Background 2" />
+                        </div>
+                        <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg3.png">
+                            <img src="/pfp_generator_images/pfp_bg3.png" alt="Background 3" />
+                        </div>
+                        <div class="banner-item" data-banner-bg="/pfp_generator_images/pfp_bg4.png">
+                            <img src="/pfp_generator_images/pfp_bg4.png" alt="Background 4" />
+                        </div>
+                        <!-- Locked backgrounds -->
+                        <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg5.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_images/pfp_bg5.png" alt="Background 5" />
+                        </div>
+                        <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg6.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_images/pfp_bg6.png" alt="Background 6" />
+                        </div>
+                        <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg7.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_images/pfp_bg7.png" alt="Background 7" />
+                        </div>
+                        <div class="banner-item locked" data-banner-bg="/pfp_generator_images/pfp_bg8.png">
+                            <div class="banner-lock-overlay">
+                                <span class="lock-icon">🔒</span>
+                                <span class="lock-text">Locked</span>
+                            </div>
+                            <img src="/pfp_generator_images/pfp_bg8.png" alt="Background 8" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary view-more-btn" id="viewMoreBannerBgsBtn">View More</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- X Verification Instructions Modal -->
+    <div class="modal-overlay" id="xInstructionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>How to Verify Your X Account</h3>
+                <button type="button" class="modal-close" id="closeXInstructionsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ol class="verification-steps">
+                    <li>
+                        <strong>Enter your X username</strong>
+                        <p>Type your X (Twitter) username in the field above (with or without @)</p>
+                    </li>
+                    <li>
+                        <strong>Copy your verification code</strong>
+                        <p>After entering your username, a unique verification code will appear. Click the 📋 button to copy it.</p>
+                    </li>
+                    <li>
+                        <strong>Add code to your X bio</strong>
+                        <p>Go to your X profile settings and edit your bio. Paste the verification code anywhere in your bio text.</p>
+                    </li>
+                    <li>
+                        <strong>Click "Verify X Account"</strong>
+                        <p>Once you've added the code to your bio, click the "Verify X Account" button. We'll check if the code is in your bio.</p>
+                    </li>
+                    <li>
+                        <strong>You're verified!</strong>
+                        <p>If the code is found in your bio, your X account will be marked as verified. You can remove the code from your bio after verification.</p>
+                    </li>
+                </ol>
+                <div class="verification-note">
+                    <p><strong>Note:</strong> The verification code must be in your public X bio for verification to work. Make sure your profile is public or the verification may fail.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="closeXInstructionsBtn2">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/profile-settings-init.js?v=1"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>
