@@ -9658,6 +9658,33 @@ body.leaderboard-body > * {
     justify-content: center;
 }
 
+/* Profile Settings Button */
+.profile-settings-btn-wrapper {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-settings-btn-wrapper .btn {
+    width: auto;
+    min-width: 180px;
+}
+
+/* Settings Page Header */
+.settings-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-header .btn {
+    width: auto;
+    min-width: 150px;
+}
+
 .follow-stat-btn {
     background: transparent;
     border: none;
