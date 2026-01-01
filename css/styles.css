@@ -9498,6 +9498,36 @@ body.leaderboard-body > * {
 }
 
 /* Banner and Bio Row */
+.profile-posts-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.profile-posts-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-posts-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.profile-posts-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
 .profile-banner-bio-row {
     display: flex;
     flex-direction: column;
