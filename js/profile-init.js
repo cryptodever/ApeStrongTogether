@@ -1731,12 +1731,12 @@ async function showFollowingList(userId) {
         // Setup search functionality
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                renderFollowingList(currentFollowingData, followingStatus, e.target.value);
+                renderFollowingList(currentFollowingData, followingStatus, e.target.value, userId);
             });
         }
         
         // Initial render
-        renderFollowingList(following, followingStatus);
+        renderFollowingList(following, followingStatus, '', userId);
     } catch (error) {
         console.error('Error loading following:', error);
         listEl.innerHTML = '<div class="follow-list-error">Error loading following</div>';
@@ -1745,7 +1745,7 @@ async function showFollowingList(userId) {
 }
 
 // Filter and render following list
-function renderFollowingList(following, followingStatus, searchTerm = '') {
+function renderFollowingList(following, followingStatus, searchTerm = '', viewingUserId = null) {
     const listEl = document.getElementById('followingList');
     if (!listEl) return;
     
@@ -1771,7 +1771,7 @@ function renderFollowingList(following, followingStatus, searchTerm = '') {
             followingItem.className = 'follow-list-item';
             const isFollowing = currentUser && followed.id !== currentUser.uid ? followingStatus.get(followed.id) : false;
             const isOwnProfile = currentUser && followed.id === currentUser.uid;
-            const isViewingOwnProfile = currentUser && userId === currentUser.uid;
+            const isViewingOwnProfile = currentUser && viewingUserId && viewingUserId === currentUser.uid;
             const level = followed.level || 1;
             
             followingItem.innerHTML = `
