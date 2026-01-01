@@ -227,10 +227,22 @@ async function loadActivityFeed() {
             
             for (const postDoc of postsSnapshot.docs) {
                 const postData = postDoc.data();
-                if (!postData.createdAt || !postData.userId) continue;
+                if (!postData.createdAt || !postData.userId) {
+                    console.warn('[loadActivityFeed] Post missing createdAt or userId:', postDoc.id);
+                    continue;
+                }
                 
                 // Filter by time if we used the fallback query
-                const postTime = postData.createdAt.toMillis();
+                let postTime;
+                if (postData.createdAt && typeof postData.createdAt.toMillis === 'function') {
+                    postTime = postData.createdAt.toMillis();
+                } else if (postData.createdAt && postData.createdAt.seconds) {
+                    postTime = postData.createdAt.seconds * 1000;
+                } else {
+                    console.warn('[loadActivityFeed] Post createdAt is not a valid timestamp:', postDoc.id);
+                    continue;
+                }
+                
                 const twentyFourHoursAgoTime = twentyFourHoursAgo.toMillis();
                 if (postTime < twentyFourHoursAgoTime) continue;
                 
@@ -261,8 +273,10 @@ async function loadActivityFeed() {
                 return b.sortTime - a.sortTime;
             });
             activities.push(...trendingPosts.slice(0, 10));
+            console.log(`[loadActivityFeed] Loaded ${trendingPosts.length} trending posts`);
         } catch (error) {
-            // Silently handle - errors are expected until indexes are deployed
+            console.error('[loadActivityFeed] Error loading trending posts:', error);
+            // Continue even if posts fail to load
         }
         
         // 3. Load recent chat messages (highlights)
