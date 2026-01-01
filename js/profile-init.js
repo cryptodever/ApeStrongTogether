@@ -41,6 +41,7 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 // Profile state
 let currentUser = null;
 let profileListener = null;
+let postsListener = null;
 let isSaving = false;
 let isVerifying = false;
 
