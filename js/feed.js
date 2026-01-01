@@ -211,7 +211,14 @@ async function handlePostSubmit(e) {
                 imageUrl = await getDownloadURL(storageRef);
             } catch (uploadError) {
                 console.error('Error uploading image:', uploadError);
-                alert('Failed to upload image. Please try again.');
+                console.error('Upload error details:', {
+                    code: uploadError.code,
+                    message: uploadError.message,
+                    fileName: selectedImageFile.name,
+                    fileSize: selectedImageFile.size,
+                    fileType: selectedImageFile.type
+                });
+                alert(`Failed to upload image: ${uploadError.message || 'Unknown error'}. Please try again.`);
                 if (postSubmitBtnEl) {
                     postSubmitBtnEl.disabled = false;
                     postSubmitBtnEl.textContent = 'Post';
@@ -247,7 +254,11 @@ async function handlePostSubmit(e) {
         
     } catch (error) {
         console.error('Error creating post:', error);
-        alert('Failed to create post. Please try again.');
+        console.error('Post creation error details:', {
+            code: error.code,
+            message: error.message
+        });
+        alert(`Failed to create post: ${error.message || 'Unknown error'}. Please try again.`);
     } finally {
         // Re-enable submit button
         if (postSubmitBtnEl) {
