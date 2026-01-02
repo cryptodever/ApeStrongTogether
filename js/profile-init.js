@@ -44,11 +44,20 @@ let profileListener = null;
 let postsListener = null;
 let isSaving = false;
 let isVerifying = false;
+let viewingUserId = null; // User ID of the profile being viewed
+
+// Get viewing user ID from URL
+function getViewingUserId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user');
+    return userId || null;
+}
 
 // Initialize profile page
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
+        viewingUserId = getViewingUserId() || user.uid; // Use URL param or current user
         await loadProfile();
         setupEventListeners();
         loadProfilePosts();
@@ -102,8 +111,23 @@ async function checkAndResetRateLimit(userData, userDocRef) {
 async function loadProfile() {
     if (!currentUser) return;
     
+    // Determine which user's profile to load
+    const targetUserId = viewingUserId || currentUser.uid;
+    const isViewingOwnProfile = targetUserId === currentUser.uid;
+    
+    // Show/hide profile settings button
+    const settingsBtn = document.getElementById('profileSettingsBtn');
+    const settingsBtnWrapper = document.querySelector('.profile-settings-btn-wrapper');
+    if (settingsBtnWrapper) {
+        if (isViewingOwnProfile) {
+            settingsBtnWrapper.style.display = 'block';
+        } else {
+            settingsBtnWrapper.style.display = 'none';
+        }
+    }
+    
     try {
-        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocRef = doc(db, 'users', targetUserId);
         
         // Set up real-time listener for profile updates
         if (profileListener) {
@@ -114,8 +138,8 @@ async function loadProfile() {
             if (userDoc.exists()) {
                 let userData = userDoc.data();
                 
-                // Check and reset rate limit if needed (only if attempts > 0 to avoid unnecessary writes)
-                if ((userData.xVerificationAttempts || 0) > 0) {
+                // Check and reset rate limit if needed (only for own profile and only if attempts > 0)
+                if (isViewingOwnProfile && (userData.xVerificationAttempts || 0) > 0) {
                     const wasReset = await checkAndResetRateLimit(userData, userDocRef);
                     // If reset, the listener will fire again with updated data, so we can return early
                     if (wasReset) {
@@ -143,8 +167,8 @@ async function loadProfile() {
                         const levelProgress = getLevelProgress(points);
                         const calculatedLevel = levelProgress.level;
                         
-                        // Update stored level if it's different (sync)
-                        if (userData.level !== calculatedLevel) {
+                        // Update stored level if it's different (sync) - only for own profile
+                        if (isViewingOwnProfile && userData.level !== calculatedLevel) {
                             const userDocRef = doc(db, 'users', currentUser.uid);
                             await setDoc(userDocRef, {
                                 level: calculatedLevel
@@ -216,7 +240,7 @@ async function loadProfile() {
                 }
                 
                 // Load followers/following counts
-                await loadFollowStats(currentUser.uid);
+                await loadFollowStats(targetUserId);
                 
                 // Sync followers quest progress after loading stats
                 // Wait a bit for the listener to set followersCount
@@ -1837,6 +1861,9 @@ async function loadProfilePosts() {
     const postsFeedEl = document.getElementById('profilePostsFeed');
     if (!postsFeedEl) return;
     
+    // Determine which user's posts to load
+    const targetUserId = viewingUserId || currentUser.uid;
+    
     // Clear existing listener
     if (postsListener) {
         postsListener();
@@ -1847,12 +1874,12 @@ async function loadProfilePosts() {
     postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
     
     try {
-        // Query posts for current user
+        // Query posts for target user
         let postsQuery;
         try {
             postsQuery = query(
                 collection(db, 'posts'),
-                where('userId', '==', currentUser.uid),
+                where('userId', '==', targetUserId),
                 where('deleted', '==', false),
                 orderBy('createdAt', 'desc'),
                 limit(50)
@@ -1896,12 +1923,15 @@ async function loadProfilePostsFallback() {
     const postsFeedEl = document.getElementById('profilePostsFeed');
     if (!postsFeedEl) return;
     
+    // Determine which user's posts to load
+    const targetUserId = viewingUserId || currentUser.uid;
+    
     try {
         // Fallback: simpler query without orderBy
         try {
             const postsQuery = query(
                 collection(db, 'posts'),
-                where('userId', '==', currentUser.uid),
+                where('userId', '==', targetUserId),
                 where('deleted', '==', false),
                 limit(100)
             );
@@ -1924,7 +1954,7 @@ async function loadProfilePostsFallback() {
             // Final fallback: get all user posts and filter/sort in JavaScript
             const allPostsQuery = query(
                 collection(db, 'posts'),
-                where('userId', '==', currentUser.uid),
+                where('userId', '==', targetUserId),
                 limit(500)
             );
             
