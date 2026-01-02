@@ -220,7 +220,7 @@ function createLeaderboardItem(rank, userData, userId, type, followersCount = nu
     item.style.cursor = 'pointer';
     item.addEventListener('click', (e) => {
         e.preventDefault();
-        showUserProfile(userId);
+        window.location.href = `/profile/?user=${userId}`;
     });
     
     return item;

@@ -282,6 +282,31 @@ async function loadActivityFeed() {
                 });
             });
             
+            // Add profile navigation for trending post authors (avatar and username)
+            activityFeedEl.querySelectorAll('.activity-post').forEach(item => {
+                const userId = item.dataset.userId;
+                if (userId) {
+                    const avatar = item.querySelector('.activity-post-avatar');
+                    const authorSection = item.querySelector('.activity-post-author');
+                    
+                    const navigateToProfile = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/profile/?user=${userId}`;
+                    };
+                    
+                    if (avatar) {
+                        avatar.style.cursor = 'pointer';
+                        avatar.addEventListener('click', navigateToProfile);
+                    }
+                    
+                    if (authorSection) {
+                        authorSection.style.cursor = 'pointer';
+                        authorSection.addEventListener('click', navigateToProfile);
+                    }
+                }
+            });
+            
             // Add comment button handlers for trending posts
             activityFeedEl.querySelectorAll('.activity-post-comment-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -970,6 +995,33 @@ async function loadActivityComments(postId) {
         }));
         
         commentsListEl.innerHTML = comments.map(comment => renderActivityComment(comment, postId)).join('');
+        
+        // Set up profile navigation for comment authors
+        comments.forEach(comment => {
+            if (comment.userId) {
+                const commentEl = document.querySelector(`.post-comment[data-comment-id="${comment.id}"]`);
+                if (commentEl) {
+                    const avatar = commentEl.querySelector('.comment-author-avatar');
+                    const authorName = commentEl.querySelector('.comment-author');
+                    
+                    const navigateToProfile = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/profile/?user=${comment.userId}`;
+                    };
+                    
+                    if (avatar) {
+                        avatar.style.cursor = 'pointer';
+                        avatar.addEventListener('click', navigateToProfile);
+                    }
+                    
+                    if (authorName) {
+                        authorName.style.cursor = 'pointer';
+                        authorName.addEventListener('click', navigateToProfile);
+                    }
+                }
+            }
+        });
         
         // Set up delete listeners for comments
         comments.forEach(comment => {

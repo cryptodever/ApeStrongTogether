@@ -2060,6 +2060,29 @@ function renderProfilePost(post) {
 
 // Set up event listeners for a profile post
 function setupProfilePostEventListeners(postId, post) {
+    // Profile navigation - avatar and name
+    const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+    if (postCard && post.userId) {
+        const avatar = postCard.querySelector('.post-author-avatar');
+        const authorInfo = postCard.querySelector('.post-author-info');
+        
+        const navigateToProfile = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = `/profile/?user=${post.userId}`;
+        };
+        
+        if (avatar) {
+            avatar.style.cursor = 'pointer';
+            avatar.addEventListener('click', navigateToProfile);
+        }
+        
+        if (authorInfo) {
+            authorInfo.style.cursor = 'pointer';
+            authorInfo.addEventListener('click', navigateToProfile);
+        }
+    }
+    
     // Like button - import from feed.js or implement here
     const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
     if (likeBtn) {
@@ -2178,6 +2201,33 @@ async function loadProfilePostComments(postId) {
         }));
         
         commentsListEl.innerHTML = comments.map(comment => renderProfileComment(comment, postId)).join('');
+        
+        // Set up profile navigation for comment authors
+        comments.forEach(comment => {
+            if (comment.userId) {
+                const commentEl = document.querySelector(`.post-comment[data-comment-id="${comment.id}"]`);
+                if (commentEl) {
+                    const avatar = commentEl.querySelector('.comment-author-avatar');
+                    const authorName = commentEl.querySelector('.comment-author');
+                    
+                    const navigateToProfile = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = `/profile/?user=${comment.userId}`;
+                    };
+                    
+                    if (avatar) {
+                        avatar.style.cursor = 'pointer';
+                        avatar.addEventListener('click', navigateToProfile);
+                    }
+                    
+                    if (authorName) {
+                        authorName.style.cursor = 'pointer';
+                        authorName.addEventListener('click', navigateToProfile);
+                    }
+                }
+            }
+        });
         
     } catch (error) {
         console.error('Error loading comments:', error);
