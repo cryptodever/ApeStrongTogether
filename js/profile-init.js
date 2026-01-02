@@ -1874,30 +1874,85 @@ async function loadProfilePosts() {
                 },
                 (error) => {
                     console.error('Error loading posts:', error);
-                    if (postsFeedEl) {
-                        postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+                    // Try fallback if index error
+                    if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                        console.warn('Index not found for posts, using fallback query');
+                        loadProfilePostsFallback();
+                    } else {
+                        if (postsFeedEl) {
+                            postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+                        }
                     }
                 }
             );
         } catch (indexError) {
             console.warn('Index not found for posts, using fallback query:', indexError);
-            // Fallback: simpler query without orderBy
-            try {
-                postsQuery = query(
-                    collection(db, 'posts'),
-                    where('userId', '==', currentUser.uid),
-                    where('deleted', '==', false),
-                    limit(100)
-                );
-                
-                const snapshot = await getDocs(postsQuery);
-                await renderProfilePosts(snapshot.docs);
-            } catch (fallbackError) {
-                console.error('Fallback query also failed:', fallbackError);
-                if (postsFeedEl) {
-                    postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
-                }
-            }
+            loadProfilePostsFallback();
+        }
+    } catch (error) {
+        console.error('Error setting up posts listener:', error);
+        if (postsFeedEl) {
+            postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
+        }
+    }
+}
+
+// Fallback function to load posts without index
+async function loadProfilePostsFallback() {
+    if (!currentUser) return;
+    
+    const postsFeedEl = document.getElementById('profilePostsFeed');
+    if (!postsFeedEl) return;
+    
+    try {
+        // Fallback: simpler query without orderBy
+        try {
+            const postsQuery = query(
+                collection(db, 'posts'),
+                where('userId', '==', currentUser.uid),
+                where('deleted', '==', false),
+                limit(100)
+            );
+            
+            const snapshot = await getDocs(postsQuery);
+            
+            // Sort by createdAt in JavaScript
+            const postsArray = Array.from(snapshot.docs);
+            postsArray.sort((a, b) => {
+                const aData = a.data();
+                const bData = b.data();
+                const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                return bTime - aTime; // DESC order
+            });
+            
+            await renderProfilePosts(postsArray);
+        } catch (fallbackError) {
+            console.error('Fallback query also failed:', fallbackError);
+            // Final fallback: get all user posts and filter/sort in JavaScript
+            const allPostsQuery = query(
+                collection(db, 'posts'),
+                where('userId', '==', currentUser.uid),
+                limit(500)
+            );
+            
+            const snapshot = await getDocs(allPostsQuery);
+            
+            // Filter and sort in JavaScript
+            const postsArray = Array.from(snapshot.docs)
+                .filter(doc => {
+                    const data = doc.data();
+                    return data.deleted !== true;
+                })
+                .sort((a, b) => {
+                    const aData = a.data();
+                    const bData = b.data();
+                    const aTime = aData.createdAt?.toMillis ? aData.createdAt.toMillis() : (aData.createdAt?.seconds * 1000 || 0);
+                    const bTime = bData.createdAt?.toMillis ? bData.createdAt.toMillis() : (bData.createdAt?.seconds * 1000 || 0);
+                    return bTime - aTime; // DESC order
+                });
+            
+            await renderProfilePosts(postsArray);
         }
     } catch (error) {
         console.error('Error setting up posts listener:', error);
