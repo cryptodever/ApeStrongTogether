@@ -227,13 +227,26 @@ async function loadProfile() {
                 
                 // Check if user is already verified and update quest if needed
                 // Use setTimeout to ensure quest system is fully initialized
-                if (userData.xAccountVerified === true) {
+                // Only update if viewing own profile (not when viewing someone else's profile)
+                if (isViewingOwnProfile && userData.xAccountVerified === true) {
                     setTimeout(async () => {
                         try {
-                            const { updateQuestProgress } = await import('/js/quests-init.js');
-                            console.log('[loadProfile] User is verified, updating quest progress...');
-                            await updateQuestProgress('achievement_verify_x', 1);
-                            console.log('[loadProfile] Quest progress updated for verified user');
+                            // Check if quest is already completed before updating
+                            const { db } = await import('/js/firebase.js');
+                            const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js');
+                            const userQuestId = `${currentUser.uid}_achievement_verify_x`;
+                            const userQuestRef = doc(db, 'userQuests', userQuestId);
+                            const userQuestDoc = await getDoc(userQuestRef);
+                            
+                            // Only update if not already completed
+                            if (!userQuestDoc.exists() || !userQuestDoc.data().completed) {
+                                const { updateQuestProgress } = await import('/js/quests-init.js');
+                                console.log('[loadProfile] User is verified, updating quest progress...');
+                                await updateQuestProgress('achievement_verify_x', 1);
+                                console.log('[loadProfile] Quest progress updated for verified user');
+                            } else {
+                                console.log('[loadProfile] Quest already completed, skipping update');
+                            }
                         } catch (error) {
                             console.error('[loadProfile] Error updating quest for verified user:', error);
                         }
@@ -1259,7 +1272,7 @@ window.checkXVerificationQuest = async function() {
         // Update quest progress
         const { updateQuestProgress } = await import('/js/quests-init.js');
         console.log('Checking and updating X verification quest...');
-        await updateQuestProgress('weekly_verify_x', 1);
+        await updateQuestProgress('achievement_verify_x', 1);
         console.log('Quest progress updated successfully');
     } catch (error) {
         console.error('Error checking X verification quest:', error);
