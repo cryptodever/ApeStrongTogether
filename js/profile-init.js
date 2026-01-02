@@ -115,12 +115,13 @@ async function loadProfile() {
     const targetUserId = viewingUserId || currentUser.uid;
     const isViewingOwnProfile = targetUserId === currentUser.uid;
     
-    // Show/hide profile settings button
+    // Show/hide profile settings and quests buttons
     const settingsBtn = document.getElementById('profileSettingsBtn');
+    const questsBtn = document.getElementById('profileQuestsBtn');
     const settingsBtnWrapper = document.querySelector('.profile-settings-btn-wrapper');
     if (settingsBtnWrapper) {
         if (isViewingOwnProfile) {
-            settingsBtnWrapper.style.display = 'block';
+            settingsBtnWrapper.style.display = 'flex';
         } else {
             settingsBtnWrapper.style.display = 'none';
         }
