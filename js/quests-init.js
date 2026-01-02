@@ -952,9 +952,10 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
             }
 
             // Don't update if already completed (after potential reset)
-            // Exception: achievements can continue to track progress even after completion
-            if (completed && quest.resetPeriod !== 'never') {
+            // For achievements (never reset), also skip if already completed to prevent re-awarding
+            if (completed) {
                 // Return early but don't throw - just skip the update
+                // This prevents re-awarding points for already-completed achievements
                 return;
             }
 
