@@ -2000,7 +2000,8 @@ async function renderProfilePosts(postDocs) {
 
 // Render single profile post
 function renderProfilePost(post) {
-    const createdAt = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt?.seconds * 1000 || Date.now());
+    // Keep as Firestore Timestamp - don't convert to Date
+    const createdAt = post.createdAt;
     const timeAgo = getTimeAgo(createdAt);
     const userLevel = post.userData?.level || 1;
     const bannerImage = post.userData?.bannerImage || '/pfp_apes/bg1.png';
@@ -2287,11 +2288,29 @@ function setupPostImageErrors(postId) {
 
 // Helper function to get time ago
 function getTimeAgo(timestamp) {
-    if (!timestamp || !timestamp.toMillis) return 'Just now';
+    // Handle both Firestore Timestamp and JavaScript Date
+    let timeMs;
+    
+    if (!timestamp) return 'Just now';
+    
+    // Check if it's a Firestore Timestamp
+    if (timestamp.toMillis && typeof timestamp.toMillis === 'function') {
+        timeMs = timestamp.toMillis();
+    }
+    // Check if it's a JavaScript Date
+    else if (timestamp instanceof Date) {
+        timeMs = timestamp.getTime();
+    }
+    // Check if it has seconds property (Firestore Timestamp format)
+    else if (timestamp.seconds) {
+        timeMs = timestamp.seconds * 1000;
+    }
+    else {
+        return 'Just now';
+    }
     
     const now = Date.now();
-    const time = timestamp.toMillis();
-    const diff = now - time;
+    const diff = now - timeMs;
     
     const minutes = Math.floor(diff / 60000);
     if (minutes < 1) return 'Just now';
