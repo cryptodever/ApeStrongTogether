@@ -654,6 +654,12 @@ function displayQuests() {
     const dailyQuests = availableQuests.filter(q => q.type === 'daily' && q.isActive);
     const weeklyQuests = availableQuests.filter(q => q.type === 'weekly' && q.isActive);
     const achievementQuests = availableQuests.filter(q => q.type === 'achievement' && q.isActive);
+    
+    console.log('[displayQuests] Available quests:', availableQuests.length);
+    console.log('[displayQuests] Daily quests:', dailyQuests.length);
+    console.log('[displayQuests] Weekly quests:', weeklyQuests.length);
+    console.log('[displayQuests] Achievement quests:', achievementQuests.length);
+    console.log('[displayQuests] achievementsQuestsEl:', achievementsQuestsEl);
 
     // Clear loading states
     dailyQuestsEl.innerHTML = '';
@@ -687,11 +693,14 @@ function displayQuests() {
         if (achievementQuests.length === 0) {
             achievementsQuestsEl.innerHTML = '<p class="quest-empty">No achievements available.</p>';
         } else {
+            console.log(`[displayQuests] Displaying ${achievementQuests.length} achievements`);
             achievementQuests.forEach(quest => {
                 const questCard = createQuestCard(quest);
                 achievementsQuestsEl.appendChild(questCard);
             });
         }
+    } else {
+        console.warn('[displayQuests] achievementsQuestsEl not found');
     }
 }
 
