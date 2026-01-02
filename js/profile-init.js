@@ -232,7 +232,7 @@ async function loadProfile() {
                         try {
                             const { updateQuestProgress } = await import('/js/quests-init.js');
                             console.log('[loadProfile] User is verified, updating quest progress...');
-                            await updateQuestProgress('weekly_verify_x', 1);
+                            await updateQuestProgress('achievement_verify_x', 1);
                             console.log('[loadProfile] Quest progress updated for verified user');
                         } catch (error) {
                             console.error('[loadProfile] Error updating quest for verified user:', error);
@@ -863,8 +863,8 @@ async function verifyXAccount() {
             // Update quest progress for X verification
             try {
                 const { updateQuestProgress } = await import('/js/quests-init.js');
-                console.log('[verifyXAccount] Updating quest progress for weekly_verify_x');
-                await updateQuestProgress('weekly_verify_x', 1);
+                console.log('[verifyXAccount] Updating quest progress for achievement_verify_x');
+                await updateQuestProgress('achievement_verify_x', 1);
                 console.log('[verifyXAccount] Quest progress updated successfully');
             } catch (error) {
                 console.error('[verifyXAccount] Error updating quest progress:', error);

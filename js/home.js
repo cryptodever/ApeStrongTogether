@@ -360,7 +360,7 @@ async function getQuestInfo(questId) {
         'daily_follow_3': { title: 'Social Butterfly', rewardPoints: 15 },
         'weekly_chat_50': { title: 'Chat Champion', rewardPoints: 50 },
         'weekly_complete_daily_5': { title: 'Daily Grinder', rewardPoints: 75 },
-        'weekly_verify_x': { title: 'Verified Ape', rewardPoints: 100 },
+        'achievement_verify_x': { title: 'Verified Ape', rewardPoints: 100 },
         'weekly_active_3_days': { title: 'Loyal Ape', rewardPoints: 50 },
         'weekly_get_25_followers': { title: 'Influencer Ape', rewardPoints: 100 }
     };

@@ -402,17 +402,6 @@ async function loadAvailableQuests() {
             resetPeriod: 'weekly'
         },
         {
-            id: 'weekly_verify_x',
-            title: 'Verified Ape',
-            description: 'Verify your X account',
-            type: 'weekly',
-            targetValue: 1,
-            rewardPoints: 100,
-            category: 'social',
-            isActive: true,
-            resetPeriod: 'weekly'
-        },
-        {
             id: 'weekly_active_3_days',
             title: 'Loyal Ape',
             description: 'Stay active for 3 days',
@@ -520,6 +509,17 @@ async function loadAvailableQuests() {
             targetValue: 1000,
             rewardPoints: 400,
             category: 'chat',
+            isActive: true,
+            resetPeriod: 'never'
+        },
+        {
+            id: 'achievement_verify_x',
+            title: 'Verified Ape',
+            description: 'Verify your X account',
+            type: 'achievement',
+            targetValue: 1,
+            rewardPoints: 100,
+            category: 'social',
             isActive: true,
             resetPeriod: 'never'
         }
