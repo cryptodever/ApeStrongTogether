@@ -1,41 +1,41 @@
-# 🗺️ Ape Together Strong - Platform Roadmap
+# 🗺️ Ape Together Strong Platform Roadmap
 
 ## Current Features ✅
 
-- User authentication & profiles with levels/XP
-- Quest/gamification system
-- Multi-channel chat (General, Raid, Trading, Support)
-- Social feed with posts, likes, comments
-- Trending posts algorithm (Reddit-style "hot" score)
+- User authentication and profiles with levels and XP
+- Quest and gamification system
+- Multi channel chat with General, Raid, Trading, and Support channels
+- Social feed with posts, likes, and comments
+- Trending posts algorithm using Reddit style hot score
 - Leaderboard
-- Follow/following system
-- X account verification (basic)
+- Follow and following system
+- X account verification basic version
 
 ---
 
 ## Phase 1: Foundation Enhancements 🚀
-**Timeline: 1-2 months**
+**Timeline: 1 to 2 months**
 
-### Reddit-Style Voting System (Free)
-- Upvote/downvote buttons on posts and comments
-- Vote score (upvotes - downvotes) replaces simple likes
+### Reddit Style Voting System (Free)
+- Upvote and downvote buttons on posts and comments
+- Vote score replaces simple likes
 - Trending algorithm uses vote scores
 - Karma system for users
 
 ### Enhanced Post Features (Free)
-- Edit posts (within 5 minutes of creation)
+- Edit posts within 5 minutes of creation
 - Post deletion confirmation
-- Post sharing (copy link)
+- Post sharing with copy link
 - Post reporting system
 
 ### Improved Chat Features (Free)
 - Emoji reactions on messages
-- Message editing/deletion
-- @mentions with notifications
+- Message editing and deletion
+- Mentions with notifications
 - Message search within channels
 
 ### Profile Enhancements (Free)
-- User badges/achievements display
+- User badges and achievements display
 - Post history with filtering
 - Comment history
 - Activity timeline
@@ -43,80 +43,72 @@
 ---
 
 ## Phase 2: Community Features 🏘️
-**Timeline: 2-3 months**
+**Timeline: 2 to 3 months**
 
-### Discord-Style Servers/Communities
+### Discord Style Servers and Communities
 - Create and join communities
-- Public/private/invite-only settings
-- Member roles (owner, admin, moderator, member)
+- Public, private, or invite only settings
+- Member roles like owner, admin, moderator, and member
 - Custom channels within communities
 - Community discovery page
-- **Premium Feature**: Custom branding (custom colors, logos, domain) for community owners
+- **Premium Feature**: Custom branding with colors, logos, and domain for community owners
 
-### Telegram-Style Group Chats (Free)
-- Create private group chats (beyond the 4 public channels)
+### Telegram Style Group Chats (Free)
+- Create private group chats beyond the 4 public channels
 - Invite users to groups
 - Group admin controls
-- Group settings (name, description, avatar)
+- Group settings for name, description, and avatar
 - Group member list
 
 ### Enhanced Moderation
-- **Free**: Basic moderation tools
-  - Report content/users
-  - Mute users
-  - Delete posts/comments
-  - Ban users from communities
-- **Premium**: Advanced moderation
-  - Auto-moderation rules
-  - Moderation queue
-  - User analytics for mods
-  - Custom moderation bots
+- **Free**: Basic moderation tools including report, mute, delete, and ban
+- **Premium**: Advanced moderation with auto mod rules, moderation queue, analytics, and custom bots
 
 ---
 
 ## Phase 3: Advanced Social Features 🎬
-**Timeline: 3-4 months**
+**Timeline: 3 to 4 months**
 
-### Live Streaming & Voice Channels (Premium)
+### Live Streaming and Voice Channels (Premium)
 - Live video streaming for communities
-- Voice channels (Discord-style)
+- Voice channels like Discord
 - Screen sharing
-- Stream recording (optional)
+- Stream recording optional
 - Viewer count and chat overlay
 - **Subscription Required**: Premium tier
 
 ### Advanced Analytics (Premium)
 - Creator analytics dashboard
-- Post performance (views, engagement, reach)
+- Post performance tracking for views, engagement, and reach
 - Follower growth tracking
-- Best posting times
+- Best posting times analysis
 - Engagement metrics
 - Community growth stats
 - Export analytics data
 - **Subscription Required**: Pro tier
 
 ### NFT Integration (Premium)
-- Wallet connection (MetaMask, WalletConnect)
+- Wallet connection with MetaMask and WalletConnect
 - NFT profile pictures
-- NFT badges/achievements
-- NFT marketplace (buy/sell NFTs)
+- NFT badges and achievements
+- NFT marketplace for buying and selling
 - Display owned NFTs on profile
 - NFT verification badges
-- **Subscription Required**: Premium tier + transaction fees
+- **Subscription Required**: Premium tier plus transaction fees
 
 ---
 
 ## Phase 4: Premium Features 💎
-**Timeline: 4-6 months**
+**Timeline: 4 to 6 months**
 
 ### Enhanced X Verification (Paid)
 - Multiple verification tiers
-- Basic verification (free, existing)
-- Premium verification badge (paid)
+- Basic verification free and existing
+- Premium verification badge paid option
 - Community leader verification
-- Verification benefits (priority in feeds, special badges)
+- Verification benefits like priority in feeds and special badges
 
-### Ad-Free Experience (Paid)
+### Ad Free Experience (Paid)
 - Remove ads for premium subscribers
 - Ad placement system for free users
 - **Subscription Tier**: Premium
@@ -136,62 +128,56 @@
 
 ### Mobile App Development
 - Native iOS and Android apps
-- Core features port:
-  - Authentication
-  - Feed (posts, voting, comments)
-  - Chat (channels, groups)
-  - Communities
-  - Profiles
-  - Quests
+- Core features port including authentication, feed with voting and comments, chat with channels and groups, communities, profiles, and quests
 - Push notifications
-- Mobile-optimized UI
+- Mobile optimized UI
 
-### Mobile-Specific Features
+### Mobile Specific Features
 - Camera integration for posts
-- Location-based features
+- Location based features
 - Mobile payments
 - App store optimization
 
 ---
 
-## Subscription Tiers & Buyback Mechanism 💰
+## Subscription Tiers and Buyback Mechanism 💰
 
 ### Free Tier
-- Basic chat (4 public channels)
-- Create posts (text + images)
-- Vote on posts/comments
-- Join communities (up to 5)
+- Basic chat with 4 public channels
+- Create posts with text and images
+- Vote on posts and comments
+- Join up to 5 communities
 - Basic profile
 - Quest system
 - Leaderboard access
 
-### Basic Tier - $4.99/month
-- Everything in Free
+### Basic Tier $4.99 per month
+- Everything in Free tier
 - Join unlimited communities
 - Create private group chats
 - Basic analytics
-- Ad-free experience
+- Ad free experience
 - Priority support
-- **20% of revenue ($1.00/month) → Meme coin buybacks** 🔥
+- **20% of revenue goes to buybacks that's $1.00 per month** 🔥
 
-### Pro Tier - $9.99/month
-- Everything in Basic
+### Pro Tier $9.99 per month
+- Everything in Basic tier
 - Live streaming
 - Voice channels
 - Advanced analytics
 - NFT integration
 - Custom community branding
 - Advanced moderation tools
-- **20% of revenue ($2.00/month) → Meme coin buybacks** 🔥
+- **20% of revenue goes to buybacks that's $2.00 per month** 🔥
 
-### Community Pro - $19.99/month
-- Everything in Pro
+### Community Pro $19.99 per month
+- Everything in Pro tier
 - Custom domain for communities
 - Community monetization
 - Advanced community analytics
 - Priority verification
-- White-label options
-- **20% of revenue ($4.00/month) → Meme coin buybacks** 🔥
+- White label options
+- **20% of revenue goes to buybacks that's $4.00 per month** 🔥
 
 ---
 
@@ -201,23 +187,19 @@
 **20% of all paid subscription revenue** automatically goes to meme coin buybacks.
 
 1. **Automatic Allocation**: When you subscribe, 20% of your payment is automatically allocated to buybacks
-2. **Scheduled Execution**: Buybacks are executed regularly (daily or weekly)
-3. **Full Transparency**: Public dashboard showing:
-   - Total buybacks executed
-   - Buyback history
-   - Next scheduled buyback
-   - Token price impact
-4. **On-Chain Verification**: All buyback transactions are recorded on-chain for full transparency
+2. **Scheduled Execution**: Buybacks are executed regularly daily or weekly
+3. **Full Transparency**: Public dashboard showing total buybacks executed, buyback history, next scheduled buyback, and token price impact
+4. **On Chain Verification**: All buyback transactions are recorded on chain for full transparency
 
 ### Why This Matters
 - **Community Value**: Your subscription directly supports the token
 - **Price Impact**: Regular buybacks create buying pressure
-- **Transparency**: Every buyback is verifiable on-chain
-- **Alignment**: Platform success = token success = community success
+- **Transparency**: Every buyback is verifiable on chain
+- **Alignment**: Platform success equals token success equals community success
 
 ### Revenue Breakdown
 - **80%**: Platform costs, development, and operations
-- **20%**: Meme coin buybacks (automatic, transparent, on-chain)
+- **20%**: Meme coin buybacks automatic, transparent, on chain
 
 ---
 
@@ -227,7 +209,7 @@
 - Reddit voting system
 - Hashtags
 - User mentions
-- Repost/share feature
+- Repost and share feature
 - Message reactions
 
 ### Foundation Builders (Do Second)
@@ -248,13 +230,9 @@
 
 ---
 
-## Community-Driven Development
+## Community Driven Development
 
-This roadmap is a living document. Features and priorities may change based on:
-- Community feedback and requests
-- Technical feasibility
-- Market conditions
-- Platform growth
+This roadmap is a living document. Features and priorities may change based on community feedback and requests, technical feasibility, market conditions, and platform growth.
 
 **We're building this together, Apes! 🦍**
 
