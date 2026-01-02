@@ -361,7 +361,7 @@ async function loadAvailableQuests() {
             title: 'Quest Completer',
             description: 'Complete all daily quests',
             type: 'daily',
-            targetValue: 4, // Number of other daily quests (excluding this one)
+            targetValue: 5, // Number of other daily quests (excluding this one)
             rewardPoints: 15,
             category: 'quests',
             isActive: true,
