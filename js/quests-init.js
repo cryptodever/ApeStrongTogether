@@ -582,27 +582,30 @@ async function checkAndResetQuests() {
             // Calculate next reset time
             const nextReset = getNextResetTime(quest.resetPeriod);
             
-            // Reset quest progress
-            const userQuestRef = doc(db, 'userQuests', `${currentUser.uid}_${quest.id}`);
-            updates.push({
-                ref: userQuestRef,
-                data: {
+            // Only reset if we have a valid reset time (skip achievements with 'never')
+            if (nextReset) {
+                // Reset quest progress
+                const userQuestRef = doc(db, 'userQuests', `${currentUser.uid}_${quest.id}`);
+                updates.push({
+                    ref: userQuestRef,
+                    data: {
+                        progress: 0,
+                        completed: false,
+                        completedAt: null,
+                        resetAt: Timestamp.fromDate(nextReset),
+                        updatedAt: serverTimestamp()
+                    }
+                });
+
+                // Update local state
+                userQuests[quest.id] = {
+                    ...userQuest,
                     progress: 0,
                     completed: false,
                     completedAt: null,
-                    resetAt: Timestamp.fromDate(nextReset),
-                    updatedAt: serverTimestamp()
-                }
-            });
-
-            // Update local state
-            userQuests[quest.id] = {
-                ...userQuest,
-                progress: 0,
-                completed: false,
-                completedAt: null,
-                resetAt: Timestamp.fromDate(nextReset)
-            };
+                    resetAt: Timestamp.fromDate(nextReset)
+                };
+            }
         }
     }
 
@@ -970,13 +973,20 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
             // Track if this transaction newly completed the quest
             wasNewlyCompleted = isNowCompleted;
             
+            // Calculate resetAt - handle achievements that never reset
+            let finalResetAt = resetAt;
+            if (!finalResetAt) {
+                const nextReset = getNextResetTime(quest.resetPeriod);
+                finalResetAt = nextReset ? Timestamp.fromDate(nextReset) : null;
+            }
+            
             const questData = {
                 userId: currentUser.uid,
                 questId: quest.id,
                 progress: newProgress,
                 completed: isNowCompleted,
                 completedAt: isNowCompleted ? serverTimestamp() : null,
-                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                resetAt: finalResetAt,
                 updatedAt: serverTimestamp()
             };
             
@@ -991,11 +1001,18 @@ export async function updateQuestProgress(questId, increment = 1, metadata = nul
                 transaction.set(userQuestRef, questData);
             } else {
                 // Document exists - update it (don't overwrite createdAt)
+                // Calculate resetAt - handle achievements that never reset
+                let finalResetAt = resetAt;
+                if (!finalResetAt) {
+                    const nextReset = getNextResetTime(quest.resetPeriod);
+                    finalResetAt = nextReset ? Timestamp.fromDate(nextReset) : null;
+                }
+                
                 const updateData = {
                     progress: newProgress,
                     completed: isNowCompleted,
                     completedAt: isNowCompleted ? serverTimestamp() : null,
-                    resetAt: resetAt || Timestamp.fromDate(getNextResetTime(quest.resetPeriod)),
+                    resetAt: finalResetAt,
                     updatedAt: serverTimestamp()
                 };
                 
@@ -1119,12 +1136,20 @@ async function checkAndUpdateCompleteAllDailyQuests() {
     if (userQuestDoc.exists()) {
         resetAt = userQuestDoc.data().resetAt;
     } else {
-        resetAt = Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod));
+        const nextReset = getNextResetTime(completeQuest.resetPeriod);
+        resetAt = nextReset ? Timestamp.fromDate(nextReset) : null;
     }
     
     // Use transaction for quest update to ensure proper rule evaluation
     await runTransaction(db, async (transaction) => {
         const questDoc = await transaction.get(userQuestRef);
+        
+        // Calculate final resetAt - handle achievements that never reset
+        let finalResetAt = resetAt;
+        if (!finalResetAt) {
+            const nextReset = getNextResetTime(completeQuest.resetPeriod);
+            finalResetAt = nextReset ? Timestamp.fromDate(nextReset) : null;
+        }
         
         const questData = {
             userId: currentUser.uid,
@@ -1132,7 +1157,7 @@ async function checkAndUpdateCompleteAllDailyQuests() {
             progress: newProgress,
             completed: isNowCompleted,
             completedAt: isNowCompleted ? serverTimestamp() : null,
-            resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
+            resetAt: finalResetAt,
             updatedAt: serverTimestamp()
         };
         
@@ -1144,20 +1169,27 @@ async function checkAndUpdateCompleteAllDailyQuests() {
                 progress: newProgress,
                 completed: isNowCompleted,
                 completedAt: isNowCompleted ? serverTimestamp() : null,
-                resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod)),
+                resetAt: finalResetAt,
                 updatedAt: serverTimestamp()
             });
         }
     });
     
     // Update local state
+    // Calculate final resetAt for local state
+    let finalResetAt = resetAt;
+    if (!finalResetAt) {
+        const nextReset = getNextResetTime(completeQuest.resetPeriod);
+        finalResetAt = nextReset ? Timestamp.fromDate(nextReset) : null;
+    }
+    
     userQuests['daily_complete_quest'] = {
         userId: currentUser.uid,
         questId: 'daily_complete_quest',
         progress: newProgress,
         completed: isNowCompleted,
         completedAt: isNowCompleted ? Timestamp.now() : null,
-        resetAt: resetAt || Timestamp.fromDate(getNextResetTime(completeQuest.resetPeriod))
+        resetAt: finalResetAt
     };
     
     // If completed, award points and show notification
