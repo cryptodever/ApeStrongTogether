@@ -324,13 +324,13 @@ async function loadAvailableQuests() {
             resetPeriod: 'daily'
         },
         {
-            id: 'daily_profile_update',
-            title: 'Profile Polisher',
-            description: 'Update your profile',
+            id: 'daily_post_1',
+            title: 'Content Creator',
+            description: 'Create 1 post',
             type: 'daily',
             targetValue: 1,
             rewardPoints: 5,
-            category: 'profile',
+            category: 'social',
             isActive: true,
             resetPeriod: 'daily'
         },

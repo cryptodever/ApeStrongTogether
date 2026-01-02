@@ -328,7 +328,7 @@ async function getQuestInfo(questId) {
     // Quest definitions mapping
     const questInfoMap = {
         'daily_chat_5': { title: 'Chat Master', rewardPoints: 10 },
-        'daily_profile_update': { title: 'Profile Polisher', rewardPoints: 5 },
+        'daily_post_1': { title: 'Content Creator', rewardPoints: 5 },
         'daily_quests_visit': { title: 'Quest Explorer', rewardPoints: 5 },
         'daily_login': { title: 'Daily Login', rewardPoints: 5 },
         'daily_complete_quest': { title: 'Quest Completer', rewardPoints: 15 },

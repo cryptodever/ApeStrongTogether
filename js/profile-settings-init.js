@@ -182,14 +182,6 @@ async function saveProfile() {
         
         console.log('Profile saved successfully');
         
-        // Update quest progress for profile update
-        try {
-            const { updateQuestProgress } = await import('/js/quests-init.js');
-            await updateQuestProgress('daily_profile_update', 1);
-        } catch (error) {
-            // Quest module might not be loaded, ignore silently
-        }
-        
         // Show success message
         if (saveBtn) {
             saveBtn.textContent = 'Saved!';

@@ -244,6 +244,14 @@ async function handlePostSubmit(e) {
         // Add post to Firestore
         await addDoc(collection(db, 'posts'), postData);
         
+        // Update quest progress for daily post quest
+        try {
+            const { updateQuestProgress } = await import('/js/quests-init.js');
+            await updateQuestProgress('daily_post_1', 1);
+        } catch (error) {
+            // Quest module might not be loaded, ignore silently
+        }
+        
         // Reset form
         if (postContentEl) postContentEl.value = '';
         if (postImageFileEl) postImageFileEl.value = '';
