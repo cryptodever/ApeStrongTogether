@@ -3681,6 +3681,170 @@ body.tokenomics-body > * {
     color: #4ade80;
 }
 
+/* Subscription Buyback System */
+.subscription-buyback-info {
+    margin: 1.5rem 0 2rem;
+}
+
+.buyback-highlight {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.buyback-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.buyback-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+}
+
+.subscription-tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin: 2rem 0;
+}
+
+.subscription-tier-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.subscription-tier-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(74, 222, 128, 0.2);
+    transform: translateY(-2px);
+}
+
+.tier-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tier-content h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+}
+
+.tier-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4ade80;
+    margin: 0.5rem 0;
+    text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+}
+
+.tier-buyback {
+    font-size: 0.95rem;
+    color: rgba(74, 222, 128, 0.9);
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.buyback-mechanism-details {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.buyback-mechanism-details h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.buyback-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.buyback-step {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74, 222, 128, 0.15);
+    border: 2px solid rgba(74, 222, 128, 0.3);
+    border-radius: 50%;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #4ade80;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.step-content {
+    flex: 1;
+    padding-top: 0.25rem;
+}
+
+.step-content strong {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.step-content p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.buyback-note {
+    padding: 1.5rem;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    border-radius: 12px;
+    margin-top: 2rem;
+}
+
+.buyback-note p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    margin: 0;
+}
+
+.buyback-note strong {
+    color: #4ade80;
+    font-weight: 600;
+}
+
 /* Distribution List (Cleaner) */
 .distribution-list {
     margin: 1.5rem 0;
@@ -4947,9 +5111,45 @@ body.tokenomics-body > * {
     .comparison-grid,
     .allocation-details-grid,
     .benefits-grid,
-    .transparency-grid {
+    .transparency-grid,
+    .fee-allocation-grid,
+    .subscription-tiers-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .subscription-tier-item {
+        padding: 1.25rem;
+    }
+
+    .tier-icon {
+        font-size: 2rem;
+    }
+
+    .buyback-steps {
+        gap: 1.25rem;
+    }
+
+    .buyback-step {
+        gap: 1rem;
+    }
+
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+    }
+
+    .step-content strong {
+        font-size: 1rem;
+    }
+
+    .step-content p {
+        font-size: 0.9rem;
+    }
+
+    .buyback-mechanism-details h3 {
+        font-size: 1.1rem;
     }
 
     .allocation-detail-item {
