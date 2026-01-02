@@ -654,12 +654,6 @@ function displayQuests() {
     const dailyQuests = availableQuests.filter(q => q.type === 'daily' && q.isActive);
     const weeklyQuests = availableQuests.filter(q => q.type === 'weekly' && q.isActive);
     const achievementQuests = availableQuests.filter(q => q.type === 'achievement' && q.isActive);
-    
-    console.log('[displayQuests] Available quests:', availableQuests.length);
-    console.log('[displayQuests] Daily quests:', dailyQuests.length);
-    console.log('[displayQuests] Weekly quests:', weeklyQuests.length);
-    console.log('[displayQuests] Achievement quests:', achievementQuests.length);
-    console.log('[displayQuests] achievementsQuestsEl:', achievementsQuestsEl);
 
     // Clear loading states
     dailyQuestsEl.innerHTML = '';
@@ -668,36 +662,87 @@ function displayQuests() {
         achievementsQuestsEl.innerHTML = '';
     }
 
-    // Display daily quests
+    // Display daily quests (limit to 4 for 2 rows × 2 columns)
+    const QUESTS_PER_SECTION = 4; // 2 rows × 2 columns
     if (dailyQuests.length === 0) {
         dailyQuestsEl.innerHTML = '<p class="quest-empty">No daily quests available.</p>';
     } else {
-        dailyQuests.forEach(quest => {
+        const dailyQuestsToShow = dailyQuests.slice(0, QUESTS_PER_SECTION);
+        dailyQuestsToShow.forEach(quest => {
             const questCard = createQuestCard(quest);
             dailyQuestsEl.appendChild(questCard);
         });
+        
+        // Show "Show More" button if there are more quests
+        if (dailyQuests.length > QUESTS_PER_SECTION) {
+            const showMoreBtn = document.createElement('button');
+            showMoreBtn.className = 'quest-show-more-btn';
+            showMoreBtn.textContent = `Show All (${dailyQuests.length})`;
+            showMoreBtn.addEventListener('click', () => {
+                // Remove button and show all quests
+                showMoreBtn.remove();
+                dailyQuests.slice(QUESTS_PER_SECTION).forEach(quest => {
+                    const questCard = createQuestCard(quest);
+                    dailyQuestsEl.appendChild(questCard);
+                });
+            });
+            dailyQuestsEl.appendChild(showMoreBtn);
+        }
     }
 
-    // Display weekly quests
+    // Display weekly quests (limit to 4 for 2 rows × 2 columns)
     if (weeklyQuests.length === 0) {
         weeklyQuestsEl.innerHTML = '<p class="quest-empty">No weekly quests available.</p>';
     } else {
-        weeklyQuests.forEach(quest => {
+        const weeklyQuestsToShow = weeklyQuests.slice(0, QUESTS_PER_SECTION);
+        weeklyQuestsToShow.forEach(quest => {
             const questCard = createQuestCard(quest);
             weeklyQuestsEl.appendChild(questCard);
         });
+        
+        // Show "Show More" button if there are more quests
+        if (weeklyQuests.length > QUESTS_PER_SECTION) {
+            const showMoreBtn = document.createElement('button');
+            showMoreBtn.className = 'quest-show-more-btn';
+            showMoreBtn.textContent = `Show All (${weeklyQuests.length})`;
+            showMoreBtn.addEventListener('click', () => {
+                // Remove button and show all quests
+                showMoreBtn.remove();
+                weeklyQuests.slice(QUESTS_PER_SECTION).forEach(quest => {
+                    const questCard = createQuestCard(quest);
+                    weeklyQuestsEl.appendChild(questCard);
+                });
+            });
+            weeklyQuestsEl.appendChild(showMoreBtn);
+        }
     }
 
-    // Display achievements
+    // Display achievements (limit to 4 for 2 rows × 2 columns)
     if (achievementsQuestsEl) {
         if (achievementQuests.length === 0) {
             achievementsQuestsEl.innerHTML = '<p class="quest-empty">No achievements available.</p>';
         } else {
-            console.log(`[displayQuests] Displaying ${achievementQuests.length} achievements`);
-            achievementQuests.forEach(quest => {
+            const achievementQuestsToShow = achievementQuests.slice(0, QUESTS_PER_SECTION);
+            achievementQuestsToShow.forEach(quest => {
                 const questCard = createQuestCard(quest);
                 achievementsQuestsEl.appendChild(questCard);
             });
+            
+            // Show "Show More" button if there are more achievements
+            if (achievementQuests.length > QUESTS_PER_SECTION) {
+                const showMoreBtn = document.createElement('button');
+                showMoreBtn.className = 'quest-show-more-btn';
+                showMoreBtn.textContent = `Show All (${achievementQuests.length})`;
+                showMoreBtn.addEventListener('click', () => {
+                    // Remove button and show all achievements
+                    showMoreBtn.remove();
+                    achievementQuests.slice(QUESTS_PER_SECTION).forEach(quest => {
+                        const questCard = createQuestCard(quest);
+                        achievementsQuestsEl.appendChild(questCard);
+                    });
+                });
+                achievementsQuestsEl.appendChild(showMoreBtn);
+            }
         }
     } else {
         console.warn('[displayQuests] achievementsQuestsEl not found');
