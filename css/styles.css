@@ -2736,7 +2736,7 @@ body.tokenomics-body > * {
 .roadmap-page {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 4rem 2rem 6rem;
+    padding: 4rem 2rem 8rem;
     position: relative;
 }
 
@@ -3110,7 +3110,7 @@ body.tokenomics-body > * {
 
 @media (max-width: 768px) {
     .roadmap-page {
-        padding: 3rem 1.5rem 4rem;
+        padding: 3rem 1.5rem 6rem;
     }
 
     .roadmap-header {
