@@ -744,7 +744,7 @@ function displayMessage(messageId, messageData) {
     // Add event listeners for message actions
     setupMessageActions(messageEl, messageId, messageData, canEdit, canDelete);
     
-    // Add event listener for clickable username
+    // Add event listener for clickable username - navigate to profile
     const usernameEl = messageEl.querySelector('.clickable-username');
     if (usernameEl) {
         usernameEl.addEventListener('click', (e) => {
@@ -752,7 +752,7 @@ function displayMessage(messageId, messageData) {
             e.stopPropagation();
             const userId = usernameEl.dataset.userId;
             if (userId) {
-                showUserProfile(userId);
+                window.location.href = `/profile/?user=${userId}`;
             }
         });
     }
