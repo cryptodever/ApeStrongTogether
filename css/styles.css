@@ -8698,7 +8698,14 @@ body.quests-body > * {
     gap: 1.5rem;
 }
 
-@media (max-width: 768px) {
+/* Ensure 2 columns on desktop - override any other media queries */
+@media (min-width: 481px) {
+    .quests-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
     .quests-grid {
         grid-template-columns: 1fr;
     }
