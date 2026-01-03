@@ -66,7 +66,12 @@ service cloud.firestore {
           && (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys())
               || request.resource.data.createdAt == resource.data.createdAt)
           && (!('role' in request.resource.data.diff(resource.data).affectedKeys()))
-          && (!('mutedUntil' in request.resource.data.diff(resource.data).affectedKeys())))
+          && (!('mutedUntil' in request.resource.data.diff(resource.data).affectedKeys()))
+          && (!('karma' in request.resource.data.diff(resource.data).affectedKeys())))
+        ||
+        // Any authenticated user updating karma (when voting on posts)
+        (isSignedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['karma']))
         ||
         // Admin/moderator updating role or mutedUntil (for moderation)
         // updateDoc only sends changed fields in request.resource.data
@@ -77,7 +82,8 @@ service cloud.firestore {
           && !('username' in request.resource.data)
           && !('email' in request.resource.data)
           && !('avatarCount' in request.resource.data)
-          && !('createdAt' in request.resource.data))
+          && !('createdAt' in request.resource.data)
+          && !('karma' in request.resource.data))
       );
 
       allow delete: if false;
@@ -240,22 +246,24 @@ service cloud.firestore {
         && request.resource.data.username is string
         && request.resource.data.content is string
         && request.resource.data.images is list
-        && request.resource.data.likes is map
-        && request.resource.data.likesCount == 0
+        && request.resource.data.upvotes is map
+        && request.resource.data.downvotes is map
+        && request.resource.data.voteScore == 0
         && request.resource.data.commentsCount == 0
         && request.resource.data.deleted == false;
       
       // Post authors can update their own posts (for deleting, editing)
-      // Authenticated users can update likes map and likesCount
+      // Authenticated users can update votes (upvotes/downvotes/voteScore) and commentsCount
       allow update: if isSignedIn() && (
         // Post author updating their own post
         (resource.data.userId == request.auth.uid
           && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
           && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
         ||
-        // Any authenticated user updating likes (for liking/unliking)
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likesCount', 'updatedAt'])
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt']))
+        // Any authenticated user updating votes (for upvoting/downvoting)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes', 'voteScore', 'updatedAt'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt'])
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes', 'voteScore', 'commentsCount', 'updatedAt']))
       );
       
       allow delete: if false; // Use soft delete (update deleted flag) instead
