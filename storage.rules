@@ -27,7 +27,7 @@ service firebase.storage {
            && request.resource.size <= 5 * 1024 * 1024)
           ||
           // Videos: MP4 only, max 1MB
-          (request.resource.contentType.matches('video/mp4') 
+          (request.resource.contentType == 'video/mp4' 
            && request.resource.size <= 1 * 1024 * 1024)
         );
     }
