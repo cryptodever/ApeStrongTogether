@@ -60,6 +60,10 @@
                         <!-- Toolbar with attach buttons and submit -->
                         <div class="post-create-toolbar">
                             <div class="post-attach-buttons">
+                                <button type="button" class="post-attach-btn" id="emojiBtn" title="Add emoji">
+                                    <span class="post-attach-icon">😀</span>
+                                </button>
+                                
                                 <input 
                                     type="file" 
                                     id="postImageFile" 
@@ -79,6 +83,17 @@
                                 <label for="postVideoFile" class="post-attach-btn" title="Add video (max 1 MB)">
                                     <span class="post-attach-icon">🎥</span>
                                 </label>
+                            </div>
+                            
+                            <!-- Emoji Picker -->
+                            <div class="emoji-picker hide" id="emojiPicker">
+                                <div class="emoji-picker-header">
+                                    <span class="emoji-picker-title">Choose an emoji</span>
+                                    <button type="button" class="emoji-picker-close" id="emojiPickerClose">×</button>
+                                </div>
+                                <div class="emoji-picker-grid" id="emojiPickerGrid">
+                                    <!-- Emojis will be populated by JavaScript -->
+                                </div>
                             </div>
                             
                             <div class="post-toolbar-right">

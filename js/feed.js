@@ -38,6 +38,7 @@ let postContentEl, postImageFileEl, postVideoFileEl;
 let postCharCountEl, postSubmitBtnEl;
 let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl;
 let removeVideoBtnEl, videoPreviewContainerEl, videoPreviewEl;
+let emojiBtnEl, emojiPickerEl, emojiPickerGridEl, emojiPickerCloseEl;
 let selectedImageFile = null;
 let selectedVideoFile = null;
 let videoPreviewUrl = null;
@@ -59,6 +60,10 @@ export function initFeed() {
     removeVideoBtnEl = document.getElementById('removeVideoBtn');
     videoPreviewContainerEl = document.getElementById('videoPreviewContainer');
     videoPreviewEl = document.getElementById('videoPreview');
+    emojiBtnEl = document.getElementById('emojiBtn');
+    emojiPickerEl = document.getElementById('emojiPicker');
+    emojiPickerGridEl = document.getElementById('emojiPickerGrid');
+    emojiPickerCloseEl = document.getElementById('emojiPickerClose');
 
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
@@ -95,6 +100,9 @@ export function initFeed() {
 
     // Set up event listeners
     setupEventListeners();
+    
+    // Initialize emoji picker
+    initEmojiPicker();
 }
 
 // Set up event listeners
@@ -144,6 +152,23 @@ function setupEventListeners() {
             }
         });
     }
+    
+    // Emoji button
+    if (emojiBtnEl) {
+        emojiBtnEl.addEventListener('click', toggleEmojiPicker);
+    }
+    
+    // Emoji picker close button
+    if (emojiPickerCloseEl) {
+        emojiPickerCloseEl.addEventListener('click', closeEmojiPicker);
+    }
+    
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', (e) => {
+        if (emojiPickerEl && !emojiPickerEl.contains(e.target) && e.target !== emojiBtnEl) {
+            closeEmojiPicker();
+        }
+    });
 }
 
 // Update character count
@@ -1094,4 +1119,96 @@ function getTimeAgo(date) {
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
     
     return date.toLocaleDateString();
+}
+
+// Emoji picker functionality
+const commonEmojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖',
+    '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯',
+    '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔',
+    '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦',
+    '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴',
+    '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿',
+    '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖',
+    '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
+    '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟',
+    '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎',
+    '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏',
+    '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠',
+    '🦷', '🦴', '👀', '👁', '👅', '👄', '💋', '💘', '💝', '💖',
+    '💗', '💓', '💞', '💕', '💟', '❣️', '💔', '❤️', '🧡', '💛',
+    '💚', '💙', '💜', '🖤', '🤍', '🤎', '💯', '🔥', '⭐', '🌟',
+    '✨', '💫', '💥', '💢', '💦', '💨', '🕳️', '💣', '💬', '👁️‍🗨️',
+    '🗨️', '🗯️', '💭', '💤', '👋', '🤚', '🖐', '✋', '🖖', '👌'
+];
+
+function initEmojiPicker() {
+    if (!emojiPickerGridEl) return;
+    
+    // Populate emoji grid
+    commonEmojis.forEach(emoji => {
+        const emojiBtn = document.createElement('button');
+        emojiBtn.type = 'button';
+        emojiBtn.className = 'emoji-item';
+        emojiBtn.textContent = emoji;
+        emojiBtn.title = emoji;
+        emojiBtn.addEventListener('click', () => insertEmoji(emoji));
+        emojiPickerGridEl.appendChild(emojiBtn);
+    });
+}
+
+function toggleEmojiPicker(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!emojiPickerEl) return;
+    
+    if (emojiPickerEl.classList.contains('hide')) {
+        openEmojiPicker();
+    } else {
+        closeEmojiPicker();
+    }
+}
+
+function openEmojiPicker() {
+    if (!emojiPickerEl) return;
+    emojiPickerEl.classList.remove('hide');
+}
+
+function closeEmojiPicker() {
+    if (!emojiPickerEl) return;
+    emojiPickerEl.classList.add('hide');
+}
+
+function insertEmoji(emoji) {
+    if (!postContentEl) return;
+    
+    const cursorPos = postContentEl.selectionStart;
+    const textBefore = postContentEl.value.substring(0, cursorPos);
+    const textAfter = postContentEl.value.substring(postContentEl.selectionEnd);
+    const newText = textBefore + emoji + textAfter;
+    
+    // Check if adding emoji would exceed max length
+    if (newText.length > 2000) {
+        alert('Post is too long! Maximum 2000 characters.');
+        return;
+    }
+    
+    postContentEl.value = newText;
+    
+    // Set cursor position after inserted emoji
+    const newCursorPos = cursorPos + emoji.length;
+    postContentEl.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Update character count
+    updateCharCount();
+    
+    // Focus back on textarea
+    postContentEl.focus();
+    
+    // Close picker
+    closeEmojiPicker();
 }
