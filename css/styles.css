@@ -10870,6 +10870,70 @@ body.leaderboard-body > * {
 }
 
 /* Banner Selection */
+/* Banner Preview Section */
+.banner-preview-section {
+    margin-bottom: 2rem;
+}
+
+.banner-preview-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.banner-preview-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.banner-preview-description {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.5rem;
+}
+
+.banner-preview {
+    width: 100%;
+    height: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.banner-preview-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.6;
+    z-index: 1;
+}
+
+.banner-preview img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 2;
+}
+
 .banner-selection-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -11065,6 +11129,14 @@ body.leaderboard-body > * {
         padding: 1.5rem;
     }
 
+    .banner-preview-card {
+        padding: 1.5rem;
+    }
+    
+    .banner-preview {
+        height: 250px;
+    }
+
     .banner-selection-card {
         padding: 1.5rem;
     }
@@ -11091,6 +11163,18 @@ body.leaderboard-body > * {
     }
 
     .profile-settings-card,
+    .banner-preview-card {
+        padding: 2.25rem;
+    }
+    
+    .banner-preview {
+        height: 300px;
+    }
+    
+    .banner-preview {
+        height: 300px;
+    }
+
     .banner-selection-card {
         padding: 2.25rem;
     }
