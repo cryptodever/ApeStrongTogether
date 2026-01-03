@@ -594,11 +594,11 @@ function renderPost(post) {
             <div class="post-actions">
                 <div class="post-vote-section">
                     <button class="post-vote-btn upvote-btn ${hasUpvote ? 'voted' : ''}" data-post-id="${post.id}" data-vote-type="upvote" title="Upvote">
-                        <span class="post-vote-icon">▲</span>
+                        <span class="post-vote-icon">↑</span>
                     </button>
                     <span class="post-vote-score" data-post-id="${post.id}">${voteScore}</span>
                     <button class="post-vote-btn downvote-btn ${hasDownvote ? 'voted' : ''}" data-post-id="${post.id}" data-vote-type="downvote" title="Downvote">
-                        <span class="post-vote-icon">▼</span>
+                        <span class="post-vote-icon">↓</span>
                     </button>
                 </div>
                 <button class="post-action-btn comment-btn" data-post-id="${post.id}">
