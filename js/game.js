@@ -51,8 +51,8 @@ export class Game {
         
         // Spawning
         this.lastSpawn = 0;
-        this.spawnInterval = 2500; // 2.5 seconds
-        this.maxEnemies = 25;
+        this.spawnInterval = 1000; // 1 second (faster initial spawn)
+        this.maxEnemies = 100; // Increased to allow scaling
         
         // Input
         this.keys = {};
@@ -175,45 +175,52 @@ export class Game {
         this.player.rotation = Math.atan2(screenY, screenX);
     }
     
-    spawnEnemies() {
+    spawnEnemies(count = 1) {
         const now = Date.now();
-        if (now - this.lastSpawn < this.spawnInterval) return;
-        if (this.enemies.length >= this.maxEnemies) return;
-        
-        this.lastSpawn = now;
-        
-        // Spawn from random edge
-        const edge = Math.floor(Math.random() * 4);
-        let x, y;
-        const spawnDistance = Math.max(this.width, this.height) * 0.6;
-        
-        switch (edge) {
-            case 0: // Top
-                x = this.player.x + (Math.random() - 0.5) * spawnDistance;
-                y = this.player.y - spawnDistance;
-                break;
-            case 1: // Right
-                x = this.player.x + spawnDistance;
-                y = this.player.y + (Math.random() - 0.5) * spawnDistance;
-                break;
-            case 2: // Bottom
-                x = this.player.x + (Math.random() - 0.5) * spawnDistance;
-                y = this.player.y + spawnDistance;
-                break;
-            case 3: // Left
-                x = this.player.x - spawnDistance;
-                y = this.player.y + (Math.random() - 0.5) * spawnDistance;
-                break;
+        if (count === 1) {
+            // Regular timed spawning
+            if (now - this.lastSpawn < this.spawnInterval) return;
+            if (this.enemies.length >= this.maxEnemies) return;
+            this.lastSpawn = now;
         }
         
-        this.enemies.push({
-            x: x,
-            y: y,
-            radius: 12,
-            speed: 1.5,
-            health: 1,
-            color: '#ff0000'
-        });
+        // Spawn 'count' number of enemies
+        for (let i = 0; i < count; i++) {
+            if (this.enemies.length >= this.maxEnemies) break;
+            
+            // Spawn from random edge
+            const edge = Math.floor(Math.random() * 4);
+            let x, y;
+            const spawnDistance = Math.max(this.width, this.height) * 0.6;
+            
+            switch (edge) {
+                case 0: // Top
+                    x = this.player.x + (Math.random() - 0.5) * spawnDistance;
+                    y = this.player.y - spawnDistance;
+                    break;
+                case 1: // Right
+                    x = this.player.x + spawnDistance;
+                    y = this.player.y + (Math.random() - 0.5) * spawnDistance;
+                    break;
+                case 2: // Bottom
+                    x = this.player.x + (Math.random() - 0.5) * spawnDistance;
+                    y = this.player.y + spawnDistance;
+                    break;
+                case 3: // Left
+                    x = this.player.x - spawnDistance;
+                    y = this.player.y + (Math.random() - 0.5) * spawnDistance;
+                    break;
+            }
+            
+            this.enemies.push({
+                x: x,
+                y: y,
+                radius: 12,
+                speed: 1.5,
+                health: 1,
+                color: '#ff0000'
+            });
+        }
     }
     
     updateEnemies(deltaTime) {
@@ -315,6 +322,10 @@ export class Game {
                         if (this.onEnemyKill) {
                             this.onEnemyKill(10); // 10 gold per kill
                         }
+                        
+                        // Spawn 1.5x enemies when one is killed (rounded up)
+                        const spawnCount = Math.ceil(1 * 1.5); // 2 enemies per kill
+                        this.spawnEnemies(spawnCount);
                     }
                     
                     break;
