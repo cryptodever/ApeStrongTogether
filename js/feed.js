@@ -36,8 +36,8 @@ let postsListener = null;
 let postsFeedEl, postCreateSectionEl, postCreateFormEl;
 let postContentEl, postImageFileEl, postVideoFileEl;
 let postCharCountEl, postSubmitBtnEl;
-let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl, imageFileNameEl;
-let removeVideoBtnEl, videoPreviewContainerEl, videoPreviewEl, videoFileNameEl;
+let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl;
+let removeVideoBtnEl, videoPreviewContainerEl, videoPreviewEl;
 let selectedImageFile = null;
 let selectedVideoFile = null;
 let videoPreviewUrl = null;
@@ -56,11 +56,9 @@ export function initFeed() {
     removeImageBtnEl = document.getElementById('removeImageBtn');
     imagePreviewContainerEl = document.getElementById('imagePreviewContainer');
     imagePreviewEl = document.getElementById('imagePreview');
-    imageFileNameEl = document.getElementById('imageFileName');
     removeVideoBtnEl = document.getElementById('removeVideoBtn');
     videoPreviewContainerEl = document.getElementById('videoPreviewContainer');
     videoPreviewEl = document.getElementById('videoPreview');
-    videoFileNameEl = document.getElementById('videoFileName');
 
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
@@ -127,7 +125,6 @@ function setupEventListeners() {
             selectedImageFile = null;
             if (postImageFileEl) postImageFileEl.value = '';
             if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
-            if (imageFileNameEl) imageFileNameEl.classList.add('hide');
         });
     }
     
@@ -145,7 +142,6 @@ function setupEventListeners() {
                 videoPreviewEl.src = '';
                 videoPreviewEl.load();
             }
-            if (videoFileNameEl) videoFileNameEl.classList.add('hide');
         });
     }
 }
@@ -175,7 +171,6 @@ function handleImageFileSelect(e) {
             videoPreviewEl.src = '';
             videoPreviewEl.load();
         }
-        if (videoFileNameEl) videoFileNameEl.classList.add('hide');
     }
     
     // Validate file type
@@ -205,10 +200,6 @@ function handleImageFileSelect(e) {
         if (imagePreviewContainerEl) {
             imagePreviewContainerEl.classList.remove('hide');
         }
-        if (imageFileNameEl) {
-            imageFileNameEl.textContent = file.name;
-            imageFileNameEl.classList.remove('hide');
-        }
     };
     reader.readAsDataURL(file);
 }
@@ -223,7 +214,6 @@ function handleVideoFileSelect(e) {
         selectedImageFile = null;
         if (postImageFileEl) postImageFileEl.value = '';
         if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
-        if (imageFileNameEl) imageFileNameEl.classList.add('hide');
     }
     
     // Revoke previous video URL if exists
@@ -256,10 +246,6 @@ function handleVideoFileSelect(e) {
     }
     if (videoPreviewContainerEl) {
         videoPreviewContainerEl.classList.remove('hide');
-    }
-    if (videoFileNameEl) {
-        videoFileNameEl.textContent = file.name;
-        videoFileNameEl.classList.remove('hide');
     }
 }
 
@@ -396,13 +382,11 @@ async function handlePostSubmit(e) {
             videoPreviewUrl = null;
         }
         if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
-        if (imageFileNameEl) imageFileNameEl.classList.add('hide');
         if (videoPreviewContainerEl) videoPreviewContainerEl.classList.add('hide');
         if (videoPreviewEl) {
             videoPreviewEl.src = '';
             videoPreviewEl.load();
         }
-        if (videoFileNameEl) videoFileNameEl.classList.add('hide');
         updateCharCount();
         
     } catch (error) {
