@@ -752,7 +752,6 @@ async function loadUserStats() {
         const karmaStatEl = document.getElementById('userKarmaStat');
         const followersStatEl = document.getElementById('userFollowersStat');
         const followingStatEl = document.getElementById('userFollowingStat');
-        const postsStatEl = document.getElementById('userPostsStat');
         const levelProgressFillEl = document.getElementById('userLevelProgressFill');
         const levelProgressTextEl = document.getElementById('userLevelProgressText');
         
@@ -778,19 +777,6 @@ async function loadUserStats() {
             if (followingStatEl) followingStatEl.textContent = followingSnapshot.size;
         } catch (error) {
             if (followingStatEl) followingStatEl.textContent = '0';
-        }
-        
-        // Get posts count
-        try {
-            const postsQuery = query(
-                collection(db, 'posts'),
-                where('userId', '==', currentUser.uid),
-                where('deleted', '==', false)
-            );
-            const postsSnapshot = await getDocs(postsQuery);
-            if (postsStatEl) postsStatEl.textContent = postsSnapshot.size;
-        } catch (error) {
-            if (postsStatEl) postsStatEl.textContent = '0';
         }
         
         // Update level progress bar
