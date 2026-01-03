@@ -12579,6 +12579,21 @@ body.leaderboard-body > * {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.activity-post-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.activity-post-video {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    max-height: 400px;
+    background: #000000;
+}
+
 .activity-post-footer {
     display: flex;
     align-items: center;
