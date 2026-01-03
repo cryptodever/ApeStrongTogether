@@ -71,12 +71,13 @@ function createOverlay() {
         return;
     }
     
-    // Find the container (profile, chat, quests, or leaderboard)
+    // Find the container (profile, chat, quests, leaderboard, or feed)
     const profileContainer = document.querySelector('.profile-container');
     const chatContainer = document.querySelector('.chat-container');
     const questsContainer = document.querySelector('.quests-container');
     const leaderboardContainer = document.querySelector('.leaderboard-container');
-    const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
+    const feedContainer = document.querySelector('.feed-container');
+    const container = profileContainer || chatContainer || questsContainer || leaderboardContainer || feedContainer;
     
     if (!container) {
         // Silently return if no container found (might be homepage or other public page)
@@ -89,6 +90,7 @@ function createOverlay() {
     const isProfilePage = !!profileContainer;
     const isQuestsPage = !!questsContainer;
     const isLeaderboardPage = !!leaderboardContainer;
+    const isFeedPage = !!feedContainer;
     const pageMessage = isChatPage 
         ? 'Sign up / Log in to access live chat.' 
         : isProfilePage
@@ -97,6 +99,8 @@ function createOverlay() {
         ? 'Sign up / Log in to access quests.'
         : isLeaderboardPage
         ? 'Sign up / Log in to view the leaderboard.'
+        : isFeedPage
+        ? 'Sign up / Log in to view the feed.'
         : 'Sign up / Log in to generate your Ape.';
     
     // Note: Both containers already have position: relative in CSS, so no need to add class
@@ -155,7 +159,8 @@ function showOverlay() {
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
         const leaderboardContainer = document.querySelector('.leaderboard-container');
-        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
+        const feedContainer = document.querySelector('.feed-container');
+        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer || feedContainer;
         
         if (container) {
             // Add blocked class to container for CSS styling
@@ -185,6 +190,14 @@ function showOverlay() {
                 }
             }
             
+            // For feed page, also add blocked class to feed-page
+            if (feedContainer) {
+                const feedPage = document.querySelector('.feed-page');
+                if (feedPage) {
+                    feedPage.classList.add('blocked');
+                }
+            }
+            
             // Disable pointer events on all children except the overlay
             Array.from(container.children).forEach(child => {
                 if (child.id !== 'authGateOverlay') {
@@ -208,7 +221,8 @@ function hideOverlay() {
         const chatContainer = document.querySelector('.chat-container');
         const questsContainer = document.querySelector('.quests-container');
         const leaderboardContainer = document.querySelector('.leaderboard-container');
-        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer;
+        const feedContainer = document.querySelector('.feed-container');
+        const container = profileContainer || chatContainer || questsContainer || leaderboardContainer || feedContainer;
         
         if (container) {
             // Remove blocked class from container
@@ -235,6 +249,14 @@ function hideOverlay() {
                 const leaderboardPage = document.querySelector('.leaderboard-page');
                 if (leaderboardPage) {
                     leaderboardPage.classList.remove('blocked');
+                }
+            }
+            
+            // For feed page, also remove blocked class from feed-page
+            if (feedContainer) {
+                const feedPage = document.querySelector('.feed-page');
+                if (feedPage) {
+                    feedPage.classList.remove('blocked');
                 }
             }
             
