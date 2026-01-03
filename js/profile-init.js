@@ -303,7 +303,9 @@ async function loadProfile() {
                 }
                 
                 // Update banner unlock states based on user level
-                const userLevel = userData.level || 1;
+                // Check if user is already at required level to unlock items
+                // Note: This will be updated again with calculated level from quests system if available
+                let userLevel = userData.level || 1;
                 updateBannerUnlockStates(userLevel);
             } else {
                 // Profile doesn't exist yet, use defaults
@@ -573,8 +575,12 @@ function getBannerBgRequiredLevel(bgIndex) {
 }
 
 // Update banner unlock states based on user level
+// This function checks if the user's current level is sufficient to unlock items
+// It will automatically unlock items if the user is already at or above the required level
 function updateBannerUnlockStates(userLevel) {
-    if (!userLevel) return;
+    if (!userLevel || userLevel < 1) {
+        userLevel = 1; // Default to level 1 if invalid
+    }
     
     // Update banner items
     const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
@@ -585,14 +591,17 @@ function updateBannerUnlockStates(userLevel) {
         const bannerIndex = getBannerIndex(bannerPath);
         if (bannerIndex === 0) return;
         
-        const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
         const requiredLevel = getBannerRequiredLevel(bannerIndex);
+        const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
         
+        // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {
+            // User is at required level or higher - unlock the item
             item.classList.remove('locked');
             const overlay = item.querySelector('.banner-lock-overlay');
             if (overlay) overlay.remove();
         } else {
+            // User is below required level - keep locked and show requirement
             item.classList.add('locked');
             // Update or create lock overlay
             let overlay = item.querySelector('.banner-lock-overlay');
@@ -617,14 +626,17 @@ function updateBannerUnlockStates(userLevel) {
         const bgIndex = getBannerBgIndex(bgPath);
         if (bgIndex === 0) return;
         
-        const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
         const requiredLevel = getBannerBgRequiredLevel(bgIndex);
+        const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
         
+        // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {
+            // User is at required level or higher - unlock the item
             item.classList.remove('locked');
             const overlay = item.querySelector('.banner-lock-overlay');
             if (overlay) overlay.remove();
         } else {
+            // User is below required level - keep locked and show requirement
             item.classList.add('locked');
             // Update or create lock overlay
             let overlay = item.querySelector('.banner-lock-overlay');
