@@ -92,9 +92,15 @@ async function loadProfile() {
                 // Store current banner values
                 if (userData.bannerImage) {
                     selectedBannerImage = userData.bannerImage;
+                } else {
+                    // Default to first banner if none selected
+                    selectedBannerImage = '/pfp_apes/bg1.png';
                 }
                 if (userData.bannerBackground) {
                     selectedBannerBackground = userData.bannerBackground;
+                } else {
+                    // Default to first background if none selected
+                    selectedBannerBackground = '/pfp_generator_images/pfp_bg1.png';
                 }
                 
                 // Update selected banner in grid
@@ -106,6 +112,9 @@ async function loadProfile() {
                 if (userData.bannerBackground) {
                     updateBannerBgSelection(userData.bannerBackground);
                 }
+                
+                // Update preview with current selections
+                updateBannerPreview();
                 
                 // Update banner unlock states based on user level
                 let userLevel = userData.level || 1;
@@ -403,6 +412,9 @@ function selectBanner(bannerPath) {
     // Update selection in grid
     updateBannerSelection(bannerPath);
     
+    // Update preview
+    updateBannerPreview();
+    
     // Auto-save banner selection
     saveProfile();
 }
@@ -425,8 +437,26 @@ function selectBannerBg(bgPath) {
     // Update selection in grid
     updateBannerBgSelection(bgPath);
     
+    // Update preview
+    updateBannerPreview();
+    
     // Auto-save banner background selection
     saveProfile();
+}
+
+// Update banner preview
+function updateBannerPreview() {
+    const previewImg = document.getElementById('bannerPreviewImg');
+    const previewBg = document.getElementById('bannerPreviewBg');
+    
+    if (previewImg) {
+        previewImg.src = selectedBannerImage || '/pfp_apes/bg1.png';
+    }
+    
+    if (previewBg) {
+        const bgUrl = selectedBannerBackground || '/pfp_generator_images/pfp_bg1.png';
+        previewBg.style.backgroundImage = `url(${bgUrl})`;
+    }
 }
 
 // Helper function to format time remaining
