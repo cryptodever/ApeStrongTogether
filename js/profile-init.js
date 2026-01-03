@@ -202,6 +202,9 @@ async function loadProfile() {
                                 rankProgressFillEl.style.setProperty('width', `${Math.min(progressPercent, 100)}%`);
                             }
                         }
+                        
+                        // Update banner unlock states when level changes
+                        updateBannerUnlockStates(calculatedLevel);
                     } catch (error) {
                         console.error('Error syncing level from quests system:', error);
                         // Fallback to stored level or default
@@ -298,6 +301,10 @@ async function loadProfile() {
                 if (userData.bannerBackground) {
                     updateBannerBgSelection(userData.bannerBackground);
                 }
+                
+                // Update banner unlock states based on user level
+                const userLevel = userData.level || 1;
+                updateBannerUnlockStates(userLevel);
             } else {
                 // Profile doesn't exist yet, use defaults
             }
@@ -499,6 +506,141 @@ function normalizePath(path) {
     return path.startsWith('/') ? path : '/' + path;
 }
 
+// Get banner index (1-based) from banner path
+function getBannerIndex(bannerPath) {
+    const banners = [
+        '/pfp_apes/bg1.png',
+        '/pfp_apes/bg2.png',
+        '/pfp_apes/bg3.png',
+        '/pfp_apes/bg4.png',
+        '/pfp_apes/tg_1.png',
+        '/pfp_apes/tg_2.png',
+        '/pfp_apes/tg_3.png',
+        '/pfp_apes/tg_4.png'
+    ];
+    const normalizedPath = normalizePath(bannerPath);
+    const index = banners.findIndex(b => normalizePath(b) === normalizedPath);
+    return index >= 0 ? index + 1 : 0;
+}
+
+// Get banner background index (1-based) from background path
+function getBannerBgIndex(bgPath) {
+    const backgrounds = [
+        '/pfp_generator_images/pfp_bg1.png',
+        '/pfp_generator_images/pfp_bg2.png',
+        '/pfp_generator_images/pfp_bg3.png',
+        '/pfp_generator_images/pfp_bg4.png',
+        '/pfp_generator_images/pfp_bg5.png',
+        '/pfp_generator_images/pfp_bg6.png',
+        '/pfp_generator_images/pfp_bg7.png',
+        '/pfp_generator_images/pfp_bg8.png'
+    ];
+    const normalizedPath = normalizePath(bgPath);
+    const index = backgrounds.findIndex(b => normalizePath(b) === normalizedPath);
+    return index >= 0 ? index + 1 : 0;
+}
+
+// Check if banner is unlocked based on level
+function isBannerUnlocked(bannerIndex, userLevel) {
+    // First 4 are always unlocked
+    if (bannerIndex <= 4) return true;
+    // Every 5 levels after level 1 unlocks a new banner
+    // Banner 5 unlocks at level 5, banner 6 at level 10, etc.
+    const requiredLevel = (bannerIndex - 4) * 5;
+    return userLevel >= requiredLevel;
+}
+
+// Check if banner background is unlocked based on level
+function isBannerBgUnlocked(bgIndex, userLevel) {
+    // First 4 are always unlocked
+    if (bgIndex <= 4) return true;
+    // Every 5 levels after level 1 unlocks a new background
+    // Background 5 unlocks at level 5, background 6 at level 10, etc.
+    const requiredLevel = (bgIndex - 4) * 5;
+    return userLevel >= requiredLevel;
+}
+
+// Get required level for banner unlock
+function getBannerRequiredLevel(bannerIndex) {
+    if (bannerIndex <= 4) return 1;
+    return (bannerIndex - 4) * 5;
+}
+
+// Get required level for banner background unlock
+function getBannerBgRequiredLevel(bgIndex) {
+    if (bgIndex <= 4) return 1;
+    return (bgIndex - 4) * 5;
+}
+
+// Update banner unlock states based on user level
+function updateBannerUnlockStates(userLevel) {
+    if (!userLevel) return;
+    
+    // Update banner items
+    const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
+    bannerItems.forEach(item => {
+        const bannerPath = item.dataset.banner;
+        if (!bannerPath) return;
+        
+        const bannerIndex = getBannerIndex(bannerPath);
+        if (bannerIndex === 0) return;
+        
+        const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
+        const requiredLevel = getBannerRequiredLevel(bannerIndex);
+        
+        if (isUnlocked) {
+            item.classList.remove('locked');
+            const overlay = item.querySelector('.banner-lock-overlay');
+            if (overlay) overlay.remove();
+        } else {
+            item.classList.add('locked');
+            // Update or create lock overlay
+            let overlay = item.querySelector('.banner-lock-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'banner-lock-overlay';
+                item.appendChild(overlay);
+            }
+            overlay.innerHTML = `
+                <span class="lock-icon">🔒</span>
+                <span class="lock-text">Unlock at Level ${requiredLevel}</span>
+            `;
+        }
+    });
+    
+    // Update banner background items
+    const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
+    bannerBgItems.forEach(item => {
+        const bgPath = item.dataset.bannerBg;
+        if (!bgPath) return;
+        
+        const bgIndex = getBannerBgIndex(bgPath);
+        if (bgIndex === 0) return;
+        
+        const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
+        const requiredLevel = getBannerBgRequiredLevel(bgIndex);
+        
+        if (isUnlocked) {
+            item.classList.remove('locked');
+            const overlay = item.querySelector('.banner-lock-overlay');
+            if (overlay) overlay.remove();
+        } else {
+            item.classList.add('locked');
+            // Update or create lock overlay
+            let overlay = item.querySelector('.banner-lock-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'banner-lock-overlay';
+                item.appendChild(overlay);
+            }
+            overlay.innerHTML = `
+                <span class="lock-icon">🔒</span>
+                <span class="lock-text">Unlock at Level ${requiredLevel}</span>
+            `;
+        }
+    });
+}
+
 // Update banner selection in grid
 function updateBannerSelection(selectedBanner) {
     if (!selectedBanner) return;
@@ -540,7 +682,9 @@ function selectBanner(bannerPath) {
     
     // Check if banner is locked
     if (bannerItem.classList.contains('locked')) {
-        console.log('Banner is locked');
+        const bannerIndex = getBannerIndex(bannerPath);
+        const requiredLevel = getBannerRequiredLevel(bannerIndex);
+        alert(`This banner is locked. Unlock it at Level ${requiredLevel}!`);
         return;
     }
     
@@ -566,7 +710,9 @@ function selectBannerBg(bgPath) {
     
     // Check if banner background is locked
     if (bannerBgItem.classList.contains('locked')) {
-        console.log('Banner background is locked');
+        const bgIndex = getBannerBgIndex(bgPath);
+        const requiredLevel = getBannerBgRequiredLevel(bgIndex);
+        alert(`This banner background is locked. Unlock it at Level ${requiredLevel}!`);
         return;
     }
     
