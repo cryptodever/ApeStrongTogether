@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
     <title>Feed 📱 | Apes Together Strong</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -66,6 +66,25 @@
                                         <button type="button" class="post-image-remove" id="removeImageBtn">×</button>
                                     </div>
                                     <div class="post-image-file-name hide" id="imageFileName"></div>
+                                </div>
+                            </div>
+                            <div class="post-option-group">
+                                <label for="postVideoFile" class="post-option-label">Attach Video (optional, max 1 MB)</label>
+                                <div class="post-video-upload-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="postVideoFile" 
+                                        class="post-video-file-input" 
+                                        accept="video/mp4"
+                                    />
+                                    <label for="postVideoFile" class="post-video-file-label">
+                                        🎥 Choose MP4 Video
+                                    </label>
+                                    <div class="post-video-preview hide" id="videoPreviewContainer">
+                                        <video id="videoPreview" class="post-video-preview-video" controls></video>
+                                        <button type="button" class="post-video-remove" id="removeVideoBtn">×</button>
+                                    </div>
+                                    <div class="post-video-file-name hide" id="videoFileName"></div>
                                 </div>
                             </div>
                         </div>
