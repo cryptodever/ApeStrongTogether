@@ -1553,13 +1553,14 @@ async function loadFollowStats(userId) {
                     }
                     
                     // Track quest progress: weekly_get_25_followers
-                    // Update quest progress to match current follower count
+                    // Update quest progress with the difference (increment)
                     if (userId === currentUser?.uid && newFollowersCount > oldFollowersCount) {
                         try {
                             const { updateQuestProgress } = await import('/js/quests-init.js');
-                            // Update quest to current follower count (not increment)
-                            // The quest system will handle capping at targetValue
-                            await updateQuestProgress('weekly_get_25_followers', newFollowersCount);
+                            // Calculate the difference (increment) between old and new follower count
+                            const followerIncrement = newFollowersCount - oldFollowersCount;
+                            // Pass the increment, not the total count
+                            await updateQuestProgress('weekly_get_25_followers', followerIncrement);
                         } catch (error) {
                             console.error('Error updating followers quest progress:', error);
                         }
