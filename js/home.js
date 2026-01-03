@@ -208,10 +208,10 @@ async function loadActivityFeed() {
                 const userData = userDoc.exists() ? userDoc.data() : null;
                 const username = userData?.username || 'Anonymous';
                 
-                // Calculate hot score for this post
-                const likes = postData.likesCount || 0;
+                // Calculate hot score for this post using vote score
+                const voteScore = postData.voteScore || 0;
                 const comments = postData.commentsCount || 0;
-                const hotScore = calculateHotScore(likes, comments, postData.createdAt);
+                const hotScore = calculateHotScore(voteScore, comments, postData.createdAt);
                 
                 trendingPosts.push({
                     type: 'trending_post',
@@ -221,7 +221,7 @@ async function loadActivityFeed() {
                     content: postData.content || '',
                     images: postData.images || [],
                     videos: postData.videos || [],
-                    likesCount: likes,
+                    voteScore: voteScore,
                     commentsCount: comments,
                     timestamp: postData.createdAt,
                     sortTime: postTime,
@@ -409,7 +409,7 @@ function createActivityItem(activity) {
                     ` : ''}
                 </div>
                 <div class="activity-post-footer">
-                    <span class="activity-post-likes">❤️ ${activity.likesCount || 0}</span>
+                    <span class="activity-post-votes">▲ ${activity.voteScore || 0}</span>
                     <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
                         💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
                     </button>
@@ -453,8 +453,8 @@ function getTimeAgo(timestamp) {
 }
 
 // Calculate Reddit-style "hot" score for trending posts
-// Formula: hot_score = (likes + comments * weight) / (age_in_hours + 2)^gravity
-function calculateHotScore(likes, comments, createdAt) {
+// Formula: hot_score = (voteScore + comments * weight) / (age_in_hours + 2)^gravity
+function calculateHotScore(voteScore, comments, createdAt) {
     // Get post age in hours
     let postTime;
     if (createdAt && typeof createdAt.toMillis === 'function') {
@@ -476,7 +476,7 @@ function calculateHotScore(likes, comments, createdAt) {
     const timeOffset = 2; // Prevents division by zero for brand new posts
     
     // Calculate engagement score
-    const engagement = likes + (comments * commentWeight);
+    const engagement = voteScore + (comments * commentWeight);
     
     // Calculate hot score with time decay
     const hotScore = engagement / Math.pow(ageInHours + timeOffset, gravity);

@@ -12277,6 +12277,64 @@ body.leaderboard-body > * {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.post-vote-section {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 0.25rem;
+}
+
+.post-vote-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.post-vote-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.post-vote-btn.upvote-btn:hover {
+    color: #4ade80;
+}
+
+.post-vote-btn.downvote-btn:hover {
+    color: #ef4444;
+}
+
+.post-vote-btn.voted {
+    color: #4ade80;
+}
+
+.post-vote-btn.downvote-btn.voted {
+    color: #ef4444;
+}
+
+.post-vote-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.post-vote-score {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0 0.5rem;
+}
+
 .post-action-btn {
     display: flex;
     align-items: center;
@@ -12295,10 +12353,6 @@ body.leaderboard-body > * {
 .post-action-btn:hover {
     background: rgba(255, 255, 255, 0.05);
     color: #ffffff;
-}
-
-.post-action-btn.liked {
-    color: #ef4444;
 }
 
 .post-action-icon {
