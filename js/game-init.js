@@ -32,8 +32,7 @@ let userGameData = {
     gameUpgrades: {
         weaponDamage: 1,
         weaponFireRate: 1,
-        apeHealth: 1,
-        apeSpeed: 1
+        apeHealth: 1
     }
 };
 
@@ -46,7 +45,6 @@ let shopGoldEl;
 let damageLevelEl, damageCostEl, upgradeDamageBtn;
 let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
 let healthLevelEl, healthCostEl, upgradeHealthBtn;
-let speedLevelEl, speedCostEl, upgradeSpeedBtn;
 let restartBtn;
 
 // Initialize game page
@@ -78,8 +76,7 @@ async function loadUserGameData() {
                 userGameData.gameUpgrades = {
                     weaponDamage: data.gameUpgrades.weaponDamage || 1,
                     weaponFireRate: data.gameUpgrades.weaponFireRate || 1,
-                    apeHealth: data.gameUpgrades.apeHealth || 1,
-                    apeSpeed: data.gameUpgrades.apeSpeed || 1
+                    apeHealth: data.gameUpgrades.apeHealth || 1
                 };
             }
         } else {
@@ -89,8 +86,7 @@ async function loadUserGameData() {
                 gameUpgrades: {
                     weaponDamage: 1,
                     weaponFireRate: 1,
-                    apeHealth: 1,
-                    apeSpeed: 1
+                    apeHealth: 1
                 },
                 createdAt: serverTimestamp()
             }, { merge: true });
@@ -137,7 +133,6 @@ function initializeGame() {
     const weaponDamage = baseDamage * userGameData.gameUpgrades.weaponDamage;
     const weaponFireRate = Math.max(100, baseFireRate / userGameData.gameUpgrades.weaponFireRate); // Min 100ms
     const playerHealth = baseHealth * userGameData.gameUpgrades.apeHealth;
-    const playerSpeed = baseSpeed * (1 + (userGameData.gameUpgrades.apeSpeed - 1) * 0.2);
     
     // Create game instance
     game = new Game(
@@ -150,7 +145,7 @@ function initializeGame() {
     game.setWeaponDamage(weaponDamage);
     game.setWeaponFireRate(weaponFireRate);
     game.setPlayerHealth(playerHealth);
-    game.setPlayerSpeed(playerSpeed);
+    game.setPlayerSpeed(baseSpeed); // Always use base speed
     
     // Start update loop for UI
     updateGameUI();
@@ -184,9 +179,10 @@ function hideUpgradeShop() {
     }
 }
 
-// Calculate upgrade cost
+// Calculate upgrade cost - slower scaling
 function getUpgradeCost(level) {
-    return Math.floor(10 * Math.pow(1.5, level - 1));
+    // Linear scaling: 10, 20, 30, 40, 50... (much slower than exponential)
+    return 10 + (level - 1) * 10;
 }
 
 // Update upgrade shop UI
@@ -202,7 +198,6 @@ function updateUpgradeShopUI() {
     const damageLevel = userGameData.gameUpgrades.weaponDamage;
     const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
     const healthLevel = userGameData.gameUpgrades.apeHealth;
-    const speedLevel = userGameData.gameUpgrades.apeSpeed;
     
     if (damageLevelEl) damageLevelEl.textContent = damageLevel;
     if (damageCostEl) damageCostEl.textContent = getUpgradeCost(damageLevel);
@@ -223,13 +218,6 @@ function updateUpgradeShopUI() {
     if (upgradeHealthBtn) {
         const cost = getUpgradeCost(healthLevel);
         upgradeHealthBtn.disabled = userGameData.gameGold < cost;
-    }
-    
-    if (speedLevelEl) speedLevelEl.textContent = speedLevel;
-    if (speedCostEl) speedCostEl.textContent = getUpgradeCost(speedLevel);
-    if (upgradeSpeedBtn) {
-        const cost = getUpgradeCost(speedLevel);
-        upgradeSpeedBtn.disabled = userGameData.gameGold < cost;
     }
 }
 
@@ -309,10 +297,6 @@ function setupEventListeners() {
     healthCostEl = document.getElementById('healthCost');
     upgradeHealthBtn = document.getElementById('upgradeHealth');
     
-    speedLevelEl = document.getElementById('speedLevel');
-    speedCostEl = document.getElementById('speedCost');
-    upgradeSpeedBtn = document.getElementById('upgradeSpeed');
-    
     restartBtn = document.getElementById('restartBtn');
     
     // Upgrade buttons
@@ -326,10 +310,6 @@ function setupEventListeners() {
     
     if (upgradeHealthBtn) {
         upgradeHealthBtn.addEventListener('click', () => purchaseUpgrade('apeHealth'));
-    }
-    
-    if (upgradeSpeedBtn) {
-        upgradeSpeedBtn.addEventListener('click', () => purchaseUpgrade('apeSpeed'));
     }
     
     // Restart button
