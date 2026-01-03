@@ -11821,29 +11821,61 @@ body.leaderboard-body > * {
 }
 
 .post-char-count {
-    position: absolute;
-    bottom: 0.5rem;
-    right: 0.75rem;
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.5);
+    margin-right: 0.75rem;
 }
 
-.post-create-options {
+.post-media-previews {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
 }
 
-.post-option-group {
+.post-create-toolbar {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 0.5rem;
+}
+
+.post-attach-buttons {
+    display: flex;
     gap: 0.5rem;
+    align-items: center;
 }
 
-.post-option-label {
-    font-size: 0.875rem;
+.post-attach-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
     color: rgba(255, 255, 255, 0.7);
-    font-weight: 500;
+}
+
+.post-attach-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.post-attach-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.post-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .post-option-input {
@@ -11861,12 +11893,6 @@ body.leaderboard-body > * {
     border-color: rgba(74, 222, 128, 0.5);
 }
 
-.post-image-upload-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
 .post-image-file-input {
     position: absolute;
     width: 1px;
@@ -11877,81 +11903,6 @@ body.leaderboard-body > * {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
-}
-
-.post-image-file-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.post-image-file-label:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(74, 222, 128, 0.3);
-    color: #ffffff;
-}
-
-.post-image-preview {
-    position: relative;
-    display: inline-block;
-    max-width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.post-image-preview-img {
-    max-width: 100%;
-    max-height: 300px;
-    object-fit: contain;
-    display: block;
-    border-radius: 8px;
-}
-
-.post-image-remove {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
-    font-size: 1.25rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    line-height: 1;
-}
-
-.post-image-remove:hover {
-    background: rgba(239, 68, 68, 0.9);
-    border-color: rgba(239, 68, 68, 1);
-}
-
-.post-image-file-name {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 0.25rem 0;
-}
-
-.post-video-upload-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
 }
 
 .post-video-file-input {
@@ -11966,34 +11917,57 @@ body.leaderboard-body > * {
     border-width: 0;
 }
 
-.post-video-file-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
+.post-image-preview {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
 }
 
-.post-video-file-label:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(74, 222, 128, 0.3);
-    color: #ffffff;
+.post-image-preview-img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    display: block;
+    border-radius: 12px;
 }
+
+.post-image-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+    z-index: 10;
+}
+
+.post-image-remove:hover {
+    background: rgba(239, 68, 68, 0.9);
+    transform: scale(1.1);
+}
+
 
 .post-video-preview {
     position: relative;
     display: inline-block;
     max-width: 100%;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .post-video-preview-video {
@@ -12001,38 +11975,34 @@ body.leaderboard-body > * {
     max-height: 300px;
     object-fit: contain;
     display: block;
-    border-radius: 8px;
+    border-radius: 12px;
+    background: #000000;
 }
 
 .post-video-remove {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.8);
+    border: none;
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     line-height: 1;
+    z-index: 10;
 }
 
 .post-video-remove:hover {
     background: rgba(239, 68, 68, 0.9);
-    border-color: rgba(239, 68, 68, 1);
-}
-
-.post-video-file-name {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 0.25rem 0;
+    transform: scale(1.1);
 }
 
 .post-option-remove {
@@ -12052,9 +12022,27 @@ body.leaderboard-body > * {
     background: rgba(239, 68, 68, 0.3);
 }
 
-.post-create-actions {
-    display: flex;
-    justify-content: flex-end;
+.post-submit-btn {
+    padding: 0.5rem 1.5rem;
+    background: #4ade80;
+    border: none;
+    border-radius: 8px;
+    color: #000000;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.post-submit-btn:hover:not(:disabled) {
+    background: #22c55e;
+    transform: translateY(-1px);
+}
+
+.post-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .post-submit-btn {

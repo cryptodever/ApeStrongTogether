@@ -41,58 +41,54 @@
                                 class="post-content-input" 
                                 placeholder="What's on your mind, Ape?"
                                 maxlength="2000"
-                                rows="4"
+                                rows="3"
                             ></textarea>
-                            <div class="post-char-count">
-                                <span id="postCharCount">0</span>/2000
-                            </div>
-                        </div>
-                        
-                        <div class="post-create-options">
-                            <div class="post-option-group">
-                                <label for="postImageFile" class="post-option-label">Attach Image (optional)</label>
-                                <div class="post-image-upload-wrapper">
-                                    <input 
-                                        type="file" 
-                                        id="postImageFile" 
-                                        class="post-image-file-input" 
-                                        accept="image/png,image/jpeg,image/jpg"
-                                    />
-                                    <label for="postImageFile" class="post-image-file-label">
-                                        📎 Choose PNG or JPEG
-                                    </label>
-                                    <div class="post-image-preview hide" id="imagePreviewContainer">
-                                        <img id="imagePreview" class="post-image-preview-img" alt="Preview" />
-                                        <button type="button" class="post-image-remove" id="removeImageBtn">×</button>
-                                    </div>
-                                    <div class="post-image-file-name hide" id="imageFileName"></div>
+                            
+                            <!-- Media Previews -->
+                            <div class="post-media-previews" id="postMediaPreviews">
+                                <div class="post-image-preview hide" id="imagePreviewContainer">
+                                    <img id="imagePreview" class="post-image-preview-img" alt="Preview" />
+                                    <button type="button" class="post-image-remove" id="removeImageBtn" title="Remove image">×</button>
                                 </div>
-                            </div>
-                            <div class="post-option-group">
-                                <label for="postVideoFile" class="post-option-label">Attach Video (optional, max 1 MB)</label>
-                                <div class="post-video-upload-wrapper">
-                                    <input 
-                                        type="file" 
-                                        id="postVideoFile" 
-                                        class="post-video-file-input" 
-                                        accept="video/mp4"
-                                    />
-                                    <label for="postVideoFile" class="post-video-file-label">
-                                        🎥 Choose MP4 Video
-                                    </label>
-                                    <div class="post-video-preview hide" id="videoPreviewContainer">
-                                        <video id="videoPreview" class="post-video-preview-video" controls></video>
-                                        <button type="button" class="post-video-remove" id="removeVideoBtn">×</button>
-                                    </div>
-                                    <div class="post-video-file-name hide" id="videoFileName"></div>
+                                <div class="post-video-preview hide" id="videoPreviewContainer">
+                                    <video id="videoPreview" class="post-video-preview-video" controls></video>
+                                    <button type="button" class="post-video-remove" id="removeVideoBtn" title="Remove video">×</button>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="post-create-actions">
-                            <button type="submit" class="post-submit-btn" id="postSubmitBtn">
-                                Post
-                            </button>
+                        <!-- Toolbar with attach buttons and submit -->
+                        <div class="post-create-toolbar">
+                            <div class="post-attach-buttons">
+                                <input 
+                                    type="file" 
+                                    id="postImageFile" 
+                                    class="post-image-file-input" 
+                                    accept="image/png,image/jpeg,image/jpg"
+                                />
+                                <label for="postImageFile" class="post-attach-btn" title="Add photo">
+                                    <span class="post-attach-icon">📷</span>
+                                </label>
+                                
+                                <input 
+                                    type="file" 
+                                    id="postVideoFile" 
+                                    class="post-video-file-input" 
+                                    accept="video/mp4"
+                                />
+                                <label for="postVideoFile" class="post-attach-btn" title="Add video (max 1 MB)">
+                                    <span class="post-attach-icon">🎥</span>
+                                </label>
+                            </div>
+                            
+                            <div class="post-toolbar-right">
+                                <div class="post-char-count">
+                                    <span id="postCharCount">0</span>/2000
+                                </div>
+                                <button type="submit" class="post-submit-btn" id="postSubmitBtn">
+                                    Post
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
