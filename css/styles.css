@@ -11948,6 +11948,93 @@ body.leaderboard-body > * {
     padding: 0.25rem 0;
 }
 
+.post-video-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.post-video-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.post-video-file-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.post-video-file-label:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(74, 222, 128, 0.3);
+    color: #ffffff;
+}
+
+.post-video-preview {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.post-video-preview-video {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    display: block;
+    border-radius: 8px;
+}
+
+.post-video-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.post-video-remove:hover {
+    background: rgba(239, 68, 68, 0.9);
+    border-color: rgba(239, 68, 68, 1);
+}
+
+.post-video-file-name {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.25rem 0;
+}
+
 .post-option-remove {
     align-self: flex-start;
     padding: 0.5rem 1rem;
@@ -12140,6 +12227,21 @@ body.leaderboard-body > * {
     object-fit: cover;
     max-height: 500px;
     cursor: pointer;
+}
+
+.post-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.post-video {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    max-height: 500px;
+    background: #000000;
 }
 
 .post-links {

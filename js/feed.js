@@ -34,10 +34,13 @@ let postsListener = null;
 
 // DOM Elements
 let postsFeedEl, postCreateSectionEl, postCreateFormEl;
-let postContentEl, postImageFileEl;
+let postContentEl, postImageFileEl, postVideoFileEl;
 let postCharCountEl, postSubmitBtnEl;
 let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl, imageFileNameEl;
+let removeVideoBtnEl, videoPreviewContainerEl, videoPreviewEl, videoFileNameEl;
 let selectedImageFile = null;
+let selectedVideoFile = null;
+let videoPreviewUrl = null;
 
 // Initialize feed page
 export function initFeed() {
@@ -47,12 +50,17 @@ export function initFeed() {
     postCreateFormEl = document.getElementById('postCreateForm');
     postContentEl = document.getElementById('postContent');
     postImageFileEl = document.getElementById('postImageFile');
+    postVideoFileEl = document.getElementById('postVideoFile');
     postCharCountEl = document.getElementById('postCharCount');
     postSubmitBtnEl = document.getElementById('postSubmitBtn');
     removeImageBtnEl = document.getElementById('removeImageBtn');
     imagePreviewContainerEl = document.getElementById('imagePreviewContainer');
     imagePreviewEl = document.getElementById('imagePreview');
     imageFileNameEl = document.getElementById('imageFileName');
+    removeVideoBtnEl = document.getElementById('removeVideoBtn');
+    videoPreviewContainerEl = document.getElementById('videoPreviewContainer');
+    videoPreviewEl = document.getElementById('videoPreview');
+    videoFileNameEl = document.getElementById('videoFileName');
 
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
@@ -108,6 +116,11 @@ function setupEventListeners() {
         postImageFileEl.addEventListener('change', handleImageFileSelect);
     }
     
+    // Video file input
+    if (postVideoFileEl) {
+        postVideoFileEl.addEventListener('change', handleVideoFileSelect);
+    }
+    
     // Remove image button
     if (removeImageBtnEl) {
         removeImageBtnEl.addEventListener('click', () => {
@@ -115,6 +128,24 @@ function setupEventListeners() {
             if (postImageFileEl) postImageFileEl.value = '';
             if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
             if (imageFileNameEl) imageFileNameEl.classList.add('hide');
+        });
+    }
+    
+    // Remove video button
+    if (removeVideoBtnEl) {
+        removeVideoBtnEl.addEventListener('click', () => {
+            selectedVideoFile = null;
+            if (videoPreviewUrl) {
+                URL.revokeObjectURL(videoPreviewUrl);
+                videoPreviewUrl = null;
+            }
+            if (postVideoFileEl) postVideoFileEl.value = '';
+            if (videoPreviewContainerEl) videoPreviewContainerEl.classList.add('hide');
+            if (videoPreviewEl) {
+                videoPreviewEl.src = '';
+                videoPreviewEl.load();
+            }
+            if (videoFileNameEl) videoFileNameEl.classList.add('hide');
         });
     }
 }
@@ -130,6 +161,22 @@ function updateCharCount() {
 function handleImageFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Clear video if image is selected
+    if (selectedVideoFile) {
+        selectedVideoFile = null;
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+            videoPreviewUrl = null;
+        }
+        if (postVideoFileEl) postVideoFileEl.value = '';
+        if (videoPreviewContainerEl) videoPreviewContainerEl.classList.add('hide');
+        if (videoPreviewEl) {
+            videoPreviewEl.src = '';
+            videoPreviewEl.load();
+        }
+        if (videoFileNameEl) videoFileNameEl.classList.add('hide');
+    }
     
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -166,6 +213,56 @@ function handleImageFileSelect(e) {
     reader.readAsDataURL(file);
 }
 
+// Handle video file selection
+function handleVideoFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Clear image if video is selected
+    if (selectedImageFile) {
+        selectedImageFile = null;
+        if (postImageFileEl) postImageFileEl.value = '';
+        if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
+        if (imageFileNameEl) imageFileNameEl.classList.add('hide');
+    }
+    
+    // Revoke previous video URL if exists
+    if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+        videoPreviewUrl = null;
+    }
+    
+    // Validate file type
+    if (file.type !== 'video/mp4') {
+        alert('Please select an MP4 video file');
+        e.target.value = '';
+        return;
+    }
+    
+    // Validate file size (1MB max)
+    const maxSize = 1 * 1024 * 1024; // 1MB
+    if (file.size > maxSize) {
+        alert('Video file must be 1MB or smaller');
+        e.target.value = '';
+        return;
+    }
+    
+    selectedVideoFile = file;
+    
+    // Show preview
+    videoPreviewUrl = URL.createObjectURL(file);
+    if (videoPreviewEl) {
+        videoPreviewEl.src = videoPreviewUrl;
+    }
+    if (videoPreviewContainerEl) {
+        videoPreviewContainerEl.classList.remove('hide');
+    }
+    if (videoFileNameEl) {
+        videoFileNameEl.textContent = file.name;
+        videoFileNameEl.classList.remove('hide');
+    }
+}
+
 // Handle post submission
 async function handlePostSubmit(e) {
     e.preventDefault();
@@ -177,8 +274,8 @@ async function handlePostSubmit(e) {
     
     const content = postContentEl?.value.trim() || '';
     
-    if (!content && !selectedImageFile) {
-        alert('Please add some content or an image to your post');
+    if (!content && !selectedImageFile && !selectedVideoFile) {
+        alert('Please add some content, an image, or a video to your post');
         return;
     }
     
@@ -195,6 +292,7 @@ async function handlePostSubmit(e) {
     
     try {
         let imageUrl = '';
+        let videoUrl = '';
         
         // Upload image if selected
         if (selectedImageFile) {
@@ -227,12 +325,44 @@ async function handlePostSubmit(e) {
             }
         }
         
+        // Upload video if selected
+        if (selectedVideoFile) {
+            try {
+                // Create a unique filename
+                const timestamp = Date.now();
+                const fileName = `${currentUser.uid}_${timestamp}_${selectedVideoFile.name}`;
+                const storageRef = ref(storage, `posts/${fileName}`);
+                
+                // Upload file
+                await uploadBytes(storageRef, selectedVideoFile);
+                
+                // Get download URL
+                videoUrl = await getDownloadURL(storageRef);
+            } catch (uploadError) {
+                console.error('Error uploading video:', uploadError);
+                console.error('Upload error details:', {
+                    code: uploadError.code,
+                    message: uploadError.message,
+                    fileName: selectedVideoFile.name,
+                    fileSize: selectedVideoFile.size,
+                    fileType: selectedVideoFile.type
+                });
+                alert(`Failed to upload video: ${uploadError.message || 'Unknown error'}. Please try again.`);
+                if (postSubmitBtnEl) {
+                    postSubmitBtnEl.disabled = false;
+                    postSubmitBtnEl.textContent = 'Post';
+                }
+                return;
+            }
+        }
+        
         // Prepare post data
         const postData = {
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
             content: content,
             images: imageUrl ? [imageUrl] : [],
+            videos: videoUrl ? [videoUrl] : [],
             likes: {},
             likesCount: 0,
             commentsCount: 0,
@@ -255,9 +385,21 @@ async function handlePostSubmit(e) {
         // Reset form
         if (postContentEl) postContentEl.value = '';
         if (postImageFileEl) postImageFileEl.value = '';
+        if (postVideoFileEl) postVideoFileEl.value = '';
         selectedImageFile = null;
+        selectedVideoFile = null;
+        if (videoPreviewUrl) {
+            URL.revokeObjectURL(videoPreviewUrl);
+            videoPreviewUrl = null;
+        }
         if (imagePreviewContainerEl) imagePreviewContainerEl.classList.add('hide');
         if (imageFileNameEl) imageFileNameEl.classList.add('hide');
+        if (videoPreviewContainerEl) videoPreviewContainerEl.classList.add('hide');
+        if (videoPreviewEl) {
+            videoPreviewEl.src = '';
+            videoPreviewEl.load();
+        }
+        if (videoFileNameEl) videoFileNameEl.classList.add('hide');
         updateCharCount();
         
     } catch (error) {
@@ -446,6 +588,14 @@ function renderPost(post) {
                     <div class="post-images">
                         ${post.images.map(img => `
                             <img src="${escapeHtml(img)}" alt="Post image" class="post-image" data-image-src="${escapeHtml(img)}" />
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${post.videos && post.videos.length > 0 ? `
+                    <div class="post-videos">
+                        ${post.videos.map(vid => `
+                            <video src="${escapeHtml(vid)}" class="post-video" controls></video>
                         `).join('')}
                     </div>
                 ` : ''}
