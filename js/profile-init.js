@@ -154,6 +154,13 @@ async function loadProfile() {
                     usernameElement.textContent = userData.username;
                 }
                 
+                // Load karma
+                const profileKarmaEl = document.getElementById('profileKarma');
+                if (profileKarmaEl) {
+                    const karma = userData.karma || 0;
+                    profileKarmaEl.textContent = karma;
+                }
+                
                 // Load and sync level from quests system
                 const profileRankEl = document.getElementById('profileRank');
                 const rankProgressFillEl = document.getElementById('rankProgressFill');

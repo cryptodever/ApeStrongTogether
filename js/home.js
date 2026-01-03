@@ -710,6 +710,7 @@ async function loadUserStats() {
         
         // Update user stats section
         const levelStatEl = document.getElementById('userLevelStat');
+        const karmaStatEl = document.getElementById('userKarmaStat');
         const followersStatEl = document.getElementById('userFollowersStat');
         const followingStatEl = document.getElementById('userFollowingStat');
         const postsStatEl = document.getElementById('userPostsStat');
@@ -717,6 +718,10 @@ async function loadUserStats() {
         const levelProgressTextEl = document.getElementById('userLevelProgressText');
         
         if (levelStatEl) levelStatEl.textContent = levelProgress.level;
+        
+        // Update karma
+        const karma = userData.karma || 0;
+        if (karmaStatEl) karmaStatEl.textContent = karma;
         
         // Get followers count
         try {
