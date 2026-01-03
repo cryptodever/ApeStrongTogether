@@ -34,7 +34,7 @@ let lastUpdateTime = null;
 
 // DOM Elements
 let activityFeedEl, lastUpdatedEl, refreshBtnEl;
-let userStatsSectionEl, quickStatsWidgetEl;
+let userStatsSectionEl;
 let trendingUsersEl, activeChannelsEl;
 let chatOnlineCountEl, questsCompletedCountEl;
 
@@ -45,7 +45,6 @@ export function initHome() {
     lastUpdatedEl = document.getElementById('lastUpdated');
     refreshBtnEl = document.getElementById('refreshFeedBtn');
     userStatsSectionEl = document.getElementById('userStatsSection');
-    quickStatsWidgetEl = document.getElementById('quickStatsWidget');
     trendingUsersEl = document.getElementById('trendingUsers');
     activeChannelsEl = document.getElementById('activeChannels');
     chatOnlineCountEl = document.getElementById('chatOnlineCount');
@@ -73,17 +72,11 @@ export function initHome() {
             if (userStatsSectionEl) {
                 userStatsSectionEl.classList.remove('hide');
             }
-            if (quickStatsWidgetEl) {
-                quickStatsWidgetEl.classList.remove('hide');
-            }
             await loadUserStats();
         } else {
             // Hide user stats section
             if (userStatsSectionEl) {
                 userStatsSectionEl.classList.add('hide');
-            }
-            if (quickStatsWidgetEl) {
-                quickStatsWidgetEl.classList.add('hide');
             }
         }
         
@@ -785,38 +778,6 @@ async function loadUserStats() {
                 const progressPercent = (levelProgress.xpInCurrentLevel / levelProgress.xpNeededForNextLevel) * 100;
                 levelProgressFillEl.style.setProperty('width', `${Math.min(progressPercent, 100)}%`);
                 levelProgressTextEl.textContent = `${levelProgress.xpInCurrentLevel} / ${levelProgress.xpNeededForNextLevel} XP`;
-            }
-        }
-        
-        // Update quick stats widget
-        if (quickStatsWidgetEl) {
-            const quickStatsContent = document.getElementById('quickStatsContent');
-            if (quickStatsContent) {
-                quickStatsContent.innerHTML = `
-                    <div class="quick-stat">
-                        <span class="quick-stat-label">Level</span>
-                        <span class="quick-stat-value">${levelProgress.level}</span>
-                    </div>
-                    <div class="quick-stat">
-                        <span class="quick-stat-label">XP</span>
-                        <span class="quick-stat-value">${points}</span>
-                    </div>
-                    <div class="quick-stat">
-                        <span class="quick-stat-label">Followers</span>
-                        <span class="quick-stat-value" id="quickFollowersCount">—</span>
-                    </div>
-                `;
-                
-                // Get followers for quick stats
-                try {
-                    const followersRef = collection(db, 'followers', currentUser.uid, 'followers');
-                    const followersSnapshot = await getDocs(followersRef);
-                    const quickFollowersEl = document.getElementById('quickFollowersCount');
-                    if (quickFollowersEl) quickFollowersEl.textContent = followersSnapshot.size;
-                } catch (error) {
-                    const quickFollowersEl = document.getElementById('quickFollowersCount');
-                    if (quickFollowersEl) quickFollowersEl.textContent = '0';
-                }
             }
         }
         
