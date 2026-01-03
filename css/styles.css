@@ -3052,6 +3052,11 @@ body.tokenomics-body > * {
     position: absolute;
     left: 0;
     top: 0.1rem;
+}
+
+.phase-list li.item-complete::before {
+    content: "✅";
+    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
     filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
 }
 
@@ -3081,11 +3086,6 @@ body.tokenomics-body > * {
     font-size: 1.3rem;
 }
 
-.phase-feature-heading.feature-complete::before,
-.phase-feature-heading-spaced.feature-complete::before {
-    content: "✅";
-    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
-}
 
 .phase-timeline-text {
     margin-top: 1rem;
