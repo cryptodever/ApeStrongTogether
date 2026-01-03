@@ -221,6 +221,8 @@ async function loadActivityFeed() {
                     content: postData.content || '',
                     images: postData.images || [],
                     videos: postData.videos || [],
+                    upvotes: postData.upvotes || {},
+                    downvotes: postData.downvotes || {},
                     voteScore: voteScore,
                     commentsCount: comments,
                     timestamp: postData.createdAt,
@@ -254,8 +256,10 @@ async function loadActivityFeed() {
             // Add click handlers for activity items
             activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    // Don't navigate if clicking on comment button or comments section
-                    if (e.target.closest('.activity-post-comment-btn') || 
+                    // Don't navigate if clicking on vote buttons, comment button, or comments section
+                    if (e.target.closest('.activity-post-vote-btn') ||
+                        e.target.closest('.activity-post-vote-section') ||
+                        e.target.closest('.activity-post-comment-btn') || 
                         e.target.closest('.activity-post-comments-section') ||
                         e.target.closest('.activity-post-comment-input-wrapper') ||
                         e.target.closest('.activity-post-comment-submit')) {
@@ -306,6 +310,30 @@ async function loadActivityFeed() {
                         authorSection.addEventListener('click', navigateToProfile);
                     }
                 }
+            });
+            
+            // Add vote button handlers for trending posts
+            activityFeedEl.querySelectorAll('.activity-post-vote-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    const voteType = btn.dataset.voteType;
+                    if (postId && voteType) {
+                        handleActivityVote(postId, voteType);
+                    }
+                });
+            });
+            
+            // Add vote button handlers for trending posts
+            activityFeedEl.querySelectorAll('.activity-post-vote-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    const voteType = btn.dataset.voteType;
+                    if (postId && voteType) {
+                        handleActivityVote(postId, voteType);
+                    }
+                });
             });
             
             // Add comment button handlers for trending posts
@@ -378,6 +406,9 @@ function createActivityItem(activity) {
         const userLevel = activity.userData?.level || 1;
         const bannerImage = activity.userData?.bannerImage || '/pfp_apes/bg1.png';
         const fullContent = activity.content ? escapeHtml(activity.content).replace(/\n/g, '<br>') : '';
+        const hasUpvote = currentUser && activity.upvotes && activity.upvotes[currentUser.uid] === true;
+        const hasDownvote = currentUser && activity.downvotes && activity.downvotes[currentUser.uid] === true;
+        const voteScore = activity.voteScore || 0;
         
         content = `
             <div class="activity-item activity-post activity-post-full" data-user-id="${activity.userId}" data-post-id="${activity.postId}">
@@ -409,7 +440,15 @@ function createActivityItem(activity) {
                     ` : ''}
                 </div>
                 <div class="activity-post-footer">
-                    <span class="activity-post-votes">↑ ${activity.voteScore || 0}</span>
+                    <div class="activity-post-vote-section">
+                        <button class="activity-post-vote-btn activity-upvote-btn ${hasUpvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="upvote" title="Upvote">
+                            <span class="activity-post-vote-icon">↑</span>
+                        </button>
+                        <span class="activity-post-vote-score" data-post-id="${activity.postId}">${voteScore}</span>
+                        <button class="activity-post-vote-btn activity-downvote-btn ${hasDownvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="downvote" title="Downvote">
+                            <span class="activity-post-vote-icon">↓</span>
+                        </button>
+                    </div>
                     <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
                         💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
                     </button>
@@ -887,6 +926,134 @@ function calculateLevelProgress(points) {
         xpNeededForNextLevel: level >= MAX_LEVEL ? 0 : xpNeededForNextLevel,
         isMaxLevel: level >= MAX_LEVEL
     };
+}
+
+// Handle vote (upvote/downvote) for activity posts
+async function handleActivityVote(postId, voteType) {
+    if (!currentUser) {
+        alert('Please log in to vote');
+        return;
+    }
+    
+    if (voteType !== 'upvote' && voteType !== 'downvote') {
+        console.error('Invalid vote type');
+        return;
+    }
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (!postDoc.exists()) {
+            console.error('Post not found');
+            return;
+        }
+        
+        const postData = postDoc.data();
+        const upvotes = postData.upvotes || {};
+        const downvotes = postData.downvotes || {};
+        const currentVoteScore = postData.voteScore || 0;
+        
+        // Check current vote state
+        const hasUpvote = upvotes[currentUser.uid] === true;
+        const hasDownvote = downvotes[currentUser.uid] === true;
+        
+        // Calculate vote change
+        let voteChange = 0;
+        const newUpvotes = { ...upvotes };
+        const newDownvotes = { ...downvotes };
+        
+        if (voteType === 'upvote') {
+            if (hasUpvote) {
+                // Remove upvote
+                delete newUpvotes[currentUser.uid];
+                voteChange = -1;
+            } else {
+                // Add upvote, remove downvote if exists
+                newUpvotes[currentUser.uid] = true;
+                if (hasDownvote) {
+                    delete newDownvotes[currentUser.uid];
+                    voteChange = 2; // +1 for upvote, +1 for removing downvote
+                } else {
+                    voteChange = 1;
+                }
+            }
+        } else { // downvote
+            if (hasDownvote) {
+                // Remove downvote
+                delete newDownvotes[currentUser.uid];
+                voteChange = 1;
+            } else {
+                // Add downvote, remove upvote if exists
+                newDownvotes[currentUser.uid] = true;
+                if (hasUpvote) {
+                    delete newUpvotes[currentUser.uid];
+                    voteChange = -2; // -1 for downvote, -1 for removing upvote
+                } else {
+                    voteChange = -1;
+                }
+            }
+        }
+        
+        const newVoteScore = currentVoteScore + voteChange;
+        
+        // Update post
+        await updateDoc(postRef, {
+            upvotes: newUpvotes,
+            downvotes: newDownvotes,
+            voteScore: newVoteScore,
+            updatedAt: serverTimestamp()
+        });
+        
+        // Update karma for post author (if not voting on own post)
+        if (postData.userId !== currentUser.uid) {
+            try {
+                const authorRef = doc(db, 'users', postData.userId);
+                const authorDoc = await getDoc(authorRef);
+                
+                if (authorDoc.exists()) {
+                    const authorData = authorDoc.data();
+                    const currentKarma = authorData.karma || 0;
+                    const newKarma = currentKarma + voteChange;
+                    
+                    await updateDoc(authorRef, {
+                        karma: newKarma
+                    });
+                }
+            } catch (karmaError) {
+                console.error('Error updating karma:', karmaError);
+                // Don't fail the vote if karma update fails
+            }
+        }
+        
+        // Update UI immediately
+        const voteScoreEl = document.querySelector(`.activity-post-vote-score[data-post-id="${postId}"]`);
+        if (voteScoreEl) {
+            voteScoreEl.textContent = newVoteScore;
+        }
+        
+        // Update button states
+        const upvoteBtn = document.querySelector(`.activity-upvote-btn[data-post-id="${postId}"]`);
+        const downvoteBtn = document.querySelector(`.activity-downvote-btn[data-post-id="${postId}"]`);
+        if (upvoteBtn) {
+            if (newUpvotes[currentUser.uid]) {
+                upvoteBtn.classList.add('voted');
+            } else {
+                upvoteBtn.classList.remove('voted');
+            }
+        }
+        if (downvoteBtn) {
+            if (newDownvotes[currentUser.uid]) {
+                downvoteBtn.classList.add('voted');
+            } else {
+                downvoteBtn.classList.remove('voted');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error voting:', error);
+        alert('Failed to vote. Please try again.');
+    }
 }
 
 // Escape HTML
