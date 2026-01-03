@@ -77,7 +77,8 @@ function createOverlay() {
     const questsContainer = document.querySelector('.quests-container');
     const leaderboardContainer = document.querySelector('.leaderboard-container');
     const feedContainer = document.querySelector('.feed-container');
-    const container = profileContainer || chatContainer || questsContainer || leaderboardContainer || feedContainer;
+    const gameContainer = document.querySelector('.game-container');
+    const container = profileContainer || chatContainer || questsContainer || leaderboardContainer || feedContainer || gameContainer;
     
     if (!container) {
         // Silently return if no container found (might be homepage or other public page)
@@ -91,6 +92,7 @@ function createOverlay() {
     const isQuestsPage = !!questsContainer;
     const isLeaderboardPage = !!leaderboardContainer;
     const isFeedPage = !!feedContainer;
+    const isGamePage = !!gameContainer;
     const pageMessage = isChatPage 
         ? 'Sign up / Log in to access live chat.' 
         : isProfilePage
@@ -98,6 +100,10 @@ function createOverlay() {
         : isQuestsPage
         ? 'Sign up / Log in to access quests.'
         : isLeaderboardPage
+        ? 'Sign up / Log in to view the leaderboard.'
+        : isGamePage
+        ? 'Sign up / Log in to play the game.'
+        : isFeedPage
         ? 'Sign up / Log in to view the leaderboard.'
         : isFeedPage
         ? 'Sign up / Log in to view the feed.'
