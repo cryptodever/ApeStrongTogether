@@ -409,7 +409,7 @@ function createActivityItem(activity) {
                     ` : ''}
                 </div>
                 <div class="activity-post-footer">
-                    <span class="activity-post-votes">▲ ${activity.voteScore || 0}</span>
+                    <span class="activity-post-votes">↑ ${activity.voteScore || 0}</span>
                     <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
                         💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
                     </button>
