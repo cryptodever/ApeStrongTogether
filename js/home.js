@@ -220,6 +220,7 @@ async function loadActivityFeed() {
                     postId: postDoc.id,
                     content: postData.content || '',
                     images: postData.images || [],
+                    videos: postData.videos || [],
                     likesCount: likes,
                     commentsCount: comments,
                     timestamp: postData.createdAt,
@@ -396,6 +397,13 @@ function createActivityItem(activity) {
                         <div class="activity-post-images">
                             ${activity.images.map(img => `
                                 <img src="${escapeHtml(img)}" alt="Post image" class="activity-post-image" />
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${activity.videos && activity.videos.length > 0 ? `
+                        <div class="activity-post-videos">
+                            ${activity.videos.map(vid => `
+                                <video src="${escapeHtml(vid)}" class="activity-post-video" controls></video>
                             `).join('')}
                         </div>
                     ` : ''}
