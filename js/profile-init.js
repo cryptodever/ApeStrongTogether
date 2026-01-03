@@ -165,6 +165,9 @@ async function loadProfile() {
                 const profileRankEl = document.getElementById('profileRank');
                 const rankProgressFillEl = document.getElementById('rankProgressFill');
                 
+                // Store calculated level outside try block so it's accessible
+                let calculatedLevel = userData.level || 1;
+                
                 if (profileRankEl || rankProgressFillEl) {
                     try {
                         // Import level calculation functions from quests system
@@ -173,7 +176,7 @@ async function loadProfile() {
                         // Calculate level from points (sync with quests system)
                         const points = userData.points || 0;
                         const levelProgress = getLevelProgress(points);
-                        const calculatedLevel = levelProgress.level;
+                        calculatedLevel = levelProgress.level;
                         
                         // Update stored level if it's different (sync) - only for own profile
                         if (isViewingOwnProfile && userData.level !== calculatedLevel) {
@@ -202,17 +205,19 @@ async function loadProfile() {
                                 rankProgressFillEl.style.setProperty('width', `${Math.min(progressPercent, 100)}%`);
                             }
                         }
-                        
-                        // Update banner unlock states when level changes
-                        updateBannerUnlockStates(calculatedLevel);
                     } catch (error) {
                         console.error('Error syncing level from quests system:', error);
                         // Fallback to stored level or default
+                        calculatedLevel = userData.level || 1;
                         if (profileRankEl) {
-                            profileRankEl.textContent = userData.level || 1;
+                            profileRankEl.textContent = calculatedLevel;
                         }
                     }
                 }
+                
+                // Update banner unlock states with calculated level
+                // This ensures items are unlocked if user is already at required level
+                updateBannerUnlockStates(calculatedLevel);
                 
                 // Load bio
                 const bioTextarea = document.getElementById('profileBio');
@@ -302,11 +307,6 @@ async function loadProfile() {
                     updateBannerBgSelection(userData.bannerBackground);
                 }
                 
-                // Update banner unlock states based on user level
-                // Check if user is already at required level to unlock items
-                // Note: This will be updated again with calculated level from quests system if available
-                let userLevel = userData.level || 1;
-                updateBannerUnlockStates(userLevel);
             } else {
                 // Profile doesn't exist yet, use defaults
             }
@@ -582,8 +582,17 @@ function updateBannerUnlockStates(userLevel) {
         userLevel = 1; // Default to level 1 if invalid
     }
     
+    // Check if banner grid exists (only on settings page)
+    const bannerGrid = document.getElementById('bannerGrid');
+    const bannerBgGrid = document.getElementById('bannerBgGrid');
+    
+    if (!bannerGrid && !bannerBgGrid) {
+        // Not on settings page, nothing to update
+        return;
+    }
+    
     // Update banner items
-    const bannerItems = document.querySelectorAll('#bannerGrid .banner-item');
+    const bannerItems = bannerGrid ? document.querySelectorAll('#bannerGrid .banner-item') : [];
     bannerItems.forEach(item => {
         const bannerPath = item.dataset.banner;
         if (!bannerPath) return;
@@ -618,7 +627,7 @@ function updateBannerUnlockStates(userLevel) {
     });
     
     // Update banner background items
-    const bannerBgItems = document.querySelectorAll('#bannerBgGrid .banner-item');
+    const bannerBgItems = bannerBgGrid ? document.querySelectorAll('#bannerBgGrid .banner-item') : [];
     bannerBgItems.forEach(item => {
         const bgPath = item.dataset.bannerBg;
         if (!bgPath) return;
