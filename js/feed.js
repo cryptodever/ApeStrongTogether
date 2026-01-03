@@ -352,8 +352,9 @@ async function handlePostSubmit(e) {
             content: content,
             images: imageUrl ? [imageUrl] : [],
             videos: videoUrl ? [videoUrl] : [],
-            likes: {},
-            likesCount: 0,
+            upvotes: {},
+            downvotes: {},
+            voteScore: 0,
             commentsCount: 0,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
@@ -551,7 +552,9 @@ function renderPost(post) {
     const timeAgo = getTimeAgo(createdAt);
     const userLevel = post.userData?.level || 1;
     const bannerImage = post.userData?.bannerImage || '/pfp_apes/bg1.png';
-    const isLiked = currentUser && post.likes && post.likes[currentUser.uid] === true;
+    const hasUpvote = currentUser && post.upvotes && post.upvotes[currentUser.uid] === true;
+    const hasDownvote = currentUser && post.downvotes && post.downvotes[currentUser.uid] === true;
+    const voteScore = post.voteScore || 0;
     const canDelete = currentUser && post.userId === currentUser.uid;
     
     return `
@@ -589,10 +592,15 @@ function renderPost(post) {
             </div>
             
             <div class="post-actions">
-                <button class="post-action-btn like-btn ${isLiked ? 'liked' : ''}" data-post-id="${post.id}" data-liked="${isLiked}">
-                    <span class="post-action-icon">${isLiked ? '❤️' : '🤍'}</span>
-                    <span class="post-action-count" data-post-id="${post.id}" data-type="likes">${post.likesCount || 0}</span>
-                </button>
+                <div class="post-vote-section">
+                    <button class="post-vote-btn upvote-btn ${hasUpvote ? 'voted' : ''}" data-post-id="${post.id}" data-vote-type="upvote" title="Upvote">
+                        <span class="post-vote-icon">▲</span>
+                    </button>
+                    <span class="post-vote-score" data-post-id="${post.id}">${voteScore}</span>
+                    <button class="post-vote-btn downvote-btn ${hasDownvote ? 'voted' : ''}" data-post-id="${post.id}" data-vote-type="downvote" title="Downvote">
+                        <span class="post-vote-icon">▼</span>
+                    </button>
+                </div>
                 <button class="post-action-btn comment-btn" data-post-id="${post.id}">
                     <span class="post-action-icon">💬</span>
                     <span class="post-action-count">${post.commentsCount || 0}</span>
@@ -637,10 +645,14 @@ function setupPostEventListeners(postId, post) {
         }
     }
     
-    // Like button
-    const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
-    if (likeBtn) {
-        likeBtn.addEventListener('click', () => handleLike(postId));
+    // Vote buttons
+    const upvoteBtn = document.querySelector(`.upvote-btn[data-post-id="${postId}"]`);
+    const downvoteBtn = document.querySelector(`.downvote-btn[data-post-id="${postId}"]`);
+    if (upvoteBtn) {
+        upvoteBtn.addEventListener('click', () => handleVote(postId, 'upvote'));
+    }
+    if (downvoteBtn) {
+        downvoteBtn.addEventListener('click', () => handleVote(postId, 'downvote'));
     }
     
     // Comment button
@@ -677,10 +689,15 @@ function setupPostEventListeners(postId, post) {
     }
 }
 
-// Handle like toggle
-async function handleLike(postId) {
+// Handle vote (upvote/downvote)
+async function handleVote(postId, voteType) {
     if (!currentUser) {
-        alert('Please log in to like posts');
+        alert('Please log in to vote');
+        return;
+    }
+    
+    if (voteType !== 'upvote' && voteType !== 'downvote') {
+        console.error('Invalid vote type');
         return;
     }
     
@@ -694,27 +711,109 @@ async function handleLike(postId) {
         }
         
         const postData = postDoc.data();
-        const likes = postData.likes || {};
-        const isLiked = likes[currentUser.uid] === true;
+        const upvotes = postData.upvotes || {};
+        const downvotes = postData.downvotes || {};
+        const currentVoteScore = postData.voteScore || 0;
         
-        // Update likes map
-        const newLikes = { ...likes };
-        if (isLiked) {
-            delete newLikes[currentUser.uid];
-        } else {
-            newLikes[currentUser.uid] = true;
+        // Check current vote state
+        const hasUpvote = upvotes[currentUser.uid] === true;
+        const hasDownvote = downvotes[currentUser.uid] === true;
+        
+        // Calculate vote change
+        let voteChange = 0;
+        const newUpvotes = { ...upvotes };
+        const newDownvotes = { ...downvotes };
+        
+        if (voteType === 'upvote') {
+            if (hasUpvote) {
+                // Remove upvote
+                delete newUpvotes[currentUser.uid];
+                voteChange = -1;
+            } else {
+                // Add upvote, remove downvote if exists
+                newUpvotes[currentUser.uid] = true;
+                if (hasDownvote) {
+                    delete newDownvotes[currentUser.uid];
+                    voteChange = 2; // +1 for upvote, +1 for removing downvote
+                } else {
+                    voteChange = 1;
+                }
+            }
+        } else { // downvote
+            if (hasDownvote) {
+                // Remove downvote
+                delete newDownvotes[currentUser.uid];
+                voteChange = 1;
+            } else {
+                // Add downvote, remove upvote if exists
+                newDownvotes[currentUser.uid] = true;
+                if (hasUpvote) {
+                    delete newUpvotes[currentUser.uid];
+                    voteChange = -2; // -1 for downvote, -1 for removing upvote
+                } else {
+                    voteChange = -1;
+                }
+            }
         }
+        
+        const newVoteScore = currentVoteScore + voteChange;
         
         // Update post
         await updateDoc(postRef, {
-            likes: newLikes,
-            likesCount: isLiked ? increment(-1) : increment(1),
+            upvotes: newUpvotes,
+            downvotes: newDownvotes,
+            voteScore: newVoteScore,
             updatedAt: serverTimestamp()
         });
         
+        // Update UI immediately
+        const voteScoreEl = document.querySelector(`.post-vote-score[data-post-id="${postId}"]`);
+        if (voteScoreEl) {
+            voteScoreEl.textContent = newVoteScore;
+        }
+        
+        // Update button states
+        const upvoteBtn = document.querySelector(`.upvote-btn[data-post-id="${postId}"]`);
+        const downvoteBtn = document.querySelector(`.downvote-btn[data-post-id="${postId}"]`);
+        if (upvoteBtn) {
+            if (newUpvotes[currentUser.uid]) {
+                upvoteBtn.classList.add('voted');
+            } else {
+                upvoteBtn.classList.remove('voted');
+            }
+        }
+        if (downvoteBtn) {
+            if (newDownvotes[currentUser.uid]) {
+                downvoteBtn.classList.add('voted');
+            } else {
+                downvoteBtn.classList.remove('voted');
+            }
+        }
+        
+        // Update karma for post author (if not voting on own post)
+        if (postData.userId !== currentUser.uid) {
+            try {
+                const authorRef = doc(db, 'users', postData.userId);
+                const authorDoc = await getDoc(authorRef);
+                
+                if (authorDoc.exists()) {
+                    const authorData = authorDoc.data();
+                    const currentKarma = authorData.karma || 0;
+                    const newKarma = currentKarma + voteChange;
+                    
+                    await updateDoc(authorRef, {
+                        karma: newKarma
+                    });
+                }
+            } catch (karmaError) {
+                console.error('Error updating karma:', karmaError);
+                // Don't fail the vote if karma update fails
+            }
+        }
+        
     } catch (error) {
-        console.error('Error toggling like:', error);
-        alert('Failed to like post. Please try again.');
+        console.error('Error voting:', error);
+        alert('Failed to vote. Please try again.');
     }
 }
 
