@@ -217,7 +217,10 @@ async function loadProfile() {
                 
                 // Update banner unlock states with calculated level
                 // This ensures items are unlocked if user is already at required level
-                updateBannerUnlockStates(calculatedLevel);
+                // Use setTimeout to ensure DOM is ready (especially for settings page)
+                setTimeout(() => {
+                    updateBannerUnlockStates(calculatedLevel);
+                }, 500);
                 
                 // Load bio
                 const bioTextarea = document.getElementById('profileBio');
@@ -591,8 +594,19 @@ function updateBannerUnlockStates(userLevel) {
         return;
     }
     
+    // Wait a bit more if grids exist but items aren't loaded yet
+    if (bannerGrid && bannerGrid.querySelectorAll('.banner-item').length === 0) {
+        setTimeout(() => updateBannerUnlockStates(userLevel), 200);
+        return;
+    }
+    if (bannerBgGrid && bannerBgGrid.querySelectorAll('.banner-item').length === 0) {
+        setTimeout(() => updateBannerUnlockStates(userLevel), 200);
+        return;
+    }
+    
     // Update banner items
     const bannerItems = bannerGrid ? document.querySelectorAll('#bannerGrid .banner-item') : [];
+    
     bannerItems.forEach(item => {
         const bannerPath = item.dataset.banner;
         if (!bannerPath) return;
@@ -602,6 +616,11 @@ function updateBannerUnlockStates(userLevel) {
         
         const requiredLevel = getBannerRequiredLevel(bannerIndex);
         const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
+        
+        // Debug logging
+        if (bannerIndex > 4) {
+            console.log(`[Banner ${bannerIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
+        }
         
         // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {
@@ -637,6 +656,11 @@ function updateBannerUnlockStates(userLevel) {
         
         const requiredLevel = getBannerBgRequiredLevel(bgIndex);
         const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
+        
+        // Debug logging
+        if (bgIndex > 4) {
+            console.log(`[Background ${bgIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
+        }
         
         // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {
@@ -1136,6 +1160,36 @@ function setupEventListeners() {
     const bannerBgGrid = document.getElementById('bannerBgGrid');
     if (bannerBgGrid) {
         bannerBgGrid.addEventListener('click', handleBannerBgClick);
+    }
+    
+    // If on settings page, update unlock states after a delay to ensure DOM is ready
+    if (bannerGrid || bannerBgGrid) {
+        // Get user level and update unlock states
+        setTimeout(async () => {
+            if (currentUser) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        let userLevel = userData.level || 1;
+                        
+                        // Try to get calculated level from quests system
+                        try {
+                            const { getLevelProgress } = await import('/js/quests-init.js');
+                            const points = userData.points || 0;
+                            const levelProgress = getLevelProgress(points);
+                            userLevel = levelProgress.level;
+                        } catch (error) {
+                            // Use stored level if calculation fails
+                        }
+                        
+                        updateBannerUnlockStates(userLevel);
+                    }
+                } catch (error) {
+                    console.error('Error updating banner unlock states on settings page:', error);
+                }
+            }
+        }, 500);
     }
     
     // Followers/Following buttons - use event delegation on parent container
