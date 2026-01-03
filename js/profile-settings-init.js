@@ -106,6 +106,28 @@ async function loadProfile() {
                 if (userData.bannerBackground) {
                     updateBannerBgSelection(userData.bannerBackground);
                 }
+                
+                // Update banner unlock states based on user level
+                let userLevel = userData.level || 1;
+                console.log('[loadProfile] Initial level from userData:', userLevel);
+                
+                // Try to get calculated level from quests system
+                try {
+                    const { getLevelProgress } = await import('/js/quests-init.js');
+                    const points = userData.points || 0;
+                    const levelProgress = getLevelProgress(points);
+                    userLevel = levelProgress.level;
+                    console.log('[loadProfile] Calculated level from quests:', userLevel, 'Points:', points);
+                } catch (error) {
+                    console.error('[loadProfile] Error calculating level:', error);
+                    // Use stored level if calculation fails
+                }
+                
+                // Update unlock states after a delay to ensure DOM is ready
+                setTimeout(() => {
+                    console.log('[loadProfile] Calling updateBannerUnlockStates with level:', userLevel);
+                    updateBannerUnlockStates(userLevel);
+                }, 500);
             }
         }, (error) => {
             console.error('Error loading profile:', error);
@@ -303,7 +325,9 @@ function selectBanner(bannerPath) {
     if (!bannerItem) return;
     
     if (bannerItem.classList.contains('locked')) {
-        console.log('Banner is locked');
+        const bannerIndex = getBannerIndex(bannerPath);
+        const requiredLevel = getBannerRequiredLevel(bannerIndex);
+        alert(`This banner is locked. Unlock it at Level ${requiredLevel}!`);
         return;
     }
     
@@ -755,4 +779,118 @@ function setupEventListeners() {
     
     listenersAttached = true;
     console.log('Settings event listeners attached');
+}
+
+// Update banner unlock states based on user level
+// This function checks if the user's current level is sufficient to unlock items
+// It will automatically unlock items if the user is already at or above the required level
+function updateBannerUnlockStates(userLevel) {
+    console.log('[updateBannerUnlockStates] Called with level:', userLevel);
+    
+    if (!userLevel || userLevel < 1) {
+        userLevel = 1; // Default to level 1 if invalid
+    }
+    
+    // Check if banner grid exists (only on settings page)
+    const bannerGrid = document.getElementById('bannerGrid');
+    const bannerBgGrid = document.getElementById('bannerBgGrid');
+    
+    console.log('[updateBannerUnlockStates] Banner grids found:', { bannerGrid: !!bannerGrid, bannerBgGrid: !!bannerBgGrid });
+    
+    if (!bannerGrid && !bannerBgGrid) {
+        // Not on settings page, nothing to update
+        console.log('[updateBannerUnlockStates] No banner grids found, returning');
+        return;
+    }
+    
+    // Wait a bit more if grids exist but items aren't loaded yet
+    if (bannerGrid && bannerGrid.querySelectorAll('.banner-item').length === 0) {
+        setTimeout(() => updateBannerUnlockStates(userLevel), 200);
+        return;
+    }
+    if (bannerBgGrid && bannerBgGrid.querySelectorAll('.banner-item').length === 0) {
+        setTimeout(() => updateBannerUnlockStates(userLevel), 200);
+        return;
+    }
+    
+    // Update banner items
+    const bannerItems = bannerGrid ? document.querySelectorAll('#bannerGrid .banner-item') : [];
+    
+    bannerItems.forEach(item => {
+        const bannerPath = item.dataset.banner;
+        if (!bannerPath) return;
+        
+        const bannerIndex = getBannerIndex(bannerPath);
+        if (bannerIndex === 0) return;
+        
+        const requiredLevel = getBannerRequiredLevel(bannerIndex);
+        const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
+        
+        // Debug logging
+        if (bannerIndex > 4) {
+            console.log(`[Banner ${bannerIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
+        }
+        
+        // Check if user is already at or above required level - unlock if so
+        if (isUnlocked) {
+            // User is at required level or higher - unlock the item
+            item.classList.remove('locked');
+            const overlay = item.querySelector('.banner-lock-overlay');
+            if (overlay) overlay.remove();
+        } else {
+            // User is below required level - keep locked and show requirement
+            item.classList.add('locked');
+            // Update or create lock overlay
+            let overlay = item.querySelector('.banner-lock-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'banner-lock-overlay';
+                item.appendChild(overlay);
+            }
+            overlay.innerHTML = `
+                <span class="lock-icon">🔒</span>
+                <span class="lock-text">Unlock at Level ${requiredLevel}</span>
+            `;
+        }
+    });
+    
+    // Update banner background items
+    const bannerBgItems = bannerBgGrid ? document.querySelectorAll('#bannerBgGrid .banner-item') : [];
+    bannerBgItems.forEach(item => {
+        const bgPath = item.dataset.bannerBg;
+        if (!bgPath) return;
+        
+        const bgIndex = getBannerBgIndex(bgPath);
+        if (bgIndex === 0) return;
+        
+        const requiredLevel = getBannerBgRequiredLevel(bgIndex);
+        const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
+        
+        // Debug logging
+        if (bgIndex > 4) {
+            console.log(`[Background ${bgIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
+        }
+        
+        // Check if user is already at or above required level - unlock if so
+        if (isUnlocked) {
+            // User is at required level or higher - unlock the item
+            item.classList.remove('locked');
+            const overlay = item.querySelector('.banner-lock-overlay');
+            if (overlay) overlay.remove();
+        } else {
+            // User is below required level - keep locked and show requirement
+            item.classList.add('locked');
+            // Update or create lock overlay
+            let overlay = item.querySelector('.banner-lock-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'banner-lock-overlay';
+                item.appendChild(overlay);
+            }
+            overlay.innerHTML = `
+                <span class="lock-icon">🔒</span>
+                <span class="lock-text">Unlock at Level ${requiredLevel}</span>
+            `;
+        }
+    });
 }
