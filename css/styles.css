@@ -9862,8 +9862,15 @@ body.leaderboard-body > * {
     box-sizing: border-box;
 }
 
-.profile-settings .profile-bio-section {
+.profile-bio-preview-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
+}
+
+.profile-settings .profile-bio-section {
+    flex: 1;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -9949,6 +9956,16 @@ body.leaderboard-body > * {
     align-items: center;
     gap: 1rem;
     width: 100%;
+}
+
+/* Level and Karma Row */
+.profile-rank-karma-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    flex-wrap: wrap;
 }
 
 /* Username Display */
@@ -10872,7 +10889,10 @@ body.leaderboard-body > * {
 /* Banner Selection */
 /* Banner Preview Section */
 .banner-preview-section {
-    margin-bottom: 2rem;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .banner-preview-card {
@@ -11127,6 +11147,21 @@ body.leaderboard-body > * {
 
     .profile-settings-card {
         padding: 1.5rem;
+    }
+    
+    .profile-bio-preview-row {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .profile-settings .profile-bio-section {
+        flex: 1;
+    }
+
+    .banner-preview-section {
+        flex: 1;
+        min-width: 0;
     }
 
     .banner-preview-card {

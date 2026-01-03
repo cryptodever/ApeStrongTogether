@@ -42,11 +42,25 @@
                         <h2>Profile Settings</h2>
                     </div>
                     
-                    <div class="profile-bio-section">
-                        <div class="profile-bio">
-                            <label for="profileBio">Bio</label>
-                            <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
-                            <small class="char-count"><span id="bioCharCount">0</span>/500</small>
+                    <div class="profile-bio-preview-row">
+                        <div class="profile-bio-section">
+                            <div class="profile-bio">
+                                <label for="profileBio">Bio</label>
+                                <textarea id="profileBio" placeholder="Tell us about yourself..." maxlength="500" rows="4"></textarea>
+                                <small class="char-count"><span id="bioCharCount">0</span>/500</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Banner Preview -->
+                        <div class="banner-preview-section">
+                            <div class="banner-preview-card">
+                                <h3>Preview</h3>
+                                <p class="banner-preview-description">See how your banner and background will look</p>
+                                <div class="banner-preview">
+                                    <div class="banner-preview-bg" id="bannerPreviewBg"></div>
+                                    <img id="bannerPreviewImg" src="/pfp_apes/bg1.png" alt="Banner Preview" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -287,18 +301,6 @@
                     </div>
                     
                     <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
-                </div>
-            </section>
-            
-            <!-- Banner Preview -->
-            <section class="banner-preview-section">
-                <div class="banner-preview-card">
-                    <h3>Preview</h3>
-                    <p class="banner-preview-description">See how your banner and background will look</p>
-                    <div class="banner-preview">
-                        <div class="banner-preview-bg" id="bannerPreviewBg"></div>
-                        <img id="bannerPreviewImg" src="/pfp_apes/bg1.png" alt="Banner Preview" />
-                    </div>
                 </div>
             </section>
             
