@@ -333,8 +333,11 @@ async function handlePostSubmit(e) {
                 const fileName = `${currentUser.uid}_${timestamp}_${selectedVideoFile.name}`;
                 const storageRef = ref(storage, `posts/${fileName}`);
                 
-                // Upload file
-                await uploadBytes(storageRef, selectedVideoFile);
+                // Upload file with explicit content type metadata
+                const metadata = {
+                    contentType: 'video/mp4'
+                };
+                await uploadBytes(storageRef, selectedVideoFile, metadata);
                 
                 // Get download URL
                 videoUrl = await getDownloadURL(storageRef);
