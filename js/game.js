@@ -212,13 +212,19 @@ export class Game {
                     break;
             }
             
+            // Random chance for faster enemy (1.5x speed) - 25% chance
+            const isFast = Math.random() < 0.25;
+            const baseSpeed = 1.5;
+            const speed = isFast ? baseSpeed * 1.5 : baseSpeed;
+            
             this.enemies.push({
                 x: x,
                 y: y,
                 radius: 12,
-                speed: 1.5,
+                speed: speed,
                 health: 1,
-                color: '#ff0000'
+                color: isFast ? '#ff6600' : '#ff0000', // Orange for fast, red for normal
+                isFast: isFast
             });
         }
     }
@@ -227,15 +233,48 @@ export class Game {
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
             
-            // Move toward player
+            // Calculate desired movement toward player
             const dx = this.player.x - enemy.x;
             const dy = this.player.y - enemy.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
+            let moveX = 0;
+            let moveY = 0;
+            
             if (dist > 0) {
-                enemy.x += (dx / dist) * enemy.speed;
-                enemy.y += (dy / dist) * enemy.speed;
+                moveX = (dx / dist) * enemy.speed;
+                moveY = (dy / dist) * enemy.speed;
             }
+            
+            // Check collision with other enemies before moving
+            const newX = enemy.x + moveX;
+            const newY = enemy.y + moveY;
+            
+            // Collision detection with other enemies
+            let canMove = true;
+            for (let j = 0; j < this.enemies.length; j++) {
+                if (i === j) continue; // Skip self
+                
+                const other = this.enemies[j];
+                const otherDx = newX - other.x;
+                const otherDy = newY - other.y;
+                const otherDist = Math.sqrt(otherDx * otherDx + otherDy * otherDy);
+                const minDist = enemy.radius + other.radius;
+                
+                if (otherDist < minDist) {
+                    // Collision detected - push away from other enemy
+                    if (otherDist > 0) {
+                        const pushX = (otherDx / otherDist) * (minDist - otherDist) * 0.5;
+                        const pushY = (otherDy / otherDist) * (minDist - otherDist) * 0.5;
+                        moveX += pushX;
+                        moveY += pushY;
+                    }
+                }
+            }
+            
+            // Apply movement
+            enemy.x += moveX;
+            enemy.y += moveY;
             
             // Check collision with player
             const playerDist = Math.sqrt(
@@ -428,9 +467,15 @@ export class Game {
             enemy.radius * 2
         );
         
-        // Draw outline
-        this.ctx.strokeStyle = '#ff6666';
-        this.ctx.lineWidth = 2;
+        // Draw outline - different color for fast enemies
+        if (enemy.isFast) {
+            this.ctx.strokeStyle = '#ffaa00'; // Brighter orange for fast enemies
+            this.ctx.lineWidth = 3; // Thicker outline for fast enemies
+        } else {
+            this.ctx.strokeStyle = '#ff6666';
+            this.ctx.lineWidth = 2;
+        }
+        
         this.ctx.strokeRect(
             enemy.x - enemy.radius,
             enemy.y - enemy.radius,
