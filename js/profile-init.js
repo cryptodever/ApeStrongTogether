@@ -248,11 +248,7 @@ async function loadProfile() {
                             // Only update if not already completed
                             if (!userQuestDoc.exists() || !userQuestDoc.data().completed) {
                                 const { updateQuestProgress } = await import('/js/quests-init.js');
-                                console.log('[loadProfile] User is verified, updating quest progress...');
                                 await updateQuestProgress('achievement_verify_x', 1);
-                                console.log('[loadProfile] Quest progress updated for verified user');
-                            } else {
-                                console.log('[loadProfile] Quest already completed, skipping update');
                             }
                         } catch (error) {
                             console.error('[loadProfile] Error updating quest for verified user:', error);
@@ -304,7 +300,6 @@ async function loadProfile() {
                 }
             } else {
                 // Profile doesn't exist yet, use defaults
-                console.log('Profile does not exist yet, using defaults');
             }
         }, (error) => {
             console.error('Error loading profile:', error);
@@ -412,7 +407,6 @@ async function saveProfile() {
             updateXVerificationUI({ xAccountVerified: false, xAccount: xAccount.trim() });
         }
         
-        console.log('Profile saved successfully', { bio: bio.trim(), country, xAccount: xAccount.trim(), bannerImage, bannerBackground });
         
         // Show success message
         if (saveBtn) {
@@ -713,7 +707,6 @@ async function copyVerificationCode() {
             }, 2000);
         }
         
-        console.log('[copyVerificationCode] Copied code:', code);
     } catch (error) {
         console.error('Failed to copy code:', error);
         
@@ -746,10 +739,8 @@ async function copyVerificationCode() {
 
 // Verify X account
 async function verifyXAccount() {
-    console.log('[verifyXAccount] Function called');
     
     if (!currentUser || isVerifying) {
-        console.log('[verifyXAccount] Early return - no user or already verifying', { currentUser: !!currentUser, isVerifying });
         return;
     }
     
@@ -770,7 +761,6 @@ async function verifyXAccount() {
     
     // Extract username (remove @ if present)
     const username = xAccount.replace(/^@/, '').trim();
-    console.log('[verifyXAccount] Starting verification for username:', username);
     
     // Rate limiting check with time-based reset (24 hours)
     try {
@@ -831,27 +821,20 @@ async function verifyXAccount() {
     
     try {
         // Get verification code
-        console.log('[verifyXAccount] Getting verification code...');
         const verificationCode = await getOrCreateVerificationCode();
         if (!verificationCode) {
             throw new Error('Failed to get verification code');
         }
-        console.log('[verifyXAccount] Verification code:', verificationCode);
         
         // Call Firebase Cloud Function to verify X account
-        console.log('[verifyXAccount] Initializing Firebase Functions...');
         const functions = getFunctions(app, 'us-central1'); // Specify region to match function deployment
-        console.log('[verifyXAccount] Creating callable function...');
         const verifyXAccountCallable = httpsCallable(functions, 'verifyXAccount');
         
-        console.log('[verifyXAccount] Calling function with:', { username, verificationCode, uid: currentUser.uid });
         const result = await verifyXAccountCallable({
             username: username,
             verificationCode: verificationCode,
             uid: currentUser.uid
         });
-        console.log('[verifyXAccount] Function result:', result);
-        console.log('[verifyXAccount] Result data:', result.data);
         
         // Firebase callable functions return data in result.data
         const verificationResult = result.data;
@@ -883,9 +866,7 @@ async function verifyXAccount() {
             // Update quest progress for X verification
             try {
                 const { updateQuestProgress } = await import('/js/quests-init.js');
-                console.log('[verifyXAccount] Updating quest progress for achievement_verify_x');
                 await updateQuestProgress('achievement_verify_x', 1);
-                console.log('[verifyXAccount] Quest progress updated successfully');
             } catch (error) {
                 console.error('[verifyXAccount] Error updating quest progress:', error);
                 // Quest module might not be loaded, ignore silently
@@ -994,17 +975,14 @@ function setupEventListeners() {
     // This is more reliable than direct attachment
     const followStatsContainer = document.querySelector('.profile-follow-stats');
     if (followStatsContainer) {
-        console.log('Attaching event delegation to follow stats container');
         followStatsContainer.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (!button) return;
             
-            console.log('Button clicked:', button.id);
             
             if (button.id === 'followersBtn') {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Followers button clicked (via delegation)');
                 if (currentUser) {
                     showFollowersList(currentUser.uid);
                 } else {
@@ -1013,7 +991,6 @@ function setupEventListeners() {
             } else if (button.id === 'followingBtn') {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Following button clicked (via delegation)');
                 if (currentUser) {
                     showFollowingList(currentUser.uid);
                 } else {
@@ -1021,7 +998,6 @@ function setupEventListeners() {
                 }
             }
         });
-        console.log('Event delegation attached successfully');
     } else {
         console.warn('Follow stats container not found');
     }
@@ -1031,11 +1007,9 @@ function setupEventListeners() {
     const followingBtn = document.getElementById('followingBtn');
     
     if (followersBtn) {
-        console.log('Directly attaching listener to followers button');
         followersBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Followers button clicked (direct)');
             if (currentUser) {
                 showFollowersList(currentUser.uid);
             }
@@ -1043,11 +1017,9 @@ function setupEventListeners() {
     }
     
     if (followingBtn) {
-        console.log('Directly attaching listener to following button');
         followingBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Following button clicked (direct)');
             if (currentUser) {
                 showFollowingList(currentUser.uid);
             }
@@ -1227,7 +1199,6 @@ function setupEventListeners() {
     });
     
     listenersAttached = true;
-    console.log('Profile event listeners attached');
 }
 
 // Event handler for banner clicks (using event delegation)
@@ -1278,9 +1249,7 @@ window.checkXVerificationQuest = async function() {
         
         // Update quest progress
         const { updateQuestProgress } = await import('/js/quests-init.js');
-        console.log('Checking and updating X verification quest...');
         await updateQuestProgress('achievement_verify_x', 1);
-        console.log('Quest progress updated successfully');
     } catch (error) {
         console.error('Error checking X verification quest:', error);
     }
@@ -1304,32 +1273,12 @@ window.syncMissingUserProfiles = async function() {
             return { error: 'Permission denied: Only admins can sync user profiles' };
         }
 
-        console.log('🔄 Starting sync of missing user profiles...');
-        
         const functions = getFunctions(app, 'us-central1');
         const syncProfiles = httpsCallable(functions, 'syncMissingUserProfiles');
         
         const result = await syncProfiles({});
         
         if (result.data && result.data.success) {
-            console.log('✅ Sync complete!', result.data);
-            console.log(`   - Total usernames: ${result.data.totalUsernames}`);
-            console.log(`   - Existing profiles: ${result.data.existingProfiles}`);
-            console.log(`   - Created profiles: ${result.data.createdProfiles}`);
-            console.log(`   - Errors: ${result.data.errors}`);
-            
-            if (result.data.results) {
-                console.log('📋 Detailed results:');
-                result.data.results.forEach(r => {
-                    if (r.status === 'created') {
-                        console.log(`   ✅ Created: ${r.username} (${r.uid})`);
-                    } else if (r.status === 'exists') {
-                        console.log(`   ℹ️  Exists: ${r.username} (${r.uid})`);
-                    } else if (r.status === 'error') {
-                        console.log(`   ❌ Error: ${r.username} (${r.uid}) - ${r.error}`);
-                    }
-                });
-            }
             
             alert(`Sync complete!\n\nCreated: ${result.data.createdProfiles} profiles\nAlready existed: ${result.data.existingProfiles}\nErrors: ${result.data.errors}`);
             
@@ -1450,7 +1399,6 @@ async function followUser(targetUserId) {
         const followingDoc = await getDoc(followingRef);
         
         if (followingDoc.exists()) {
-            console.log('Already following this user');
             return; // Already following, don't count for quest
         }
         
@@ -1470,7 +1418,6 @@ async function followUser(targetUserId) {
         });
         
         await batch.commit();
-        console.log(`Followed user: ${targetUserId}`);
         
         // Track quest progress: daily_follow_3 (only if this was a new follow)
         try {
@@ -1504,7 +1451,6 @@ async function unfollowUser(targetUserId) {
         batch.delete(followersRef);
         
         await batch.commit();
-        console.log(`Unfollowed user: ${targetUserId}`);
     } catch (error) {
         console.error('Error unfollowing user:', error);
         alert('Failed to unfollow user. Please try again.');
@@ -1640,7 +1586,6 @@ function renderFollowersList(followers, followingStatus, searchTerm = '') {
 
 // Show followers list
 async function showFollowersList(userId) {
-    console.log('showFollowersList called with userId:', userId);
     const modal = document.getElementById('followersModal');
     const listEl = document.getElementById('followersList');
     const searchInput = document.getElementById('followersSearchInput');
@@ -1715,7 +1660,6 @@ async function showFollowersList(userId) {
 
 // Show following list
 async function showFollowingList(userId) {
-    console.log('showFollowingList called with userId:', userId);
     const modal = document.getElementById('followingModal');
     const listEl = document.getElementById('followingList');
     const searchInput = document.getElementById('followingSearchInput');
@@ -2549,5 +2493,4 @@ if (typeof window !== 'undefined') {
     window.checkIfFollowing = checkIfFollowing;
 }
 
-console.log('Profile page initialized');
 
