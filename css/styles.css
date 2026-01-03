@@ -3059,6 +3059,8 @@ body.tokenomics-body > * {
     margin-bottom: 0.75rem;
     font-size: 1rem;
     color: rgba(74, 222, 128, 0.9);
+    position: relative;
+    padding-left: 1.75rem;
 }
 
 .phase-feature-heading-spaced {
@@ -3066,6 +3068,23 @@ body.tokenomics-body > * {
     margin-bottom: 0.75rem;
     font-size: 1rem;
     color: rgba(74, 222, 128, 0.9);
+    position: relative;
+    padding-left: 1.75rem;
+}
+
+.phase-feature-heading::before,
+.phase-feature-heading-spaced::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.3rem;
+}
+
+.phase-feature-heading.feature-complete::before,
+.phase-feature-heading-spaced.feature-complete::before {
+    content: "✅";
+    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.6));
 }
 
 .phase-timeline-text {
