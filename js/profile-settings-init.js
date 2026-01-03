@@ -285,6 +285,72 @@ function normalizePath(path) {
     return path.startsWith('/') ? path : '/' + path;
 }
 
+// Get banner index (1-based) from banner path
+function getBannerIndex(bannerPath) {
+    const banners = [
+        '/pfp_apes/bg1.png',
+        '/pfp_apes/bg2.png',
+        '/pfp_apes/bg3.png',
+        '/pfp_apes/bg4.png',
+        '/pfp_apes/tg_1.png',
+        '/pfp_apes/tg_2.png',
+        '/pfp_apes/tg_3.png',
+        '/pfp_apes/tg_4.png'
+    ];
+    const normalizedPath = normalizePath(bannerPath);
+    const index = banners.findIndex(b => normalizePath(b) === normalizedPath);
+    return index >= 0 ? index + 1 : 0;
+}
+
+// Get banner background index (1-based) from background path
+function getBannerBgIndex(bgPath) {
+    const backgrounds = [
+        '/pfp_generator_images/pfp_bg1.png',
+        '/pfp_generator_images/pfp_bg2.png',
+        '/pfp_generator_images/pfp_bg3.png',
+        '/pfp_generator_images/pfp_bg4.png',
+        '/pfp_generator_images/pfp_bg5.png',
+        '/pfp_generator_images/pfp_bg6.png',
+        '/pfp_generator_images/pfp_bg7.png',
+        '/pfp_generator_images/pfp_bg8.png'
+    ];
+    const normalizedPath = normalizePath(bgPath);
+    const index = backgrounds.findIndex(b => normalizePath(b) === normalizedPath);
+    return index >= 0 ? index + 1 : 0;
+}
+
+// Check if banner is unlocked based on level
+function isBannerUnlocked(bannerIndex, userLevel) {
+    // First 4 are always unlocked
+    if (bannerIndex <= 4) return true;
+    // Every 5 levels after level 1 unlocks a new banner
+    // Banner 5 unlocks at level 5, banner 6 at level 10, etc.
+    const requiredLevel = (bannerIndex - 4) * 5;
+    return userLevel >= requiredLevel;
+}
+
+// Check if banner background is unlocked based on level
+function isBannerBgUnlocked(bgIndex, userLevel) {
+    // First 4 are always unlocked
+    if (bgIndex <= 4) return true;
+    // Every 5 levels after level 1 unlocks a new background
+    // Background 5 unlocks at level 5, background 6 at level 10, etc.
+    const requiredLevel = (bgIndex - 4) * 5;
+    return userLevel >= requiredLevel;
+}
+
+// Get required level for banner unlock
+function getBannerRequiredLevel(bannerIndex) {
+    if (bannerIndex <= 4) return 1;
+    return (bannerIndex - 4) * 5;
+}
+
+// Get required level for banner background unlock
+function getBannerBgRequiredLevel(bgIndex) {
+    if (bgIndex <= 4) return 1;
+    return (bgIndex - 4) * 5;
+}
+
 // Update banner selection in grid
 function updateBannerSelection(selectedBanner) {
     if (!selectedBanner) return;
