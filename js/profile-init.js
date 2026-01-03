@@ -2076,6 +2076,14 @@ function renderProfilePost(post) {
                         `).join('')}
                     </div>
                 ` : ''}
+                
+                ${post.videos && post.videos.length > 0 ? `
+                    <div class="post-videos">
+                        ${post.videos.map(vid => `
+                            <video src="${escapeHtml(vid)}" class="post-video" controls></video>
+                        `).join('')}
+                    </div>
+                ` : ''}
             </div>
             
             <div class="post-actions">
