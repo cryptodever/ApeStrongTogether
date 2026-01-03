@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://www.gstatic.com https://apis.google.com https://*.cloudfunctions.net; frame-src https://www.google.com https://www.recaptcha.net https://apes-365b0.firebaseapp.com https://apes-365b0.web.app;">
+    <title>Game 🎮 | Apes Together Strong</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
+    
+    <!-- reCAPTCHA v3 for Firebase App Check -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY" async defer></script>
+</head>
+<body class="game-body">
+    <!-- Global Header (injected by js/header.js) -->
+    <div id="site-header"></div>
+    
+    <!-- Header Script -->
+    <script type="module" src="/js/header.js?v=2"></script>
+
+    <main class="game-page">
+        <div class="game-container">
+            <!-- Game Canvas -->
+            <div class="game-canvas-wrapper">
+                <canvas id="gameCanvas"></canvas>
+                
+                <!-- Game UI Overlay -->
+                <div class="game-ui-overlay">
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Health</span>
+                            <div class="health-bar">
+                                <div class="health-fill" id="healthFill"></div>
+                            </div>
+                            <span class="stat-value" id="healthValue">100</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Gold</span>
+                            <span class="stat-value" id="goldValue">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Score</span>
+                            <span class="stat-value" id="scoreValue">0</span>
+                        </div>
+                    </div>
+                    <div class="game-controls-hint">
+                        <p>WASD/Arrows to move • Click/Tap to shoot</p>
+                    </div>
+                </div>
+
+                <!-- Death Screen / Upgrade Shop -->
+                <div class="upgrade-shop-modal" id="upgradeShop" style="display: none;">
+                    <div class="upgrade-shop-content">
+                        <h2>Game Over!</h2>
+                        <p class="death-message">You were defeated by the suits. Upgrade your ape to fight back!</p>
+                        
+                        <div class="upgrade-shop-stats">
+                            <div class="shop-stat">
+                                <span>Gold Available:</span>
+                                <span class="shop-gold" id="shopGold">0</span>
+                            </div>
+                        </div>
+
+                        <div class="upgrade-categories">
+                            <!-- Weapon Upgrades -->
+                            <div class="upgrade-category">
+                                <h3>Weapon Upgrades</h3>
+                                <div class="upgrade-item">
+                                    <div class="upgrade-info">
+                                        <span class="upgrade-name">Damage</span>
+                                        <span class="upgrade-level">Level <span id="damageLevel">1</span></span>
+                                    </div>
+                                    <button class="upgrade-btn" id="upgradeDamage">
+                                        Upgrade (<span id="damageCost">10</span> gold)
+                                    </button>
+                                </div>
+                                <div class="upgrade-item">
+                                    <div class="upgrade-info">
+                                        <span class="upgrade-name">Fire Rate</span>
+                                        <span class="upgrade-level">Level <span id="fireRateLevel">1</span></span>
+                                    </div>
+                                    <button class="upgrade-btn" id="upgradeFireRate">
+                                        Upgrade (<span id="fireRateCost">10</span> gold)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Ape Upgrades -->
+                            <div class="upgrade-category">
+                                <h3>Ape Upgrades</h3>
+                                <div class="upgrade-item">
+                                    <div class="upgrade-info">
+                                        <span class="upgrade-name">Health</span>
+                                        <span class="upgrade-level">Level <span id="healthLevel">1</span></span>
+                                    </div>
+                                    <button class="upgrade-btn" id="upgradeHealth">
+                                        Upgrade (<span id="healthCost">10</span> gold)
+                                    </button>
+                                </div>
+                                <div class="upgrade-item">
+                                    <div class="upgrade-info">
+                                        <span class="upgrade-name">Speed</span>
+                                        <span class="upgrade-level">Level <span id="speedLevel">1</span></span>
+                                    </div>
+                                    <button class="upgrade-btn" id="upgradeSpeed">
+                                        Upgrade (<span id="speedCost">10</span> gold)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="upgrade-shop-actions">
+                            <button class="restart-btn" id="restartBtn">Start New Game</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/game-init.js?v=1"></script>
+    <script type="module" src="/js/asset-selftest.js?v=2"></script>
+</body>
+</html>

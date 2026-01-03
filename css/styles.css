@@ -13229,3 +13229,358 @@ body.leaderboard-body > * {
         gap: 1rem;
     }
 }
+
+/* ============================================
+   Game Page Styles
+   ============================================ */
+
+.game-page {
+    min-height: 100vh;
+    background: #0a0a0a;
+    position: relative;
+    padding-top: 80px;
+}
+
+.game-container {
+    width: 100%;
+    height: calc(100vh - 80px);
+    position: relative;
+    overflow: hidden;
+}
+
+.game-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+/* Game UI Overlay */
+.game-ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.game-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.game-stats .stat-item {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 150px;
+    pointer-events: auto;
+}
+
+.game-stats .stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.game-stats .stat-value {
+    font-size: 1.25rem;
+    color: #00ff00;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.health-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 0, 0, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff0000, #ff6600, #00ff00);
+    transition: width 0.1s linear;
+    border-radius: 4px;
+}
+
+.game-controls-hint {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    pointer-events: auto;
+}
+
+.game-controls-hint p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Upgrade Shop Modal */
+.upgrade-shop-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.upgrade-shop-content {
+    background: rgba(15, 15, 15, 0.98);
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+}
+
+.upgrade-shop-content h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    color: #00ff00;
+    margin: 0 0 0.5rem 0;
+    text-align: center;
+}
+
+.death-message {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+}
+
+.upgrade-shop-stats {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.shop-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.shop-gold {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.upgrade-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.upgrade-category h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    color: #00ff00;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 255, 0, 0.3);
+}
+
+.upgrade-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.upgrade-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.upgrade-name {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+}
+
+.upgrade-level {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.upgrade-btn {
+    background: rgba(0, 255, 0, 0.2);
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    color: #00ff00;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+}
+
+.upgrade-btn:hover:not(:disabled) {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: rgba(0, 255, 0, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+}
+
+.upgrade-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.upgrade-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.upgrade-shop-actions {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.restart-btn {
+    background: rgba(0, 255, 0, 0.2);
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    color: #00ff00;
+    padding: 1rem 2.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.restart-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: rgba(0, 255, 0, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+}
+
+.restart-btn:active {
+    transform: translateY(0);
+}
+
+/* Game page blocked state */
+.game-page.blocked .game-container > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .game-page {
+        padding-top: 60px;
+    }
+    
+    .game-container {
+        height: calc(100vh - 60px);
+    }
+    
+    .game-ui-overlay {
+        padding: 1rem;
+    }
+    
+    .game-stats {
+        gap: 1rem;
+    }
+    
+    .game-stats .stat-item {
+        min-width: 120px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .game-stats .stat-value {
+        font-size: 1rem;
+    }
+    
+    .game-controls-hint {
+        padding: 0.4rem 0.75rem;
+    }
+    
+    .game-controls-hint p {
+        font-size: 0.7rem;
+    }
+    
+    .upgrade-shop-modal {
+        padding: 1rem;
+    }
+    
+    .upgrade-shop-content {
+        padding: 1.5rem;
+    }
+    
+    .upgrade-shop-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .upgrade-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .upgrade-btn {
+        width: 100%;
+    }
+    
+    .upgrade-categories {
+        gap: 1.5rem;
+    }
+}
