@@ -165,7 +165,6 @@ async function loadActivityFeed() {
                         limit(500) // Get more documents since we'll filter in JS
                     );
                     postsSnapshot = await getDocs(postsQuery);
-                    console.log(`[loadActivityFeed] Fallback posts query returned ${postsSnapshot.size} documents`);
                 } catch (fallbackError) {
                     console.error('[loadActivityFeed] Fallback query also failed:', fallbackError);
                     // If even the simple query fails, try without any filters
@@ -174,7 +173,6 @@ async function loadActivityFeed() {
                         limit(500)
                     );
                     postsSnapshot = await getDocs(simpleQuery);
-                    console.log(`[loadActivityFeed] Simple query returned ${postsSnapshot.size} documents`);
                 }
             }
             
@@ -238,7 +236,6 @@ async function loadActivityFeed() {
                 return b.hotScore - a.hotScore;
             });
             activities.push(...trendingPosts.slice(0, 25));
-            console.log(`[loadActivityFeed] Loaded ${trendingPosts.length} trending posts, adding ${Math.min(trendingPosts.length, 25)} to feed`);
         } catch (error) {
             console.error('[loadActivityFeed] Error loading trending posts:', error);
             // Continue even if posts fail to load

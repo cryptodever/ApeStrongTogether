@@ -439,7 +439,6 @@ function loadPosts() {
                 (error) => {
                     // If index error, fall back to simpler query
                     if (error.code === 'failed-precondition' || error.message.includes('index')) {
-                        console.log('Index not found for posts, using fallback query');
                         setupFallbackPostsListener();
                     } else {
                         console.error('Error loading posts:', error);
@@ -450,7 +449,6 @@ function loadPosts() {
         } catch (indexError) {
             // If query setup fails due to missing index, use fallback
             if (indexError.code === 'failed-precondition' || indexError.message.includes('index')) {
-                console.log('Index not found for posts, using fallback query');
                 setupFallbackPostsListener();
             } else {
                 throw indexError;
