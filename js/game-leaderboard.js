@@ -93,7 +93,7 @@ async function loadLeaderboard(currentUser) {
 // Display leaderboard entries
 function displayLeaderboard(scores) {
     if (scores.length === 0) {
-        leaderboardListEl.innerHTML = '<div class="leaderboard-empty">No scores yet. Be the first!</div>';
+        leaderboardListEl.innerHTML = '<div class="game-leaderboard-empty">No scores yet. Be the first!</div>';
         return;
     }
     
@@ -104,10 +104,10 @@ function displayLeaderboard(scores) {
         const rankDisplay = medal || rank;
         
         html += `
-            <div class="leaderboard-entry ${rank <= 3 ? 'top-three' : ''}">
-                <div class="leaderboard-rank">${rankDisplay}</div>
-                <div class="leaderboard-username">${escapeHtml(entry.username)}</div>
-                <div class="leaderboard-score">${entry.score.toLocaleString()}</div>
+            <div class="game-leaderboard-entry ${rank <= 3 ? 'top-three' : ''}">
+                <div class="game-leaderboard-rank">${rankDisplay}</div>
+                <div class="game-leaderboard-username">${escapeHtml(entry.username)}</div>
+                <div class="game-leaderboard-score">${entry.score.toLocaleString()}</div>
             </div>
         `;
     });
@@ -162,9 +162,9 @@ async function displayUserRank(userId, topScores) {
             const username = userData.username || auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'You';
             
             userRankItemEl.innerHTML = `
-                <div class="leaderboard-rank">${userRank}</div>
-                <div class="leaderboard-username">${escapeHtml(username)}</div>
-                <div class="leaderboard-score">${userScore.toLocaleString()}</div>
+                <div class="game-leaderboard-rank">${userRank}</div>
+                <div class="game-leaderboard-username">${escapeHtml(username)}</div>
+                <div class="game-leaderboard-score">${userScore.toLocaleString()}</div>
             `;
             
             userRankSectionEl.style.display = 'block';
@@ -174,9 +174,9 @@ async function displayUserRank(userId, topScores) {
             const username = userData.username || auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'You';
             
             userRankItemEl.innerHTML = `
-                <div class="leaderboard-rank">-</div>
-                <div class="leaderboard-username">${escapeHtml(username)}</div>
-                <div class="leaderboard-score">${userScore.toLocaleString()}</div>
+                <div class="game-leaderboard-rank">-</div>
+                <div class="game-leaderboard-username">${escapeHtml(username)}</div>
+                <div class="game-leaderboard-score">${userScore.toLocaleString()}</div>
             `;
             
             userRankSectionEl.style.display = 'block';
