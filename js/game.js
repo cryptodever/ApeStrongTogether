@@ -33,8 +33,8 @@ export class Game {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 0.5, // Start zoomed in at 50%
-            targetZoom: 0.5 // Target zoom for smooth transitions
+            zoom: 2.0, // Start zoomed in at 200% (much closer)
+            targetZoom: 2.0 // Target zoom for smooth transitions
         };
         
         // Player
@@ -205,9 +205,9 @@ export class Game {
         this.camera.y = this.player.y;
         
         // Update camera zoom based on enemy count
-        // Start at 0.5 (50% zoomed in), zoom out to 1.0 as enemies approach max
+        // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
         const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
-        this.camera.targetZoom = 0.5 + (enemyRatio * 0.5); // 0.5 to 1.0
+        this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
         
         // Smoothly interpolate zoom
         const zoomSpeed = 0.002 * deltaTime; // Smooth zoom transition
@@ -472,8 +472,8 @@ export class Game {
         this.bullets = [];
         this.lastSpawn = Date.now();
         // Reset camera zoom to starting value
-        this.camera.zoom = 0.5;
-        this.camera.targetZoom = 0.5;
+        this.camera.zoom = 2.0;
+        this.camera.targetZoom = 2.0;
     }
     
     die() {
@@ -564,7 +564,7 @@ export class Game {
         const img = this.images.player[direction];
         
         if (img && img.complete && img.naturalWidth > 0) {
-            const size = this.player.radius * 2.5; // Slightly larger than radius
+            const size = this.player.radius * 3.5; // Larger size for better visibility
             this.ctx.save();
             // Ensure transparency is preserved
             this.ctx.globalCompositeOperation = 'source-over';
@@ -687,8 +687,8 @@ export class Game {
         this.bullets = [];
         this.lastSpawn = 0;
         // Reset camera zoom to starting value
-        this.camera.zoom = 0.5;
-        this.camera.targetZoom = 0.5;
+        this.camera.zoom = 2.0;
+        this.camera.targetZoom = 2.0;
     }
     
     getHealth() {
