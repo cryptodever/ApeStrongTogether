@@ -45,8 +45,8 @@ export class Game {
             x: 0,
             y: 0,
             radius: 15,
-            health: 100,
-            maxHealth: 100,
+            health: 20, // Default health (will be set by setPlayerHealth)
+            maxHealth: 20, // Default max health (will be set by setPlayerHealth)
             speed: 3,
             rotation: 0,
             color: '#00ff00'
