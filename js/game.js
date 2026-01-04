@@ -627,8 +627,8 @@ export class Game {
             // Clear boss projectiles when boss dies
             this.bossProjectiles = [];
             this.boss = null;
-            // Reset bossSpawned flag so boss can spawn again later if needed
-            this.bossSpawned = false;
+            // Keep bossSpawned = true so boss doesn't spawn again
+            // Game will return to normal mob spawning and continue scaling
             return;
         }
         
