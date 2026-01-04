@@ -484,31 +484,27 @@ export class Game {
     }
     
     render() {
-        // Clear canvas with fallback background color
-        this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background (fallback)
-        this.ctx.fillRect(0, 0, this.width, this.height);
+        // Draw static background image first (before camera transform - doesn't move)
+        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
+            // Draw background to fill entire canvas (static, doesn't move with camera)
+            this.ctx.drawImage(
+                this.images.background,
+                0,
+                0,
+                this.width,
+                this.height
+            );
+        } else {
+            // Fallback: solid color background
+            this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        }
         
         // Transform to camera view (orbital)
         this.ctx.save();
         this.ctx.translate(this.width / 2, this.height / 2);
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
         this.ctx.translate(-this.camera.x, -this.camera.y);
-        
-        // Draw background image - fill the viewport at max zoom
-        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
-            // Calculate viewport size in world coordinates at max zoom (1.0)
-            const viewportWidth = this.width; // At zoom 1.0, viewport = canvas size
-            const viewportHeight = this.height;
-            
-            // Draw background to fill the viewport, centered at camera position
-            this.ctx.drawImage(
-                this.images.background,
-                this.camera.x - viewportWidth / 2,
-                this.camera.y - viewportHeight / 2,
-                viewportWidth,
-                viewportHeight
-            );
-        }
         
         // Draw grid background (optional, for retro feel - can be removed if background image is used)
         // this.drawGrid();
