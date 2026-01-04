@@ -484,27 +484,29 @@ export class Game {
     }
     
     render() {
-        // Draw static background image first (before camera transform - doesn't move)
-        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
-            // Draw background to fill entire canvas (static, doesn't move with camera)
-            this.ctx.drawImage(
-                this.images.background,
-                0,
-                0,
-                this.width,
-                this.height
-            );
-        } else {
-            // Fallback: solid color background
-            this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background
-            this.ctx.fillRect(0, 0, this.width, this.height);
-        }
+        // Clear canvas with fallback background color
+        this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background (fallback)
+        this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Transform to camera view (orbital)
         this.ctx.save();
         this.ctx.translate(this.width / 2, this.height / 2);
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
         this.ctx.translate(-this.camera.x, -this.camera.y);
+        
+        // Draw background image (moves with camera so player can walk around)
+        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
+            const bgWidth = this.images.background.naturalWidth;
+            const bgHeight = this.images.background.naturalHeight;
+            // Center background at world origin (0, 0) - player can walk around it
+            this.ctx.drawImage(
+                this.images.background,
+                -bgWidth / 2,
+                -bgHeight / 2,
+                bgWidth,
+                bgHeight
+            );
+        }
         
         // Draw grid background (optional, for retro feel - can be removed if background image is used)
         // this.drawGrid();
