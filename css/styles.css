@@ -13646,7 +13646,7 @@ body.leaderboard-body > * {
     right: 0;
     bottom: 0;
     background-image: url('/game-jpegs/minigame_backgroundstartscreen.png');
-    background-size: cover;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     display: flex;
