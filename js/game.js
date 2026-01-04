@@ -15,7 +15,7 @@ export class Game {
         window.addEventListener('resize', () => this.resize());
         
         // Game state
-        this.state = 'playing'; // 'playing', 'dead', 'shop'
+        this.state = 'menu'; // 'menu', 'playing', 'dead', 'shop'
         this.score = 0;
         
         // Image assets
@@ -428,6 +428,16 @@ export class Game {
                 }
             }
         }
+    }
+    
+    start() {
+        // Reset game state
+        this.state = 'playing';
+        this.score = 0;
+        this.player.health = this.player.maxHealth;
+        this.enemies = [];
+        this.bullets = [];
+        this.lastSpawn = Date.now();
     }
     
     die() {

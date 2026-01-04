@@ -13239,13 +13239,23 @@ body.leaderboard-body > * {
     background: #0a0a0a;
     position: relative;
     padding-top: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 1rem 1rem;
 }
 
 .game-container {
     width: 100%;
-    height: calc(100vh - 80px);
+    max-width: 1200px;
+    aspect-ratio: 16 / 9;
+    max-height: calc(100vh - 100px);
     position: relative;
     overflow: hidden;
+    border: 3px solid rgba(0, 255, 0, 0.3);
+    border-radius: 12px;
+    background: #000;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
 }
 
 .game-canvas-wrapper {
@@ -13271,6 +13281,23 @@ body.leaderboard-body > * {
     padding: 1.5rem;
     pointer-events: none;
     z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.game-container:has(.game-start-screen:not(.hide)) ~ .game-ui-overlay,
+.game-container .game-start-screen:not(.hide) ~ .game-ui-overlay {
+    opacity: 0;
+}
+
+.game-container:has(.game-start-screen.hide) .game-ui-overlay,
+.game-container .game-start-screen.hide ~ .game-ui-overlay {
+    opacity: 1;
+}
+
+/* Show UI when start screen is hidden */
+.game-start-screen.hide ~ .game-ui-overlay {
+    opacity: 1;
 }
 
 .game-stats {
@@ -13515,6 +13542,105 @@ body.leaderboard-body > * {
     transform: translateY(0);
 }
 
+/* Start Screen */
+.game-start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.game-start-screen.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.start-screen-content {
+    text-align: center;
+    padding: 2rem;
+    max-width: 500px;
+}
+
+.game-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #00ff00;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    letter-spacing: 2px;
+}
+
+.game-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 2rem 0;
+}
+
+.start-game-btn {
+    background: rgba(0, 255, 0, 0.2);
+    border: 3px solid rgba(0, 255, 0, 0.6);
+    color: #00ff00;
+    padding: 1.25rem 3rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.start-game-btn:hover {
+    background: rgba(0, 255, 0, 0.3);
+    border-color: rgba(0, 255, 0, 0.9);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 25px rgba(0, 255, 0, 0.5);
+}
+
+.start-game-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.game-instructions {
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(0, 255, 0, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.game-instructions p {
+    margin: 0.5rem 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.game-instructions p:first-child {
+    margin-top: 0;
+    color: #00ff00;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.game-instructions p:last-child {
+    margin-bottom: 0;
+}
+
 /* Game page blocked state */
 .game-page.blocked .game-container > *:not(.auth-gate-overlay) {
     opacity: 0.4;
@@ -13526,11 +13652,25 @@ body.leaderboard-body > * {
 /* Responsive */
 @media (max-width: 768px) {
     .game-page {
-        padding-top: 60px;
+        padding: 60px 0.5rem 0.5rem;
     }
     
     .game-container {
-        height: calc(100vh - 60px);
+        max-height: calc(100vh - 70px);
+        border-width: 2px;
+    }
+    
+    .game-title {
+        font-size: 2rem;
+    }
+    
+    .game-subtitle {
+        font-size: 1rem;
+    }
+    
+    .start-game-btn {
+        padding: 1rem 2rem;
+        font-size: 1.25rem;
     }
     
     .game-ui-overlay {
