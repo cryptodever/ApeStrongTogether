@@ -22,7 +22,9 @@ export class Game {
         // Image assets
         this.images = {
             player: {}, // Will hold directional ape images
-            enemy: null, // Enemy/suit image
+            normalMob: {}, // Will hold directional normal mob images
+            enemy: null, // Fallback enemy image (for fast/big mobs)
+            bullet: null, // Bullet sprite
             background: null // Game background image
         };
         this.imagesLoaded = false;
@@ -94,7 +96,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length + 2; // 8 player directions + 1 enemy + 1 background
+        const totalImages = directions.length * 2 + 3; // 8 player directions + 8 normal mob directions + 1 enemy fallback + 1 bullet + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -115,15 +117,37 @@ export class Game {
             this.images.player[dir] = img;
         });
         
-        // Load enemy image (using first pfp_ape as placeholder for "suit")
+        // Load normal mob directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load normal mob image: normalmob-${dir}.png`);
+                checkAllLoaded();
+            };
+            img.src = `/game-jpegs/normalmob-${dir}.png`;
+            this.images.normalMob[dir] = img;
+        });
+        
+        // Load enemy fallback image (for fast/big mobs that use tints)
         const enemyImg = new Image();
         enemyImg.onload = checkAllLoaded;
         enemyImg.onerror = () => {
-            console.warn('Failed to load enemy image, using fallback');
+            console.warn('Failed to load enemy fallback image, using fallback');
             checkAllLoaded();
         };
         enemyImg.src = '/pfp_apes/tg_1.png';
         this.images.enemy = enemyImg;
+        
+        // Load bullet sprite
+        const bulletImg = new Image();
+        bulletImg.onload = checkAllLoaded;
+        bulletImg.onerror = () => {
+            console.warn('Failed to load bullet sprite, using fallback');
+            checkAllLoaded();
+        };
+        bulletImg.src = '/game-jpegs/bullet_sprite.png';
+        this.images.bullet = bulletImg;
         
         // Load background image
         const bgImg = new Image();
@@ -140,6 +164,19 @@ export class Game {
         // Convert rotation angle to direction
         // Rotation is in radians, 0 = right (E), PI/2 = down (S), etc.
         const angle = this.player.rotation;
+        const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+        
+        // Map angle to 8 directions
+        const sector = Math.floor((normalized + Math.PI / 8) / (Math.PI / 4)) % 8;
+        const directions = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+        return directions[sector];
+    }
+    
+    getEnemyDirection(enemy) {
+        // Calculate direction from enemy to player
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        const angle = Math.atan2(dy, dx);
         const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
         
         // Map angle to 8 directions
@@ -364,6 +401,11 @@ export class Game {
                 goldReward = 1;
             }
             
+            // Calculate initial rotation toward player
+            const dx = this.player.x - x;
+            const dy = this.player.y - y;
+            const rotation = Math.atan2(dy, dx);
+            
             // Apply difficulty multiplier to enemy stats
             this.enemies.push({
                 x: x,
@@ -372,6 +414,7 @@ export class Game {
                 speed: baseSpeed * difficultyMultiplier,
                 health: health * difficultyMultiplier,
                 maxHealth: health * difficultyMultiplier,
+                rotation: rotation, // Track rotation for directional sprites
                 color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
                 enemyType: enemyType,
                 goldReward: goldReward
@@ -396,6 +439,9 @@ export class Game {
                 const timeFactor = deltaTime / 16.67;
                 moveX = (dx / dist) * enemy.speed * timeFactor;
                 moveY = (dy / dist) * enemy.speed * timeFactor;
+                
+                // Update enemy rotation toward player
+                enemy.rotation = Math.atan2(dy, dx);
             }
             
             // Check collision with other enemies before moving
@@ -655,13 +701,33 @@ export class Game {
     drawEnemy(enemy) {
         const size = enemy.radius * 2.2;
         
+        this.ctx.save();
+        
+        // Scale for big enemies
+        const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
+        
+        // Use directional sprites for normal mobs
+        if (enemy.enemyType === 'normal' && this.imagesLoaded && this.images.normalMob) {
+            const direction = this.getEnemyDirection(enemy);
+            const img = this.images.normalMob[direction];
+            
+            if (img && img.complete && img.naturalWidth > 0) {
+                // Draw normal mob directional sprite
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.drawImage(
+                    img,
+                    enemy.x - (size * scale) / 2,
+                    enemy.y - (size * scale) / 2,
+                    size * scale,
+                    size * scale
+                );
+                this.ctx.restore();
+                return; // Early return for normal mobs
+            }
+        }
+        
+        // Fallback: use enemy image for fast/big mobs or if normal mob sprites aren't loaded
         if (this.imagesLoaded && this.images.enemy && this.images.enemy.complete && this.images.enemy.naturalWidth > 0) {
-            // Draw enemy image with transparency preserved
-            this.ctx.save();
-            
-            // Scale for big enemies
-            const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
-            
             // Draw the image first (preserves transparency)
             this.ctx.drawImage(
                 this.images.enemy,
@@ -755,14 +821,38 @@ export class Game {
                 enemy.radius * 2,
                 enemy.radius * 2
             );
+            
+            this.ctx.restore();
         }
     }
     
     drawBullet(bullet) {
-        this.ctx.fillStyle = '#ffff00';
-        this.ctx.beginPath();
-        this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        if (this.imagesLoaded && this.images.bullet && this.images.bullet.complete && this.images.bullet.naturalWidth > 0) {
+            // Draw bullet sprite
+            const size = bullet.radius * 2;
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'source-over';
+            
+            // Calculate bullet rotation from velocity
+            const angle = Math.atan2(bullet.vy, bullet.vx);
+            this.ctx.translate(bullet.x, bullet.y);
+            this.ctx.rotate(angle);
+            
+            this.ctx.drawImage(
+                this.images.bullet,
+                -size / 2,
+                -size / 2,
+                size,
+                size
+            );
+            this.ctx.restore();
+        } else {
+            // Fallback: draw circle while bullet sprite loads
+            this.ctx.fillStyle = '#ffff00';
+            this.ctx.beginPath();
+            this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
     }
     
     gameLoop() {
