@@ -199,7 +199,7 @@ export class Game {
         this.updateEnemies(deltaTime);
         
         // Update bullets
-        this.updateBullets();
+        this.updateBullets(deltaTime);
         
         // Check collisions
         this.checkCollisions();
@@ -226,9 +226,10 @@ export class Game {
             dy *= 0.707;
         }
         
-        // Apply movement
-        this.player.x += dx * this.player.speed;
-        this.player.y += dy * this.player.speed;
+        // Apply movement (frame-rate independent: deltaTime is in ms, normalize to ~16.67ms for 60fps)
+        const timeFactor = deltaTime / 16.67;
+        this.player.x += dx * this.player.speed * timeFactor;
+        this.player.y += dy * this.player.speed * timeFactor;
         
         // Rotate player toward mouse
         const screenX = this.mouse.x - this.width / 2;
@@ -303,8 +304,10 @@ export class Game {
             let moveY = 0;
             
             if (dist > 0) {
-                moveX = (dx / dist) * enemy.speed;
-                moveY = (dy / dist) * enemy.speed;
+                // Frame-rate independent movement
+                const timeFactor = deltaTime / 16.67;
+                moveX = (dx / dist) * enemy.speed * timeFactor;
+                moveY = (dy / dist) * enemy.speed * timeFactor;
             }
             
             // Check collision with other enemies before moving
@@ -356,13 +359,14 @@ export class Game {
         }
     }
     
-    updateBullets() {
+    updateBullets(deltaTime) {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             
-            // Move bullet
-            bullet.x += bullet.vx;
-            bullet.y += bullet.vy;
+            // Move bullet (frame-rate independent)
+            const timeFactor = deltaTime / 16.67;
+            bullet.x += bullet.vx * timeFactor;
+            bullet.y += bullet.vy * timeFactor;
             
             // Remove if too far
             const dist = Math.sqrt(
