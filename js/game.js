@@ -6,7 +6,7 @@
 export class Game {
     constructor(canvas, onEnemyKill, onPlayerDeath) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas.getContext('2d', { alpha: true }); // Ensure alpha channel is preserved
         this.onEnemyKill = onEnemyKill; // Callback for when enemy is killed
         this.onPlayerDeath = onPlayerDeath; // Callback for when player dies
         
@@ -82,6 +82,10 @@ export class Game {
         this.canvas.height = rect.height;
         this.width = this.canvas.width;
         this.height = this.canvas.height;
+        
+        // Ensure transparency is preserved
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
     }
     
     loadImages() {
@@ -448,8 +452,8 @@ export class Game {
     }
     
     render() {
-        // Clear canvas
-        this.ctx.fillStyle = '#0a0a0a';
+        // Clear canvas with new background color
+        this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background
         this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Transform to camera view (orbital)
@@ -535,17 +539,10 @@ export class Game {
         const size = enemy.radius * 2.2;
         
         if (this.imagesLoaded && this.images.enemy && this.images.enemy.complete && this.images.enemy.naturalWidth > 0) {
-            // Draw enemy image
+            // Draw enemy image with transparency preserved
             this.ctx.save();
             
-            // Apply tint for fast enemies (orange tint)
-            if (enemy.isFast) {
-                this.ctx.globalCompositeOperation = 'multiply';
-                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.5)'; // Orange tint
-                this.ctx.fillRect(enemy.x - size / 2, enemy.y - size / 2, size, size);
-                this.ctx.globalCompositeOperation = 'source-over';
-            }
-            
+            // Draw the image first (preserves transparency)
             this.ctx.drawImage(
                 this.images.enemy,
                 enemy.x - size / 2,
@@ -554,8 +551,14 @@ export class Game {
                 size
             );
             
-            // Draw outline for fast enemies
+            // Apply tint for fast enemies (overlay mode to preserve transparency)
             if (enemy.isFast) {
+                this.ctx.globalCompositeOperation = 'overlay';
+                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)'; // Orange tint
+                this.ctx.fillRect(enemy.x - size / 2, enemy.y - size / 2, size, size);
+                this.ctx.globalCompositeOperation = 'source-over';
+                
+                // Draw outline for fast enemies
                 this.ctx.strokeStyle = '#ffaa00';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
