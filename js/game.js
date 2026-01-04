@@ -318,19 +318,47 @@ export class Game {
                     break;
             }
             
-            // Random chance for faster enemy (1.5x speed) - 25% chance
-            const isFast = Math.random() < 0.25;
-            const baseSpeed = 1.5;
-            const speed = isFast ? baseSpeed * 1.5 : baseSpeed;
+            // Determine enemy type: 60% normal, 25% fast, 15% big
+            const rand = Math.random();
+            let enemyType = 'normal';
+            let baseSpeed = 1.5;
+            let health = 1;
+            let radius = 12;
+            let goldReward = 1;
+            
+            if (rand < 0.15) {
+                // Big enemy (15% chance)
+                enemyType = 'big';
+                baseSpeed = 1.0; // Slower than normal
+                health = 3; // Takes 3 hits to kill
+                radius = 18; // Larger size
+                goldReward = 5;
+            } else if (rand < 0.40) {
+                // Fast enemy (25% chance)
+                enemyType = 'fast';
+                baseSpeed = 1.5 * 1.5; // 1.5x faster
+                health = 1;
+                radius = 12;
+                goldReward = 2;
+            } else {
+                // Normal enemy (60% chance)
+                enemyType = 'normal';
+                baseSpeed = 1.5;
+                health = 1;
+                radius = 12;
+                goldReward = 1;
+            }
             
             this.enemies.push({
                 x: x,
                 y: y,
-                radius: 12,
-                speed: speed,
-                health: 1,
-                color: isFast ? '#ff6600' : '#ff0000', // Orange for fast, red for normal
-                isFast: isFast
+                radius: radius,
+                speed: baseSpeed,
+                health: health,
+                maxHealth: health,
+                color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
+                enemyType: enemyType,
+                goldReward: goldReward
             });
         }
     }
@@ -465,11 +493,14 @@ export class Game {
                     this.bullets.splice(i, 1);
                     
                     if (enemy.health <= 0) {
-                        this.enemies.splice(j, 1);
-                        this.score += 10;
+                        // Enemy killed - reward gold based on type
+                        const goldReward = enemy.goldReward || 1;
+                        this.score += goldReward * 10; // Score is 10x gold for display
                         if (this.onEnemyKill) {
-                            this.onEnemyKill(10); // 10 gold per kill
+                            this.onEnemyKill(goldReward);
                         }
+                        
+                        this.enemies.splice(j, 1);
                         
                         // Spawn 1.5x enemies when one is killed (rounded up)
                         const spawnCount = Math.ceil(1 * 1.5); // 2 enemies per kill
@@ -609,27 +640,57 @@ export class Game {
             // Draw enemy image with transparency preserved
             this.ctx.save();
             
+            // Scale for big enemies
+            const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
+            
             // Draw the image first (preserves transparency)
             this.ctx.drawImage(
                 this.images.enemy,
-                enemy.x - size / 2,
-                enemy.y - size / 2,
-                size,
-                size
+                enemy.x - (size * scale) / 2,
+                enemy.y - (size * scale) / 2,
+                size * scale,
+                size * scale
             );
             
-            // Apply tint for fast enemies (overlay mode to preserve transparency)
-            if (enemy.isFast) {
+            // Apply tint based on enemy type (overlay mode to preserve transparency)
+            if (enemy.enemyType === 'fast') {
                 this.ctx.globalCompositeOperation = 'overlay';
                 this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)'; // Orange tint
-                this.ctx.fillRect(enemy.x - size / 2, enemy.y - size / 2, size, size);
+                this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
                 this.ctx.globalCompositeOperation = 'source-over';
                 
                 // Draw outline for fast enemies
                 this.ctx.strokeStyle = '#ffaa00';
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                this.ctx.arc(enemy.x, enemy.y, size / 2, 0, Math.PI * 2);
+                this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+            } else if (enemy.enemyType === 'big') {
+                // Draw health bar for big enemies
+                const barWidth = size * scale;
+                const barHeight = 6;
+                const barX = enemy.x - barWidth / 2;
+                const barY = enemy.y - (size * scale) / 2 - 12;
+                
+                // Background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                // Health fill
+                const healthPercent = enemy.health / enemy.maxHealth;
+                this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+                
+                // Outline
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+                
+                // Draw thick outline for big enemies
+                this.ctx.strokeStyle = '#8b0000';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
                 this.ctx.stroke();
             }
             
@@ -644,10 +705,26 @@ export class Game {
                 enemy.radius * 2
             );
             
-            // Draw outline - different color for fast enemies
-            if (enemy.isFast) {
+            // Draw outline - different color/style for different types
+            if (enemy.enemyType === 'fast') {
                 this.ctx.strokeStyle = '#ffaa00';
                 this.ctx.lineWidth = 3;
+            } else if (enemy.enemyType === 'big') {
+                this.ctx.strokeStyle = '#8b0000';
+                this.ctx.lineWidth = 4;
+                
+                // Health bar for big enemies (fallback)
+                const barWidth = enemy.radius * 2;
+                const barHeight = 6;
+                const barX = enemy.x - enemy.radius;
+                const barY = enemy.y - enemy.radius - 12;
+                
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                const healthPercent = enemy.health / enemy.maxHealth;
+                this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
             } else {
                 this.ctx.strokeStyle = '#ff6666';
                 this.ctx.lineWidth = 2;
