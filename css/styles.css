@@ -13676,7 +13676,7 @@ body.leaderboard-body > * {
     position: absolute;
     top: 2rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(2);
     max-width: 80%;
     max-height: 30vh;
     z-index: 3;
