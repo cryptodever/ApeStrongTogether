@@ -157,12 +157,20 @@ function initializeGame() {
     // Calculate upgrade values
     const baseDamage = 5;
     const baseFireRate = 500;
-    const baseHealth = 100;
+    const baseHealth = 20; // Base health starts at 20
     const baseSpeed = 3;
     
+    // Upgrade scaling: each level multiplies the base value
     const weaponDamage = baseDamage * userGameData.gameUpgrades.weaponDamage;
-    const weaponFireRate = Math.max(100, baseFireRate / userGameData.gameUpgrades.weaponFireRate); // Min 100ms
-    const playerHealth = baseHealth * userGameData.gameUpgrades.apeHealth;
+    
+    // Fire rate scaling: continues to improve beyond level 5 with diminishing returns
+    // Formula: baseFireRate / (1 + (level - 1) * 0.5)
+    // This gives: Level 1 = 500ms, Level 2 = 333ms, Level 3 = 250ms, Level 5 = 200ms, Level 10 = 111ms, Level 20 = 63ms, etc.
+    // Minimum of 50ms to keep it fair
+    const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
+    const weaponFireRate = Math.max(50, baseFireRate / (1 + (fireRateLevel - 1) * 0.5));
+    
+    const playerHealth = baseHealth * userGameData.gameUpgrades.apeHealth; // Health multiplies by level
     
     // Create game instance
     game = new Game(
