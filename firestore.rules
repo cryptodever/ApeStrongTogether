@@ -291,6 +291,29 @@ service cloud.firestore {
       }
     }
 
+    // Game leaderboard collection
+    match /gameLeaderboard/{userId} {
+      // Allow public read (anyone can view leaderboard)
+      allow read: if true;
+      
+      // Users can create their own leaderboard entry
+      allow create: if isSignedIn()
+        && userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.score is int
+        && request.resource.data.username is string;
+      
+      // Users can update their own leaderboard entry (only if new score is higher)
+      allow update: if isSignedIn()
+        && userId == request.auth.uid
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.score is int
+        && request.resource.data.score >= resource.data.score;
+      
+      allow delete: if false;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
