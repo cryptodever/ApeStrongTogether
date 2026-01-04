@@ -238,9 +238,49 @@ export class Game {
         // Update player movement
         this.updatePlayer(deltaTime);
         
-        // Update camera to follow player
-        this.camera.x = this.player.x;
-        this.camera.y = this.player.y;
+        // Update camera to follow player, but constrain to background bounds
+        let targetX = this.player.x;
+        let targetY = this.player.y;
+        
+        // Constrain camera so viewport doesn't show outside background
+        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
+            const bgWidth = this.images.background.naturalWidth;
+            const bgHeight = this.images.background.naturalHeight;
+            
+            // Calculate viewport size at current zoom
+            const viewportWidth = this.width / this.camera.zoom;
+            const viewportHeight = this.height / this.camera.zoom;
+            
+            // Background bounds (centered at 0,0)
+            const bgMinX = -bgWidth / 2;
+            const bgMaxX = bgWidth / 2;
+            const bgMinY = -bgHeight / 2;
+            const bgMaxY = bgHeight / 2;
+            
+            // Constrain camera position so viewport stays within background
+            const minX = bgMinX + viewportWidth / 2;
+            const maxX = bgMaxX - viewportWidth / 2;
+            const minY = bgMinY + viewportHeight / 2;
+            const maxY = bgMaxY - viewportHeight / 2;
+            
+            // Only constrain if viewport is smaller than background
+            if (viewportWidth < bgWidth) {
+                targetX = Math.max(minX, Math.min(maxX, targetX));
+            } else {
+                // If viewport is larger than background, center it
+                targetX = 0;
+            }
+            
+            if (viewportHeight < bgHeight) {
+                targetY = Math.max(minY, Math.min(maxY, targetY));
+            } else {
+                // If viewport is larger than background, center it
+                targetY = 0;
+            }
+        }
+        
+        this.camera.x = targetX;
+        this.camera.y = targetY;
         
         // Update camera zoom based on enemy count
         // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
@@ -873,8 +913,8 @@ export class Game {
     
     drawBullet(bullet) {
         if (this.imagesLoaded && this.images.bullet && this.images.bullet.complete && this.images.bullet.naturalWidth > 0) {
-            // Draw bullet sprite
-            const size = bullet.radius * 2;
+            // Draw bullet sprite - enlarged for better visibility
+            const size = bullet.radius * 4;
             this.ctx.save();
             this.ctx.globalCompositeOperation = 'source-over';
             
@@ -892,10 +932,11 @@ export class Game {
             );
             this.ctx.restore();
         } else {
-            // Fallback: draw circle while bullet sprite loads
+            // Fallback: draw circle while bullet sprite loads (also enlarged)
+            const radius = bullet.radius * 2;
             this.ctx.fillStyle = '#ffff00';
             this.ctx.beginPath();
-            this.ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+            this.ctx.arc(bullet.x, bullet.y, radius, 0, Math.PI * 2);
             this.ctx.fill();
         }
     }
