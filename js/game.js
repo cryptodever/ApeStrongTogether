@@ -559,6 +559,9 @@ export class Game {
     }
     
     spawnBoss() {
+        // Clear all existing enemies when boss spawns
+        this.enemies = [];
+        
         // Spawn boss at center of background
         const difficultyMultiplier = this.getDifficultyMultiplier();
         
@@ -566,8 +569,8 @@ export class Game {
             x: 0,
             y: 0,
             radius: 40 * difficultyMultiplier,
-            health: 500 * difficultyMultiplier,
-            maxHealth: 500 * difficultyMultiplier,
+            health: 10000 * difficultyMultiplier,
+            maxHealth: 10000 * difficultyMultiplier,
             speed: 0, // Stationary
             rotation: 0,
             lastAttack: Date.now(),
