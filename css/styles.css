@@ -13406,17 +13406,33 @@ body.leaderboard-body > * {
     max-width: 90%;
     width: 100%;
     max-height: 85%;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-    /* Hide scrollbars */
-    scrollbar-width: none; /* Firefox */
+    /* Hide scrollbars but allow scrolling */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(0, 255, 0, 0.3) rgba(0, 0, 0, 0.5);
     -ms-overflow-style: none; /* IE and Edge */
     /* Ensure it fits within game container */
     box-sizing: border-box;
 }
 
 .upgrade-shop-content::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    width: 8px; /* Chrome, Safari, Opera */
+}
+
+.upgrade-shop-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+.upgrade-shop-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 0, 0.3);
+    border-radius: 4px;
+}
+
+.upgrade-shop-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 0, 0.5);
 }
 
 .upgrade-shop-content h2 {

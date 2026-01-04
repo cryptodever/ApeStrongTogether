@@ -21,7 +21,8 @@ export class Game {
         // Image assets
         this.images = {
             player: {}, // Will hold directional ape images
-            enemy: null // Enemy/suit image
+            enemy: null, // Enemy/suit image
+            background: null // Game background image
         };
         this.imagesLoaded = false;
         
@@ -32,7 +33,8 @@ export class Game {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 1
+            zoom: 0.5, // Start zoomed in at 50%
+            targetZoom: 0.5 // Target zoom for smooth transitions
         };
         
         // Player
@@ -91,7 +93,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length + 1; // 8 player directions + 1 enemy
+        const totalImages = directions.length + 2; // 8 player directions + 1 enemy + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -121,6 +123,16 @@ export class Game {
         };
         enemyImg.src = '/pfp_apes/tg_1.png';
         this.images.enemy = enemyImg;
+        
+        // Load background image
+        const bgImg = new Image();
+        bgImg.onload = checkAllLoaded;
+        bgImg.onerror = () => {
+            console.warn('Failed to load background image, using fallback color');
+            checkAllLoaded();
+        };
+        bgImg.src = '/game-jpegs/background_game.png';
+        this.images.background = bgImg;
     }
     
     getPlayerDirection() {
@@ -191,6 +203,19 @@ export class Game {
         // Update camera to follow player
         this.camera.x = this.player.x;
         this.camera.y = this.player.y;
+        
+        // Update camera zoom based on enemy count
+        // Start at 0.5 (50% zoomed in), zoom out to 1.0 as enemies approach max
+        const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
+        this.camera.targetZoom = 0.5 + (enemyRatio * 0.5); // 0.5 to 1.0
+        
+        // Smoothly interpolate zoom
+        const zoomSpeed = 0.002 * deltaTime; // Smooth zoom transition
+        if (this.camera.zoom < this.camera.targetZoom) {
+            this.camera.zoom = Math.min(this.camera.zoom + zoomSpeed, this.camera.targetZoom);
+        } else if (this.camera.zoom > this.camera.targetZoom) {
+            this.camera.zoom = Math.max(this.camera.zoom - zoomSpeed, this.camera.targetZoom);
+        }
         
         // Spawn enemies
         this.spawnEnemies();
@@ -446,6 +471,9 @@ export class Game {
         this.enemies = [];
         this.bullets = [];
         this.lastSpawn = Date.now();
+        // Reset camera zoom to starting value
+        this.camera.zoom = 0.5;
+        this.camera.targetZoom = 0.5;
     }
     
     die() {
@@ -456,8 +484,8 @@ export class Game {
     }
     
     render() {
-        // Clear canvas with new background color
-        this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background
+        // Clear canvas with fallback background color
+        this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background (fallback)
         this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Transform to camera view (orbital)
@@ -466,8 +494,24 @@ export class Game {
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
         this.ctx.translate(-this.camera.x, -this.camera.y);
         
-        // Draw grid background (optional, for retro feel)
-        this.drawGrid();
+        // Draw background image - fill the viewport at max zoom
+        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
+            // Calculate viewport size in world coordinates at max zoom (1.0)
+            const viewportWidth = this.width; // At zoom 1.0, viewport = canvas size
+            const viewportHeight = this.height;
+            
+            // Draw background to fill the viewport, centered at camera position
+            this.ctx.drawImage(
+                this.images.background,
+                this.camera.x - viewportWidth / 2,
+                this.camera.y - viewportHeight / 2,
+                viewportWidth,
+                viewportHeight
+            );
+        }
+        
+        // Draw grid background (optional, for retro feel - can be removed if background image is used)
+        // this.drawGrid();
         
         // Draw enemies
         this.enemies.forEach(enemy => {
@@ -646,6 +690,9 @@ export class Game {
         this.enemies = [];
         this.bullets = [];
         this.lastSpawn = 0;
+        // Reset camera zoom to starting value
+        this.camera.zoom = 0.5;
+        this.camera.targetZoom = 0.5;
     }
     
     getHealth() {
