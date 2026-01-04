@@ -434,7 +434,7 @@ function setupEventListeners() {
     // Leaderboard button
     if (leaderboardBtn) {
         leaderboardBtn.addEventListener('click', () => {
-            window.location.href = '/leaderboard/index.html';
+            window.location.href = '/game/leaderboard/index.html';
         });
     }
     
