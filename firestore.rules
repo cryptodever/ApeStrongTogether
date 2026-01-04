@@ -293,8 +293,9 @@ service cloud.firestore {
 
     // Game leaderboard collection
     match /gameLeaderboard/{userId} {
-      // Allow public read (anyone can view leaderboard)
-      allow read: if true;
+      // Allow public read (anyone can view leaderboard) - both get and list
+      allow get: if true;
+      allow list: if true;
       
       // Users can create their own leaderboard entry
       allow create: if isSignedIn()
