@@ -63,6 +63,9 @@ export class Game {
         // Entities
         this.enemies = [];
         this.bullets = [];
+        this.boss = null; // Boss entity
+        this.bossProjectiles = []; // Boss projectiles
+        this.bossSpawned = false; // Track if boss has been spawned
         
         // Spawning
         this.lastSpawn = 0;
@@ -295,14 +298,27 @@ export class Game {
             this.camera.zoom = Math.max(this.camera.zoom - zoomSpeed, this.camera.targetZoom);
         }
         
+        // Spawn boss if 1000 kills reached
+        if (this.kills >= 1000 && !this.bossSpawned && !this.boss) {
+            this.spawnBoss();
+        }
+        
         // Spawn enemies
         this.spawnEnemies();
         
         // Update enemies
         this.updateEnemies(deltaTime);
         
+        // Update boss
+        if (this.boss) {
+            this.updateBoss(deltaTime);
+        }
+        
         // Update bullets
         this.updateBullets(deltaTime);
+        
+        // Update boss projectiles
+        this.updateBossProjectiles(deltaTime);
         
         // Check collisions
         this.checkCollisions();
@@ -533,6 +549,174 @@ export class Game {
         }
     }
     
+    spawnBoss() {
+        // Spawn boss at center of background
+        const difficultyMultiplier = this.getDifficultyMultiplier();
+        
+        this.boss = {
+            x: 0,
+            y: 0,
+            radius: 40 * difficultyMultiplier,
+            health: 500 * difficultyMultiplier,
+            maxHealth: 500 * difficultyMultiplier,
+            speed: 0, // Stationary
+            rotation: 0,
+            lastAttack: Date.now(),
+            attackCooldown: 2000, // 2 seconds between attacks
+            attackPattern: 0, // Current attack pattern (0-3)
+            attackTimer: 0, // Timer for pattern-specific timing
+            color: '#ff0000'
+        };
+        
+        this.bossSpawned = true;
+    }
+    
+    updateBoss(deltaTime) {
+        if (!this.boss) return;
+        
+        // Boss stays stationary, just rotates toward player
+        const dx = this.player.x - this.boss.x;
+        const dy = this.player.y - this.boss.y;
+        this.boss.rotation = Math.atan2(dy, dx);
+        
+        const now = Date.now();
+        this.boss.attackTimer += deltaTime;
+        
+        // Cycle through attack patterns
+        if (now - this.boss.lastAttack >= this.boss.attackCooldown) {
+            this.boss.lastAttack = now;
+            this.boss.attackTimer = 0;
+            
+            // Execute current attack pattern
+            switch (this.boss.attackPattern) {
+                case 0:
+                    this.bossAttackDirect();
+                    break;
+                case 1:
+                    this.bossAttackSpread();
+                    break;
+                case 2:
+                    this.bossAttackSpiral();
+                    break;
+                case 3:
+                    this.bossAttackRing();
+                    break;
+            }
+            
+            // Cycle to next pattern
+            this.boss.attackPattern = (this.boss.attackPattern + 1) % 4;
+        }
+        
+        // Check if boss is dead
+        if (this.boss.health <= 0) {
+            // Boss defeated - reward gold
+            const goldReward = 50;
+            this.score += goldReward * 10;
+            if (this.onEnemyKill) {
+                this.onEnemyKill(goldReward);
+            }
+            this.boss = null;
+        }
+    }
+    
+    bossAttackDirect() {
+        // Direct shot at player
+        const dx = this.player.x - this.boss.x;
+        const dy = this.player.y - this.boss.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        this.bossProjectiles.push({
+            x: this.boss.x,
+            y: this.boss.y,
+            vx: Math.cos(angle) * 3,
+            vy: Math.sin(angle) * 3,
+            radius: 8,
+            damage: 10,
+            color: '#ff0000'
+        });
+    }
+    
+    bossAttackSpread() {
+        // Spread shot - 5 projectiles in a cone
+        const dx = this.player.x - this.boss.x;
+        const dy = this.player.y - this.boss.y;
+        const baseAngle = Math.atan2(dy, dx);
+        const spread = Math.PI / 6; // 30 degree spread
+        
+        for (let i = 0; i < 5; i++) {
+            const angle = baseAngle + (i - 2) * (spread / 4);
+            this.bossProjectiles.push({
+                x: this.boss.x,
+                y: this.boss.y,
+                vx: Math.cos(angle) * 3,
+                vy: Math.sin(angle) * 3,
+                radius: 6,
+                damage: 8,
+                color: '#ff6600'
+            });
+        }
+    }
+    
+    bossAttackSpiral() {
+        // Spiral attack - multiple projectiles in a spiral pattern
+        const spiralCount = 8;
+        // Use a rotating base angle that changes each time this attack is called
+        const timeBasedAngle = (Date.now() / 50) % (Math.PI * 2);
+        
+        for (let i = 0; i < spiralCount; i++) {
+            const angle = timeBasedAngle + (i * Math.PI * 2 / spiralCount);
+            this.bossProjectiles.push({
+                x: this.boss.x,
+                y: this.boss.y,
+                vx: Math.cos(angle) * 2.5,
+                vy: Math.sin(angle) * 2.5,
+                radius: 7,
+                damage: 7,
+                color: '#ff00ff'
+            });
+        }
+    }
+    
+    bossAttackRing() {
+        // Ring attack - projectiles in all directions
+        const ringCount = 12;
+        
+        for (let i = 0; i < ringCount; i++) {
+            const angle = (i * Math.PI * 2 / ringCount);
+            this.bossProjectiles.push({
+                x: this.boss.x,
+                y: this.boss.y,
+                vx: Math.cos(angle) * 2.5,
+                vy: Math.sin(angle) * 2.5,
+                radius: 6,
+                damage: 6,
+                color: '#00ffff'
+            });
+        }
+    }
+    
+    updateBossProjectiles(deltaTime) {
+        for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
+            const projectile = this.bossProjectiles[i];
+            
+            // Move projectile (frame-rate independent)
+            const timeFactor = deltaTime / 16.67;
+            projectile.x += projectile.vx * timeFactor;
+            projectile.y += projectile.vy * timeFactor;
+            
+            // Remove if too far from boss
+            const dist = Math.sqrt(
+                (projectile.x - this.boss.x) ** 2 + 
+                (projectile.y - this.boss.y) ** 2
+            );
+            
+            if (dist > Math.max(this.width, this.height) * 1.5) {
+                this.bossProjectiles.splice(i, 1);
+            }
+        }
+    }
+    
     updateBullets(deltaTime) {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
@@ -614,6 +798,42 @@ export class Game {
                     break;
                 }
             }
+            
+            // Bullet vs Boss
+            if (this.boss) {
+                const dist = Math.sqrt(
+                    (bullet.x - this.boss.x) ** 2 + 
+                    (bullet.y - this.boss.y) ** 2
+                );
+                
+                if (dist < bullet.radius + this.boss.radius) {
+                    // Hit boss!
+                    this.boss.health -= bullet.damage;
+                    this.bullets.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        // Boss Projectile vs Player
+        for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
+            const projectile = this.bossProjectiles[i];
+            
+            const dist = Math.sqrt(
+                (projectile.x - this.player.x) ** 2 + 
+                (projectile.y - this.player.y) ** 2
+            );
+            
+            if (dist < projectile.radius + this.player.radius) {
+                // Player hit by boss projectile
+                this.player.health -= projectile.damage;
+                this.bossProjectiles.splice(i, 1);
+                
+                if (this.player.health <= 0) {
+                    this.player.health = 0;
+                    this.die();
+                }
+            }
         }
     }
     
@@ -625,6 +845,9 @@ export class Game {
         this.player.health = this.player.maxHealth;
         this.enemies = [];
         this.bullets = [];
+        this.boss = null;
+        this.bossProjectiles = [];
+        this.bossSpawned = false;
         this.lastSpawn = Date.now();
         // Reset camera zoom to starting value
         this.camera.zoom = 2.0;
@@ -671,9 +894,19 @@ export class Game {
             this.drawEnemy(enemy);
         });
         
+        // Draw boss
+        if (this.boss) {
+            this.drawBoss();
+        }
+        
         // Draw bullets
         this.bullets.forEach(bullet => {
             this.drawBullet(bullet);
+        });
+        
+        // Draw boss projectiles
+        this.bossProjectiles.forEach(projectile => {
+            this.drawBossProjectile(projectile);
         });
         
         // Draw player
@@ -941,6 +1174,84 @@ export class Game {
         }
     }
     
+    drawBoss() {
+        if (!this.boss) return;
+        
+        this.ctx.save();
+        
+        const size = this.boss.radius * 2;
+        
+        // Draw boss as a large red circle with pulsing effect
+        const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Pulsing effect
+        const drawSize = size * pulse;
+        
+        // Outer glow
+        const gradient = this.ctx.createRadialGradient(
+            this.boss.x, this.boss.y, 0,
+            this.boss.x, this.boss.y, drawSize / 2
+        );
+        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(255, 0, 0, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(this.boss.x, this.boss.y, drawSize / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Boss body
+        this.ctx.fillStyle = '#ff0000';
+        this.ctx.beginPath();
+        this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Boss outline
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
+        this.ctx.stroke();
+        
+        // Health bar
+        const barWidth = this.boss.radius * 2;
+        const barHeight = 8;
+        const barX = this.boss.x - barWidth / 2;
+        const barY = this.boss.y - this.boss.radius - 20;
+        
+        // Background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Health fill
+        const healthPercent = this.boss.health / this.boss.maxHealth;
+        this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+        this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+        
+        // Outline
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        this.ctx.restore();
+    }
+    
+    drawBossProjectile(projectile) {
+        this.ctx.save();
+        this.ctx.fillStyle = projectile.color;
+        this.ctx.beginPath();
+        this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Glow effect
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+        this.ctx.stroke();
+        
+        this.ctx.restore();
+    }
+    
     gameLoop() {
         const now = performance.now();
         const deltaTime = now - this.lastFrame;
@@ -979,6 +1290,9 @@ export class Game {
         this.player.health = this.player.maxHealth;
         this.enemies = [];
         this.bullets = [];
+        this.boss = null;
+        this.bossProjectiles = [];
+        this.bossSpawned = false;
         this.lastSpawn = 0;
         // Reset camera zoom to starting value
         this.camera.zoom = 2.0;
