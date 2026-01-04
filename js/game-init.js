@@ -143,6 +143,39 @@ async function saveGameData() {
     }
 }
 
+// Save score to leaderboard (only highest score per user)
+async function saveScoreToLeaderboard(score) {
+    if (!currentUser) return;
+    
+    try {
+        const leaderboardRef = doc(db, 'gameLeaderboard', currentUser.uid);
+        const leaderboardDoc = await getDoc(leaderboardRef);
+        
+        if (leaderboardDoc.exists()) {
+            const currentScore = leaderboardDoc.data().score || 0;
+            // Only update if new score is higher
+            if (score > currentScore) {
+                await updateDoc(leaderboardRef, {
+                    score: score,
+                    username: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+                    updatedAt: serverTimestamp()
+                });
+            }
+        } else {
+            // Create new entry
+            await setDoc(leaderboardRef, {
+                userId: currentUser.uid,
+                username: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+                score: score,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+    } catch (error) {
+        console.error('Error saving score to leaderboard:', error);
+    }
+}
+
 // Initialize game instance
 function initializeGame() {
     canvasEl = document.getElementById('gameCanvas');
@@ -197,8 +230,10 @@ async function onEnemyKilled(goldEarned) {
 }
 
 // Callback when player dies
-function onPlayerDied(score) {
+async function onPlayerDied(score) {
     updateUI();
+    // Save score to leaderboard
+    await saveScoreToLeaderboard(score);
     showUpgradeShop();
 }
 
@@ -345,6 +380,7 @@ function setupEventListeners() {
     // Start screen elements
     startScreenEl = document.getElementById('startScreen');
     startGameBtn = document.getElementById('startGameBtn');
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
     
     // Upgrade buttons
     if (upgradeDamageBtn) {
@@ -392,6 +428,13 @@ function setupEventListeners() {
                     gameUIOverlay.style.opacity = '1';
                 }
             }
+        });
+    }
+    
+    // Leaderboard button
+    if (leaderboardBtn) {
+        leaderboardBtn.addEventListener('click', () => {
+            window.location.href = '/leaderboard/index.html';
         });
     }
     

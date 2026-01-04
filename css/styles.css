@@ -13737,6 +13737,209 @@ body.leaderboard-body > * {
     transform: translateY(-1px) scale(1.02);
 }
 
+.leaderboard-btn {
+    background: rgba(255, 215, 0, 0.4);
+    border: 3px solid rgba(255, 215, 0, 0.8);
+    color: #ffd700;
+    padding: 1.25rem 3rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 300px;
+}
+
+.leaderboard-btn:hover {
+    background: rgba(255, 215, 0, 0.5);
+    border-color: rgba(255, 215, 0, 1);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.7);
+}
+
+.leaderboard-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* Game Leaderboard Page */
+.leaderboard-page {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: #fff;
+}
+
+.leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.leaderboard-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffd700;
+    margin: 0;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.back-to-game-btn {
+    background: rgba(0, 255, 0, 0.3);
+    border: 2px solid rgba(0, 255, 0, 0.6);
+    color: #00ff00;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.back-to-game-btn:hover {
+    background: rgba(0, 255, 0, 0.4);
+    border-color: rgba(0, 255, 0, 0.9);
+    transform: translateY(-2px);
+}
+
+.leaderboard-content {
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(0, 255, 0, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.leaderboard-loading,
+.leaderboard-empty {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.leaderboard-entry {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.leaderboard-entry:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 255, 0, 0.3);
+    transform: translateX(5px);
+}
+
+.leaderboard-entry.top-three {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+.leaderboard-rank {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-align: center;
+}
+
+.leaderboard-username {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #fff;
+    padding-left: 1rem;
+}
+
+.leaderboard-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #00ff00;
+    text-align: right;
+}
+
+.user-rank-divider {
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(0, 255, 0, 0.5), transparent);
+    margin: 2rem 0;
+}
+
+.user-rank-item {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid rgba(0, 255, 0, 0.5);
+    border-radius: 8px;
+}
+
+.user-rank-item .leaderboard-rank {
+    color: #00ff00;
+}
+
+.user-rank-item .leaderboard-username {
+    color: #00ff00;
+    font-weight: 700;
+}
+
+.user-rank-item .leaderboard-score {
+    color: #00ff00;
+}
+
+@media (max-width: 768px) {
+    .leaderboard-page {
+        padding: 1rem;
+    }
+    
+    .leaderboard-title {
+        font-size: 2rem;
+    }
+    
+    .leaderboard-entry {
+        grid-template-columns: 50px 1fr auto;
+        padding: 0.75rem;
+    }
+    
+    .leaderboard-rank {
+        font-size: 1.25rem;
+    }
+    
+    .leaderboard-username {
+        font-size: 1rem;
+        padding-left: 0.5rem;
+    }
+    
+    .leaderboard-score {
+        font-size: 1.1rem;
+    }
+}
+
 .game-instructions {
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid rgba(0, 255, 0, 0.4);
