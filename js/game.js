@@ -599,12 +599,12 @@ export class Game {
             x: 0,
             y: 0,
             radius: 40 * difficultyMultiplier,
-            health: 10000 * difficultyMultiplier,
-            maxHealth: 10000 * difficultyMultiplier,
+            health: 20000 * difficultyMultiplier, // Doubled from 10000
+            maxHealth: 20000 * difficultyMultiplier,
             speed: 0, // Stationary
             rotation: 0,
             lastAttack: Date.now(),
-            attackCooldown: 2000, // 2 seconds between attacks
+            attackCooldown: 1200, // Reduced from 2000ms to 1200ms (faster attacks)
             attackPattern: 0, // Current attack pattern (0-3)
             attackTimer: 0, // Timer for pattern-specific timing
             color: '#ff0000'
@@ -616,6 +616,22 @@ export class Game {
     updateBoss(deltaTime) {
         if (!this.boss) return;
         
+        // Check if boss is dead first, before doing anything else
+        if (this.boss.health <= 0) {
+            // Boss defeated - reward gold
+            const goldReward = 50;
+            this.score += goldReward * 10;
+            if (this.onEnemyKill) {
+                this.onEnemyKill(goldReward);
+            }
+            // Clear boss projectiles when boss dies
+            this.bossProjectiles = [];
+            this.boss = null;
+            // Reset bossSpawned flag so boss can spawn again later if needed
+            this.bossSpawned = false;
+            return;
+        }
+        
         // Boss stays stationary and static (no rotation)
         const now = Date.now();
         this.boss.attackTimer += deltaTime;
@@ -625,7 +641,8 @@ export class Game {
             this.boss.lastAttack = now;
             this.boss.attackTimer = 0;
             
-            // Execute current attack pattern
+            // Execute current attack pattern (check boss still exists)
+            if (!this.boss) return;
             switch (this.boss.attackPattern) {
                 case 0:
                     this.bossAttackDirect();
@@ -641,8 +658,8 @@ export class Game {
                     break;
             }
             
-            // Random chance (30%) to do a second attack immediately
-            if (Math.random() < 0.3) {
+            // Random chance (50%) to do a second attack immediately (increased from 30%)
+            if (this.boss && Math.random() < 0.5) {
                 // Execute same attack pattern again
                 switch (this.boss.attackPattern) {
                     case 0:
@@ -661,27 +678,16 @@ export class Game {
             }
             
             // Cycle to next pattern
-            this.boss.attackPattern = (this.boss.attackPattern + 1) % 4;
-        }
-        
-        // Check if boss is dead
-        if (this.boss.health <= 0) {
-            // Boss defeated - reward gold
-            const goldReward = 50;
-            this.score += goldReward * 10;
-            if (this.onEnemyKill) {
-                this.onEnemyKill(goldReward);
+            if (this.boss) {
+                this.boss.attackPattern = (this.boss.attackPattern + 1) % 4;
             }
-            // Clear boss projectiles when boss dies
-            this.bossProjectiles = [];
-            this.boss = null;
-            // Reset bossSpawned flag so boss can spawn again later if needed
-            this.bossSpawned = false;
         }
     }
     
     bossAttackDirect() {
         // Direct shot at player
+        if (!this.boss) return;
+        
         const dx = this.player.x - this.boss.x;
         const dy = this.player.y - this.boss.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -690,30 +696,32 @@ export class Game {
         this.bossProjectiles.push({
             x: this.boss.x,
             y: this.boss.y,
-            vx: Math.cos(angle) * 3.75, // 25% faster (3 * 1.25)
-            vy: Math.sin(angle) * 3.75,
-            radius: 10, // 25% larger (8 * 1.25)
-            damage: 10,
+            vx: Math.cos(angle) * 4.5, // Increased speed (was 3.75)
+            vy: Math.sin(angle) * 4.5,
+            radius: 10,
+            damage: 15, // Increased from 10
             color: '#ff0000'
         });
     }
     
     bossAttackSpread() {
         // Spread shot - 5 projectiles in a cone
+        if (!this.boss) return;
+        
         const dx = this.player.x - this.boss.x;
         const dy = this.player.y - this.boss.y;
         const baseAngle = Math.atan2(dy, dx);
         const spread = Math.PI / 6; // 30 degree spread
         
-        for (let i = 0; i < 5; i++) {
-            const angle = baseAngle + (i - 2) * (spread / 4);
+        for (let i = 0; i < 7; i++) { // Increased from 5 to 7 projectiles
+            const angle = baseAngle + (i - 3) * (spread / 6);
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 3.75, // 25% faster (3 * 1.25)
-                vy: Math.sin(angle) * 3.75,
-                radius: 7.5, // 25% larger (6 * 1.25)
-                damage: 8,
+                vx: Math.cos(angle) * 4.5, // Increased speed (was 3.75)
+                vy: Math.sin(angle) * 4.5,
+                radius: 7.5,
+                damage: 12, // Increased from 8
                 color: '#ff6600'
             });
         }
@@ -721,7 +729,9 @@ export class Game {
     
     bossAttackSpiral() {
         // Spiral attack - multiple projectiles in a spiral pattern
-        const spiralCount = 8;
+        if (!this.boss) return;
+        
+        const spiralCount = 12; // Increased from 8 to 12
         // Use a rotating base angle that changes each time this attack is called
         const timeBasedAngle = (Date.now() / 50) % (Math.PI * 2);
         
@@ -730,10 +740,10 @@ export class Game {
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 3.125, // 25% faster (2.5 * 1.25)
-                vy: Math.sin(angle) * 3.125,
-                radius: 8.75, // 25% larger (7 * 1.25)
-                damage: 7,
+                vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
+                vy: Math.sin(angle) * 3.75,
+                radius: 8.75,
+                damage: 10, // Increased from 7
                 color: '#ff00ff'
             });
         }
@@ -741,23 +751,30 @@ export class Game {
     
     bossAttackRing() {
         // Ring attack - projectiles in all directions
-        const ringCount = 12;
+        if (!this.boss) return;
+        
+        const ringCount = 16; // Increased from 12 to 16
         
         for (let i = 0; i < ringCount; i++) {
             const angle = (i * Math.PI * 2 / ringCount);
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 3.125, // 25% faster (2.5 * 1.25)
-                vy: Math.sin(angle) * 3.125,
-                radius: 7.5, // 25% larger (6 * 1.25)
-                damage: 6,
+                vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
+                vy: Math.sin(angle) * 3.75,
+                radius: 7.5,
+                damage: 9, // Increased from 6
                 color: '#00ffff'
             });
         }
     }
     
     updateBossProjectiles(deltaTime) {
+        // If no boss and no projectiles, nothing to update
+        if (!this.boss && this.bossProjectiles.length === 0) {
+            return;
+        }
+        
         for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
             const projectile = this.bossProjectiles[i];
             
@@ -779,7 +796,8 @@ export class Game {
                 (projectile.y - centerY) ** 2
             );
             
-            if (dist > Math.max(this.width, this.height) * 1.5) {
+            // Remove if too far from center or if boss is dead
+            if (dist > Math.max(this.width, this.height) * 1.5 || !this.boss) {
                 this.bossProjectiles.splice(i, 1);
             }
         }
