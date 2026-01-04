@@ -17,6 +17,7 @@ export class Game {
         // Game state
         this.state = 'menu'; // 'menu', 'playing', 'dead', 'shop'
         this.score = 0;
+        this.kills = 0; // Track total enemies killed for difficulty scaling
         
         // Image assets
         this.images = {
@@ -281,6 +282,17 @@ export class Game {
         this.player.rotation = Math.atan2(screenY, screenX);
     }
     
+    getDifficultyMultiplier() {
+        // Every 100 kills = 1.2x multiplier (compounding)
+        // 0-99 kills: 1.0x
+        // 100-199 kills: 1.2x
+        // 200-299 kills: 1.44x (1.2^2)
+        // 300-399 kills: 1.728x (1.2^3)
+        // etc.
+        const difficultyLevel = Math.floor(this.kills / 100);
+        return Math.pow(1.2, difficultyLevel);
+    }
+    
     spawnEnemies(count = 1) {
         const now = Date.now();
         if (count === 1) {
@@ -318,11 +330,14 @@ export class Game {
                     break;
             }
             
+            // Get difficulty multiplier
+            const difficultyMultiplier = this.getDifficultyMultiplier();
+            
             // Determine enemy type: 60% normal, 25% fast, 15% big
             const rand = Math.random();
             let enemyType = 'normal';
             let baseSpeed = 1.5;
-            let health = 1;
+            let health = 10; // Base health values
             let radius = 12;
             let goldReward = 1;
             
@@ -330,32 +345,33 @@ export class Game {
                 // Big enemy (15% chance)
                 enemyType = 'big';
                 baseSpeed = 1.0; // Slower than normal
-                health = 3; // Takes 3 hits to kill
+                health = 30;
                 radius = 18; // Larger size
                 goldReward = 5;
             } else if (rand < 0.40) {
                 // Fast enemy (25% chance)
                 enemyType = 'fast';
                 baseSpeed = 1.5 * 1.5; // 1.5x faster
-                health = 1;
+                health = 5;
                 radius = 12;
                 goldReward = 2;
             } else {
                 // Normal enemy (60% chance)
                 enemyType = 'normal';
                 baseSpeed = 1.5;
-                health = 1;
+                health = 10;
                 radius = 12;
                 goldReward = 1;
             }
             
+            // Apply difficulty multiplier to enemy stats
             this.enemies.push({
                 x: x,
                 y: y,
-                radius: radius,
-                speed: baseSpeed,
-                health: health,
-                maxHealth: health,
+                radius: radius * difficultyMultiplier,
+                speed: baseSpeed * difficultyMultiplier,
+                health: health * difficultyMultiplier,
+                maxHealth: health * difficultyMultiplier,
                 color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
                 enemyType: enemyType,
                 goldReward: goldReward
@@ -493,7 +509,9 @@ export class Game {
                     this.bullets.splice(i, 1);
                     
                     if (enemy.health <= 0) {
-                        // Enemy killed - reward gold based on type
+                        // Enemy killed
+                        this.kills++; // Increment kill counter
+                        
                         const goldReward = enemy.goldReward || 1;
                         this.score += goldReward * 10; // Score is 10x gold for display
                         if (this.onEnemyKill) {
@@ -517,6 +535,7 @@ export class Game {
         // Reset game state
         this.state = 'playing';
         this.score = 0;
+        this.kills = 0; // Reset kill counter
         this.player.health = this.player.maxHealth;
         this.enemies = [];
         this.bullets = [];
@@ -778,6 +797,7 @@ export class Game {
     restart() {
         this.state = 'playing';
         this.score = 0;
+        this.kills = 0; // Reset kill counter
         this.player.x = 0;
         this.player.y = 0;
         this.player.health = this.player.maxHealth;

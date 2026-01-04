@@ -126,7 +126,7 @@ function initializeGame() {
     }
     
     // Calculate upgrade values
-    const baseDamage = 10;
+    const baseDamage = 5;
     const baseFireRate = 500;
     const baseHealth = 100;
     const baseSpeed = 3;
@@ -201,24 +201,24 @@ function updateUpgradeShopUI() {
     const healthLevel = userGameData.gameUpgrades.apeHealth;
     
     if (damageLevelEl) damageLevelEl.textContent = damageLevel;
-    if (damageCostEl) damageCostEl.textContent = getUpgradeCost(damageLevel);
+    if (damageCostEl) damageCostEl.textContent = damageLevel >= 100 ? 'MAX' : getUpgradeCost(damageLevel);
     if (upgradeDamageBtn) {
         const cost = getUpgradeCost(damageLevel);
-        upgradeDamageBtn.disabled = userGameData.gameGold < cost;
+        upgradeDamageBtn.disabled = damageLevel >= 100 || userGameData.gameGold < cost;
     }
     
     if (fireRateLevelEl) fireRateLevelEl.textContent = fireRateLevel;
-    if (fireRateCostEl) fireRateCostEl.textContent = getUpgradeCost(fireRateLevel);
+    if (fireRateCostEl) fireRateCostEl.textContent = fireRateLevel >= 100 ? 'MAX' : getUpgradeCost(fireRateLevel);
     if (upgradeFireRateBtn) {
         const cost = getUpgradeCost(fireRateLevel);
-        upgradeFireRateBtn.disabled = userGameData.gameGold < cost;
+        upgradeFireRateBtn.disabled = fireRateLevel >= 100 || userGameData.gameGold < cost;
     }
     
     if (healthLevelEl) healthLevelEl.textContent = healthLevel;
-    if (healthCostEl) healthCostEl.textContent = getUpgradeCost(healthLevel);
+    if (healthCostEl) healthCostEl.textContent = healthLevel >= 100 ? 'MAX' : getUpgradeCost(healthLevel);
     if (upgradeHealthBtn) {
         const cost = getUpgradeCost(healthLevel);
-        upgradeHealthBtn.disabled = userGameData.gameGold < cost;
+        upgradeHealthBtn.disabled = healthLevel >= 100 || userGameData.gameGold < cost;
     }
 }
 
@@ -226,6 +226,11 @@ function updateUpgradeShopUI() {
 async function purchaseUpgrade(upgradeType) {
     const level = userGameData.gameUpgrades[upgradeType];
     const cost = getUpgradeCost(level);
+    
+    // Check max upgrade level (100)
+    if (level >= 100) {
+        return; // Already at max level
+    }
     
     if (userGameData.gameGold < cost) {
         return; // Not enough gold
