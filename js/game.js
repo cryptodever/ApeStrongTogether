@@ -641,6 +641,25 @@ export class Game {
                     break;
             }
             
+            // Random chance (30%) to do a second attack immediately
+            if (Math.random() < 0.3) {
+                // Execute same attack pattern again
+                switch (this.boss.attackPattern) {
+                    case 0:
+                        this.bossAttackDirect();
+                        break;
+                    case 1:
+                        this.bossAttackSpread();
+                        break;
+                    case 2:
+                        this.bossAttackSpiral();
+                        break;
+                    case 3:
+                        this.bossAttackRing();
+                        break;
+                }
+            }
+            
             // Cycle to next pattern
             this.boss.attackPattern = (this.boss.attackPattern + 1) % 4;
         }
@@ -653,7 +672,11 @@ export class Game {
             if (this.onEnemyKill) {
                 this.onEnemyKill(goldReward);
             }
+            // Clear boss projectiles when boss dies
+            this.bossProjectiles = [];
             this.boss = null;
+            // Reset bossSpawned flag so boss can spawn again later if needed
+            this.bossSpawned = false;
         }
     }
     
@@ -667,9 +690,9 @@ export class Game {
         this.bossProjectiles.push({
             x: this.boss.x,
             y: this.boss.y,
-            vx: Math.cos(angle) * 3,
-            vy: Math.sin(angle) * 3,
-            radius: 8,
+            vx: Math.cos(angle) * 3.75, // 25% faster (3 * 1.25)
+            vy: Math.sin(angle) * 3.75,
+            radius: 10, // 25% larger (8 * 1.25)
             damage: 10,
             color: '#ff0000'
         });
@@ -687,9 +710,9 @@ export class Game {
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 3,
-                vy: Math.sin(angle) * 3,
-                radius: 6,
+                vx: Math.cos(angle) * 3.75, // 25% faster (3 * 1.25)
+                vy: Math.sin(angle) * 3.75,
+                radius: 7.5, // 25% larger (6 * 1.25)
                 damage: 8,
                 color: '#ff6600'
             });
@@ -707,9 +730,9 @@ export class Game {
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 2.5,
-                vy: Math.sin(angle) * 2.5,
-                radius: 7,
+                vx: Math.cos(angle) * 3.125, // 25% faster (2.5 * 1.25)
+                vy: Math.sin(angle) * 3.125,
+                radius: 8.75, // 25% larger (7 * 1.25)
                 damage: 7,
                 color: '#ff00ff'
             });
@@ -725,9 +748,9 @@ export class Game {
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 2.5,
-                vy: Math.sin(angle) * 2.5,
-                radius: 6,
+                vx: Math.cos(angle) * 3.125, // 25% faster (2.5 * 1.25)
+                vy: Math.sin(angle) * 3.125,
+                radius: 7.5, // 25% larger (6 * 1.25)
                 damage: 6,
                 color: '#00ffff'
             });
@@ -743,10 +766,17 @@ export class Game {
             projectile.x += projectile.vx * timeFactor;
             projectile.y += projectile.vy * timeFactor;
             
-            // Remove if too far from boss
+            // Remove if too far from center (or boss if it exists)
+            let centerX = 0;
+            let centerY = 0;
+            if (this.boss) {
+                centerX = this.boss.x;
+                centerY = this.boss.y;
+            }
+            
             const dist = Math.sqrt(
-                (projectile.x - this.boss.x) ** 2 + 
-                (projectile.y - this.boss.y) ** 2
+                (projectile.x - centerX) ** 2 + 
+                (projectile.y - centerY) ** 2
             );
             
             if (dist > Math.max(this.width, this.height) * 1.5) {
