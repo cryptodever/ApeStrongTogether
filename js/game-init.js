@@ -148,6 +148,12 @@ async function saveScoreToLeaderboard(score) {
     if (!currentUser) return;
     
     try {
+        // Get username from user profile
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const username = userData.username || currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous';
+        
         const leaderboardRef = doc(db, 'gameLeaderboard', currentUser.uid);
         const leaderboardDoc = await getDoc(leaderboardRef);
         
@@ -157,7 +163,7 @@ async function saveScoreToLeaderboard(score) {
             if (score > currentScore) {
                 await updateDoc(leaderboardRef, {
                     score: score,
-                    username: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+                    username: username,
                     updatedAt: serverTimestamp()
                 });
             }
@@ -165,7 +171,7 @@ async function saveScoreToLeaderboard(score) {
             // Create new entry
             await setDoc(leaderboardRef, {
                 userId: currentUser.uid,
-                username: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous',
+                username: username,
                 score: score,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
