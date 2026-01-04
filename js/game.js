@@ -18,6 +18,16 @@ export class Game {
         this.state = 'playing'; // 'playing', 'dead', 'shop'
         this.score = 0;
         
+        // Image assets
+        this.images = {
+            player: {}, // Will hold directional ape images
+            enemy: null // Enemy/suit image
+        };
+        this.imagesLoaded = false;
+        
+        // Load images
+        this.loadImages();
+        
         // Camera (orbital view)
         this.camera = {
             x: 0,
@@ -72,6 +82,53 @@ export class Game {
         this.canvas.height = rect.height;
         this.width = this.canvas.width;
         this.height = this.canvas.height;
+    }
+    
+    loadImages() {
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        let loadedCount = 0;
+        const totalImages = directions.length + 1; // 8 player directions + 1 enemy
+        
+        const checkAllLoaded = () => {
+            loadedCount++;
+            if (loadedCount === totalImages) {
+                this.imagesLoaded = true;
+            }
+        };
+        
+        // Load player directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load player image: ape-${dir}.jpeg`);
+                checkAllLoaded(); // Still count as loaded to not block game
+            };
+            img.src = `/game-jpegs/ape-${dir}.jpeg`;
+            this.images.player[dir] = img;
+        });
+        
+        // Load enemy image (using first pfp_ape as placeholder for "suit")
+        const enemyImg = new Image();
+        enemyImg.onload = checkAllLoaded;
+        enemyImg.onerror = () => {
+            console.warn('Failed to load enemy image, using fallback');
+            checkAllLoaded();
+        };
+        enemyImg.src = '/pfp_apes/tg_1.png';
+        this.images.enemy = enemyImg;
+    }
+    
+    getPlayerDirection() {
+        // Convert rotation angle to direction
+        // Rotation is in radians, 0 = right (E), PI/2 = down (S), etc.
+        const angle = this.player.rotation;
+        const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+        
+        // Map angle to 8 directions
+        const sector = Math.floor((normalized + Math.PI / 8) / (Math.PI / 4)) % 8;
+        const directions = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+        return directions[sector];
     }
     
     setupInput() {
@@ -436,52 +493,93 @@ export class Game {
     }
     
     drawPlayer() {
-        this.ctx.save();
-        this.ctx.translate(this.player.x, this.player.y);
-        this.ctx.rotate(this.player.rotation);
+        if (!this.imagesLoaded) {
+            // Fallback: draw circle while images load
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            return;
+        }
         
-        // Draw player body (circle)
-        this.ctx.fillStyle = this.player.color;
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, this.player.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        const direction = this.getPlayerDirection();
+        const img = this.images.player[direction];
         
-        // Draw gun (line pointing forward)
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 3;
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.player.radius, 0);
-        this.ctx.lineTo(this.player.radius + 10, 0);
-        this.ctx.stroke();
-        
-        this.ctx.restore();
+        if (img && img.complete && img.naturalWidth > 0) {
+            const size = this.player.radius * 2.5; // Slightly larger than radius
+            this.ctx.save();
+            this.ctx.translate(this.player.x, this.player.y);
+            // No rotation needed - images are already facing the right direction
+            this.ctx.drawImage(img, -size / 2, -size / 2, size, size);
+            this.ctx.restore();
+        } else {
+            // Fallback: draw circle if image not ready
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
     }
     
     drawEnemy(enemy) {
-        // Draw enemy (square for "suit")
-        this.ctx.fillStyle = enemy.color;
-        this.ctx.fillRect(
-            enemy.x - enemy.radius,
-            enemy.y - enemy.radius,
-            enemy.radius * 2,
-            enemy.radius * 2
-        );
+        const size = enemy.radius * 2.2;
         
-        // Draw outline - different color for fast enemies
-        if (enemy.isFast) {
-            this.ctx.strokeStyle = '#ffaa00'; // Brighter orange for fast enemies
-            this.ctx.lineWidth = 3; // Thicker outline for fast enemies
+        if (this.imagesLoaded && this.images.enemy && this.images.enemy.complete && this.images.enemy.naturalWidth > 0) {
+            // Draw enemy image
+            this.ctx.save();
+            
+            // Apply tint for fast enemies (orange tint)
+            if (enemy.isFast) {
+                this.ctx.globalCompositeOperation = 'multiply';
+                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.5)'; // Orange tint
+                this.ctx.fillRect(enemy.x - size / 2, enemy.y - size / 2, size, size);
+                this.ctx.globalCompositeOperation = 'source-over';
+            }
+            
+            this.ctx.drawImage(
+                this.images.enemy,
+                enemy.x - size / 2,
+                enemy.y - size / 2,
+                size,
+                size
+            );
+            
+            // Draw outline for fast enemies
+            if (enemy.isFast) {
+                this.ctx.strokeStyle = '#ffaa00';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(enemy.x, enemy.y, size / 2, 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
+            
+            this.ctx.restore();
         } else {
-            this.ctx.strokeStyle = '#ff6666';
-            this.ctx.lineWidth = 2;
+            // Fallback: draw rectangle while images load
+            this.ctx.fillStyle = enemy.color;
+            this.ctx.fillRect(
+                enemy.x - enemy.radius,
+                enemy.y - enemy.radius,
+                enemy.radius * 2,
+                enemy.radius * 2
+            );
+            
+            // Draw outline - different color for fast enemies
+            if (enemy.isFast) {
+                this.ctx.strokeStyle = '#ffaa00';
+                this.ctx.lineWidth = 3;
+            } else {
+                this.ctx.strokeStyle = '#ff6666';
+                this.ctx.lineWidth = 2;
+            }
+            
+            this.ctx.strokeRect(
+                enemy.x - enemy.radius,
+                enemy.y - enemy.radius,
+                enemy.radius * 2,
+                enemy.radius * 2
+            );
         }
-        
-        this.ctx.strokeRect(
-            enemy.x - enemy.radius,
-            enemy.y - enemy.radius,
-            enemy.radius * 2,
-            enemy.radius * 2
-        );
     }
     
     drawBullet(bullet) {
