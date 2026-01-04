@@ -13249,15 +13249,21 @@ body.leaderboard-body > * {
 .mobile-only-message {
     display: none;
     position: fixed;
-    top: 0;
+    top: 80px; /* Start below header */
     left: 0;
     right: 0;
     bottom: 0;
     background: #0a0a0a;
-    z-index: 10000;
+    z-index: 9999; /* Below header (header is 10000) */
     align-items: center;
     justify-content: center;
-    padding: 80px 1rem 1rem;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .mobile-only-message {
+        top: 60px; /* Mobile header height */
+    }
 }
 
 .mobile-message-content {
