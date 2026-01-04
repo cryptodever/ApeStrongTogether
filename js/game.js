@@ -384,14 +384,15 @@ export class Game {
     }
     
     getDifficultyMultiplier() {
-        // Every 100 kills = 1.2x multiplier (compounding)
-        // 0-99 kills: 1.0x
-        // 100-199 kills: 1.2x
-        // 200-299 kills: 1.44x (1.2^2)
-        // 300-399 kills: 1.728x (1.2^3)
+        // Every 150 kills = 1.15x multiplier (compounding)
+        // 0-149 kills: 1.0x
+        // 150-299 kills: 1.15x
+        // 300-449 kills: 1.3225x (1.15^2)
+        // 450-599 kills: 1.5209x (1.15^3)
+        // 600-749 kills: 1.749x (1.15^4)
         // etc.
-        const difficultyLevel = Math.floor(this.kills / 100);
-        return Math.pow(1.2, difficultyLevel);
+        const difficultyLevel = Math.floor(this.kills / 150);
+        return Math.pow(1.15, difficultyLevel);
     }
     
     spawnEnemies(count = 1) {
