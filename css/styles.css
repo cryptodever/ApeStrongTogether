@@ -13245,6 +13245,56 @@ body.leaderboard-body > * {
     padding: 80px 1rem 1rem;
 }
 
+/* Mobile Only Message */
+.mobile-only-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0a0a0a;
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 1rem 1rem;
+}
+
+.mobile-message-content {
+    background: rgba(26, 26, 46, 0.95);
+    border: 3px solid rgba(255, 0, 0, 0.5);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.3);
+}
+
+.mobile-message-content h1 {
+    font-size: 2.5rem;
+    color: #fff;
+    margin: 0 0 1.5rem 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+}
+
+.mobile-message-content p {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.mobile-message-content p:first-of-type {
+    margin-top: 0;
+}
+
+.mobile-message-content p:last-of-type {
+    margin-bottom: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+}
+
 .game-container {
     width: 100%;
     max-width: 1200px;

@@ -24,7 +24,16 @@
     <script type="module" src="/js/header.js?v=2"></script>
 
     <main class="game-page">
-        <div class="game-container">
+        <!-- Mobile Device Message -->
+        <div class="mobile-only-message" id="mobileMessage" style="display: none;">
+            <div class="mobile-message-content">
+                <h1>🖥️ Desktop Only</h1>
+                <p>This game requires a desktop or laptop computer to play.</p>
+                <p>Please visit this page on a desktop device to enjoy the game!</p>
+            </div>
+        </div>
+        
+        <div class="game-container" id="gameContainer">
             <!-- Game Canvas -->
             <div class="game-canvas-wrapper">
                 <canvas id="gameCanvas"></canvas>

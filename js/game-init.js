@@ -14,15 +14,42 @@ import {
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 import { Game } from './game.js';
 
-// Initialize auth gate
-(async () => {
-    try {
-        const { initAuthGate } = await import('/js/auth-gate.js');
-        initAuthGate();
-    } catch (error) {
-        console.error('Game init: Auth gate initialization error:', error);
+// Mobile detection
+function isMobileDevice() {
+    // Check for touch device and small screen
+    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth < 1024 || window.innerHeight < 600;
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    
+    // Consider it mobile if it's a mobile user agent OR (has touch AND small screen)
+    return isMobileUA || (hasTouchScreen && isSmallScreen);
+}
+
+// Check for mobile device and show message
+const isMobile = isMobileDevice();
+if (isMobile) {
+    const mobileMessage = document.getElementById('mobileMessage');
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (mobileMessage) {
+        mobileMessage.style.display = 'flex';
     }
-})();
+    if (gameContainer) {
+        gameContainer.style.display = 'none';
+    }
+} else {
+    // Only initialize game on desktop
+    // Initialize auth gate
+    (async () => {
+        try {
+            const { initAuthGate } = await import('/js/auth-gate.js');
+            initAuthGate();
+        } catch (error) {
+            console.error('Game init: Auth gate initialization error:', error);
+        }
+    })();
+}
 
 // State
 let currentUser = null;
@@ -48,17 +75,19 @@ let healthLevelEl, healthCostEl, upgradeHealthBtn;
 let restartBtn;
 let startScreenEl, startGameBtn;
 
-// Initialize game page
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadUserGameData();
-        initializeGame();
-        setupEventListeners();
-    } else {
-        currentUser = null;
-    }
-});
+// Initialize game page (only on desktop)
+if (!isMobile) {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            await loadUserGameData();
+            initializeGame();
+            setupEventListeners();
+        } else {
+            currentUser = null;
+        }
+    });
+}
 
 // Load user game data from Firestore
 async function loadUserGameData() {
