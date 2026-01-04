@@ -307,10 +307,15 @@ export class Game {
         this.camera.x = targetX;
         this.camera.y = targetY;
         
-        // Update camera zoom based on enemy count
-        // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
-        const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
-        this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
+        // Update camera zoom based on enemy count (or maintain zoom if boss is active)
+        if (this.boss) {
+            // Keep current zoom when boss is active (don't change)
+            // Don't update targetZoom, let it stay at current value
+        } else {
+            // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
+            const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
+            this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
+        }
         
         // Smoothly interpolate zoom
         const zoomSpeed = 0.002 * deltaTime; // Smooth zoom transition
@@ -418,6 +423,9 @@ export class Game {
     }
     
     spawnEnemies(count = 1) {
+        // Don't spawn enemies if boss is active
+        if (this.boss) return;
+        
         const now = Date.now();
         if (count === 1) {
             // Regular timed spawning
@@ -608,11 +616,7 @@ export class Game {
     updateBoss(deltaTime) {
         if (!this.boss) return;
         
-        // Boss stays stationary, just rotates toward player
-        const dx = this.player.x - this.boss.x;
-        const dy = this.player.y - this.boss.y;
-        this.boss.rotation = Math.atan2(dy, dx);
-        
+        // Boss stays stationary and static (no rotation)
         const now = Date.now();
         this.boss.attackTimer += deltaTime;
         
@@ -1226,21 +1230,15 @@ export class Game {
         
         // Draw boss sprite if loaded
         if (this.imagesLoaded && this.images.boss && this.images.boss.complete && this.images.boss.naturalWidth > 0) {
-            // Rotate boss to face player
-            this.ctx.translate(this.boss.x, this.boss.y);
-            this.ctx.rotate(this.boss.rotation);
-            
-            // Draw boss sprite with transparency preserved
+            // Draw boss sprite static (no rotation)
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.drawImage(
                 this.images.boss,
-                -size / 2,
-                -size / 2,
+                this.boss.x - size / 2,
+                this.boss.y - size / 2,
                 size,
                 size
             );
-            
-            this.ctx.restore();
         } else {
             // Fallback: draw boss as a large red circle with pulsing effect
             const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Pulsing effect
