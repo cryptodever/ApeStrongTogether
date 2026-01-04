@@ -46,6 +46,7 @@ let damageLevelEl, damageCostEl, upgradeDamageBtn;
 let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
 let healthLevelEl, healthCostEl, upgradeHealthBtn;
 let restartBtn;
+let startScreenEl, startGameBtn;
 
 // Initialize game page
 onAuthStateChanged(auth, async (user) => {
@@ -299,6 +300,10 @@ function setupEventListeners() {
     
     restartBtn = document.getElementById('restartBtn');
     
+    // Start screen elements
+    startScreenEl = document.getElementById('startScreen');
+    startGameBtn = document.getElementById('startGameBtn');
+    
     // Upgrade buttons
     if (upgradeDamageBtn) {
         upgradeDamageBtn.addEventListener('click', () => purchaseUpgrade('weaponDamage'));
@@ -318,7 +323,40 @@ function setupEventListeners() {
             hideUpgradeShop();
             // Reinitialize with current upgrades (may have been upgraded)
             initializeGame();
+            // Show start screen again
+            if (startScreenEl) {
+                startScreenEl.classList.remove('hide');
+            }
+            // Hide game UI overlay
+            const gameUIOverlay = document.querySelector('.game-ui-overlay');
+            if (gameUIOverlay) {
+                gameUIOverlay.style.opacity = '0';
+            }
         });
+    }
+    
+    // Start game button
+    if (startGameBtn) {
+        startGameBtn.addEventListener('click', () => {
+            if (game) {
+                game.start();
+                // Hide start screen
+                if (startScreenEl) {
+                    startScreenEl.classList.add('hide');
+                }
+                // Show game UI overlay
+                const gameUIOverlay = document.querySelector('.game-ui-overlay');
+                if (gameUIOverlay) {
+                    gameUIOverlay.style.opacity = '1';
+                }
+            }
+        });
+    }
+    
+    // Initially hide game UI overlay (show when start screen is hidden)
+    const gameUIOverlay = document.querySelector('.game-ui-overlay');
+    if (gameUIOverlay && startScreenEl && !startScreenEl.classList.contains('hide')) {
+        gameUIOverlay.style.opacity = '0';
     }
     
     // Initial UI update
