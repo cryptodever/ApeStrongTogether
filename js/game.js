@@ -25,6 +25,8 @@ export class Game {
             normalMob: {}, // Will hold directional normal mob images
             enemy: null, // Fallback enemy image (for fast/big mobs)
             bullet: null, // Bullet sprite
+            boss: null, // Boss sprite
+            bossBullet: null, // Boss projectile sprite
             background: null // Game background image
         };
         this.imagesLoaded = false;
@@ -99,7 +101,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length * 2 + 3; // 8 player directions + 8 normal mob directions + 1 enemy fallback + 1 bullet + 1 background
+        const totalImages = directions.length * 2 + 5; // 8 player directions + 8 normal mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -151,6 +153,26 @@ export class Game {
         };
         bulletImg.src = '/game-jpegs/bullet_sprite.png';
         this.images.bullet = bulletImg;
+        
+        // Load boss sprite
+        const bossImg = new Image();
+        bossImg.onload = checkAllLoaded;
+        bossImg.onerror = () => {
+            console.warn('Failed to load boss sprite, using fallback');
+            checkAllLoaded();
+        };
+        bossImg.src = '/game-jpegs/mobboss-1.png';
+        this.images.boss = bossImg;
+        
+        // Load boss bullet sprite
+        const bossBulletImg = new Image();
+        bossBulletImg.onload = checkAllLoaded;
+        bossBulletImg.onerror = () => {
+            console.warn('Failed to load boss bullet sprite, using fallback');
+            checkAllLoaded();
+        };
+        bossBulletImg.src = '/game-jpegs/mobboss-bullets.png';
+        this.images.bossBullet = bossBulletImg;
         
         // Load background image
         const bgImg = new Image();
@@ -1200,40 +1222,61 @@ export class Game {
         
         this.ctx.save();
         
-        const size = this.boss.radius * 2;
+        const size = this.boss.radius * 2.5; // Slightly larger for better visibility
         
-        // Draw boss as a large red circle with pulsing effect
-        const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Pulsing effect
-        const drawSize = size * pulse;
+        // Draw boss sprite if loaded
+        if (this.imagesLoaded && this.images.boss && this.images.boss.complete && this.images.boss.naturalWidth > 0) {
+            // Rotate boss to face player
+            this.ctx.translate(this.boss.x, this.boss.y);
+            this.ctx.rotate(this.boss.rotation);
+            
+            // Draw boss sprite with transparency preserved
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.drawImage(
+                this.images.boss,
+                -size / 2,
+                -size / 2,
+                size,
+                size
+            );
+            
+            this.ctx.restore();
+        } else {
+            // Fallback: draw boss as a large red circle with pulsing effect
+            const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Pulsing effect
+            const drawSize = size * pulse;
+            
+            // Outer glow
+            const gradient = this.ctx.createRadialGradient(
+                this.boss.x, this.boss.y, 0,
+                this.boss.x, this.boss.y, drawSize / 2
+            );
+            gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(255, 0, 0, 0.4)');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(this.boss.x, this.boss.y, drawSize / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Boss body
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.beginPath();
+            this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Boss outline
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 4;
+            this.ctx.beginPath();
+            this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
+            this.ctx.stroke();
+            
+            this.ctx.restore();
+        }
         
-        // Outer glow
-        const gradient = this.ctx.createRadialGradient(
-            this.boss.x, this.boss.y, 0,
-            this.boss.x, this.boss.y, drawSize / 2
-        );
-        gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(255, 0, 0, 0.4)');
-        gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        this.ctx.arc(this.boss.x, this.boss.y, drawSize / 2, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Boss body
-        this.ctx.fillStyle = '#ff0000';
-        this.ctx.beginPath();
-        this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Boss outline
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 4;
-        this.ctx.beginPath();
-        this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius, 0, Math.PI * 2);
-        this.ctx.stroke();
-        
-        // Health bar
+        // Health bar (always drawn)
         const barWidth = this.boss.radius * 2;
         const barHeight = 8;
         const barX = this.boss.x - barWidth / 2;
@@ -1257,20 +1300,42 @@ export class Game {
     }
     
     drawBossProjectile(projectile) {
-        this.ctx.save();
-        this.ctx.fillStyle = projectile.color;
-        this.ctx.beginPath();
-        this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Glow effect
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
-        this.ctx.stroke();
-        
-        this.ctx.restore();
+        if (this.imagesLoaded && this.images.bossBullet && this.images.bossBullet.complete && this.images.bossBullet.naturalWidth > 0) {
+            // Draw boss bullet sprite
+            const size = projectile.radius * 3;
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'source-over';
+            
+            // Calculate projectile rotation from velocity
+            const angle = Math.atan2(projectile.vy, projectile.vx);
+            this.ctx.translate(projectile.x, projectile.y);
+            this.ctx.rotate(angle);
+            
+            this.ctx.drawImage(
+                this.images.bossBullet,
+                -size / 2,
+                -size / 2,
+                size,
+                size
+            );
+            this.ctx.restore();
+        } else {
+            // Fallback: draw colored circle while sprite loads
+            this.ctx.save();
+            this.ctx.fillStyle = projectile.color;
+            this.ctx.beginPath();
+            this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Glow effect
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+            this.ctx.stroke();
+            
+            this.ctx.restore();
+        }
     }
     
     gameLoop() {
