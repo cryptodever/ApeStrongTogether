@@ -699,20 +699,21 @@ export class Game {
     }
     
     drawEnemy(enemy) {
-        const size = enemy.radius * 2.2;
+        // Increased size multiplier for better visibility
+        const size = enemy.radius * 3.5;
         
         this.ctx.save();
         
         // Scale for big enemies
         const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
         
-        // Use directional sprites for normal mobs
-        if (enemy.enemyType === 'normal' && this.imagesLoaded && this.images.normalMob) {
+        // Use directional sprites for ALL mob types (normal, fast, big)
+        if (this.imagesLoaded && this.images.normalMob) {
             const direction = this.getEnemyDirection(enemy);
             const img = this.images.normalMob[direction];
             
             if (img && img.complete && img.naturalWidth > 0) {
-                // Draw normal mob directional sprite
+                // Draw normal mob directional sprite for all enemy types
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.drawImage(
                     img,
@@ -721,12 +722,56 @@ export class Game {
                     size * scale,
                     size * scale
                 );
+                
+                // Apply visual effects based on enemy type
+                if (enemy.enemyType === 'fast') {
+                    // Orange tint for fast enemies
+                    this.ctx.globalCompositeOperation = 'overlay';
+                    this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)';
+                    this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
+                    this.ctx.globalCompositeOperation = 'source-over';
+                    
+                    // Draw outline for fast enemies
+                    this.ctx.strokeStyle = '#ffaa00';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                } else if (enemy.enemyType === 'big') {
+                    // Draw health bar for big enemies
+                    const barWidth = size * scale;
+                    const barHeight = 6;
+                    const barX = enemy.x - barWidth / 2;
+                    const barY = enemy.y - (size * scale) / 2 - 12;
+                    
+                    // Background
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                    
+                    // Health fill
+                    const healthPercent = enemy.health / enemy.maxHealth;
+                    this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                    this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+                    
+                    // Outline
+                    this.ctx.strokeStyle = '#ffffff';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+                    
+                    // Draw thick outline for big enemies
+                    this.ctx.strokeStyle = '#8b0000';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.beginPath();
+                    this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
                 this.ctx.restore();
-                return; // Early return for normal mobs
+                return; // Early return after drawing sprite
             }
         }
         
-        // Fallback: use enemy image for fast/big mobs or if normal mob sprites aren't loaded
+        // Fallback: use enemy image if normal mob sprites aren't loaded
         if (this.imagesLoaded && this.images.enemy && this.images.enemy.complete && this.images.enemy.naturalWidth > 0) {
             // Draw the image first (preserves transparency)
             this.ctx.drawImage(
