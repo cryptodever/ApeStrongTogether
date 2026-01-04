@@ -81,6 +81,7 @@ if (!isMobile) {
         if (user) {
             currentUser = user;
             await loadUserGameData();
+            await updateLeaderboardUsername(); // Fix username in existing leaderboard entry
             initializeGame();
             setupEventListeners();
         } else {
@@ -143,6 +144,35 @@ async function saveGameData() {
     }
 }
 
+// Update leaderboard username (fixes existing entries)
+async function updateLeaderboardUsername() {
+    if (!currentUser) return;
+    
+    try {
+        // Get username from user profile
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const username = userData.username || currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonymous';
+        
+        const leaderboardRef = doc(db, 'gameLeaderboard', currentUser.uid);
+        const leaderboardDoc = await getDoc(leaderboardRef);
+        
+        if (leaderboardDoc.exists()) {
+            // Update username if it's different
+            const currentUsername = leaderboardDoc.data().username;
+            if (currentUsername !== username) {
+                await updateDoc(leaderboardRef, {
+                    username: username,
+                    updatedAt: serverTimestamp()
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error updating leaderboard username:', error);
+    }
+}
+
 // Save score to leaderboard (only highest score per user)
 async function saveScoreToLeaderboard(score) {
     if (!currentUser) return;
@@ -159,10 +189,16 @@ async function saveScoreToLeaderboard(score) {
         
         if (leaderboardDoc.exists()) {
             const currentScore = leaderboardDoc.data().score || 0;
-            // Only update if new score is higher
+            // Only update score if new score is higher, but always update username
             if (score > currentScore) {
                 await updateDoc(leaderboardRef, {
                     score: score,
+                    username: username,
+                    updatedAt: serverTimestamp()
+                });
+            } else {
+                // Update username even if score isn't higher (to fix existing entries)
+                await updateDoc(leaderboardRef, {
                     username: username,
                     updatedAt: serverTimestamp()
                 });
