@@ -253,8 +253,27 @@ export class Game {
         
         // Apply movement (frame-rate independent: deltaTime is in ms, normalize to ~16.67ms for 60fps)
         const timeFactor = deltaTime / 16.67;
-        this.player.x += dx * this.player.speed * timeFactor;
-        this.player.y += dy * this.player.speed * timeFactor;
+        let newX = this.player.x + dx * this.player.speed * timeFactor;
+        let newY = this.player.y + dy * this.player.speed * timeFactor;
+        
+        // Constrain player within background boundaries
+        if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
+            const bgWidth = this.images.background.naturalWidth;
+            const bgHeight = this.images.background.naturalHeight;
+            
+            // Background is centered at (0, 0), so boundaries are half the size
+            const minX = -bgWidth / 2 + this.player.radius;
+            const maxX = bgWidth / 2 - this.player.radius;
+            const minY = -bgHeight / 2 + this.player.radius;
+            const maxY = bgHeight / 2 - this.player.radius;
+            
+            // Clamp position to boundaries
+            newX = Math.max(minX, Math.min(maxX, newX));
+            newY = Math.max(minY, Math.min(maxY, newY));
+        }
+        
+        this.player.x = newX;
+        this.player.y = newY;
         
         // Rotate player toward mouse
         const screenX = this.mouse.x - this.width / 2;
