@@ -369,10 +369,18 @@ export class Game {
         this.player.x = newX;
         this.player.y = newY;
         
-        // Rotate player toward mouse
+        // Rotate player toward mouse (convert screen to world coordinates)
         const screenX = this.mouse.x - this.width / 2;
         const screenY = this.mouse.y - this.height / 2;
-        this.player.rotation = Math.atan2(screenY, screenX);
+        
+        // Convert screen space to world space (accounting for zoom)
+        const worldX = (screenX / this.camera.zoom) + this.camera.x;
+        const worldY = (screenY / this.camera.zoom) + this.camera.y;
+        
+        // Calculate direction from player to world mouse position
+        const dx = worldX - this.player.x;
+        const dy = worldY - this.player.y;
+        this.player.rotation = Math.atan2(dy, dx);
     }
     
     getDifficultyMultiplier() {
@@ -744,10 +752,19 @@ export class Game {
         
         this.weapon.lastShot = now;
         
-        // Calculate direction from player to mouse (in world coordinates)
+        // Convert mouse screen coordinates to world coordinates
+        // Account for camera zoom and position
         const screenX = this.mouse.x - this.width / 2;
         const screenY = this.mouse.y - this.height / 2;
-        const angle = Math.atan2(screenY, screenX);
+        
+        // Convert screen space to world space (accounting for zoom)
+        const worldX = (screenX / this.camera.zoom) + this.camera.x;
+        const worldY = (screenY / this.camera.zoom) + this.camera.y;
+        
+        // Calculate direction from player to world mouse position
+        const dx = worldX - this.player.x;
+        const dy = worldY - this.player.y;
+        const angle = Math.atan2(dy, dx);
         
         // Create bullet
         this.bullets.push({
