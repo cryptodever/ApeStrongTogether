@@ -762,9 +762,9 @@ export class Game {
         const worldY = (screenY / this.camera.zoom) + this.camera.y;
         
         // Calculate direction from player to world mouse position
-        const dx = worldX - this.player.x;
-        const dy = worldY - this.player.y;
-        const angle = Math.atan2(dy, dx);
+        const mouseDx = worldX - this.player.x;
+        const mouseDy = worldY - this.player.y;
+        const angle = Math.atan2(mouseDy, mouseDx);
         
         // Create bullet
         this.bullets.push({
