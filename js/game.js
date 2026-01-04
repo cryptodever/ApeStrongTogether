@@ -100,15 +100,15 @@ export class Game {
             }
         };
         
-        // Load player directional images
+        // Load player directional images (now PNG with transparency)
         directions.forEach(dir => {
             const img = new Image();
             img.onload = checkAllLoaded;
             img.onerror = () => {
-                console.warn(`Failed to load player image: ape-${dir}.jpeg`);
+                console.warn(`Failed to load player image: ape-${dir}.png`);
                 checkAllLoaded(); // Still count as loaded to not block game
             };
-            img.src = `/game-jpegs/ape-${dir}.jpeg`;
+            img.src = `/game-jpegs/ape-${dir}.png`;
             this.images.player[dir] = img;
         });
         
@@ -526,8 +526,10 @@ export class Game {
         if (img && img.complete && img.naturalWidth > 0) {
             const size = this.player.radius * 2.5; // Slightly larger than radius
             this.ctx.save();
+            // Ensure transparency is preserved
+            this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.translate(this.player.x, this.player.y);
-            // No rotation needed - images are already facing the right direction
+            // Draw image with transparency preserved (PNG alpha channel)
             this.ctx.drawImage(img, -size / 2, -size / 2, size, size);
             this.ctx.restore();
         } else {
