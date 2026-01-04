@@ -13646,12 +13646,11 @@ body.leaderboard-body > * {
     right: 0;
     bottom: 0;
     background-image: url('/game-jpegs/minigame_backgroundstartscreen.png');
-    background-size: contain;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     z-index: 20;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
@@ -13676,14 +13675,12 @@ body.leaderboard-body > * {
 .start-screen-content {
     position: relative;
     z-index: 2;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     padding: 2rem;
-    max-width: 500px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 12px;
-    border: 2px solid rgba(0, 255, 0, 0.3);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    height: 100%;
+    width: 100%;
 }
 
 .game-title {
@@ -13720,7 +13717,7 @@ body.leaderboard-body > * {
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
     position: relative;
     z-index: 3;
@@ -13750,12 +13747,10 @@ body.leaderboard-body > * {
     font-family: 'Space Grotesk', sans-serif;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
     position: relative;
     z-index: 3;
-    width: 100%;
-    max-width: 300px;
 }
 
 .leaderboard-btn:hover {
@@ -13945,10 +13940,12 @@ body.leaderboard-body > * {
     border: 2px solid rgba(0, 255, 0, 0.4);
     border-radius: 8px;
     padding: 1.5rem;
-    margin-top: 2rem;
     text-align: left;
-    position: relative;
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
     z-index: 3;
+    max-width: 300px;
 }
 
 .game-instructions p {
