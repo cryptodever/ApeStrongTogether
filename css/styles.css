@@ -13683,7 +13683,7 @@ body.leaderboard-body > * {
 
 .game-title-image {
     position: absolute;
-    top: 15%;
+    top: 25%;
     left: 50%;
     transform: translateX(-50%) scale(3);
     max-width: 80%;
