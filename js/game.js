@@ -608,7 +608,7 @@ export class Game {
                 this.addScreenShake(0.5, 200);
                 
                 // Spawn hit particles
-                this.spawnParticles(this.player.x, this.player.y, 10, 'blood');
+                this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
                 
                 // Spawn damage number
                 this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, 5, false);
@@ -950,7 +950,7 @@ export class Game {
                         }
                         
                         // Spawn death particles
-                        this.spawnParticles(enemy.x, enemy.y, 15, 'enemyDeath');
+                        this.spawnParticles(enemy.x, enemy.y, 25, 'enemyDeath'); // Increased count for better visibility
                         
                         // Spawn gold popup
                         this.spawnGoldPopup(enemy.x, enemy.y, goldReward);
@@ -1009,7 +1009,7 @@ export class Game {
                 this.addScreenShake(0.5, 200);
                 
                 // Spawn hit particles
-                this.spawnParticles(this.player.x, this.player.y, 10, 'blood');
+                this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
                 
                 // Spawn damage number
                 this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
@@ -1073,8 +1073,15 @@ export class Game {
             
             // Make blood splatters larger and more varied
             let particleSize = 2 + Math.random() * 3;
+            let ellipseWidth = particleSize;
+            let ellipseHeight = particleSize;
+            let ellipseRotation = 0;
+            
             if (type === 'enemyDeath' || type === 'blood') {
                 particleSize = 3 + Math.random() * 6; // Larger blood splatters (3-9px)
+                ellipseWidth = particleSize;
+                ellipseHeight = particleSize * (0.7 + Math.random() * 0.6); // Vary height for splatter shape
+                ellipseRotation = Math.random() * Math.PI * 2; // Random rotation for splatter direction
             }
             
             this.particles.push({
@@ -1085,6 +1092,9 @@ export class Game {
                 life: life,
                 maxLife: life,
                 size: particleSize,
+                ellipseWidth: ellipseWidth,
+                ellipseHeight: ellipseHeight,
+                ellipseRotation: ellipseRotation,
                 color: colorSet[Math.floor(Math.random() * colorSet.length)],
                 alpha: 1,
                 type: type
@@ -1128,9 +1138,7 @@ export class Game {
             if (p.type === 'enemyDeath' || p.type === 'blood') {
                 // Draw as slightly irregular ellipse for blood splatter effect
                 this.ctx.beginPath();
-                const width = p.size;
-                const height = p.size * (0.7 + Math.random() * 0.6); // Vary height for splatter shape
-                this.ctx.ellipse(p.x, p.y, width / 2, height / 2, Math.random() * Math.PI * 2, 0, Math.PI * 2);
+                this.ctx.ellipse(p.x, p.y, p.ellipseWidth / 2, p.ellipseHeight / 2, p.ellipseRotation, 0, Math.PI * 2);
                 this.ctx.fill();
             } else {
                 // Regular circular particles for other types
