@@ -23,7 +23,8 @@ export class Game {
         this.images = {
             player: {}, // Will hold directional ape images
             normalMob: {}, // Will hold directional normal mob images
-            enemy: null, // Fallback enemy image (for fast/big mobs)
+            speedMob: {}, // Will hold directional speed mob images
+            enemy: null, // Fallback enemy image (for big mobs only)
             bullet: null, // Bullet sprite
             boss: null, // Boss sprite
             bossBullet: null, // Boss projectile sprite
@@ -53,7 +54,11 @@ export class Game {
             speed: 3,
             rotation: 0,
             color: '#00ff00',
-            hitFlash: 0
+            hitFlash: 0,
+            vx: 0, // Velocity for prediction
+            vy: 0,
+            lastX: 0,
+            lastY: 0
         };
         
         // Weapon
@@ -117,7 +122,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length * 2 + 5; // 8 player directions + 8 normal mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
+        const totalImages = directions.length * 3 + 5; // 8 player directions + 8 normal mob directions + 8 speed mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -148,6 +153,18 @@ export class Game {
             };
             img.src = `/game-jpegs/normalmob-${dir}.png`;
             this.images.normalMob[dir] = img;
+        });
+        
+        // Load speed mob directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load speed mob image: speedmob_${dir}.png`);
+                checkAllLoaded();
+            };
+            img.src = `/game-jpegs/speedmob_${dir}.png`;
+            this.images.speedMob[dir] = img;
         });
         
         // Load enemy fallback image (for fast/big mobs that use tints)
@@ -337,9 +354,13 @@ export class Game {
             // Keep current zoom when boss is active (don't change)
             // Don't update targetZoom, let it stay at current value
         } else {
-            // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
-            const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
-            this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
+            // Only recalculate zoom if we have enemies (don't reset when boss dies and enemies are cleared)
+            if (this.enemies.length > 0) {
+                // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
+                const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
+                this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
+            }
+            // If no enemies (boss just died), maintain current zoom - don't update targetZoom
         }
         
         // Smoothly interpolate zoom
@@ -414,6 +435,11 @@ export class Game {
         
         // Apply movement (frame-rate independent: deltaTime is in ms, normalize to ~16.67ms for 60fps)
         const timeFactor = deltaTime / 16.67;
+        
+        // Calculate velocity for boss prediction (before constraints)
+        this.player.vx = dx * this.player.speed;
+        this.player.vy = dy * this.player.speed;
+        
         let newX = this.player.x + dx * this.player.speed * timeFactor;
         let newY = this.player.y + dy * this.player.speed * timeFactor;
         
@@ -432,6 +458,10 @@ export class Game {
             newX = Math.max(minX, Math.min(maxX, newX));
             newY = Math.max(minY, Math.min(maxY, newY));
         }
+        
+        // Store last position for velocity smoothing
+        this.player.lastX = this.player.x;
+        this.player.lastY = this.player.y;
         
         this.player.x = newX;
         this.player.y = newY;
@@ -712,17 +742,31 @@ export class Game {
         const now = Date.now();
         this.boss.attackTimer += deltaTime;
         
-        // Cycle through attack patterns
-        if (now - this.boss.lastAttack >= this.boss.attackCooldown) {
+        // Randomize attack cooldown slightly (800-1600ms instead of fixed 1200ms)
+        const randomCooldown = this.boss.attackCooldown + (Math.random() - 0.5) * 800;
+        
+        // Attack with randomized timing and patterns
+        if (now - this.boss.lastAttack >= randomCooldown) {
             this.boss.lastAttack = now;
             this.boss.attackTimer = 0;
             
             // Screen shake on boss attack
             this.addScreenShake(0.3, 150);
             
-            // Execute current attack pattern (check boss still exists)
+            // Randomly select attack pattern instead of cycling (more unpredictable)
             if (!this.boss) return;
-            switch (this.boss.attackPattern) {
+            
+            // 30% chance to use a random pattern, 70% chance to use next in sequence
+            let attackPattern;
+            if (Math.random() < 0.3) {
+                attackPattern = Math.floor(Math.random() * 4);
+            } else {
+                attackPattern = (this.boss.attackPattern + 1) % 4;
+            }
+            this.boss.attackPattern = attackPattern;
+            
+            // Execute attack pattern
+            switch (attackPattern) {
                 case 0:
                     this.bossAttackDirect();
                     break;
@@ -737,10 +781,15 @@ export class Game {
                     break;
             }
             
-            // Random chance (50%) to do a second attack immediately (increased from 30%)
-            if (this.boss && Math.random() < 0.5) {
-                // Execute same attack pattern again
-                switch (this.boss.attackPattern) {
+            // Random chance (40-60%) to do a second attack immediately
+            if (this.boss && Math.random() < (0.4 + Math.random() * 0.2)) {
+                // 50% chance to use same pattern, 50% chance to use different pattern
+                let secondPattern = attackPattern;
+                if (Math.random() < 0.5) {
+                    secondPattern = Math.floor(Math.random() * 4);
+                }
+                
+                switch (secondPattern) {
                     case 0:
                         this.bossAttackDirect();
                         break;
@@ -755,52 +804,67 @@ export class Game {
                         break;
                 }
             }
-            
-            // Cycle to next pattern
-            if (this.boss) {
-                this.boss.attackPattern = (this.boss.attackPattern + 1) % 4;
-            }
         }
     }
     
     bossAttackDirect() {
-        // Direct shot at player
+        // Direct shot at player with prediction (aims ahead of player)
         if (!this.boss) return;
         
-        const dx = this.player.x - this.boss.x;
-        const dy = this.player.y - this.boss.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
+        // Calculate predicted position based on player velocity
+        const predictTime = 0.3 + Math.random() * 0.4; // Random prediction time (0.3-0.7s)
+        const predictedX = this.player.x + this.player.vx * predictTime;
+        const predictedY = this.player.y + this.player.vy * predictTime;
+        
+        // 70% chance to aim at predicted position, 30% chance to aim at current position
+        const targetX = Math.random() < 0.7 ? predictedX : this.player.x;
+        const targetY = Math.random() < 0.7 ? predictedY : this.player.y;
+        
+        // Add slight random offset to make it less predictable
+        const offsetAngle = (Math.random() - 0.5) * 0.2; // ±0.1 radians (~±6 degrees)
+        const dx = targetX - this.boss.x;
+        const dy = targetY - this.boss.y;
+        const baseAngle = Math.atan2(dy, dx);
+        const angle = baseAngle + offsetAngle;
         
         this.bossProjectiles.push({
             x: this.boss.x,
             y: this.boss.y,
-            vx: Math.cos(angle) * 4.5, // Increased speed (was 3.75)
+            vx: Math.cos(angle) * 4.5,
             vy: Math.sin(angle) * 4.5,
             radius: 10,
-            damage: 15, // Increased from 10
+            damage: 15,
             color: '#ff0000'
         });
     }
     
     bossAttackSpread() {
-        // Spread shot - 5 projectiles in a cone
+        // Spread shot - 7 projectiles in a cone with prediction
         if (!this.boss) return;
         
-        const dx = this.player.x - this.boss.x;
-        const dy = this.player.y - this.boss.y;
-        const baseAngle = Math.atan2(dy, dx);
-        const spread = Math.PI / 6; // 30 degree spread
+        // Calculate predicted position
+        const predictTime = 0.2 + Math.random() * 0.3; // Random prediction time (0.2-0.5s)
+        const predictedX = this.player.x + this.player.vx * predictTime;
+        const predictedY = this.player.y + this.player.vy * predictTime;
         
-        for (let i = 0; i < 7; i++) { // Increased from 5 to 7 projectiles
+        // 60% chance to aim at predicted position
+        const targetX = Math.random() < 0.6 ? predictedX : this.player.x;
+        const targetY = Math.random() < 0.6 ? predictedY : this.player.y;
+        
+        const dx = targetX - this.boss.x;
+        const dy = targetY - this.boss.y;
+        const baseAngle = Math.atan2(dy, dx);
+        const spread = Math.PI / 5 + Math.random() * 0.2; // Variable spread (36-50 degrees)
+        
+        for (let i = 0; i < 7; i++) {
             const angle = baseAngle + (i - 3) * (spread / 6);
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 4.5, // Increased speed (was 3.75)
-                vy: Math.sin(angle) * 4.5,
+                vx: Math.cos(angle) * (4.0 + Math.random() * 1.0), // Variable speed (4.0-5.0)
+                vy: Math.sin(angle) * (4.0 + Math.random() * 1.0),
                 radius: 7.5,
-                damage: 12, // Increased from 8
+                damage: 12,
                 color: '#ff6600'
             });
         }
@@ -1531,29 +1595,29 @@ export class Game {
         const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
         
         // Use directional sprites for ALL mob types (normal, fast, big)
-        if (this.imagesLoaded && this.images.normalMob) {
-            const direction = this.getEnemyDirection(enemy);
-            const img = this.images.normalMob[direction];
+        const direction = this.getEnemyDirection(enemy);
+        let img = null;
+        
+        // Choose sprite based on enemy type
+        if (enemy.enemyType === 'fast' && this.imagesLoaded && this.images.speedMob) {
+            img = this.images.speedMob[direction];
+        } else if (this.imagesLoaded && this.images.normalMob) {
+            img = this.images.normalMob[direction];
+        }
+        
+        if (img && img.complete && img.naturalWidth > 0) {
+            // Draw directional sprite
+            this.ctx.globalCompositeOperation = 'source-over';
+            this.ctx.drawImage(
+                img,
+                enemy.x - (size * scale) / 2,
+                enemy.y - (size * scale) / 2,
+                size * scale,
+                size * scale
+            );
             
-            if (img && img.complete && img.naturalWidth > 0) {
-                // Draw normal mob directional sprite for all enemy types
-                this.ctx.globalCompositeOperation = 'source-over';
-                this.ctx.drawImage(
-                    img,
-                    enemy.x - (size * scale) / 2,
-                    enemy.y - (size * scale) / 2,
-                    size * scale,
-                    size * scale
-                );
-                
-                // Apply visual effects based on enemy type
-                if (enemy.enemyType === 'fast') {
-                    // Orange tint for fast enemies (keep tint, remove outline)
-                    this.ctx.globalCompositeOperation = 'overlay';
-                    this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)';
-                    this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
-                    this.ctx.globalCompositeOperation = 'source-over';
-                } else if (enemy.enemyType === 'big') {
+            // Apply visual effects based on enemy type
+            if (enemy.enemyType === 'big') {
                     // Draw health bar for big enemies
                     const barWidth = size * scale;
                     const barHeight = 6;
@@ -1580,7 +1644,7 @@ export class Game {
             }
         }
         
-        // Fallback: use enemy image if normal mob sprites aren't loaded
+        // Fallback: use enemy image if sprites aren't loaded
         if (this.imagesLoaded && this.images.enemy && this.images.enemy.complete && this.images.enemy.naturalWidth > 0) {
             // Draw the image first (preserves transparency)
             this.ctx.drawImage(
@@ -1592,12 +1656,7 @@ export class Game {
             );
             
             // Apply tint based on enemy type (overlay mode to preserve transparency)
-            if (enemy.enemyType === 'fast') {
-                this.ctx.globalCompositeOperation = 'overlay';
-                this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)'; // Orange tint
-                this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
-                this.ctx.globalCompositeOperation = 'source-over';
-            } else if (enemy.enemyType === 'big') {
+            if (enemy.enemyType === 'big') {
                 // Draw health bar for big enemies
                 const barWidth = size * scale;
                 const barHeight = 6;
