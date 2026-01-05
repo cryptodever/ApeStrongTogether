@@ -563,7 +563,7 @@ export class Game {
                 enemyType = 'fast';
                 baseSpeed = 1.5 * 1.5; // 1.5x faster
                 health = 5;
-                radius = 12;
+                radius = 15; // Increased from 12 to make speedmob larger
                 goldReward = 2;
             } else {
                 // Normal enemy (60% chance)
