@@ -1057,11 +1057,11 @@ export class Game {
         if (this.particles.length >= this.maxParticles) return; // Performance limit
         
         const colors = {
-            'enemyDeath': ['#ff4444', '#ff6600', '#ffaa00'],
+            'enemyDeath': ['#8b0000', '#a00000', '#cc0000', '#990000', '#660000'], // Darker blood reds for splatters
             'bossDeath': ['#ff0000', '#ff0088', '#8800ff', '#ff6600'],
             'hit': ['#ffff00', '#ffaa00', '#ffffff'],
             'gold': ['#ffd700', '#ffaa00', '#ffff00'],
-            'blood': ['#ff0000', '#880000', '#ff4444']
+            'blood': ['#8b0000', '#a00000', '#cc0000', '#990000', '#660000'] // Darker blood reds
         };
         
         const colorSet = colors[type] || colors['hit'];
@@ -1071,6 +1071,12 @@ export class Game {
             const speed = 0.5 + Math.random() * 2;
             const life = 300 + Math.random() * 500; // 300-800ms
             
+            // Make blood splatters larger and more varied
+            let particleSize = 2 + Math.random() * 3;
+            if (type === 'enemyDeath' || type === 'blood') {
+                particleSize = 3 + Math.random() * 6; // Larger blood splatters (3-9px)
+            }
+            
             this.particles.push({
                 x: x,
                 y: y,
@@ -1078,7 +1084,7 @@ export class Game {
                 vy: Math.sin(angle) * speed,
                 life: life,
                 maxLife: life,
-                size: 2 + Math.random() * 3,
+                size: particleSize,
                 color: colorSet[Math.floor(Math.random() * colorSet.length)],
                 alpha: 1,
                 type: type
@@ -1117,9 +1123,22 @@ export class Game {
             this.ctx.save();
             this.ctx.globalAlpha = p.alpha;
             this.ctx.fillStyle = p.color;
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            
+            // Draw blood splatters as slightly elongated shapes for more realistic look
+            if (p.type === 'enemyDeath' || p.type === 'blood') {
+                // Draw as slightly irregular ellipse for blood splatter effect
+                this.ctx.beginPath();
+                const width = p.size;
+                const height = p.size * (0.7 + Math.random() * 0.6); // Vary height for splatter shape
+                this.ctx.ellipse(p.x, p.y, width / 2, height / 2, Math.random() * Math.PI * 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else {
+                // Regular circular particles for other types
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
             this.ctx.restore();
         }
     }
@@ -1406,18 +1425,11 @@ export class Game {
                 
                 // Apply visual effects based on enemy type
                 if (enemy.enemyType === 'fast') {
-                    // Orange tint for fast enemies
+                    // Orange tint for fast enemies (keep tint, remove outline)
                     this.ctx.globalCompositeOperation = 'overlay';
                     this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)';
                     this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
                     this.ctx.globalCompositeOperation = 'source-over';
-                    
-                    // Draw outline for fast enemies
-                    this.ctx.strokeStyle = '#ffaa00';
-                    this.ctx.lineWidth = 3;
-                    this.ctx.beginPath();
-                    this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
-                    this.ctx.stroke();
                 } else if (enemy.enemyType === 'big') {
                     // Draw health bar for big enemies
                     const barWidth = size * scale;
@@ -1438,13 +1450,6 @@ export class Game {
                     this.ctx.strokeStyle = '#ffffff';
                     this.ctx.lineWidth = 1;
                     this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-                    
-                    // Draw thick outline for big enemies
-                    this.ctx.strokeStyle = '#8b0000';
-                    this.ctx.lineWidth = 4;
-                    this.ctx.beginPath();
-                    this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
-                    this.ctx.stroke();
                 }
                 
                 this.ctx.restore();
@@ -1469,13 +1474,6 @@ export class Game {
                 this.ctx.fillStyle = 'rgba(255, 165, 0, 0.4)'; // Orange tint
                 this.ctx.fillRect(enemy.x - (size * scale) / 2, enemy.y - (size * scale) / 2, size * scale, size * scale);
                 this.ctx.globalCompositeOperation = 'source-over';
-                
-                // Draw outline for fast enemies
-                this.ctx.strokeStyle = '#ffaa00';
-                this.ctx.lineWidth = 3;
-                this.ctx.beginPath();
-                this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
-                this.ctx.stroke();
             } else if (enemy.enemyType === 'big') {
                 // Draw health bar for big enemies
                 const barWidth = size * scale;
@@ -1496,13 +1494,6 @@ export class Game {
                 this.ctx.strokeStyle = '#ffffff';
                 this.ctx.lineWidth = 1;
                 this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-                
-                // Draw thick outline for big enemies
-                this.ctx.strokeStyle = '#8b0000';
-                this.ctx.lineWidth = 4;
-                this.ctx.beginPath();
-                this.ctx.arc(enemy.x, enemy.y, (size * scale) / 2, 0, Math.PI * 2);
-                this.ctx.stroke();
             }
             
             this.ctx.restore();
@@ -1516,15 +1507,8 @@ export class Game {
                 enemy.radius * 2
             );
             
-            // Draw outline - different color/style for different types
-            if (enemy.enemyType === 'fast') {
-                this.ctx.strokeStyle = '#ffaa00';
-                this.ctx.lineWidth = 3;
-            } else if (enemy.enemyType === 'big') {
-                this.ctx.strokeStyle = '#8b0000';
-                this.ctx.lineWidth = 4;
-                
-                // Health bar for big enemies (fallback)
+            // Health bar for big enemies (fallback only)
+            if (enemy.enemyType === 'big') {
                 const barWidth = enemy.radius * 2;
                 const barHeight = 6;
                 const barX = enemy.x - enemy.radius;
@@ -1536,17 +1520,7 @@ export class Game {
                 const healthPercent = enemy.health / enemy.maxHealth;
                 this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
                 this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-            } else {
-                this.ctx.strokeStyle = '#ff6666';
-                this.ctx.lineWidth = 2;
             }
-            
-            this.ctx.strokeRect(
-                enemy.x - enemy.radius,
-                enemy.y - enemy.radius,
-                enemy.radius * 2,
-                enemy.radius * 2
-            );
             
             this.ctx.restore();
         }

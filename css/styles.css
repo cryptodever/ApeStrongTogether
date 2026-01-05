@@ -13672,16 +13672,26 @@ body.leaderboard-body > * {
     pointer-events: none;
 }
 
+@keyframes bounce-title {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0) scale(3);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-10px) scale(3);
+    }
+}
+
 .game-title-image {
     position: absolute;
-    top: 2rem;
+    top: 15%;
     left: 50%;
-    transform: translateX(-50%) scale(2);
+    transform: translateX(-50%) scale(3);
     max-width: 80%;
     max-height: 30vh;
     z-index: 3;
     pointer-events: none;
     filter: brightness(0.5);
+    animation: bounce-title 2s ease-in-out infinite;
 }
 
 .start-screen-content {
