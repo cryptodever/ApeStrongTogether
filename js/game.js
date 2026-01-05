@@ -558,25 +558,13 @@ export class Game {
     }
     
     updateEnemies(deltaTime) {
-        // Calculate viewport bounds for culling
-        const viewportWidth = this.width / this.camera.zoom;
-        const viewportHeight = this.height / this.camera.zoom;
-        const viewportLeft = this.camera.x - viewportWidth / 2 - this.viewportMargin;
-        const viewportRight = this.camera.x + viewportWidth / 2 + this.viewportMargin;
-        const viewportTop = this.camera.y - viewportHeight / 2 - this.viewportMargin;
-        const viewportBottom = this.camera.y + viewportHeight / 2 + this.viewportMargin;
-        
         const timeFactor = deltaTime / 16.67;
         const playerRadius = this.player.radius;
+        const playerX = this.player.x;
+        const playerY = this.player.y;
         
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
-            
-            // Viewport culling - skip enemies far off screen
-            if (enemy.x < viewportLeft || enemy.x > viewportRight || 
-                enemy.y < viewportTop || enemy.y > viewportBottom) {
-                continue; // Skip updating off-screen enemies
-            }
             
             // Calculate desired movement toward player (use squared distance for optimization)
             const dx = this.player.x - enemy.x;
