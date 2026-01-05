@@ -77,6 +77,14 @@ export class Game {
         this.maxParticles = 300; // Performance limit
         this.maxDamageNumbers = 30; // Performance limit
         
+        // Performance optimizations
+        this.viewportMargin = 200; // Extra margin for culling
+        this.cachedMath = {
+            PI2: Math.PI * 2,
+            PI_4: Math.PI / 4,
+            PI_8: Math.PI / 8
+        };
+        
         // Spawning
         this.lastSpawn = 0;
         this.spawnInterval = 1000; // 1 second (faster initial spawn)
@@ -194,26 +202,25 @@ export class Game {
     }
     
     getPlayerDirection() {
-        // Convert rotation angle to direction
-        // Rotation is in radians, 0 = right (E), PI/2 = down (S), etc.
+        // Convert rotation angle to direction (optimized with cached values)
         const angle = this.player.rotation;
-        const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+        const normalized = ((angle % this.cachedMath.PI2) + this.cachedMath.PI2) % this.cachedMath.PI2;
         
         // Map angle to 8 directions
-        const sector = Math.floor((normalized + Math.PI / 8) / (Math.PI / 4)) % 8;
+        const sector = Math.floor((normalized + this.cachedMath.PI_8) / (this.cachedMath.PI_4)) % 8;
         const directions = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
         return directions[sector];
     }
     
     getEnemyDirection(enemy) {
-        // Calculate direction from enemy to player
+        // Calculate direction from enemy to player (optimized with cached values)
         const dx = this.player.x - enemy.x;
         const dy = this.player.y - enemy.y;
         const angle = Math.atan2(dy, dx);
-        const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+        const normalized = ((angle % this.cachedMath.PI2) + this.cachedMath.PI2) % this.cachedMath.PI2;
         
         // Map angle to 8 directions
-        const sector = Math.floor((normalized + Math.PI / 8) / (Math.PI / 4)) % 8;
+        const sector = Math.floor((normalized + this.cachedMath.PI_8) / (this.cachedMath.PI_4)) % 8;
         const directions = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
         return directions[sector];
     }
@@ -551,20 +558,36 @@ export class Game {
     }
     
     updateEnemies(deltaTime) {
+        // Calculate viewport bounds for culling
+        const viewportWidth = this.width / this.camera.zoom;
+        const viewportHeight = this.height / this.camera.zoom;
+        const viewportLeft = this.camera.x - viewportWidth / 2 - this.viewportMargin;
+        const viewportRight = this.camera.x + viewportWidth / 2 + this.viewportMargin;
+        const viewportTop = this.camera.y - viewportHeight / 2 - this.viewportMargin;
+        const viewportBottom = this.camera.y + viewportHeight / 2 + this.viewportMargin;
+        
+        const timeFactor = deltaTime / 16.67;
+        const playerRadius = this.player.radius;
+        
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
             
-            // Calculate desired movement toward player
+            // Viewport culling - skip enemies far off screen
+            if (enemy.x < viewportLeft || enemy.x > viewportRight || 
+                enemy.y < viewportTop || enemy.y > viewportBottom) {
+                continue; // Skip updating off-screen enemies
+            }
+            
+            // Calculate desired movement toward player (use squared distance for optimization)
             const dx = this.player.x - enemy.x;
             const dy = this.player.y - enemy.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+            const distSq = dx * dx + dy * dy;
             
             let moveX = 0;
             let moveY = 0;
             
-            if (dist > 0) {
-                // Frame-rate independent movement
-                const timeFactor = deltaTime / 16.67;
+            if (distSq > 0.01) { // Avoid division by zero
+                const dist = Math.sqrt(distSq);
                 moveX = (dx / dist) * enemy.speed * timeFactor;
                 moveY = (dy / dist) * enemy.speed * timeFactor;
                 
@@ -572,29 +595,38 @@ export class Game {
                 enemy.rotation = Math.atan2(dy, dx);
             }
             
-            // Check collision with other enemies before moving
+            // Check collision with other enemies before moving (optimized with squared distance)
             const newX = enemy.x + moveX;
             const newY = enemy.y + moveY;
+            const enemyRadius = enemy.radius;
             
-            // Collision detection with other enemies
-            let canMove = true;
+            // Only check nearby enemies (spatial optimization)
+            const checkRadius = enemyRadius * 4;
+            const checkRadiusSq = checkRadius * checkRadius;
+            
+            // Only check enemies in viewport for collision (further optimization)
             for (let j = 0; j < this.enemies.length; j++) {
-                if (i === j) continue; // Skip self
+                if (i === j) continue;
                 
                 const other = this.enemies[j];
+                
+                // Early exit if other enemy is far away
                 const otherDx = newX - other.x;
                 const otherDy = newY - other.y;
-                const otherDist = Math.sqrt(otherDx * otherDx + otherDy * otherDy);
-                const minDist = enemy.radius + other.radius;
+                const otherDistSq = otherDx * otherDx + otherDy * otherDy;
                 
-                if (otherDist < minDist) {
+                if (otherDistSq > checkRadiusSq) continue;
+                
+                const minDist = enemyRadius + other.radius;
+                const minDistSqCheck = minDist * minDist;
+                
+                if (otherDistSq < minDistSqCheck && otherDistSq > 0.01) {
                     // Collision detected - push away from other enemy
-                    if (otherDist > 0) {
-                        const pushX = (otherDx / otherDist) * (minDist - otherDist) * 0.5;
-                        const pushY = (otherDy / otherDist) * (minDist - otherDist) * 0.5;
-                        moveX += pushX;
-                        moveY += pushY;
-                    }
+                    const otherDist = Math.sqrt(otherDistSq);
+                    const invDist = 1 / otherDist;
+                    const pushAmount = (minDist - otherDist) * 0.5;
+                    moveX += otherDx * invDist * pushAmount;
+                    moveY += otherDy * invDist * pushAmount;
                 }
             }
             
@@ -602,13 +634,11 @@ export class Game {
             enemy.x += moveX;
             enemy.y += moveY;
             
-            // Check collision with player
-            const playerDist = Math.sqrt(
-                (enemy.x - this.player.x) ** 2 + 
-                (enemy.y - this.player.y) ** 2
-            );
+            // Check collision with player (use squared distance)
+            const playerDistSq = distSq;
+            const collisionDistSq = (enemy.radius + playerRadius) ** 2;
             
-            if (playerDist < enemy.radius + this.player.radius) {
+            if (playerDistSq < collisionDistSq) {
                 // Enemy hit player
                 this.player.health -= 5;
                 this.player.hitFlash = 150; // Flash on hit
@@ -865,28 +895,32 @@ export class Game {
     }
     
     updateBullets(deltaTime) {
+        const timeFactor = deltaTime / 16.67;
+        const maxDistSq = (Math.max(this.width, this.height) * 0.8) ** 2;
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             
-            // Update trail (store last 5 positions)
-            if (!bullet.trail) bullet.trail = [];
-            bullet.trail.push({ x: bullet.x, y: bullet.y });
-            if (bullet.trail.length > 5) {
-                bullet.trail.shift();
+            // Update trail (store last 5 positions) - only if trail exists
+            if (bullet.trail) {
+                bullet.trail.push({ x: bullet.x, y: bullet.y });
+                if (bullet.trail.length > 5) {
+                    bullet.trail.shift();
+                }
             }
             
             // Move bullet (frame-rate independent)
-            const timeFactor = deltaTime / 16.67;
             bullet.x += bullet.vx * timeFactor;
             bullet.y += bullet.vy * timeFactor;
             
-            // Remove if too far
-            const dist = Math.sqrt(
-                (bullet.x - this.player.x) ** 2 + 
-                (bullet.y - this.player.y) ** 2
-            );
+            // Remove if too far (use squared distance)
+            const dx = bullet.x - playerX;
+            const dy = bullet.y - playerY;
+            const distSq = dx * dx + dy * dy;
             
-            if (dist > Math.max(this.width, this.height) * 0.8) {
+            if (distSq > maxDistSq) {
                 this.bullets.splice(i, 1);
             }
         }
@@ -925,19 +959,21 @@ export class Game {
     }
     
     checkCollisions() {
-        // Bullet vs Enemy
+        // Bullet vs Enemy (optimized with squared distances)
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
+            const bulletRadius = bullet.radius;
             
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
                 
-                const dist = Math.sqrt(
-                    (bullet.x - enemy.x) ** 2 + 
-                    (bullet.y - enemy.y) ** 2
-                );
+                // Use squared distance to avoid Math.sqrt
+                const dx = bullet.x - enemy.x;
+                const dy = bullet.y - enemy.y;
+                const distSq = dx * dx + dy * dy;
+                const minDistSq = (bulletRadius + enemy.radius) ** 2;
                 
-                if (dist < bullet.radius + enemy.radius) {
+                if (distSq < minDistSq) {
                     // Hit!
                     enemy.health -= bullet.damage;
                     enemy.hitFlash = 100; // Flash on hit
@@ -976,14 +1012,14 @@ export class Game {
                 }
             }
             
-            // Bullet vs Boss
+            // Bullet vs Boss (optimized with squared distance)
             if (this.boss) {
-                const dist = Math.sqrt(
-                    (bullet.x - this.boss.x) ** 2 + 
-                    (bullet.y - this.boss.y) ** 2
-                );
+                const dx = bullet.x - this.boss.x;
+                const dy = bullet.y - this.boss.y;
+                const distSq = dx * dx + dy * dy;
+                const minDistSq = (bullet.radius + this.boss.radius) ** 2;
                 
-                if (dist < bullet.radius + this.boss.radius) {
+                if (distSq < minDistSq) {
                     // Hit boss!
                     this.boss.health -= bullet.damage;
                     this.boss.hitFlash = 100; // Flash on hit
@@ -1000,16 +1036,17 @@ export class Game {
             }
         }
         
-        // Boss Projectile vs Player
+        // Boss Projectile vs Player (optimized with squared distance)
+        const playerRadius = this.player.radius;
         for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
             const projectile = this.bossProjectiles[i];
             
-            const dist = Math.sqrt(
-                (projectile.x - this.player.x) ** 2 + 
-                (projectile.y - this.player.y) ** 2
-            );
+            const dx = projectile.x - this.player.x;
+            const dy = projectile.y - this.player.y;
+            const distSq = dx * dx + dy * dy;
+            const minDistSq = (projectile.radius + playerRadius) ** 2;
             
-            if (dist < projectile.radius + this.player.radius) {
+            if (distSq < minDistSq) {
                 // Player hit by boss projectile
                 this.player.health -= projectile.damage;
                 this.player.hitFlash = 150; // Flash on hit
@@ -1126,6 +1163,15 @@ export class Game {
     
     updateParticles(deltaTime) {
         const timeFactor = deltaTime / 16.67;
+        const gravity = 0.05 * timeFactor;
+        
+        // Calculate viewport bounds for culling
+        const viewportWidth = this.width / this.camera.zoom;
+        const viewportHeight = this.height / this.camera.zoom;
+        const viewportLeft = this.camera.x - viewportWidth / 2 - this.viewportMargin;
+        const viewportRight = this.camera.x + viewportWidth / 2 + this.viewportMargin;
+        const viewportTop = this.camera.y - viewportHeight / 2 - this.viewportMargin;
+        const viewportBottom = this.camera.y + viewportHeight / 2 + this.viewportMargin;
         
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
@@ -1136,39 +1182,48 @@ export class Game {
             
             // Update life and alpha
             p.life -= deltaTime;
-            p.alpha = Math.max(0, p.life / p.maxLife);
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+                continue;
+            }
+            p.alpha = p.life / p.maxLife;
             
             // Apply gravity for some particle types
             if (p.type === 'enemyDeath' || p.type === 'bossDeath' || p.type === 'blood') {
-                p.vy += 0.05 * timeFactor; // Gravity
+                p.vy += gravity;
             }
             
-            // Remove dead particles
-            if (p.life <= 0) {
+            // Cull off-screen particles
+            if (p.x < viewportLeft || p.x > viewportRight || 
+                p.y < viewportTop || p.y > viewportBottom) {
                 this.particles.splice(i, 1);
             }
         }
     }
     
     drawParticles() {
-        for (const p of this.particles) {
+        // Draw particles directly without batching (faster than creating arrays)
+        const PI2 = this.cachedMath.PI2;
+        
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            
+            // Skip invisible particles
+            if (p.alpha <= 0) continue;
+            
             this.ctx.save();
             this.ctx.globalAlpha = p.alpha;
             this.ctx.fillStyle = p.color;
+            this.ctx.beginPath();
             
-            // Draw blood splatters as slightly elongated shapes for more realistic look
+            // Draw blood splatters as ellipses, others as circles
             if (p.type === 'enemyDeath' || p.type === 'blood') {
-                // Draw as slightly irregular ellipse for blood splatter effect
-                this.ctx.beginPath();
-                this.ctx.ellipse(p.x, p.y, p.ellipseWidth / 2, p.ellipseHeight / 2, p.ellipseRotation, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.ellipse(p.x, p.y, p.ellipseWidth / 2, p.ellipseHeight / 2, p.ellipseRotation, 0, PI2);
             } else {
-                // Regular circular particles for other types
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                this.ctx.fill();
+                this.ctx.arc(p.x, p.y, p.size, 0, PI2);
             }
             
+            this.ctx.fill();
             this.ctx.restore();
         }
     }
@@ -1211,11 +1266,13 @@ export class Game {
     }
     
     updateDamageNumbers(deltaTime) {
+        const floatSpeed = 0.3 * (deltaTime / 16.67);
+        
         for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
             const dn = this.damageNumbers[i];
             
             // Float upward
-            dn.y -= 0.3 * (deltaTime / 16.67);
+            dn.y -= floatSpeed;
             
             // Fade out
             dn.life -= deltaTime;
@@ -1232,12 +1289,36 @@ export class Game {
         this.ctx.save();
         this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
         
-        for (const dn of this.damageNumbers) {
-            // Convert world position to screen position
-            const screenX = (dn.x - this.camera.x) * this.camera.zoom + this.width / 2;
-            const screenY = (dn.y - this.camera.y) * this.camera.zoom + this.height / 2;
+        // Cache camera values
+        const camX = this.camera.x;
+        const camY = this.camera.y;
+        const zoom = this.camera.zoom;
+        const halfWidth = this.width / 2;
+        const halfHeight = this.height / 2;
+        
+        // Calculate viewport bounds for culling
+        const viewportLeft = -halfWidth / zoom;
+        const viewportRight = halfWidth / zoom;
+        const viewportTop = -halfHeight / zoom;
+        const viewportBottom = halfHeight / zoom;
+        
+        for (let i = 0; i < this.damageNumbers.length; i++) {
+            const dn = this.damageNumbers[i];
             
-            const alpha = Math.max(0, dn.life / dn.maxLife);
+            // Cull off-screen damage numbers
+            const worldX = dn.x - camX;
+            const worldY = dn.y - camY;
+            if (worldX < viewportLeft || worldX > viewportRight || 
+                worldY < viewportTop || worldY > viewportBottom) {
+                continue;
+            }
+            
+            // Convert world position to screen position
+            const screenX = worldX * zoom + halfWidth;
+            const screenY = worldY * zoom + halfHeight;
+            
+            const alpha = dn.life / dn.maxLife;
+            if (alpha <= 0) continue;
             
             this.ctx.save();
             this.ctx.globalAlpha = alpha;
@@ -1247,8 +1328,9 @@ export class Game {
             this.ctx.textBaseline = 'middle';
             this.ctx.strokeStyle = '#000000';
             this.ctx.lineWidth = 3;
-            this.ctx.strokeText(dn.value.toString(), screenX, screenY);
-            this.ctx.fillText(dn.value.toString(), screenX, screenY);
+            const valueStr = dn.value.toString();
+            this.ctx.strokeText(valueStr, screenX, screenY);
+            this.ctx.fillText(valueStr, screenX, screenY);
             this.ctx.restore();
         }
         
@@ -1315,10 +1397,23 @@ export class Game {
         // Draw grid background (optional, for retro feel - can be removed if background image is used)
         // this.drawGrid();
         
-        // Draw enemies
-        this.enemies.forEach(enemy => {
-            this.drawEnemy(enemy);
-        });
+        // Calculate viewport bounds for culling
+        const viewportWidth = this.width / this.camera.zoom;
+        const viewportHeight = this.height / this.camera.zoom;
+        const viewportLeft = this.camera.x - viewportWidth / 2 - this.viewportMargin;
+        const viewportRight = this.camera.x + viewportWidth / 2 + this.viewportMargin;
+        const viewportTop = this.camera.y - viewportHeight / 2 - this.viewportMargin;
+        const viewportBottom = this.camera.y + viewportHeight / 2 + this.viewportMargin;
+        
+        // Draw enemies (with viewport culling)
+        for (let i = 0; i < this.enemies.length; i++) {
+            const enemy = this.enemies[i];
+            // Only draw if in viewport
+            if (enemy.x >= viewportLeft && enemy.x <= viewportRight && 
+                enemy.y >= viewportTop && enemy.y <= viewportBottom) {
+                this.drawEnemy(enemy);
+            }
+        }
         
         // Draw boss
         if (this.boss) {
@@ -1328,15 +1423,25 @@ export class Game {
         // Draw particles (behind entities but visible)
         this.drawParticles();
         
-        // Draw bullets
-        this.bullets.forEach(bullet => {
-            this.drawBullet(bullet);
-        });
+        // Draw bullets (with viewport culling)
+        for (let i = 0; i < this.bullets.length; i++) {
+            const bullet = this.bullets[i];
+            // Only draw if in viewport
+            if (bullet.x >= viewportLeft && bullet.x <= viewportRight && 
+                bullet.y >= viewportTop && bullet.y <= viewportBottom) {
+                this.drawBullet(bullet);
+            }
+        }
         
-        // Draw boss projectiles
-        this.bossProjectiles.forEach(projectile => {
-            this.drawBossProjectile(projectile);
-        });
+        // Draw boss projectiles (with viewport culling)
+        for (let i = 0; i < this.bossProjectiles.length; i++) {
+            const projectile = this.bossProjectiles[i];
+            // Only draw if in viewport
+            if (projectile.x >= viewportLeft && projectile.x <= viewportRight && 
+                projectile.y >= viewportTop && projectile.y <= viewportBottom) {
+                this.drawBossProjectile(projectile);
+            }
+        }
         
         // Draw player
         this.drawPlayer();
