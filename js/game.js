@@ -1618,30 +1618,29 @@ export class Game {
             
             // Apply visual effects based on enemy type
             if (enemy.enemyType === 'big') {
-                    // Draw health bar for big enemies
-                    const barWidth = size * scale;
-                    const barHeight = 6;
-                    const barX = enemy.x - barWidth / 2;
-                    const barY = enemy.y - (size * scale) / 2 - 12;
-                    
-                    // Background
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                    this.ctx.fillRect(barX, barY, barWidth, barHeight);
-                    
-                    // Health fill
-                    const healthPercent = enemy.health / enemy.maxHealth;
-                    this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
-                    this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-                    
-                    // Outline
-                    this.ctx.strokeStyle = '#ffffff';
-                    this.ctx.lineWidth = 1;
-                    this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-                }
+                // Draw health bar for big enemies
+                const barWidth = size * scale;
+                const barHeight = 6;
+                const barX = enemy.x - barWidth / 2;
+                const barY = enemy.y - (size * scale) / 2 - 12;
                 
-                this.ctx.restore();
-                return; // Early return after drawing sprite
+                // Background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                // Health fill
+                const healthPercent = enemy.health / enemy.maxHealth;
+                this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+                
+                // Outline
+                this.ctx.strokeStyle = '#ffffff';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(barX, barY, barWidth, barHeight);
             }
+            
+            this.ctx.restore();
+            return; // Early return after drawing sprite
         }
         
         // Fallback: use enemy image if sprites aren't loaded
