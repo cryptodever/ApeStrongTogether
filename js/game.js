@@ -75,6 +75,7 @@ export class Game {
         this.boss = null; // Boss entity
         this.bossProjectiles = []; // Boss projectiles
         this.bossSpawned = false; // Track if boss has been spawned
+        this.zoomBeforeBoss = null; // Store zoom level before boss spawns
         
         // Visual effects
         this.particles = [];
@@ -354,9 +355,16 @@ export class Game {
             // Keep current zoom when boss is active (don't change)
             // Don't update targetZoom, let it stay at current value
         } else {
-            // Only recalculate zoom if we have enemies (don't reset when boss dies and enemies are cleared)
-            if (this.enemies.length > 0) {
-                // Start at 2.0 (200% zoomed in), zoom out to 1.2 as enemies approach max
+            // After boss dies, restore the zoom level from before boss spawned
+            if (this.zoomBeforeBoss !== null && this.enemies.length < 10) {
+                // Restore zoom from before boss if we have few enemies (just after boss death)
+                this.camera.targetZoom = this.zoomBeforeBoss;
+                // Clear the stored zoom once we have enough enemies to recalculate
+                if (this.enemies.length >= 10) {
+                    this.zoomBeforeBoss = null;
+                }
+            } else if (this.enemies.length > 0) {
+                // Recalculate zoom based on enemy count (normal behavior)
                 const enemyRatio = Math.min(this.enemies.length / this.maxEnemies, 1);
                 this.camera.targetZoom = 2.0 - (enemyRatio * 0.8); // 2.0 to 1.2 (stays zoomed in)
             }
@@ -680,6 +688,9 @@ export class Game {
     }
     
     spawnBoss() {
+        // Store current zoom level before boss spawns
+        this.zoomBeforeBoss = this.camera.zoom;
+        
         // Clear all existing enemies when boss spawns
         this.enemies = [];
         
