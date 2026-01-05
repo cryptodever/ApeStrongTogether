@@ -39,7 +39,8 @@ export class Game {
             x: 0,
             y: 0,
             zoom: 2.0, // Start zoomed in at 200% (much closer)
-            targetZoom: 2.0 // Target zoom for smooth transitions
+            targetZoom: 2.0, // Target zoom for smooth transitions
+            shake: { intensity: 0, duration: 0, currentTime: 0 }
         };
         
         // Player
@@ -51,7 +52,8 @@ export class Game {
             maxHealth: 20, // Default max health (will be set by setPlayerHealth)
             speed: 3,
             rotation: 0,
-            color: '#00ff00'
+            color: '#00ff00',
+            hitFlash: 0
         };
         
         // Weapon
@@ -68,6 +70,12 @@ export class Game {
         this.boss = null; // Boss entity
         this.bossProjectiles = []; // Boss projectiles
         this.bossSpawned = false; // Track if boss has been spawned
+        
+        // Visual effects
+        this.particles = [];
+        this.damageNumbers = [];
+        this.maxParticles = 300; // Performance limit
+        this.maxDamageNumbers = 30; // Performance limit
         
         // Spawning
         this.lastSpawn = 0;
@@ -347,6 +355,21 @@ export class Game {
         // Update boss projectiles
         this.updateBossProjectiles(deltaTime);
         
+        // Update visual effects
+        this.updateParticles(deltaTime);
+        this.updateDamageNumbers(deltaTime);
+        this.updateScreenShake(deltaTime);
+        
+        // Update hit flash timers
+        if (this.player.hitFlash > 0) {
+            this.player.hitFlash -= deltaTime;
+            if (this.player.hitFlash < 0) this.player.hitFlash = 0;
+        }
+        if (this.boss && this.boss.hitFlash > 0) {
+            this.boss.hitFlash -= deltaTime;
+            if (this.boss.hitFlash < 0) this.boss.hitFlash = 0;
+        }
+        
         // Check collisions
         this.checkCollisions();
         
@@ -578,7 +601,17 @@ export class Game {
             if (playerDist < enemy.radius + this.player.radius) {
                 // Enemy hit player
                 this.player.health -= 5;
+                this.player.hitFlash = 150; // Flash on hit
                 this.enemies.splice(i, 1);
+                
+                // Screen shake on damage
+                this.addScreenShake(0.5, 200);
+                
+                // Spawn hit particles
+                this.spawnParticles(this.player.x, this.player.y, 10, 'blood');
+                
+                // Spawn damage number
+                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, 5, false);
                 
                 if (this.player.health <= 0) {
                     this.player.health = 0;
@@ -607,10 +640,14 @@ export class Game {
             attackCooldown: 1200, // Reduced from 2000ms to 1200ms (faster attacks)
             attackPattern: 0, // Current attack pattern (0-3)
             attackTimer: 0, // Timer for pattern-specific timing
-            color: '#ff0000'
+            color: '#ff0000',
+            hitFlash: 0
         };
         
         this.bossSpawned = true;
+        
+        // Screen shake on boss spawn
+        this.addScreenShake(1.0, 500);
     }
     
     updateBoss(deltaTime) {
@@ -624,6 +661,17 @@ export class Game {
             if (this.onEnemyKill) {
                 this.onEnemyKill(goldReward);
             }
+            
+            // Save boss position for particles
+            const bossX = this.boss.x;
+            const bossY = this.boss.y;
+            
+            // Spawn boss death particles
+            this.spawnParticles(bossX, bossY, 40, 'bossDeath');
+            
+            // Screen shake on boss death
+            this.addScreenShake(1.5, 800);
+            
             // Clear boss projectiles when boss dies
             this.bossProjectiles = [];
             this.boss = null;
@@ -640,6 +688,9 @@ export class Game {
         if (now - this.boss.lastAttack >= this.boss.attackCooldown) {
             this.boss.lastAttack = now;
             this.boss.attackTimer = 0;
+            
+            // Screen shake on boss attack
+            this.addScreenShake(0.3, 150);
             
             // Execute current attack pattern (check boss still exists)
             if (!this.boss) return;
@@ -807,6 +858,13 @@ export class Game {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             
+            // Update trail (store last 5 positions)
+            if (!bullet.trail) bullet.trail = [];
+            bullet.trail.push({ x: bullet.x, y: bullet.y });
+            if (bullet.trail.length > 5) {
+                bullet.trail.shift();
+            }
+            
             // Move bullet (frame-rate independent)
             const timeFactor = deltaTime / 16.67;
             bullet.x += bullet.vx * timeFactor;
@@ -844,14 +902,15 @@ export class Game {
         const mouseDy = worldY - this.player.y;
         const angle = Math.atan2(mouseDy, mouseDx);
         
-        // Create bullet
+        // Create bullet with trail
         this.bullets.push({
             x: this.player.x,
             y: this.player.y,
             vx: Math.cos(angle) * this.weapon.bulletSpeed,
             vy: Math.sin(angle) * this.weapon.bulletSpeed,
             radius: 4,
-            damage: this.weapon.damage
+            damage: this.weapon.damage,
+            trail: [] // For bullet trail effect
         });
     }
     
@@ -871,7 +930,14 @@ export class Game {
                 if (dist < bullet.radius + enemy.radius) {
                     // Hit!
                     enemy.health -= bullet.damage;
+                    enemy.hitFlash = 100; // Flash on hit
                     this.bullets.splice(i, 1);
+                    
+                    // Spawn hit particles
+                    this.spawnParticles(enemy.x, enemy.y, 5, 'hit');
+                    
+                    // Spawn damage number
+                    this.spawnDamageNumber(enemy.x, enemy.y - enemy.radius, bullet.damage, false);
                     
                     if (enemy.health <= 0) {
                         // Enemy killed
@@ -882,6 +948,12 @@ export class Game {
                         if (this.onEnemyKill) {
                             this.onEnemyKill(goldReward);
                         }
+                        
+                        // Spawn death particles
+                        this.spawnParticles(enemy.x, enemy.y, 15, 'enemyDeath');
+                        
+                        // Spawn gold popup
+                        this.spawnGoldPopup(enemy.x, enemy.y, goldReward);
                         
                         this.enemies.splice(j, 1);
                         
@@ -904,7 +976,15 @@ export class Game {
                 if (dist < bullet.radius + this.boss.radius) {
                     // Hit boss!
                     this.boss.health -= bullet.damage;
+                    this.boss.hitFlash = 100; // Flash on hit
                     this.bullets.splice(i, 1);
+                    
+                    // Spawn hit particles
+                    this.spawnParticles(this.boss.x, this.boss.y, 8, 'hit');
+                    
+                    // Spawn damage number
+                    this.spawnDamageNumber(this.boss.x, this.boss.y - this.boss.radius - 20, bullet.damage, false);
+                    
                     break;
                 }
             }
@@ -922,7 +1002,17 @@ export class Game {
             if (dist < projectile.radius + this.player.radius) {
                 // Player hit by boss projectile
                 this.player.health -= projectile.damage;
+                this.player.hitFlash = 150; // Flash on hit
                 this.bossProjectiles.splice(i, 1);
+                
+                // Screen shake on damage
+                this.addScreenShake(0.5, 200);
+                
+                // Spawn hit particles
+                this.spawnParticles(this.player.x, this.player.y, 10, 'blood');
+                
+                // Spawn damage number
+                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
                 
                 if (this.player.health <= 0) {
                     this.player.health = 0;
@@ -938,6 +1028,7 @@ export class Game {
         this.score = 0;
         this.kills = 0; // Reset kill counter
         this.player.health = this.player.maxHealth;
+        this.player.hitFlash = 0;
         this.enemies = [];
         this.bullets = [];
         this.boss = null;
@@ -947,6 +1038,10 @@ export class Game {
         // Reset camera zoom to starting value
         this.camera.zoom = 2.0;
         this.camera.targetZoom = 2.0;
+        // Reset visual effects
+        this.particles = [];
+        this.damageNumbers = [];
+        this.camera.shake = { intensity: 0, duration: 0, currentTime: 0 };
     }
     
     die() {
@@ -956,16 +1051,203 @@ export class Game {
         }
     }
     
+    // ========== VISUAL EFFECTS ==========
+    
+    spawnParticles(x, y, count, type) {
+        if (this.particles.length >= this.maxParticles) return; // Performance limit
+        
+        const colors = {
+            'enemyDeath': ['#ff4444', '#ff6600', '#ffaa00'],
+            'bossDeath': ['#ff0000', '#ff0088', '#8800ff', '#ff6600'],
+            'hit': ['#ffff00', '#ffaa00', '#ffffff'],
+            'gold': ['#ffd700', '#ffaa00', '#ffff00'],
+            'blood': ['#ff0000', '#880000', '#ff4444']
+        };
+        
+        const colorSet = colors[type] || colors['hit'];
+        
+        for (let i = 0; i < count && this.particles.length < this.maxParticles; i++) {
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+            const speed = 0.5 + Math.random() * 2;
+            const life = 300 + Math.random() * 500; // 300-800ms
+            
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: life,
+                maxLife: life,
+                size: 2 + Math.random() * 3,
+                color: colorSet[Math.floor(Math.random() * colorSet.length)],
+                alpha: 1,
+                type: type
+            });
+        }
+    }
+    
+    updateParticles(deltaTime) {
+        const timeFactor = deltaTime / 16.67;
+        
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            
+            // Update position
+            p.x += p.vx * timeFactor;
+            p.y += p.vy * timeFactor;
+            
+            // Update life and alpha
+            p.life -= deltaTime;
+            p.alpha = Math.max(0, p.life / p.maxLife);
+            
+            // Apply gravity for some particle types
+            if (p.type === 'enemyDeath' || p.type === 'bossDeath' || p.type === 'blood') {
+                p.vy += 0.05 * timeFactor; // Gravity
+            }
+            
+            // Remove dead particles
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+    
+    drawParticles() {
+        for (const p of this.particles) {
+            this.ctx.save();
+            this.ctx.globalAlpha = p.alpha;
+            this.ctx.fillStyle = p.color;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        }
+    }
+    
+    addScreenShake(intensity, duration) {
+        // Override existing shake if new one is stronger or add together
+        if (intensity > this.camera.shake.intensity || this.camera.shake.currentTime <= 0) {
+            this.camera.shake.intensity = intensity;
+            this.camera.shake.duration = duration;
+            this.camera.shake.currentTime = duration;
+        }
+    }
+    
+    updateScreenShake(deltaTime) {
+        if (this.camera.shake.currentTime > 0) {
+            this.camera.shake.currentTime -= deltaTime;
+            if (this.camera.shake.currentTime < 0) {
+                this.camera.shake.currentTime = 0;
+                this.camera.shake.intensity = 0;
+            }
+        }
+    }
+    
+    spawnDamageNumber(x, y, damage, isCrit) {
+        if (this.damageNumbers.length >= this.maxDamageNumbers) {
+            // Remove oldest if at limit
+            this.damageNumbers.shift();
+        }
+        
+        this.damageNumbers.push({
+            x: x,
+            y: y,
+            startY: y,
+            value: Math.round(damage),
+            life: 1200, // 1.2 seconds
+            maxLife: 1200,
+            color: isCrit ? '#ff6600' : '#ffff00',
+            size: isCrit ? 24 : 18
+        });
+    }
+    
+    updateDamageNumbers(deltaTime) {
+        for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
+            const dn = this.damageNumbers[i];
+            
+            // Float upward
+            dn.y -= 0.3 * (deltaTime / 16.67);
+            
+            // Fade out
+            dn.life -= deltaTime;
+            
+            // Remove dead numbers
+            if (dn.life <= 0) {
+                this.damageNumbers.splice(i, 1);
+            }
+        }
+    }
+    
+    drawDamageNumbers() {
+        // Convert to screen space after camera transform
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to screen space
+        
+        for (const dn of this.damageNumbers) {
+            // Convert world position to screen position
+            const screenX = (dn.x - this.camera.x) * this.camera.zoom + this.width / 2;
+            const screenY = (dn.y - this.camera.y) * this.camera.zoom + this.height / 2;
+            
+            const alpha = Math.max(0, dn.life / dn.maxLife);
+            
+            this.ctx.save();
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = dn.color;
+            this.ctx.font = `bold ${dn.size}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText(dn.value.toString(), screenX, screenY);
+            this.ctx.fillText(dn.value.toString(), screenX, screenY);
+            this.ctx.restore();
+        }
+        
+        this.ctx.restore();
+    }
+    
+    spawnGoldPopup(x, y, gold) {
+        // Use damage number system for gold popup (different color)
+        if (this.damageNumbers.length >= this.maxDamageNumbers) {
+            this.damageNumbers.shift();
+        }
+        
+        this.damageNumbers.push({
+            x: x,
+            y: y,
+            startY: y,
+            value: `+${gold}`,
+            life: 1500,
+            maxLife: 1500,
+            color: '#ffd700',
+            size: 20,
+            isGold: true
+        });
+        
+        // Also spawn gold particles
+        this.spawnParticles(x, y, 8, 'gold');
+    }
+    
     render() {
         // Clear canvas with fallback background color
         this.ctx.fillStyle = '#1a1a2e'; // Dark blue-gray background (fallback)
         this.ctx.fillRect(0, 0, this.width, this.height);
         
-        // Transform to camera view (orbital)
+        // Transform to camera view (orbital) with screen shake
         this.ctx.save();
         this.ctx.translate(this.width / 2, this.height / 2);
+        
+        // Apply screen shake offset
+        let shakeX = 0;
+        let shakeY = 0;
+        if (this.camera.shake.currentTime > 0) {
+            const shakeAmount = this.camera.shake.intensity * (this.camera.shake.currentTime / this.camera.shake.duration);
+            shakeX = (Math.random() - 0.5) * shakeAmount * 10;
+            shakeY = (Math.random() - 0.5) * shakeAmount * 10;
+        }
+        
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
-        this.ctx.translate(-this.camera.x, -this.camera.y);
+        this.ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
         
         // Draw background image (moves with camera so player can walk around)
         if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
@@ -994,6 +1276,9 @@ export class Game {
             this.drawBoss();
         }
         
+        // Draw particles (behind entities but visible)
+        this.drawParticles();
+        
         // Draw bullets
         this.bullets.forEach(bullet => {
             this.drawBullet(bullet);
@@ -1008,6 +1293,9 @@ export class Game {
         this.drawPlayer();
         
         this.ctx.restore();
+        
+        // Draw damage numbers (screen space, after camera transform)
+        this.drawDamageNumbers();
     }
     
     drawGrid() {
@@ -1036,12 +1324,26 @@ export class Game {
     }
     
     drawPlayer() {
+        this.ctx.save();
+        
+        // Hit flash effect
+        if (this.player.hitFlash > 0) {
+            const flashAlpha = (this.player.hitFlash / 150) * 0.5;
+            this.ctx.globalAlpha = flashAlpha;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath();
+            this.ctx.arc(this.player.x, this.player.y, this.player.radius * 3.5, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+        }
+        
         if (!this.imagesLoaded) {
             // Fallback: draw circle while images load
             this.ctx.fillStyle = this.player.color;
             this.ctx.beginPath();
             this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
             this.ctx.fill();
+            this.ctx.restore();
             return;
         }
         
@@ -1050,13 +1352,11 @@ export class Game {
         
         if (img && img.complete && img.naturalWidth > 0) {
             const size = this.player.radius * 3.5; // Larger size for better visibility
-            this.ctx.save();
             // Ensure transparency is preserved
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.translate(this.player.x, this.player.y);
             // Draw image with transparency preserved (PNG alpha channel)
             this.ctx.drawImage(img, -size / 2, -size / 2, size, size);
-            this.ctx.restore();
         } else {
             // Fallback: draw circle if image not ready
             this.ctx.fillStyle = this.player.color;
@@ -1064,6 +1364,8 @@ export class Game {
             this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
             this.ctx.fill();
         }
+        
+        this.ctx.restore();
     }
     
     drawEnemy(enemy) {
@@ -1071,6 +1373,17 @@ export class Game {
         const size = enemy.radius * 3.5;
         
         this.ctx.save();
+        
+        // Hit flash effect
+        if (enemy.hitFlash !== undefined && enemy.hitFlash > 0) {
+            const flashAlpha = (enemy.hitFlash / 100) * 0.6;
+            this.ctx.globalAlpha = flashAlpha;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath();
+            this.ctx.arc(enemy.x, enemy.y, size / 2, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+        }
         
         // Scale for big enemies
         const scale = enemy.enemyType === 'big' ? 1.5 : 1.0;
@@ -1240,10 +1553,26 @@ export class Game {
     }
     
     drawBullet(bullet) {
+        this.ctx.save();
+        
+        // Draw bullet trail
+        if (bullet.trail && bullet.trail.length > 1) {
+            this.ctx.strokeStyle = '#ffff00';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(bullet.trail[0].x, bullet.trail[0].y);
+            for (let i = 1; i < bullet.trail.length; i++) {
+                const alpha = i / bullet.trail.length;
+                this.ctx.globalAlpha = alpha * 0.5;
+                this.ctx.lineTo(bullet.trail[i].x, bullet.trail[i].y);
+            }
+            this.ctx.stroke();
+            this.ctx.globalAlpha = 1;
+        }
+        
         if (this.imagesLoaded && this.images.bullet && this.images.bullet.complete && this.images.bullet.naturalWidth > 0) {
             // Draw bullet sprite - enlarged for better visibility
             const size = bullet.radius * 4;
-            this.ctx.save();
             this.ctx.globalCompositeOperation = 'source-over';
             
             // Calculate bullet rotation from velocity
@@ -1258,7 +1587,6 @@ export class Game {
                 size,
                 size
             );
-            this.ctx.restore();
         } else {
             // Fallback: draw circle while bullet sprite loads (also enlarged)
             const radius = bullet.radius * 2;
@@ -1267,12 +1595,40 @@ export class Game {
             this.ctx.arc(bullet.x, bullet.y, radius, 0, Math.PI * 2);
             this.ctx.fill();
         }
+        
+        this.ctx.restore();
     }
     
     drawBoss() {
         if (!this.boss) return;
         
         this.ctx.save();
+        
+        // Hit flash effect
+        if (this.boss.hitFlash > 0) {
+            const flashAlpha = (this.boss.hitFlash / 100) * 0.6;
+            this.ctx.globalAlpha = flashAlpha;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.beginPath();
+            this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius * 2.5, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+        }
+        
+        // Attack charge indicator - pulsing ring before attacks
+        const timeSinceLastAttack = Date.now() - this.boss.lastAttack;
+        const timeUntilNextAttack = this.boss.attackCooldown - timeSinceLastAttack;
+        if (timeUntilNextAttack < 400 && timeUntilNextAttack > 0) {
+            const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
+            const chargeAlpha = (1 - timeUntilNextAttack / 400) * 0.5 * pulse;
+            this.ctx.globalAlpha = chargeAlpha;
+            this.ctx.strokeStyle = '#ff6600';
+            this.ctx.lineWidth = 4;
+            this.ctx.beginPath();
+            this.ctx.arc(this.boss.x, this.boss.y, this.boss.radius * 2.5 + 10, 0, Math.PI * 2);
+            this.ctx.stroke();
+            this.ctx.globalAlpha = 1;
+        }
         
         const size = this.boss.radius * 2.5; // Slightly larger for better visibility
         
@@ -1336,6 +1692,15 @@ export class Game {
         const healthPercent = this.boss.health / this.boss.maxHealth;
         this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
         this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+        
+        // Health bar glow when low
+        if (healthPercent < 0.25) {
+            const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+            this.ctx.globalAlpha = pulse * 0.5;
+            this.ctx.fillStyle = '#ff0000';
+            this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+            this.ctx.globalAlpha = 1;
+        }
         
         // Outline
         this.ctx.strokeStyle = '#ffffff';
@@ -1420,6 +1785,7 @@ export class Game {
         this.player.x = 0;
         this.player.y = 0;
         this.player.health = this.player.maxHealth;
+        this.player.hitFlash = 0;
         this.enemies = [];
         this.bullets = [];
         this.boss = null;
@@ -1429,6 +1795,10 @@ export class Game {
         // Reset camera zoom to starting value
         this.camera.zoom = 2.0;
         this.camera.targetZoom = 2.0;
+        // Reset visual effects
+        this.particles = [];
+        this.damageNumbers = [];
+        this.camera.shake = { intensity: 0, duration: 0, currentTime: 0 };
     }
     
     getHealth() {
