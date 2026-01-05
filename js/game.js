@@ -15,7 +15,7 @@ export class Game {
         window.addEventListener('resize', () => this.resize());
         
         // Game state
-        this.state = 'menu'; // 'menu', 'playing', 'dead', 'shop'
+        this.state = 'menu'; // 'menu', 'playing', 'paused', 'dead', 'shop'
         this.score = 0;
         this.kills = 0; // Track total enemies killed for difficulty scaling
         
@@ -221,7 +221,17 @@ export class Game {
     setupInput() {
         // Keyboard
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
+            const key = e.key.toLowerCase();
+            this.keys[key] = true;
+            
+            // Handle ESC key for pause
+            if (key === 'escape') {
+                if (this.state === 'playing') {
+                    this.pause();
+                } else if (this.state === 'paused') {
+                    this.resume();
+                }
+            }
         });
         
         window.addEventListener('keyup', (e) => {
@@ -266,7 +276,7 @@ export class Game {
     }
     
     update(deltaTime) {
-        if (this.state !== 'playing') return;
+        if (this.state !== 'playing') return; // Don't update if paused or other states
         
         // Update player movement
         this.updatePlayer(deltaTime);
@@ -1042,6 +1052,18 @@ export class Game {
         this.particles = [];
         this.damageNumbers = [];
         this.camera.shake = { intensity: 0, duration: 0, currentTime: 0 };
+    }
+    
+    pause() {
+        if (this.state === 'playing') {
+            this.state = 'paused';
+        }
+    }
+    
+    resume() {
+        if (this.state === 'paused') {
+            this.state = 'playing';
+        }
     }
     
     die() {

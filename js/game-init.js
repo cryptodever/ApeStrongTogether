@@ -74,6 +74,7 @@ let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
 let healthLevelEl, healthCostEl, upgradeHealthBtn;
 let restartBtn;
 let startScreenEl, startGameBtn;
+let pauseMenuEl, resumeBtn, restartPauseBtn;
 
 // Initialize game page (only on desktop)
 if (!isMobile) {
@@ -365,12 +366,33 @@ function updateUI() {
     }
 }
 
+// Show pause menu
+function showPauseMenu() {
+    if (pauseMenuEl) {
+        pauseMenuEl.style.display = 'flex';
+    }
+}
+
+// Hide pause menu
+function hidePauseMenu() {
+    if (pauseMenuEl) {
+        pauseMenuEl.style.display = 'none';
+    }
+}
+
 // Update game UI (health, score)
 function updateGameUI() {
     if (!game) {
         // If no game, try again next frame (game might be initializing)
         requestAnimationFrame(updateGameUI);
         return;
+    }
+    
+    // Check pause state
+    if (game.state === 'paused') {
+        showPauseMenu();
+    } else {
+        hidePauseMenu();
     }
     
     const health = game.getHealth();
@@ -423,6 +445,11 @@ function setupEventListeners() {
     startScreenEl = document.getElementById('startScreen');
     startGameBtn = document.getElementById('startGameBtn');
     const leaderboardBtn = document.getElementById('leaderboardBtn');
+    
+    // Pause menu elements
+    pauseMenuEl = document.getElementById('pauseMenu');
+    resumeBtn = document.getElementById('resumeBtn');
+    restartPauseBtn = document.getElementById('restartPauseBtn');
     
     // Upgrade buttons
     if (upgradeDamageBtn) {
@@ -477,6 +504,33 @@ function setupEventListeners() {
     if (leaderboardBtn) {
         leaderboardBtn.addEventListener('click', () => {
             window.location.href = '/game/leaderboard/index.html';
+        });
+    }
+    
+    // Pause menu buttons
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+            if (game) {
+                game.resume();
+                hidePauseMenu();
+            }
+        });
+    }
+    
+    if (restartPauseBtn) {
+        restartPauseBtn.addEventListener('click', () => {
+            hidePauseMenu();
+            // Reinitialize with current upgrades
+            initializeGame();
+            // Show start screen again
+            if (startScreenEl) {
+                startScreenEl.classList.remove('hide');
+            }
+            // Hide game UI overlay
+            const gameUIOverlay = document.querySelector('.game-ui-overlay');
+            if (gameUIOverlay) {
+                gameUIOverlay.style.opacity = '0';
+            }
         });
     }
     
