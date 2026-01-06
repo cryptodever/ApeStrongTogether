@@ -446,13 +446,27 @@ function updateGameUI() {
 
 // Update power-ups display
 function updatePowerUpsDisplay() {
-    if (!powerUpsDisplayEl || !game) return;
+    if (!game) return;
+    
+    // Ensure element is found (in case it wasn't found during setup)
+    if (!powerUpsDisplayEl) {
+        powerUpsDisplayEl = document.getElementById('powerUpsDisplay');
+        if (!powerUpsDisplayEl) {
+            console.warn('Power-ups display element not found');
+            return; // Still not found, exit
+        }
+    }
     
     const activeEffects = game.activeEffects;
+    if (!activeEffects) {
+        console.warn('Active effects not found on game object');
+        return;
+    }
+    
     const powerUpsHTML = [];
     
     // Speed boost
-    if (activeEffects.speed && activeEffects.speed.count > 0) {
+    if (activeEffects.speed && activeEffects.speed.count > 0 && activeEffects.speed.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.speed.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
         powerUpsHTML.push(`
@@ -518,7 +532,13 @@ function updatePowerUpsDisplay() {
         `);
     }
     
+    // Always update the innerHTML, even if empty (to clear old items)
     powerUpsDisplayEl.innerHTML = powerUpsHTML.join('');
+    
+    // Debug logging (remove after testing)
+    if (powerUpsHTML.length > 0) {
+        console.log('Power-ups displayed:', powerUpsHTML.length, powerUpsHTML);
+    }
 }
 
 // Setup event listeners
