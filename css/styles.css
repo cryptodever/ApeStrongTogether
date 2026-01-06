@@ -13430,6 +13430,62 @@ body.leaderboard-body > * {
 }
 
 /* Upgrade Shop Modal */
+/* Round Popup */
+.round-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.round-popup.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.round-popup-content {
+    background: rgba(15, 15, 15, 0.98);
+    border: 3px solid rgba(255, 215, 0, 0.8);
+    border-radius: 20px;
+    padding: 3rem 4rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.2);
+    transform: scale(0.8);
+    transition: transform 0.5s ease;
+}
+
+.round-popup.show .round-popup-content {
+    transform: scale(1);
+}
+
+.round-popup-content h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #ffd700;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.8);
+    letter-spacing: 4px;
+}
+
+.round-popup-content p {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin: 0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .pause-menu {
     position: absolute;
     top: 0;

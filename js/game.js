@@ -18,6 +18,7 @@ export class Game {
         this.state = 'menu'; // 'menu', 'playing', 'paused', 'dead', 'shop'
         this.score = 0;
         this.kills = 0; // Track total enemies killed for difficulty scaling
+        this.round = 1; // Track current round (increases after each boss defeat)
         
         // Image assets
         this.images = {
@@ -489,15 +490,15 @@ export class Game {
     }
     
     getDifficultyMultiplier() {
-        // Every 150 kills = 1.15x multiplier (compounding)
-        // 0-149 kills: 1.0x
-        // 150-299 kills: 1.15x
-        // 300-449 kills: 1.3225x (1.15^2)
-        // 450-599 kills: 1.5209x (1.15^3)
-        // 600-749 kills: 1.749x (1.15^4)
-        // etc.
-        const difficultyLevel = Math.floor(this.kills / 150);
-        return Math.pow(1.15, difficultyLevel);
+        // Round-based difficulty: mobs get 2x health per round
+        // Round 1: 1x, Round 2: 2x, Round 3: 4x, etc.
+        return Math.pow(2, this.round - 1);
+    }
+    
+    getBossDifficultyMultiplier() {
+        // Boss gets 2x harder per round (health, damage, etc.)
+        // Round 1: 1x, Round 2: 2x, Round 3: 4x, etc.
+        return Math.pow(2, this.round - 1);
     }
     
     spawnEnemies(count = 1) {
@@ -540,8 +541,8 @@ export class Game {
                     break;
             }
             
-            // Get difficulty multiplier
-            const difficultyMultiplier = this.getDifficultyMultiplier();
+            // Get round-based difficulty multiplier (2x health per round)
+            const roundMultiplier = this.getDifficultyMultiplier();
             
             // Determine enemy type: 60% normal, 25% fast, 15% big
             const rand = Math.random();
@@ -579,14 +580,15 @@ export class Game {
             const dy = this.player.y - y;
             const rotation = Math.atan2(dy, dx);
             
-            // Apply difficulty multiplier to enemy stats
+            // Apply round multiplier to health only (mobs get 2x health per round)
+            // Speed and radius stay the same, only health scales
             this.enemies.push({
                 x: x,
                 y: y,
-                radius: radius * difficultyMultiplier,
-                speed: baseSpeed * difficultyMultiplier,
-                health: health * difficultyMultiplier,
-                maxHealth: health * difficultyMultiplier,
+                radius: radius, // No scaling on radius
+                speed: baseSpeed, // No scaling on speed
+                health: health * roundMultiplier, // Only health scales with rounds
+                maxHealth: health * roundMultiplier,
                 rotation: rotation, // Track rotation for directional sprites
                 color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
                 enemyType: enemyType,
@@ -695,14 +697,14 @@ export class Game {
         this.enemies = [];
         
         // Spawn boss at center of background
-        const difficultyMultiplier = this.getDifficultyMultiplier();
+        const bossMultiplier = this.getBossDifficultyMultiplier();
         
         this.boss = {
             x: 0,
             y: 0,
-            radius: 40 * difficultyMultiplier,
-            health: 20000 * difficultyMultiplier, // Doubled from 10000
-            maxHealth: 20000 * difficultyMultiplier,
+            radius: 40 * bossMultiplier,
+            health: 20000 * bossMultiplier, // 2x harder per round
+            maxHealth: 20000 * bossMultiplier,
             speed: 0, // Stationary
             rotation: 0,
             lastAttack: Date.now(),
@@ -710,7 +712,8 @@ export class Game {
             attackPattern: 0, // Current attack pattern (0-3)
             attackTimer: 0, // Timer for pattern-specific timing
             color: '#ff0000',
-            hitFlash: 0
+            hitFlash: 0,
+            damageMultiplier: bossMultiplier // Store damage multiplier for attacks
         };
         
         this.bossSpawned = true;
@@ -744,8 +747,17 @@ export class Game {
             // Clear boss projectiles when boss dies
             this.bossProjectiles = [];
             this.boss = null;
-            // Keep bossSpawned = true so boss doesn't spawn again
-            // Game will return to normal mob spawning and continue scaling
+            
+            // Increment round and reset kills for next round
+            this.round++;
+            this.kills = 0; // Reset kills for the new round
+            
+            // Show round popup
+            this.showRoundPopup(this.round);
+            
+            // Reset bossSpawned so boss can spawn again at 1000 kills
+            this.bossSpawned = false;
+            
             return;
         }
         
@@ -838,13 +850,14 @@ export class Game {
         const baseAngle = Math.atan2(dy, dx);
         const angle = baseAngle + offsetAngle;
         
+        const damage = 15 * (this.boss.damageMultiplier || 1);
         this.bossProjectiles.push({
             x: this.boss.x,
             y: this.boss.y,
             vx: Math.cos(angle) * 4.5,
             vy: Math.sin(angle) * 4.5,
             radius: 10,
-            damage: 15,
+            damage: damage,
             color: '#ff0000'
         });
     }
@@ -867,6 +880,7 @@ export class Game {
         const baseAngle = Math.atan2(dy, dx);
         const spread = Math.PI / 5 + Math.random() * 0.2; // Variable spread (36-50 degrees)
         
+        const damage = 12 * (this.boss.damageMultiplier || 1);
         for (let i = 0; i < 7; i++) {
             const angle = baseAngle + (i - 3) * (spread / 6);
             this.bossProjectiles.push({
@@ -875,7 +889,7 @@ export class Game {
                 vx: Math.cos(angle) * (4.0 + Math.random() * 1.0), // Variable speed (4.0-5.0)
                 vy: Math.sin(angle) * (4.0 + Math.random() * 1.0),
                 radius: 7.5,
-                damage: 12,
+                damage: damage,
                 color: '#ff6600'
             });
         }
@@ -889,6 +903,7 @@ export class Game {
         // Use a rotating base angle that changes each time this attack is called
         const timeBasedAngle = (Date.now() / 50) % (Math.PI * 2);
         
+        const damage = 10 * (this.boss.damageMultiplier || 1);
         for (let i = 0; i < spiralCount; i++) {
             const angle = timeBasedAngle + (i * Math.PI * 2 / spiralCount);
             this.bossProjectiles.push({
@@ -897,7 +912,7 @@ export class Game {
                 vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
                 vy: Math.sin(angle) * 3.75,
                 radius: 8.75,
-                damage: 10, // Increased from 7
+                damage: damage,
                 color: '#ff00ff'
             });
         }
@@ -909,6 +924,7 @@ export class Game {
         
         const ringCount = 16; // Increased from 12 to 16
         
+        const damage = 9 * (this.boss.damageMultiplier || 1);
         for (let i = 0; i < ringCount; i++) {
             const angle = (i * Math.PI * 2 / ringCount);
             this.bossProjectiles.push({
@@ -917,7 +933,7 @@ export class Game {
                 vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
                 vy: Math.sin(angle) * 3.75,
                 radius: 7.5,
-                damage: 9, // Increased from 6
+                damage: damage,
                 color: '#00ffff'
             });
         }
@@ -1137,6 +1153,7 @@ export class Game {
         this.state = 'playing';
         this.score = 0;
         this.kills = 0; // Reset kill counter
+        this.round = 1; // Reset round
         this.player.health = this.player.maxHealth;
         this.player.hitFlash = 0;
         this.enemies = [];
@@ -1398,6 +1415,30 @@ export class Game {
         }
         
         this.ctx.restore();
+    }
+    
+    showRoundPopup(round) {
+        // Create round popup element
+        const popup = document.createElement('div');
+        popup.className = 'round-popup';
+        const multiplier = Math.pow(2, round - 1);
+        popup.innerHTML = `<div class="round-popup-content"><h2>Round ${round}</h2><p>Mobs are now ${multiplier}x stronger!</p></div>`;
+        document.body.appendChild(popup);
+        
+        // Animate in
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(popup)) {
+                    document.body.removeChild(popup);
+                }
+            }, 500);
+        }, 3000);
     }
     
     spawnGoldPopup(x, y, gold) {
@@ -1948,6 +1989,7 @@ export class Game {
         this.state = 'playing';
         this.score = 0;
         this.kills = 0; // Reset kill counter
+        this.round = 1; // Reset round
         this.player.x = 0;
         this.player.y = 0;
         this.player.health = this.player.maxHealth;
