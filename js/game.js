@@ -91,6 +91,7 @@ export class Game {
         this.goldMultiplierActive = false;
         this.goldMultiplierTimer = 0; // Timer for gold multiplier (in milliseconds)
         this.goldMultiplierDuration = 10000; // 10 seconds duration
+        this.powerUpSpawnRateMultiplier = 1.0; // Multiplier for power-up spawn rate (upgradeable)
         
         // Visual effects
         this.particles = [];
@@ -2198,6 +2199,9 @@ export class Game {
             spawnChance = 0.01; // 1% for fast enemies (1 in 100)
         }
         
+        // Apply spawn rate multiplier from upgrade
+        spawnChance *= this.powerUpSpawnRateMultiplier;
+        
         if (Math.random() < spawnChance) {
             // Weight power-up types based on player health
             const healthPercent = this.player.health / this.player.maxHealth;
@@ -3000,6 +3004,10 @@ export class Game {
     
     setPlayerSpeed(speed) {
         this.player.speed = speed;
+    }
+    
+    setPowerUpSpawnRateMultiplier(multiplier) {
+        this.powerUpSpawnRateMultiplier = multiplier;
     }
     
     restart() {
