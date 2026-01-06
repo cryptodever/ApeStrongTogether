@@ -72,11 +72,11 @@ let goldValueEl, scoreValueEl;
 let upgradeShopEl;
 let powerUpsDisplayEl;
 let shopGoldEl;
-let damageLevelEl, damageCostEl, upgradeDamageBtn, damageCurrentEl, damageNextEl;
-let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn, fireRateCurrentEl, fireRateNextEl;
-let healthLevelEl, healthCostEl, upgradeHealthBtn, healthCurrentEl, healthNextEl;
-let speedLevelEl, speedCostEl, upgradeSpeedBtn, speedCurrentEl, speedNextEl;
-let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn, powerUpSpawnRateCurrentEl, powerUpSpawnRateNextEl;
+let damageLevelEl, damageCostEl, upgradeDamageBtn, damageCurrentEl, damageNextEl, refundDamageBtn;
+let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn, fireRateCurrentEl, fireRateNextEl, refundFireRateBtn;
+let healthLevelEl, healthCostEl, upgradeHealthBtn, healthCurrentEl, healthNextEl, refundHealthBtn;
+let speedLevelEl, speedCostEl, upgradeSpeedBtn, speedCurrentEl, speedNextEl, refundSpeedBtn;
+let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn, powerUpSpawnRateCurrentEl, powerUpSpawnRateNextEl, refundPowerUpSpawnRateBtn;
 let restartBtn;
 let startScreenEl, startGameBtn;
 let pauseMenuEl, resumeBtn, restartPauseBtn;
@@ -377,6 +377,9 @@ function updateUpgradeShopUI() {
     if (upgradeDamageBtn) {
         upgradeDamageBtn.disabled = damageLevel >= 100 || userGameData.gameGold < damageCost;
     }
+    if (refundDamageBtn) {
+        refundDamageBtn.disabled = damageLevel <= 1;
+    }
     
     // Fire Rate upgrade
     if (fireRateLevelEl) fireRateLevelEl.textContent = fireRateLevel;
@@ -388,6 +391,9 @@ function updateUpgradeShopUI() {
     if (fireRateCostEl) fireRateCostEl.textContent = fireRateLevel >= 100 ? 'MAX' : fireRateCost.toLocaleString();
     if (upgradeFireRateBtn) {
         upgradeFireRateBtn.disabled = fireRateLevel >= 100 || userGameData.gameGold < fireRateCost;
+    }
+    if (refundFireRateBtn) {
+        refundFireRateBtn.disabled = fireRateLevel <= 1;
     }
     
     // Health upgrade
@@ -401,6 +407,9 @@ function updateUpgradeShopUI() {
     if (upgradeHealthBtn) {
         upgradeHealthBtn.disabled = healthLevel >= 100 || userGameData.gameGold < healthCost;
     }
+    if (refundHealthBtn) {
+        refundHealthBtn.disabled = healthLevel <= 1;
+    }
     
     // Speed upgrade
     if (speedLevelEl) speedLevelEl.textContent = speedLevel;
@@ -412,6 +421,9 @@ function updateUpgradeShopUI() {
     if (speedCostEl) speedCostEl.textContent = speedLevel >= 100 ? 'MAX' : speedCost.toLocaleString();
     if (upgradeSpeedBtn) {
         upgradeSpeedBtn.disabled = speedLevel >= 100 || userGameData.gameGold < speedCost;
+    }
+    if (refundSpeedBtn) {
+        refundSpeedBtn.disabled = speedLevel <= 1;
     }
     
     // Power-up Spawn Rate upgrade
@@ -425,6 +437,9 @@ function updateUpgradeShopUI() {
     if (powerUpSpawnRateCostEl) powerUpSpawnRateCostEl.textContent = powerUpSpawnRateLevel >= 100 ? 'MAX' : powerUpSpawnRateCost.toLocaleString();
     if (upgradePowerUpSpawnRateBtn) {
         upgradePowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel >= 100 || userGameData.gameGold < powerUpSpawnRateCost;
+    }
+    if (refundPowerUpSpawnRateBtn) {
+        refundPowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel <= 1;
     }
 }
 
@@ -444,6 +459,29 @@ async function purchaseUpgrade(upgradeType) {
     
     userGameData.gameGold -= cost;
     userGameData.gameUpgrades[upgradeType] += 1;
+    
+    await saveGameData();
+    updateUpgradeShopUI();
+    updateUI();
+}
+
+// Refund upgrade (remove 1 level, get 50% gold back)
+async function refundUpgrade(upgradeType) {
+    const level = userGameData.gameUpgrades[upgradeType];
+    
+    // Can't refund if at level 1
+    if (level <= 1) {
+        return; // Already at minimum level
+    }
+    
+    // Calculate refund: 50% of the cost to go from (level - 1) to level
+    const previousLevel = level - 1;
+    const costToUpgrade = getUpgradeCost(previousLevel);
+    const refundAmount = Math.floor(costToUpgrade * 0.5); // 50% back
+    
+    // Refund the upgrade
+    userGameData.gameUpgrades[upgradeType] -= 1;
+    userGameData.gameGold += refundAmount;
     
     await saveGameData();
     updateUpgradeShopUI();
@@ -626,30 +664,35 @@ function setupEventListeners() {
     upgradeDamageBtn = document.getElementById('upgradeDamage');
     damageCurrentEl = document.getElementById('damageCurrent');
     damageNextEl = document.getElementById('damageNext');
+    refundDamageBtn = document.getElementById('refundDamage');
     
     fireRateLevelEl = document.getElementById('fireRateLevel');
     fireRateCostEl = document.getElementById('fireRateCost');
     upgradeFireRateBtn = document.getElementById('upgradeFireRate');
     fireRateCurrentEl = document.getElementById('fireRateCurrent');
     fireRateNextEl = document.getElementById('fireRateNext');
+    refundFireRateBtn = document.getElementById('refundFireRate');
     
     healthLevelEl = document.getElementById('healthLevel');
     healthCostEl = document.getElementById('healthCost');
     upgradeHealthBtn = document.getElementById('upgradeHealth');
     healthCurrentEl = document.getElementById('healthCurrent');
     healthNextEl = document.getElementById('healthNext');
+    refundHealthBtn = document.getElementById('refundHealth');
     
     speedLevelEl = document.getElementById('speedLevel');
     speedCostEl = document.getElementById('speedCost');
     upgradeSpeedBtn = document.getElementById('upgradeSpeed');
     speedCurrentEl = document.getElementById('speedCurrent');
     speedNextEl = document.getElementById('speedNext');
+    refundSpeedBtn = document.getElementById('refundSpeed');
     
     powerUpSpawnRateLevelEl = document.getElementById('powerUpSpawnRateLevel');
     powerUpSpawnRateCostEl = document.getElementById('powerUpSpawnRateCost');
     upgradePowerUpSpawnRateBtn = document.getElementById('upgradePowerUpSpawnRate');
     powerUpSpawnRateCurrentEl = document.getElementById('powerUpSpawnRateCurrent');
     powerUpSpawnRateNextEl = document.getElementById('powerUpSpawnRateNext');
+    refundPowerUpSpawnRateBtn = document.getElementById('refundPowerUpSpawnRate');
     
     restartBtn = document.getElementById('restartBtn');
     
@@ -682,6 +725,27 @@ function setupEventListeners() {
     
     if (upgradePowerUpSpawnRateBtn) {
         upgradePowerUpSpawnRateBtn.addEventListener('click', () => purchaseUpgrade('powerUpSpawnRate'));
+    }
+    
+    // Refund buttons
+    if (refundDamageBtn) {
+        refundDamageBtn.addEventListener('click', () => refundUpgrade('weaponDamage'));
+    }
+    
+    if (refundFireRateBtn) {
+        refundFireRateBtn.addEventListener('click', () => refundUpgrade('weaponFireRate'));
+    }
+    
+    if (refundHealthBtn) {
+        refundHealthBtn.addEventListener('click', () => refundUpgrade('apeHealth'));
+    }
+    
+    if (refundSpeedBtn) {
+        refundSpeedBtn.addEventListener('click', () => refundUpgrade('apeSpeed'));
+    }
+    
+    if (refundPowerUpSpawnRateBtn) {
+        refundPowerUpSpawnRateBtn.addEventListener('click', () => refundUpgrade('powerUpSpawnRate'));
     }
     
     // Restart button
