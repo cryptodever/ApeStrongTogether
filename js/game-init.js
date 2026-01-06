@@ -56,12 +56,30 @@ let currentUser = null;
 let game = null;
 let userGameData = {
     gameGold: 0,
+    selectedCharacter: 1, // Default character (1 = Standard, 2 = Shotgun, 3 = Sniper)
+    unlockedCharacters: [1], // Character 1 unlocked by default
     gameUpgrades: {
-        weaponDamage: 1,
-        weaponFireRate: 1,
-        apeHealth: 1,
-        apeSpeed: 1,
-        powerUpSpawnRate: 1
+        character1: {
+            weaponDamage: 1,
+            weaponFireRate: 1,
+            apeHealth: 1,
+            apeSpeed: 1,
+            powerUpSpawnRate: 1
+        },
+        character2: {
+            weaponDamage: 1,
+            weaponFireRate: 1,
+            apeHealth: 1,
+            apeSpeed: 1,
+            powerUpSpawnRate: 1
+        },
+        character3: {
+            weaponDamage: 1,
+            weaponFireRate: 1,
+            apeHealth: 1,
+            apeSpeed: 1,
+            powerUpSpawnRate: 1
+        }
     }
 };
 
@@ -109,25 +127,101 @@ async function loadUserGameData() {
             if (data.gameGold !== undefined) {
                 userGameData.gameGold = data.gameGold || 0;
             }
-            if (data.gameUpgrades) {
+            
+            // Migration: Convert old upgrade structure to new per-character structure
+            if (data.gameUpgrades && !data.gameUpgrades.character1) {
+                // Old structure detected - migrate to new structure
+                const oldUpgrades = data.gameUpgrades;
                 userGameData.gameUpgrades = {
-                    weaponDamage: data.gameUpgrades.weaponDamage || 1,
-                    weaponFireRate: data.gameUpgrades.weaponFireRate || 1,
-                    apeHealth: data.gameUpgrades.apeHealth || 1,
-                    apeSpeed: data.gameUpgrades.apeSpeed || 1,
-                    powerUpSpawnRate: data.gameUpgrades.powerUpSpawnRate || 1
+                    character1: {
+                        weaponDamage: oldUpgrades.weaponDamage || 1,
+                        weaponFireRate: oldUpgrades.weaponFireRate || 1,
+                        apeHealth: oldUpgrades.apeHealth || 1,
+                        apeSpeed: oldUpgrades.apeSpeed || 1,
+                        powerUpSpawnRate: oldUpgrades.powerUpSpawnRate || 1
+                    },
+                    character2: {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    },
+                    character3: {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    }
                 };
+                // Save migrated data
+                await saveGameData();
+            } else if (data.gameUpgrades) {
+                // New structure - load as-is
+                userGameData.gameUpgrades = {
+                    character1: data.gameUpgrades.character1 || {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    },
+                    character2: data.gameUpgrades.character2 || {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    },
+                    character3: data.gameUpgrades.character3 || {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    }
+                };
+            }
+            
+            // Load character selection data
+            if (data.selectedCharacter !== undefined) {
+                userGameData.selectedCharacter = data.selectedCharacter;
+            }
+            if (data.unlockedCharacters && Array.isArray(data.unlockedCharacters)) {
+                userGameData.unlockedCharacters = data.unlockedCharacters;
+            } else if (!data.unlockedCharacters) {
+                // Initialize unlocked characters if not present
+                userGameData.unlockedCharacters = [1];
             }
         } else {
             // Create initial game data
             await setDoc(userDocRef, {
                 gameGold: 0,
+                selectedCharacter: 1,
+                unlockedCharacters: [1],
                 gameUpgrades: {
-                    weaponDamage: 1,
-                    weaponFireRate: 1,
-                    apeHealth: 1,
-                    apeSpeed: 1,
-                    powerUpSpawnRate: 1
+                    character1: {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    },
+                    character2: {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    },
+                    character3: {
+                        weaponDamage: 1,
+                        weaponFireRate: 1,
+                        apeHealth: 1,
+                        apeSpeed: 1,
+                        powerUpSpawnRate: 1
+                    }
                 },
                 createdAt: serverTimestamp()
             }, { merge: true });
@@ -147,6 +241,8 @@ async function saveGameData() {
         const userDocRef = doc(db, 'users', currentUser.uid);
         await updateDoc(userDocRef, {
             gameGold: userGameData.gameGold,
+            selectedCharacter: userGameData.selectedCharacter,
+            unlockedCharacters: userGameData.unlockedCharacters,
             gameUpgrades: userGameData.gameUpgrades
         });
     } catch (error) {
@@ -239,6 +335,17 @@ function initializeGame() {
         game = null;
     }
     
+    // Get selected character's upgrades
+    const selectedCharacter = userGameData.selectedCharacter;
+    const characterKey = `character${selectedCharacter}`;
+    const characterUpgrades = userGameData.gameUpgrades[characterKey] || {
+        weaponDamage: 1,
+        weaponFireRate: 1,
+        apeHealth: 1,
+        apeSpeed: 1,
+        powerUpSpawnRate: 1
+    };
+    
     // Calculate upgrade values
     const baseDamage = 5;
     const baseFireRate = 500;
@@ -246,30 +353,31 @@ function initializeGame() {
     const baseSpeed = 3;
     
     // Upgrade scaling: each level multiplies the base value
-    const weaponDamage = baseDamage * userGameData.gameUpgrades.weaponDamage;
+    const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
     
     // Fire rate scaling: continues to improve beyond level 5 with diminishing returns
     // Formula: baseFireRate / (1 + (level - 1) * 0.5)
     // This gives: Level 1 = 500ms, Level 2 = 333ms, Level 3 = 250ms, Level 5 = 200ms, Level 10 = 111ms, Level 20 = 63ms, etc.
     // Minimum of 50ms to keep it fair
-    const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
+    const fireRateLevel = characterUpgrades.weaponFireRate;
     const weaponFireRate = Math.max(50, baseFireRate / (1 + (fireRateLevel - 1) * 0.5));
     
-    const playerHealth = baseHealth * userGameData.gameUpgrades.apeHealth; // Health multiplies by level
+    const playerHealth = baseHealth * characterUpgrades.apeHealth; // Health multiplies by level
     
     // Speed scaling: each level increases speed by 5%
-    const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
+    const speedLevel = characterUpgrades.apeSpeed || 1;
     const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05); // Level 1 = 100%, Level 2 = 105%, Level 3 = 110%, etc.
     
     // Power-up spawn rate bonus: each level adds 0.05% to base spawn chances
-    const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
+    const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
     const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 0, Level 2 = 0.0005 (0.05%), etc.
     
-    // Create game instance
+    // Create game instance with character type
     game = new Game(
         canvasEl,
         onEnemyKilled,
-        onPlayerDied
+        onPlayerDied,
+        selectedCharacter
     );
     
     // Set power-up spawn rate bonus
@@ -314,6 +422,7 @@ function showUpgradeShop(fromMainMenu = false) {
     if (restartBtn) {
         restartBtn.style.display = fromMainMenu ? 'none' : 'block';
     }
+    updateCharacterSelectionUI();
     updateUpgradeShopUI();
 }
 
@@ -322,6 +431,96 @@ function hideUpgradeShop() {
     if (upgradeShopEl) {
         upgradeShopEl.style.display = 'none';
     }
+}
+
+// Get character unlock cost
+function getCharacterUnlockCost(characterId) {
+    if (characterId === 1) return 0; // Free (unlocked by default)
+    if (characterId === 2) return 50000; // 50,000 gold
+    if (characterId === 3) return 75000; // 75,000 gold
+    // Future characters: 75,000 + (characterId - 3) * 25,000
+    return 75000 + (characterId - 3) * 25000;
+}
+
+// Get character name
+function getCharacterName(characterId) {
+    switch(characterId) {
+        case 1: return 'Standard';
+        case 2: return 'Shotgun';
+        case 3: return 'Sniper';
+        default: return `Character ${characterId}`;
+    }
+}
+
+// Get character description
+function getCharacterDescription(characterId) {
+    switch(characterId) {
+        case 1: return 'Standard weapon with balanced stats';
+        case 2: return '5 bullet spread, slower fire rate';
+        case 3: return 'Piercing bullets, slower fire rate and movement';
+        default: return '';
+    }
+}
+
+// Unlock character
+async function unlockCharacter(characterId) {
+    if (!currentUser) return;
+    
+    // Check if already unlocked
+    if (userGameData.unlockedCharacters.includes(characterId)) {
+        return;
+    }
+    
+    // Check cost
+    const cost = getCharacterUnlockCost(characterId);
+    if (userGameData.gameGold < cost) {
+        return; // Not enough gold
+    }
+    
+    // Deduct gold
+    userGameData.gameGold -= cost;
+    
+    // Add to unlocked characters
+    userGameData.unlockedCharacters.push(characterId);
+    
+    // Initialize character upgrades (already initialized in data structure, but ensure they exist)
+    if (!userGameData.gameUpgrades[`character${characterId}`]) {
+        userGameData.gameUpgrades[`character${characterId}`] = {
+            weaponDamage: 1,
+            weaponFireRate: 1,
+            apeHealth: 1,
+            apeSpeed: 1,
+            powerUpSpawnRate: 1
+        };
+    }
+    
+    // Save to Firestore
+    await saveGameData();
+    
+    // Update UI
+    updateUI();
+    updateCharacterSelectionUI();
+    updateUpgradeShopUI();
+}
+
+// Select character
+async function selectCharacter(characterId) {
+    if (!currentUser) return;
+    
+    // Check if unlocked
+    if (!userGameData.unlockedCharacters.includes(characterId)) {
+        return;
+    }
+    
+    // Set selected character
+    userGameData.selectedCharacter = characterId;
+    
+    // Save to Firestore
+    await saveGameData();
+    
+    // Update UI
+    updateCharacterSelectionUI();
+    updateUpgradeShopUI();
 }
 
 // Calculate upgrade cost - optimized scaling (slower growth at high levels)
@@ -353,9 +552,64 @@ function getUpgradeCost(level) {
     }
 }
 
+// Update character selection UI
+function updateCharacterSelectionUI() {
+    const characterSelectionEl = document.getElementById('characterSelection');
+    if (!characterSelectionEl) return;
+    
+    const selectedCharacter = userGameData.selectedCharacter;
+    const unlockedCharacters = userGameData.unlockedCharacters;
+    
+    // Update each character card
+    for (let i = 1; i <= 3; i++) {
+        const cardEl = document.getElementById(`characterCard${i}`);
+        const unlockBtnEl = document.getElementById(`unlockCharacter${i}`);
+        const selectBtnEl = document.getElementById(`selectCharacter${i}`);
+        const costEl = document.getElementById(`characterCost${i}`);
+        
+        if (!cardEl) continue;
+        
+        const isUnlocked = unlockedCharacters.includes(i);
+        const isSelected = selectedCharacter === i;
+        const cost = getCharacterUnlockCost(i);
+        
+        // Update card classes
+        cardEl.classList.toggle('character-locked', !isUnlocked);
+        cardEl.classList.toggle('character-selected', isSelected);
+        
+        // Update buttons
+        if (unlockBtnEl) {
+            unlockBtnEl.style.display = isUnlocked ? 'none' : 'block';
+            unlockBtnEl.disabled = userGameData.gameGold < cost;
+            unlockBtnEl.textContent = `${cost.toLocaleString()} gold`;
+        }
+        
+        if (selectBtnEl) {
+            selectBtnEl.style.display = isUnlocked ? 'block' : 'none';
+            selectBtnEl.disabled = isSelected;
+            selectBtnEl.textContent = isSelected ? 'Selected' : 'Select';
+        }
+        
+        if (costEl && !isUnlocked) {
+            costEl.textContent = `${cost.toLocaleString()} gold`;
+        }
+    }
+}
+
 // Update upgrade shop UI
 function updateUpgradeShopUI() {
     if (!upgradeShopEl) return;
+    
+    // Get current character's upgrades
+    const selectedCharacter = userGameData.selectedCharacter;
+    const characterKey = `character${selectedCharacter}`;
+    const characterUpgrades = userGameData.gameUpgrades[characterKey] || {
+        weaponDamage: 1,
+        weaponFireRate: 1,
+        apeHealth: 1,
+        apeSpeed: 1,
+        powerUpSpawnRate: 1
+    };
     
     // Base values
     const baseDamage = 5;
@@ -368,12 +622,18 @@ function updateUpgradeShopUI() {
         shopGoldEl.textContent = userGameData.gameGold;
     }
     
+    // Update character name display
+    const characterNameEl = document.getElementById('currentCharacterName');
+    if (characterNameEl) {
+        characterNameEl.textContent = getCharacterName(selectedCharacter);
+    }
+    
     // Update upgrade levels and costs
-    const damageLevel = userGameData.gameUpgrades.weaponDamage;
-    const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
-    const healthLevel = userGameData.gameUpgrades.apeHealth;
-    const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
-    const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
+    const damageLevel = characterUpgrades.weaponDamage;
+    const fireRateLevel = characterUpgrades.weaponFireRate;
+    const healthLevel = characterUpgrades.apeHealth;
+    const speedLevel = characterUpgrades.apeSpeed || 1;
+    const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
     
     // Damage upgrade
     if (damageLevelEl) damageLevelEl.textContent = damageLevel;
@@ -454,7 +714,13 @@ function updateUpgradeShopUI() {
 
 // Purchase upgrade
 async function purchaseUpgrade(upgradeType) {
-    const level = userGameData.gameUpgrades[upgradeType];
+    const selectedCharacter = userGameData.selectedCharacter;
+    const characterKey = `character${selectedCharacter}`;
+    const characterUpgrades = userGameData.gameUpgrades[characterKey];
+    
+    if (!characterUpgrades) return;
+    
+    const level = characterUpgrades[upgradeType];
     const cost = getUpgradeCost(level);
     
     // Check max upgrade level (100)
@@ -467,7 +733,7 @@ async function purchaseUpgrade(upgradeType) {
     }
     
     userGameData.gameGold -= cost;
-    userGameData.gameUpgrades[upgradeType] += 1;
+    characterUpgrades[upgradeType] += 1;
     
     await saveGameData();
     updateUpgradeShopUI();
@@ -476,7 +742,13 @@ async function purchaseUpgrade(upgradeType) {
 
 // Refund upgrade (remove 1 level, get 50% gold back)
 async function refundUpgrade(upgradeType) {
-    const level = userGameData.gameUpgrades[upgradeType];
+    const selectedCharacter = userGameData.selectedCharacter;
+    const characterKey = `character${selectedCharacter}`;
+    const characterUpgrades = userGameData.gameUpgrades[characterKey];
+    
+    if (!characterUpgrades) return;
+    
+    const level = characterUpgrades[upgradeType];
     
     // Can't refund if at level 1
     if (level <= 1) {
@@ -489,7 +761,7 @@ async function refundUpgrade(upgradeType) {
     const refundAmount = Math.floor(costToUpgrade * 0.5); // 50% back
     
     // Refund the upgrade
-    userGameData.gameUpgrades[upgradeType] -= 1;
+    characterUpgrades[upgradeType] -= 1;
     userGameData.gameGold += refundAmount;
     
     await saveGameData();
@@ -858,6 +1130,21 @@ function setupEventListeners() {
         gameUIOverlay.style.opacity = '0';
     }
     
+    // Character selection buttons
+    for (let i = 1; i <= 3; i++) {
+        const unlockBtn = document.getElementById(`unlockCharacter${i}`);
+        const selectBtn = document.getElementById(`selectCharacter${i}`);
+        
+        if (unlockBtn) {
+            unlockBtn.addEventListener('click', () => unlockCharacter(i));
+        }
+        
+        if (selectBtn) {
+            selectBtn.addEventListener('click', () => selectCharacter(i));
+        }
+    }
+    
     // Initial UI update
     updateUI();
+    updateCharacterSelectionUI();
 }
