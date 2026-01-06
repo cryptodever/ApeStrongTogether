@@ -452,8 +452,15 @@ function updatePowerUpsDisplay() {
     if (!powerUpsDisplayEl) {
         powerUpsDisplayEl = document.getElementById('powerUpsDisplay');
         if (!powerUpsDisplayEl) {
-            console.warn('Power-ups display element not found');
-            return; // Still not found, exit
+            console.warn('Power-ups display element not found, searching...');
+            // Try alternative selectors
+            powerUpsDisplayEl = document.querySelector('.power-ups-display');
+            if (!powerUpsDisplayEl) {
+                console.error('Power-ups display element still not found!');
+                return; // Still not found, exit
+            } else {
+                console.log('Found power-ups display via class selector');
+            }
         }
     }
     
@@ -533,11 +540,30 @@ function updatePowerUpsDisplay() {
     }
     
     // Always update the innerHTML, even if empty (to clear old items)
-    powerUpsDisplayEl.innerHTML = powerUpsHTML.join('');
+    const htmlContent = powerUpsHTML.join('');
     
-    // Debug logging (remove after testing)
     if (powerUpsHTML.length > 0) {
-        console.log('Power-ups displayed:', powerUpsHTML.length, powerUpsHTML);
+        console.log('Setting innerHTML, element:', powerUpsDisplayEl);
+        console.log('HTML content length:', htmlContent.length);
+        powerUpsDisplayEl.innerHTML = htmlContent;
+        console.log('After setting, innerHTML length:', powerUpsDisplayEl.innerHTML.length);
+        
+        // Force visibility
+        powerUpsDisplayEl.style.display = 'flex';
+        powerUpsDisplayEl.style.visibility = 'visible';
+        powerUpsDisplayEl.style.opacity = '1';
+        
+        // Check parent visibility
+        const parent = powerUpsDisplayEl.parentElement;
+        if (parent) {
+            const parentStyle = window.getComputedStyle(parent);
+            console.log('Parent element:', parent.className);
+            console.log('Parent display:', parentStyle.display);
+            console.log('Parent visibility:', parentStyle.visibility);
+            console.log('Parent opacity:', parentStyle.opacity);
+        }
+    } else {
+        powerUpsDisplayEl.innerHTML = htmlContent;
     }
 }
 
