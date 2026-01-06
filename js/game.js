@@ -93,6 +93,32 @@ export class Game {
             PI_8: Math.PI / 8
         };
         
+        // Cache frequently accessed values
+        this.cachedViewport = {
+            width: 0,
+            height: 0,
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            zoom: 0,
+            needsUpdate: true
+        };
+        
+        // Cache background dimensions
+        this.cachedBgDimensions = {
+            width: 0,
+            height: 0,
+            minX: 0,
+            maxX: 0,
+            minY: 0,
+            maxY: 0,
+            loaded: false
+        };
+        
+        // Bind gameLoop to avoid creating new function each frame
+        this.gameLoopBound = this.gameLoop.bind(this);
+        
         // Spawning
         this.lastSpawn = 0;
         this.spawnInterval = 1000; // 1 second (faster initial spawn)
@@ -325,35 +351,39 @@ export class Game {
         let targetY = this.player.y;
         
         // Constrain camera so viewport doesn't show outside background
+        // Cache background dimensions (only calculated once when background loads)
         if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
-            const bgWidth = this.images.background.naturalWidth;
-            const bgHeight = this.images.background.naturalHeight;
+            if (!this.cachedBgDimensions.loaded) {
+                const bgWidth = this.images.background.naturalWidth;
+                const bgHeight = this.images.background.naturalHeight;
+                this.cachedBgDimensions.width = bgWidth;
+                this.cachedBgDimensions.height = bgHeight;
+                this.cachedBgDimensions.minX = -bgWidth / 2;
+                this.cachedBgDimensions.maxX = bgWidth / 2;
+                this.cachedBgDimensions.minY = -bgHeight / 2;
+                this.cachedBgDimensions.maxY = bgHeight / 2;
+                this.cachedBgDimensions.loaded = true;
+            }
             
             // Calculate viewport size at current zoom
             const viewportWidth = this.width / this.camera.zoom;
             const viewportHeight = this.height / this.camera.zoom;
             
-            // Background bounds (centered at 0,0)
-            const bgMinX = -bgWidth / 2;
-            const bgMaxX = bgWidth / 2;
-            const bgMinY = -bgHeight / 2;
-            const bgMaxY = bgHeight / 2;
-            
             // Constrain camera position so viewport stays within background
-            const minX = bgMinX + viewportWidth / 2;
-            const maxX = bgMaxX - viewportWidth / 2;
-            const minY = bgMinY + viewportHeight / 2;
-            const maxY = bgMaxY - viewportHeight / 2;
+            const minX = this.cachedBgDimensions.minX + viewportWidth / 2;
+            const maxX = this.cachedBgDimensions.maxX - viewportWidth / 2;
+            const minY = this.cachedBgDimensions.minY + viewportHeight / 2;
+            const maxY = this.cachedBgDimensions.maxY - viewportHeight / 2;
             
             // Only constrain if viewport is smaller than background
-            if (viewportWidth < bgWidth) {
+            if (viewportWidth < this.cachedBgDimensions.width) {
                 targetX = Math.max(minX, Math.min(maxX, targetX));
             } else {
                 // If viewport is larger than background, center it
                 targetX = 0;
             }
             
-            if (viewportHeight < bgHeight) {
+            if (viewportHeight < this.cachedBgDimensions.height) {
                 targetY = Math.max(minY, Math.min(maxY, targetY));
             } else {
                 // If viewport is larger than background, center it
@@ -363,6 +393,9 @@ export class Game {
         
         this.camera.x = targetX;
         this.camera.y = targetY;
+        
+        // Mark viewport for update (camera moved)
+        this.cachedViewport.needsUpdate = true;
         
         // Update camera zoom based on enemy count (or maintain zoom if boss is active)
         if (this.boss) {
@@ -1485,13 +1518,18 @@ export class Game {
         this.ctx.save();
         this.ctx.translate(this.width / 2, this.height / 2);
         
-        // Apply screen shake offset
+        // Apply screen shake offset (optimized - only calculate if shaking)
         let shakeX = 0;
         let shakeY = 0;
         if (this.camera.shake.currentTime > 0) {
-            const shakeAmount = this.camera.shake.intensity * (this.camera.shake.currentTime / this.camera.shake.duration);
-            shakeX = (Math.random() - 0.5) * shakeAmount * 10;
-            shakeY = (Math.random() - 0.5) * shakeAmount * 10;
+            const shakeProgress = this.camera.shake.currentTime / this.camera.shake.duration;
+            const shakeAmount = this.camera.shake.intensity * shakeProgress;
+            const shakeMultiplier = shakeAmount * 10;
+            // Use single random call and derive both values
+            const rand1 = Math.random();
+            const rand2 = Math.random();
+            shakeX = (rand1 - 0.5) * shakeMultiplier;
+            shakeY = (rand2 - 0.5) * shakeMultiplier;
         }
         
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
@@ -1499,8 +1537,9 @@ export class Game {
         
         // Draw background image (moves with camera so player can walk around)
         if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
-            const bgWidth = this.images.background.naturalWidth;
-            const bgHeight = this.images.background.naturalHeight;
+            // Use cached dimensions
+            const bgWidth = this.cachedBgDimensions.width || this.images.background.naturalWidth;
+            const bgHeight = this.cachedBgDimensions.height || this.images.background.naturalHeight;
             // Center background at world origin (0, 0) - player can walk around it
             this.ctx.drawImage(
                 this.images.background,
@@ -1514,13 +1553,23 @@ export class Game {
         // Draw grid background (optional, for retro feel - can be removed if background image is used)
         // this.drawGrid();
         
-        // Calculate viewport bounds for culling
-        const viewportWidth = this.width / this.camera.zoom;
-        const viewportHeight = this.height / this.camera.zoom;
-        const viewportLeft = this.camera.x - viewportWidth / 2 - this.viewportMargin;
-        const viewportRight = this.camera.x + viewportWidth / 2 + this.viewportMargin;
-        const viewportTop = this.camera.y - viewportHeight / 2 - this.viewportMargin;
-        const viewportBottom = this.camera.y + viewportHeight / 2 + this.viewportMargin;
+        // Calculate viewport bounds for culling (cache when zoom changes)
+        if (this.cachedViewport.needsUpdate || this.cachedViewport.zoom !== this.camera.zoom) {
+            this.cachedViewport.zoom = this.camera.zoom;
+            this.cachedViewport.width = this.width / this.camera.zoom;
+            this.cachedViewport.height = this.height / this.camera.zoom;
+            this.cachedViewport.left = this.camera.x - this.cachedViewport.width / 2 - this.viewportMargin;
+            this.cachedViewport.right = this.camera.x + this.cachedViewport.width / 2 + this.viewportMargin;
+            this.cachedViewport.top = this.camera.y - this.cachedViewport.height / 2 - this.viewportMargin;
+            this.cachedViewport.bottom = this.camera.y + this.cachedViewport.height / 2 + this.viewportMargin;
+            this.cachedViewport.needsUpdate = false;
+        }
+        
+        // Use cached viewport values
+        const viewportLeft = this.cachedViewport.left;
+        const viewportRight = this.cachedViewport.right;
+        const viewportTop = this.cachedViewport.top;
+        const viewportBottom = this.cachedViewport.bottom;
         
         // Draw enemies (with viewport culling)
         for (let i = 0; i < this.enemies.length; i++) {
@@ -1979,7 +2028,8 @@ export class Game {
         this.update(deltaTime);
         this.render();
         
-        requestAnimationFrame(() => this.gameLoop());
+        // Use bound method reference instead of arrow function (faster)
+        requestAnimationFrame(this.gameLoopBound);
     }
     
     // Public methods for external control
