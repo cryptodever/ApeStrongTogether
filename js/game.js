@@ -88,9 +88,9 @@ export class Game {
             shield: { count: 0, active: false, timers: [] }
         };
         this.powerUpDuration = 10000; // 10 seconds in milliseconds
-        this.goldMultiplierKills = 0; // Track kills with gold multiplier active
         this.goldMultiplierActive = false;
-        this.goldMultiplierKillsRemaining = 0;
+        this.goldMultiplierTimer = 0; // Timer for gold multiplier (in milliseconds)
+        this.goldMultiplierDuration = 10000; // 10 seconds duration
         
         // Visual effects
         this.particles = [];
@@ -1792,13 +1792,9 @@ export class Game {
                         
                         let goldReward = enemy.goldReward || 1;
                         
-                        // Apply gold multiplier if active
-                        if (this.goldMultiplierActive) {
+                        // Apply gold multiplier if active (timer-based)
+                        if (this.goldMultiplierActive && this.goldMultiplierTimer > 0) {
                             goldReward *= 2;
-                            this.goldMultiplierKillsRemaining--;
-                            if (this.goldMultiplierKillsRemaining <= 0) {
-                                this.goldMultiplierActive = false;
-                            }
                         }
                         
                         this.score += goldReward * 10; // Score is 10x gold for display
@@ -2302,9 +2298,9 @@ export class Game {
                 }
                 break;
             case 'gold':
-                // Gold multiplier - next 5-10 kills give 2x gold
+                // Gold multiplier - 10 second timer (stackable - adds time)
                 this.goldMultiplierActive = true;
-                this.goldMultiplierKillsRemaining = 5 + Math.floor(Math.random() * 6); // 5-10 kills
+                this.goldMultiplierTimer += this.goldMultiplierDuration; // Add 10 seconds to timer
                 break;
         }
     }
@@ -2313,20 +2309,32 @@ export class Game {
         const effect = this.activeEffects[type];
         if (!effect) return;
         
-        // Add timer for this power-up instance
-        effect.timers.push({
-            remaining: this.powerUpDuration,
-            id: Date.now() + Math.random() // Unique ID
-        });
+        // Check if there's already an active timer - if so, extend it instead of stacking
+        if (effect.timers.length > 0) {
+            // Extend the longest remaining timer by adding duration
+            const longestTimer = effect.timers.reduce((max, timer) => 
+                timer.remaining > max.remaining ? timer : max
+            );
+            longestTimer.remaining += this.powerUpDuration;
+            // Cap at reasonable maximum (e.g., 60 seconds)
+            longestTimer.remaining = Math.min(longestTimer.remaining, 60000);
+        } else {
+            // No active timer, add a new one
+            effect.timers.push({
+                remaining: this.powerUpDuration,
+                id: Date.now() + Math.random() // Unique ID
+            });
+        }
         
-        // Update count and multiplier
+        // Update count and multiplier (count is still number of timers, but we only extend)
         effect.count = effect.timers.length;
         
         if (type === 'shield') {
             effect.active = effect.count > 0;
         } else {
-            // Stacking: each power-up adds 0.5x multiplier (1 = 1.5x, 2 = 2.0x, 3 = 2.5x, etc.)
-            effect.multiplier = 1.0 + effect.count * 0.5;
+            // Multiplier stays at 1.5x (50% boost) regardless of how many times you pick it up
+            // The timer just gets extended
+            effect.multiplier = 1.5; // Fixed 50% boost
         }
     }
     
@@ -2361,7 +2369,17 @@ export class Game {
             if (type === 'shield') {
                 effect.active = effect.count > 0;
             } else {
-                effect.multiplier = effect.count > 0 ? (1.0 + effect.count * 0.5) : 1.0;
+                // Fixed multiplier - picking up same boost extends timer, doesn't increase multiplier
+                effect.multiplier = effect.count > 0 ? 1.5 : 1.0; // Always 50% boost
+            }
+        }
+        
+        // Update gold multiplier timer
+        if (this.goldMultiplierActive) {
+            this.goldMultiplierTimer -= deltaTime;
+            if (this.goldMultiplierTimer <= 0) {
+                this.goldMultiplierActive = false;
+                this.goldMultiplierTimer = 0;
             }
         }
     }

@@ -474,42 +474,36 @@ function updatePowerUpsDisplay() {
     
     // Speed boost
     if (activeEffects.speed && activeEffects.speed.count > 0 && activeEffects.speed.timers.length > 0) {
-        const minTimer = Math.min(...activeEffects.speed.timers.map(t => t.remaining));
-        const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`
-            <div class="power-up-item" data-type="speed">
-                <span class="power-up-icon" style="color: #00aaff;">→</span>
-                <span class="power-up-name">Speed</span>
-                <span class="power-up-stack">x${activeEffects.speed.count}</span>
-                <span class="power-up-timer">${seconds}s</span>
-            </div>
-        `);
+        const maxTimer = Math.max(...activeEffects.speed.timers.map(t => t.remaining));
+        const seconds = Math.ceil(maxTimer / 1000);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="speed"><span class="power-up-icon" style="color: #00aaff;">→</span><span class="power-up-name">Speed</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Damage boost
     if (activeEffects.damage && activeEffects.damage.count > 0 && activeEffects.damage.timers.length > 0) {
-        const minTimer = Math.min(...activeEffects.damage.timers.map(t => t.remaining));
-        const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`<div class="power-up-item" data-type="damage"><span class="power-up-icon" style="color: #ff0000;">⚔</span><span class="power-up-name">Damage</span><span class="power-up-stack">x${activeEffects.damage.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
+        const maxTimer = Math.max(...activeEffects.damage.timers.map(t => t.remaining));
+        const seconds = Math.ceil(maxTimer / 1000);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="damage"><span class="power-up-icon" style="color: #ff0000;">⚔</span><span class="power-up-name">Damage</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Fire rate boost
     if (activeEffects.fireRate && activeEffects.fireRate.count > 0 && activeEffects.fireRate.timers.length > 0) {
-        const minTimer = Math.min(...activeEffects.fireRate.timers.map(t => t.remaining));
-        const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`<div class="power-up-item" data-type="fireRate"><span class="power-up-icon" style="color: #ffaa00;">⚡</span><span class="power-up-name">Fire Rate</span><span class="power-up-stack">x${activeEffects.fireRate.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
+        const maxTimer = Math.max(...activeEffects.fireRate.timers.map(t => t.remaining));
+        const seconds = Math.ceil(maxTimer / 1000);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="fireRate"><span class="power-up-icon" style="color: #ffaa00;">⚡</span><span class="power-up-name">Fire Rate</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Shield
     if (activeEffects.shield && activeEffects.shield.active && activeEffects.shield.timers.length > 0) {
-        const minTimer = Math.min(...activeEffects.shield.timers.map(t => t.remaining));
-        const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`<div class="power-up-item" data-type="shield"><span class="power-up-icon" style="color: #aa00ff;">🛡</span><span class="power-up-name">Shield</span><span class="power-up-stack">x${activeEffects.shield.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
+        const maxTimer = Math.max(...activeEffects.shield.timers.map(t => t.remaining));
+        const seconds = Math.ceil(maxTimer / 1000);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="shield"><span class="power-up-icon" style="color: #aa00ff;">🛡</span><span class="power-up-name">Shield</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Gold multiplier
-    if (game.goldMultiplierActive) {
-        powerUpsHTML.push(`<div class="power-up-item" data-type="gold"><span class="power-up-icon" style="color: #ffd700;">★</span><span class="power-up-name">Gold x2</span><span class="power-up-timer">${game.goldMultiplierKillsRemaining} kills</span></div>`);
+    if (game.goldMultiplierActive && game.goldMultiplierTimer > 0) {
+        const seconds = Math.ceil(game.goldMultiplierTimer / 1000);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="gold"><span class="power-up-icon" style="color: #ffd700;">★</span><span class="power-up-name">Gold x2</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Always update the innerHTML, even if empty (to clear old items)
