@@ -522,8 +522,8 @@ function updatePowerUpsDisplay() {
         // Force visibility and positioning with all important flags
         powerUpsDisplayEl.style.cssText = `
             position: fixed !important;
-            top: 80px !important;
-            right: 1.5rem !important;
+            top: 100px !important;
+            right: 20px !important;
             display: flex !important;
             flex-direction: column !important;
             gap: 0.5rem !important;
@@ -532,7 +532,7 @@ function updatePowerUpsDisplay() {
             opacity: 1 !important;
             visibility: visible !important;
             min-width: 140px !important;
-            background: rgba(255, 0, 0, 0.3) !important;
+            max-width: 180px !important;
         `;
         
         // Also force styles on child elements

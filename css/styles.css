@@ -13431,17 +13431,18 @@ body.leaderboard-body > * {
 
 /* Power-ups Display */
 .power-ups-display {
-    position: absolute !important;
-    top: 1.5rem !important;
-    right: 1.5rem !important;
+    position: fixed !important;
+    top: 100px !important;
+    right: 20px !important;
     display: flex !important;
     flex-direction: column;
     gap: 0.5rem;
     pointer-events: none;
-    z-index: 100 !important;
+    z-index: 10000 !important;
     opacity: 1 !important;
     visibility: visible !important;
     min-width: 140px;
+    max-width: 180px;
 }
 
 .power-up-item {
