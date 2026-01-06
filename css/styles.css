@@ -13445,15 +13445,17 @@ body.leaderboard-body > * {
 }
 
 .power-up-item {
-    background: rgba(0, 0, 0, 0.85);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 140px;
-    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.85) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    min-width: 140px !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     animation: powerUpSlideIn 0.3s ease-out;
 }
 
