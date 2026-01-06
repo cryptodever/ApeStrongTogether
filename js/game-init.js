@@ -452,14 +452,14 @@ function updatePowerUpsDisplay() {
     if (!powerUpsDisplayEl) {
         powerUpsDisplayEl = document.getElementById('powerUpsDisplay');
         if (!powerUpsDisplayEl) {
-            console.warn('Power-ups display element not found, searching...');
             // Try alternative selectors
             powerUpsDisplayEl = document.querySelector('.power-ups-display');
             if (!powerUpsDisplayEl) {
-                console.error('Power-ups display element still not found!');
-                return; // Still not found, exit
-            } else {
-                console.log('Found power-ups display via class selector');
+                // Create element if it doesn't exist
+                powerUpsDisplayEl = document.createElement('div');
+                powerUpsDisplayEl.id = 'powerUpsDisplay';
+                powerUpsDisplayEl.className = 'power-ups-display';
+                document.body.appendChild(powerUpsDisplayEl);
             }
         }
     }
@@ -516,6 +516,7 @@ function updatePowerUpsDisplay() {
     const htmlContent = powerUpsHTML.join('');
     
     if (powerUpsHTML.length > 0) {
+        // Set innerHTML first
         powerUpsDisplayEl.innerHTML = htmlContent;
         
         // Force visibility and positioning with all important flags
@@ -531,9 +532,20 @@ function updatePowerUpsDisplay() {
             opacity: 1 !important;
             visibility: visible !important;
             min-width: 140px !important;
+            background: rgba(255, 0, 0, 0.3) !important;
         `;
+        
+        // Also force styles on child elements
+        const items = powerUpsDisplayEl.querySelectorAll('.power-up-item');
+        items.forEach(item => {
+            item.style.display = 'flex';
+            item.style.visibility = 'visible';
+            item.style.opacity = '1';
+        });
     } else {
         powerUpsDisplayEl.innerHTML = htmlContent;
+        // Reset styles when empty
+        powerUpsDisplayEl.style.cssText = '';
     }
 }
 
