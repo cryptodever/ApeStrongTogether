@@ -153,14 +153,14 @@ export class Game {
     
     getCharacterBaseStats(characterType) {
         switch(characterType) {
-            case 1: // Standard
-                return { fireRate: 500, speed: 3, bulletSpeed: 8 };
+            case 1: // Pistol
+                return { fireRate: 300, speed: 3, bulletSpeed: 8, minFireRate: 50 };
             case 2: // Shotgun
-                return { fireRate: 750, speed: 3, bulletSpeed: 8 };
+                return { fireRate: 600, speed: 3, bulletSpeed: 8, minFireRate: 200 };
             case 3: // Sniper
-                return { fireRate: 1000, speed: 2.0, bulletSpeed: 8 };
+                return { fireRate: 900, speed: 2.0, bulletSpeed: 8, minFireRate: 300 };
             default:
-                return { fireRate: 500, speed: 3, bulletSpeed: 8 };
+                return { fireRate: 300, speed: 3, bulletSpeed: 8, minFireRate: 50 };
         }
     }
     

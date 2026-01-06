@@ -348,19 +348,48 @@ function initializeGame() {
     
     // Calculate upgrade values
     const baseDamage = 5;
-    const baseFireRate = 500;
     const baseHealth = 20; // Base health starts at 20
     const baseSpeed = 3;
+    
+    // Character-specific fire rate calculation
+    // Pistol: 300ms at level 1, 50ms at level 100
+    // Shotgun: 600ms at level 1, 200ms at level 100
+    // Sniper: 900ms at level 1, 300ms at level 100
+    function getCharacterFireRate(characterType, level) {
+        let startFireRate, endFireRate;
+        switch(characterType) {
+            case 1: // Pistol
+                startFireRate = 300;
+                endFireRate = 50;
+                break;
+            case 2: // Shotgun
+                startFireRate = 600;
+                endFireRate = 200;
+                break;
+            case 3: // Sniper
+                startFireRate = 900;
+                endFireRate = 300;
+                break;
+            default:
+                startFireRate = 300;
+                endFireRate = 50;
+        }
+        
+        if (level >= 100) {
+            return endFireRate;
+        }
+        
+        // Linear interpolation from start to end
+        const progress = (level - 1) / 99; // 0 at level 1, 1 at level 100
+        return startFireRate - (startFireRate - endFireRate) * progress;
+    }
     
     // Upgrade scaling: each level multiplies the base value
     const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
     
-    // Fire rate scaling: continues to improve beyond level 5 with diminishing returns
-    // Formula: baseFireRate / (1 + (level - 1) * 0.5)
-    // This gives: Level 1 = 500ms, Level 2 = 333ms, Level 3 = 250ms, Level 5 = 200ms, Level 10 = 111ms, Level 20 = 63ms, etc.
-    // Minimum of 50ms to keep it fair
+    // Fire rate scaling: character-specific linear interpolation
     const fireRateLevel = characterUpgrades.weaponFireRate;
-    const weaponFireRate = Math.max(50, baseFireRate / (1 + (fireRateLevel - 1) * 0.5));
+    const weaponFireRate = getCharacterFireRate(selectedCharacter, fireRateLevel);
     
     const playerHealth = baseHealth * characterUpgrades.apeHealth; // Health multiplies by level
     
@@ -641,9 +670,38 @@ function updateUpgradeShopUI() {
     
     // Base values
     const baseDamage = 5;
-    const baseFireRate = 500;
     const baseHealth = 20;
     const baseSpeed = 3;
+    
+    // Character-specific fire rate calculation function
+    function getCharacterFireRate(characterType, level) {
+        let startFireRate, endFireRate;
+        switch(characterType) {
+            case 1: // Pistol
+                startFireRate = 300;
+                endFireRate = 50;
+                break;
+            case 2: // Shotgun
+                startFireRate = 600;
+                endFireRate = 200;
+                break;
+            case 3: // Sniper
+                startFireRate = 900;
+                endFireRate = 300;
+                break;
+            default:
+                startFireRate = 300;
+                endFireRate = 50;
+        }
+        
+        if (level >= 100) {
+            return endFireRate;
+        }
+        
+        // Linear interpolation from start to end
+        const progress = (level - 1) / 99; // 0 at level 1, 1 at level 100
+        return startFireRate - (startFireRate - endFireRate) * progress;
+    }
     
     // Update gold display
     if (shopGoldEl) {
@@ -678,10 +736,10 @@ function updateUpgradeShopUI() {
         refundDamageBtn.disabled = damageLevel <= 1;
     }
     
-    // Fire Rate upgrade
+    // Fire Rate upgrade (character-specific)
     if (fireRateLevelEl) fireRateLevelEl.textContent = fireRateLevel;
-    const currentFireRate = Math.max(50, baseFireRate / (1 + (fireRateLevel - 1) * 0.5));
-    const nextFireRate = fireRateLevel >= 100 ? currentFireRate : Math.max(50, baseFireRate / (1 + fireRateLevel * 0.5));
+    const currentFireRate = getCharacterFireRate(selectedCharacter, fireRateLevel);
+    const nextFireRate = fireRateLevel >= 100 ? currentFireRate : getCharacterFireRate(selectedCharacter, fireRateLevel + 1);
     if (fireRateCurrentEl) fireRateCurrentEl.textContent = Math.round(currentFireRate) + 'ms';
     if (fireRateNextEl) fireRateNextEl.textContent = fireRateLevel >= 100 ? 'MAX' : Math.round(nextFireRate) + 'ms';
     const fireRateCost = fireRateLevel >= 100 ? 0 : getUpgradeCost(fireRateLevel);
