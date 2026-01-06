@@ -1722,10 +1722,13 @@ export class Game {
         const now = Date.now();
         
         // Apply fire rate boost if active
-        const fireRateMultiplier = this.activeEffects.fireRate.multiplier || 1.0;
+        const fireRateEffect = this.activeEffects.fireRate;
+        const fireRateMultiplier = (fireRateEffect && fireRateEffect.count > 0 && fireRateEffect.timers.length > 0) ? fireRateEffect.multiplier : 1.0;
         const effectiveFireRate = this.weapon.fireRate / fireRateMultiplier; // Lower fireRate = faster shooting
+        // Apply minimum fire rate cap even with boost (but allow boost to go below 50ms for noticeable effect)
+        const finalFireRate = Math.max(30, effectiveFireRate); // Minimum 30ms with boost (vs 50ms without)
         
-        if (now - this.weapon.lastShot < effectiveFireRate) return;
+        if (now - this.weapon.lastShot < finalFireRate) return;
         
         this.weapon.lastShot = now;
         
