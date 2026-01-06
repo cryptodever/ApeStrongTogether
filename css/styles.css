@@ -13439,6 +13439,8 @@ body.leaderboard-body > * {
     gap: 0.5rem;
     pointer-events: none;
     z-index: 11;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .power-up-item {
