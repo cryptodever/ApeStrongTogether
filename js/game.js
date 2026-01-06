@@ -476,6 +476,10 @@ export class Game {
             if (this.boss.hitFlash < 0) this.boss.hitFlash = 0;
         }
         
+        // Update power-ups and active effects
+        this.updatePowerUps(deltaTime);
+        this.updateActiveEffects(deltaTime);
+        
         // Check collisions
         this.checkCollisions();
         
@@ -2187,12 +2191,12 @@ export class Game {
     }
     
     trySpawnPowerUp(x, y, enemyType) {
-        // Determine spawn chance based on enemy type
-        let spawnChance = 0.02; // 2% base chance
+        // Determine spawn chance based on enemy type (made more rare)
+        let spawnChance = 0.005; // 0.5% base chance (1 in 200)
         if (enemyType === 'big') {
-            spawnChance = 0.10; // 10% for big enemies
+            spawnChance = 0.02; // 2% for big enemies (1 in 50)
         } else if (enemyType === 'fast') {
-            spawnChance = 0.05; // 5% for fast enemies
+            spawnChance = 0.01; // 1% for fast enemies (1 in 100)
         }
         
         if (Math.random() < spawnChance) {
@@ -2259,10 +2263,12 @@ export class Game {
             }
             
             // Check collection (player collision)
+            // Use larger collection radius for easier pickup
             const dx = this.player.x - powerUp.x;
             const dy = this.player.y - powerUp.y;
             const distSq = dx * dx + dy * dy;
-            const collectionDistSq = (playerRadius + powerUp.radius) ** 2;
+            const collectionRadius = playerRadius + powerUp.radius + 8; // Add 8px buffer for easier pickup
+            const collectionDistSq = collectionRadius * collectionRadius;
             
             if (distSq < collectionDistSq) {
                 this.collectPowerUp(powerUp);
