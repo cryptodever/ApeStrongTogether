@@ -514,17 +514,26 @@ function updatePowerUpsDisplay() {
     
     // Always update the innerHTML, even if empty (to clear old items)
     const htmlContent = powerUpsHTML.join('');
-    powerUpsDisplayEl.innerHTML = htmlContent;
     
-    // Force visibility and positioning
     if (powerUpsHTML.length > 0) {
-        powerUpsDisplayEl.style.display = 'flex';
-        powerUpsDisplayEl.style.visibility = 'visible';
-        powerUpsDisplayEl.style.opacity = '1';
-        powerUpsDisplayEl.style.position = 'absolute';
-        powerUpsDisplayEl.style.top = '1.5rem';
-        powerUpsDisplayEl.style.right = '1.5rem';
-        powerUpsDisplayEl.style.zIndex = '100';
+        powerUpsDisplayEl.innerHTML = htmlContent;
+        
+        // Force visibility and positioning with all important flags
+        powerUpsDisplayEl.style.cssText = `
+            position: fixed !important;
+            top: 80px !important;
+            right: 1.5rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+            pointer-events: none !important;
+            z-index: 10000 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            min-width: 140px !important;
+        `;
+    } else {
+        powerUpsDisplayEl.innerHTML = htmlContent;
     }
 }
 
