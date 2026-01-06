@@ -56,7 +56,7 @@ let currentUser = null;
 let game = null;
 let userGameData = {
     gameGold: 0,
-    selectedCharacter: 1, // Default character (1 = Standard, 2 = Shotgun, 3 = Sniper)
+    selectedCharacter: 1, // Default character (1 = Pistol, 2 = Shotgun, 3 = Sniper)
     unlockedCharacters: [1], // Character 1 unlocked by default
     gameUpgrades: {
         character1: {
@@ -436,16 +436,16 @@ function hideUpgradeShop() {
 // Get character unlock cost
 function getCharacterUnlockCost(characterId) {
     if (characterId === 1) return 0; // Free (unlocked by default)
-    if (characterId === 2) return 50000; // 50,000 gold
-    if (characterId === 3) return 75000; // 75,000 gold
-    // Future characters: 75,000 + (characterId - 3) * 25,000
-    return 75000 + (characterId - 3) * 25000;
+    if (characterId === 2) return 20000; // 20,000 gold
+    if (characterId === 3) return 30000; // 30,000 gold
+    // Future characters: 30,000 + (characterId - 3) * 10,000
+    return 30000 + (characterId - 3) * 10000;
 }
 
 // Get character name
 function getCharacterName(characterId) {
     switch(characterId) {
-        case 1: return 'Standard';
+        case 1: return 'Pistol';
         case 2: return 'Shotgun';
         case 3: return 'Sniper';
         default: return `Character ${characterId}`;
@@ -455,7 +455,7 @@ function getCharacterName(characterId) {
 // Get character description
 function getCharacterDescription(characterId) {
     switch(characterId) {
-        case 1: return 'Standard weapon with balanced stats';
+        case 1: return 'Pistol weapon with balanced stats';
         case 2: return '5 bullet spread, slower fire rate';
         case 3: return 'Piercing bullets, slower fire rate and movement';
         default: return '';
