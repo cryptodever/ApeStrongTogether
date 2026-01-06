@@ -68,6 +68,7 @@ let canvasEl;
 let healthFillEl, healthValueEl;
 let goldValueEl, scoreValueEl;
 let upgradeShopEl;
+let powerUpsDisplayEl;
 let shopGoldEl;
 let damageLevelEl, damageCostEl, upgradeDamageBtn;
 let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
@@ -440,6 +441,83 @@ function updateGameUI() {
     requestAnimationFrame(updateGameUI);
 }
 
+// Update power-ups display
+function updatePowerUpsDisplay() {
+    if (!powerUpsDisplayEl || !game) return;
+    
+    const activeEffects = game.activeEffects;
+    const powerUpsHTML = [];
+    
+    // Speed boost
+    if (activeEffects.speed && activeEffects.speed.count > 0) {
+        const minTimer = Math.min(...activeEffects.speed.timers.map(t => t.remaining));
+        const seconds = Math.ceil(minTimer / 1000);
+        powerUpsHTML.push(`
+            <div class="power-up-item" data-type="speed">
+                <span class="power-up-icon" style="color: #00aaff;">→</span>
+                <span class="power-up-name">Speed</span>
+                <span class="power-up-stack">x${activeEffects.speed.count}</span>
+                <span class="power-up-timer">${seconds}s</span>
+            </div>
+        `);
+    }
+    
+    // Damage boost
+    if (activeEffects.damage && activeEffects.damage.count > 0) {
+        const minTimer = Math.min(...activeEffects.damage.timers.map(t => t.remaining));
+        const seconds = Math.ceil(minTimer / 1000);
+        powerUpsHTML.push(`
+            <div class="power-up-item" data-type="damage">
+                <span class="power-up-icon" style="color: #ff0000;">⚔</span>
+                <span class="power-up-name">Damage</span>
+                <span class="power-up-stack">x${activeEffects.damage.count}</span>
+                <span class="power-up-timer">${seconds}s</span>
+            </div>
+        `);
+    }
+    
+    // Fire rate boost
+    if (activeEffects.fireRate && activeEffects.fireRate.count > 0) {
+        const minTimer = Math.min(...activeEffects.fireRate.timers.map(t => t.remaining));
+        const seconds = Math.ceil(minTimer / 1000);
+        powerUpsHTML.push(`
+            <div class="power-up-item" data-type="fireRate">
+                <span class="power-up-icon" style="color: #ffaa00;">⚡</span>
+                <span class="power-up-name">Fire Rate</span>
+                <span class="power-up-stack">x${activeEffects.fireRate.count}</span>
+                <span class="power-up-timer">${seconds}s</span>
+            </div>
+        `);
+    }
+    
+    // Shield
+    if (activeEffects.shield && activeEffects.shield.active) {
+        const minTimer = Math.min(...activeEffects.shield.timers.map(t => t.remaining));
+        const seconds = Math.ceil(minTimer / 1000);
+        powerUpsHTML.push(`
+            <div class="power-up-item" data-type="shield">
+                <span class="power-up-icon" style="color: #aa00ff;">🛡</span>
+                <span class="power-up-name">Shield</span>
+                <span class="power-up-stack">x${activeEffects.shield.count}</span>
+                <span class="power-up-timer">${seconds}s</span>
+            </div>
+        `);
+    }
+    
+    // Gold multiplier
+    if (game.goldMultiplierActive) {
+        powerUpsHTML.push(`
+            <div class="power-up-item" data-type="gold">
+                <span class="power-up-icon" style="color: #ffd700;">★</span>
+                <span class="power-up-name">Gold x2</span>
+                <span class="power-up-timer">${game.goldMultiplierKillsRemaining} kills</span>
+            </div>
+        `);
+    }
+    
+    powerUpsDisplayEl.innerHTML = powerUpsHTML.join('');
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Get DOM elements
@@ -447,6 +525,7 @@ function setupEventListeners() {
     healthValueEl = document.getElementById('healthValue');
     goldValueEl = document.getElementById('goldValue');
     scoreValueEl = document.getElementById('scoreValue');
+    powerUpsDisplayEl = document.getElementById('powerUpsDisplay');
     upgradeShopEl = document.getElementById('upgradeShop');
     shopGoldEl = document.getElementById('shopGold');
     
