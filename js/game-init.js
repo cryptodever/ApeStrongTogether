@@ -490,80 +490,41 @@ function updatePowerUpsDisplay() {
     if (activeEffects.damage && activeEffects.damage.count > 0 && activeEffects.damage.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.damage.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`
-            <div class="power-up-item" data-type="damage">
-                <span class="power-up-icon" style="color: #ff0000;">⚔</span>
-                <span class="power-up-name">Damage</span>
-                <span class="power-up-stack">x${activeEffects.damage.count}</span>
-                <span class="power-up-timer">${seconds}s</span>
-            </div>
-        `);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="damage"><span class="power-up-icon" style="color: #ff0000;">⚔</span><span class="power-up-name">Damage</span><span class="power-up-stack">x${activeEffects.damage.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Fire rate boost
     if (activeEffects.fireRate && activeEffects.fireRate.count > 0 && activeEffects.fireRate.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.fireRate.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`
-            <div class="power-up-item" data-type="fireRate">
-                <span class="power-up-icon" style="color: #ffaa00;">⚡</span>
-                <span class="power-up-name">Fire Rate</span>
-                <span class="power-up-stack">x${activeEffects.fireRate.count}</span>
-                <span class="power-up-timer">${seconds}s</span>
-            </div>
-        `);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="fireRate"><span class="power-up-icon" style="color: #ffaa00;">⚡</span><span class="power-up-name">Fire Rate</span><span class="power-up-stack">x${activeEffects.fireRate.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Shield
     if (activeEffects.shield && activeEffects.shield.active && activeEffects.shield.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.shield.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
-        powerUpsHTML.push(`
-            <div class="power-up-item" data-type="shield">
-                <span class="power-up-icon" style="color: #aa00ff;">🛡</span>
-                <span class="power-up-name">Shield</span>
-                <span class="power-up-stack">x${activeEffects.shield.count}</span>
-                <span class="power-up-timer">${seconds}s</span>
-            </div>
-        `);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="shield"><span class="power-up-icon" style="color: #aa00ff;">🛡</span><span class="power-up-name">Shield</span><span class="power-up-stack">x${activeEffects.shield.count}</span><span class="power-up-timer">${seconds}s</span></div>`);
     }
     
     // Gold multiplier
     if (game.goldMultiplierActive) {
-        powerUpsHTML.push(`
-            <div class="power-up-item" data-type="gold">
-                <span class="power-up-icon" style="color: #ffd700;">★</span>
-                <span class="power-up-name">Gold x2</span>
-                <span class="power-up-timer">${game.goldMultiplierKillsRemaining} kills</span>
-            </div>
-        `);
+        powerUpsHTML.push(`<div class="power-up-item" data-type="gold"><span class="power-up-icon" style="color: #ffd700;">★</span><span class="power-up-name">Gold x2</span><span class="power-up-timer">${game.goldMultiplierKillsRemaining} kills</span></div>`);
     }
     
     // Always update the innerHTML, even if empty (to clear old items)
     const htmlContent = powerUpsHTML.join('');
+    powerUpsDisplayEl.innerHTML = htmlContent;
     
+    // Force visibility and positioning
     if (powerUpsHTML.length > 0) {
-        console.log('Setting innerHTML, element:', powerUpsDisplayEl);
-        console.log('HTML content length:', htmlContent.length);
-        powerUpsDisplayEl.innerHTML = htmlContent;
-        console.log('After setting, innerHTML length:', powerUpsDisplayEl.innerHTML.length);
-        
-        // Force visibility
         powerUpsDisplayEl.style.display = 'flex';
         powerUpsDisplayEl.style.visibility = 'visible';
         powerUpsDisplayEl.style.opacity = '1';
-        
-        // Check parent visibility
-        const parent = powerUpsDisplayEl.parentElement;
-        if (parent) {
-            const parentStyle = window.getComputedStyle(parent);
-            console.log('Parent element:', parent.className);
-            console.log('Parent display:', parentStyle.display);
-            console.log('Parent visibility:', parentStyle.visibility);
-            console.log('Parent opacity:', parentStyle.opacity);
-        }
-    } else {
-        powerUpsDisplayEl.innerHTML = htmlContent;
+        powerUpsDisplayEl.style.position = 'absolute';
+        powerUpsDisplayEl.style.top = '1.5rem';
+        powerUpsDisplayEl.style.right = '1.5rem';
+        powerUpsDisplayEl.style.zIndex = '100';
     }
 }
 
