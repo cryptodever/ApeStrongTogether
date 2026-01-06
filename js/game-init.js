@@ -59,7 +59,9 @@ let userGameData = {
     gameUpgrades: {
         weaponDamage: 1,
         weaponFireRate: 1,
-        apeHealth: 1
+        apeHealth: 1,
+        apeSpeed: 1,
+        powerUpSpawnRate: 1
     }
 };
 
@@ -73,6 +75,8 @@ let shopGoldEl;
 let damageLevelEl, damageCostEl, upgradeDamageBtn;
 let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
 let healthLevelEl, healthCostEl, upgradeHealthBtn;
+let speedLevelEl, speedCostEl, upgradeSpeedBtn;
+let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn;
 let restartBtn;
 let startScreenEl, startGameBtn;
 let pauseMenuEl, resumeBtn, restartPauseBtn;
@@ -109,7 +113,9 @@ async function loadUserGameData() {
                 userGameData.gameUpgrades = {
                     weaponDamage: data.gameUpgrades.weaponDamage || 1,
                     weaponFireRate: data.gameUpgrades.weaponFireRate || 1,
-                    apeHealth: data.gameUpgrades.apeHealth || 1
+                    apeHealth: data.gameUpgrades.apeHealth || 1,
+                    apeSpeed: data.gameUpgrades.apeSpeed || 1,
+                    powerUpSpawnRate: data.gameUpgrades.powerUpSpawnRate || 1
                 };
             }
         } else {
@@ -119,7 +125,9 @@ async function loadUserGameData() {
                 gameUpgrades: {
                     weaponDamage: 1,
                     weaponFireRate: 1,
-                    apeHealth: 1
+                    apeHealth: 1,
+                    apeSpeed: 1,
+                    powerUpSpawnRate: 1
                 },
                 createdAt: serverTimestamp()
             }, { merge: true });
@@ -249,6 +257,14 @@ function initializeGame() {
     
     const playerHealth = baseHealth * userGameData.gameUpgrades.apeHealth; // Health multiplies by level
     
+    // Speed scaling: each level increases speed by 5%
+    const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
+    const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05); // Level 1 = 100%, Level 2 = 105%, Level 3 = 110%, etc.
+    
+    // Power-up spawn rate multiplier: each level increases spawn rate by 0.05%
+    const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
+    const powerUpSpawnRateMultiplier = 1 + (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 1.0, Level 2 = 1.0005, etc.
+    
     // Create game instance
     game = new Game(
         canvasEl,
@@ -256,11 +272,14 @@ function initializeGame() {
         onPlayerDied
     );
     
+    // Set power-up spawn rate multiplier
+    game.setPowerUpSpawnRateMultiplier(powerUpSpawnRateMultiplier);
+    
     // Apply upgrades
     game.setWeaponDamage(weaponDamage);
     game.setWeaponFireRate(weaponFireRate);
     game.setPlayerHealth(playerHealth);
-    game.setPlayerSpeed(baseSpeed); // Always use base speed
+    game.setPlayerSpeed(playerSpeed);
     
     // Start update loop for UI
     updateGameUI();
@@ -338,6 +357,7 @@ function updateUpgradeShopUI() {
     const damageLevel = userGameData.gameUpgrades.weaponDamage;
     const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
     const healthLevel = userGameData.gameUpgrades.apeHealth;
+    const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
     
     if (damageLevelEl) damageLevelEl.textContent = damageLevel;
     if (damageCostEl) damageCostEl.textContent = damageLevel >= 100 ? 'MAX' : getUpgradeCost(damageLevel);
@@ -358,6 +378,21 @@ function updateUpgradeShopUI() {
     if (upgradeHealthBtn) {
         const cost = getUpgradeCost(healthLevel);
         upgradeHealthBtn.disabled = healthLevel >= 100 || userGameData.gameGold < cost;
+    }
+    
+    if (speedLevelEl) speedLevelEl.textContent = speedLevel;
+    if (speedCostEl) speedCostEl.textContent = speedLevel >= 100 ? 'MAX' : getUpgradeCost(speedLevel);
+    if (upgradeSpeedBtn) {
+        const cost = getUpgradeCost(speedLevel);
+        upgradeSpeedBtn.disabled = speedLevel >= 100 || userGameData.gameGold < cost;
+    }
+    
+    const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
+    if (powerUpSpawnRateLevelEl) powerUpSpawnRateLevelEl.textContent = powerUpSpawnRateLevel;
+    if (powerUpSpawnRateCostEl) powerUpSpawnRateCostEl.textContent = powerUpSpawnRateLevel >= 100 ? 'MAX' : getUpgradeCost(powerUpSpawnRateLevel);
+    if (upgradePowerUpSpawnRateBtn) {
+        const cost = getUpgradeCost(powerUpSpawnRateLevel);
+        upgradePowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel >= 100 || userGameData.gameGold < cost;
     }
 }
 
@@ -566,6 +601,14 @@ function setupEventListeners() {
     healthCostEl = document.getElementById('healthCost');
     upgradeHealthBtn = document.getElementById('upgradeHealth');
     
+    speedLevelEl = document.getElementById('speedLevel');
+    speedCostEl = document.getElementById('speedCost');
+    upgradeSpeedBtn = document.getElementById('upgradeSpeed');
+    
+    powerUpSpawnRateLevelEl = document.getElementById('powerUpSpawnRateLevel');
+    powerUpSpawnRateCostEl = document.getElementById('powerUpSpawnRateCost');
+    upgradePowerUpSpawnRateBtn = document.getElementById('upgradePowerUpSpawnRate');
+    
     restartBtn = document.getElementById('restartBtn');
     
     // Start screen elements
@@ -589,6 +632,14 @@ function setupEventListeners() {
     
     if (upgradeHealthBtn) {
         upgradeHealthBtn.addEventListener('click', () => purchaseUpgrade('apeHealth'));
+    }
+    
+    if (upgradeSpeedBtn) {
+        upgradeSpeedBtn.addEventListener('click', () => purchaseUpgrade('apeSpeed'));
+    }
+    
+    if (upgradePowerUpSpawnRateBtn) {
+        upgradePowerUpSpawnRateBtn.addEventListener('click', () => purchaseUpgrade('powerUpSpawnRate'));
     }
     
     // Restart button
