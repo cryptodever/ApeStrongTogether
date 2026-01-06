@@ -25,7 +25,8 @@ export class Game {
             player: {}, // Will hold directional ape images
             normalMob: {}, // Will hold directional normal mob images
             speedMob: {}, // Will hold directional speed mob images
-            enemy: null, // Fallback enemy image (for big mobs only)
+            bigMob: {}, // Will hold directional big mob images
+            enemy: null, // Fallback enemy image (for fallback only)
             bullet: null, // Bullet sprite
             boss: null, // Boss sprite
             bossBullet: null, // Boss projectile sprite
@@ -124,7 +125,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length * 3 + 5; // 8 player directions + 8 normal mob directions + 8 speed mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
+        const totalImages = directions.length * 4 + 5; // 8 player directions + 8 normal mob directions + 8 speed mob directions + 8 big mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -169,7 +170,19 @@ export class Game {
             this.images.speedMob[dir] = img;
         });
         
-        // Load enemy fallback image (for fast/big mobs that use tints)
+        // Load big mob directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load big mob image: bigmob_${dir}.png`);
+                checkAllLoaded();
+            };
+            img.src = `/game-jpegs/bigmob_${dir}.png`;
+            this.images.bigMob[dir] = img;
+        });
+        
+        // Load enemy fallback image (for fallback only)
         const enemyImg = new Image();
         enemyImg.onload = checkAllLoaded;
         enemyImg.onerror = () => {
@@ -1653,6 +1666,8 @@ export class Game {
         // Choose sprite based on enemy type
         if (enemy.enemyType === 'fast' && this.imagesLoaded && this.images.speedMob) {
             img = this.images.speedMob[direction];
+        } else if (enemy.enemyType === 'big' && this.imagesLoaded && this.images.bigMob) {
+            img = this.images.bigMob[direction];
         } else if (this.imagesLoaded && this.images.normalMob) {
             img = this.images.normalMob[direction];
         }
