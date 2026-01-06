@@ -774,21 +774,76 @@ export class Game {
         // Spawn boss at center of background
         const bossMultiplier = this.getBossDifficultyMultiplier();
         
+        // Calculate round-based attack speed and projectile speed multipliers
+        let baseCooldown = 1200;
+        let attackSpeedMultiplier = 1.0;
+        let projectileSpeedMultiplier = 1.0;
+        
+        if (this.round <= 2) {
+            baseCooldown = 1200;
+            projectileSpeedMultiplier = 1.0;
+        } else if (this.round <= 5) {
+            baseCooldown = 1000;
+            projectileSpeedMultiplier = 1.15;
+        } else if (this.round <= 9) {
+            baseCooldown = 800;
+            projectileSpeedMultiplier = 1.30;
+        } else {
+            baseCooldown = 600;
+            projectileSpeedMultiplier = 1.50;
+        }
+        
+        // Determine movement type based on round
+        let movementType = 'stationary';
+        if (this.round >= 10) {
+            movementType = 'follow';
+        } else if (this.round >= 7) {
+            movementType = 'charge';
+        } else if (this.round >= 5) {
+            movementType = 'teleport';
+        } else if (this.round >= 3) {
+            movementType = 'circle';
+        }
+        
+        // Determine unlocked attacks based on round
+        // 0=Direct, 1=Spread, 2=Spiral, 3=Ring, 4=Wave, 5=Cross, 6=Homing, 7=Laser, 8=Minefield
+        const unlockedAttacks = [0, 1, 2, 3]; // Base attacks: Direct, Spread, Spiral, Ring
+        if (this.round >= 12) unlockedAttacks.push(8); // Minefield
+        if (this.round >= 10) unlockedAttacks.push(7); // Laser
+        if (this.round >= 7) unlockedAttacks.push(6); // Homing
+        if (this.round >= 5) unlockedAttacks.push(5); // Cross
+        if (this.round >= 3) unlockedAttacks.push(4); // Wave
+        
         this.boss = {
             x: 0,
             y: 0,
             radius: 40 * bossMultiplier,
-            health: 20000 * bossMultiplier, // 2x harder per round
+            health: 20000 * bossMultiplier,
             maxHealth: 20000 * bossMultiplier,
-            speed: 0, // Stationary
+            speed: 0,
+            vx: 0,
+            vy: 0,
             rotation: 0,
             lastAttack: Date.now(),
-            attackCooldown: 1200, // Reduced from 2000ms to 1200ms (faster attacks)
-            attackPattern: 0, // Current attack pattern (0-3)
-            attackTimer: 0, // Timer for pattern-specific timing
+            attackCooldown: baseCooldown,
+            attackPattern: 0,
+            attackTimer: 0,
             color: '#ff0000',
             hitFlash: 0,
-            damageMultiplier: bossMultiplier // Store damage multiplier for attacks
+            damageMultiplier: bossMultiplier,
+            phase: 'normal', // 'normal', 'enraged', 'desperate', 'finalStand'
+            movementType: movementType,
+            movementTimer: 0,
+            movementAngle: 0,
+            teleportTimer: 0,
+            chargeTimer: 0,
+            minionSpawnTimer: 0,
+            minionSpawnCooldown: this.round >= 10 ? 3000 : (this.round >= 7 ? 5000 : (this.round >= 4 ? 7000 : 999999)),
+            unlockedAttacks: unlockedAttacks,
+            attackSpeedMultiplier: attackSpeedMultiplier,
+            projectileSpeedMultiplier: projectileSpeedMultiplier,
+            lastTeleport: Date.now(),
+            chargeCooldown: 5000
         };
         
         this.bossSpawned = true;
@@ -836,12 +891,39 @@ export class Game {
             return;
         }
         
-        // Boss stays stationary and static (no rotation)
+        // Check and update boss phase based on health
+        const healthPercent = this.boss.health / this.boss.maxHealth;
+        if (healthPercent <= 0.25 && this.boss.phase !== 'finalStand') {
+            this.boss.phase = 'finalStand';
+            this.boss.minionSpawnCooldown = 2000; // Constant minion spawning
+        } else if (healthPercent <= 0.50 && this.boss.phase !== 'desperate' && this.boss.phase !== 'finalStand') {
+            this.boss.phase = 'desperate';
+            this.boss.minionSpawnCooldown = Math.min(this.boss.minionSpawnCooldown, 4000);
+        } else if (healthPercent <= 0.75 && this.boss.phase === 'normal') {
+            this.boss.phase = 'enraged';
+        }
+        
+        // Update boss movement
+        this.updateBossMovement(deltaTime);
+        
+        // Update minion spawning
+        if (this.round >= 4) {
+            this.boss.minionSpawnTimer += deltaTime;
+            if (this.boss.minionSpawnTimer >= this.boss.minionSpawnCooldown) {
+                this.boss.minionSpawnTimer = 0;
+                this.spawnBossMinions();
+            }
+        }
+        
         const now = Date.now();
         this.boss.attackTimer += deltaTime;
         
-        // Randomize attack cooldown slightly (800-1600ms instead of fixed 1200ms)
-        const randomCooldown = this.boss.attackCooldown + (Math.random() - 0.5) * 800;
+        // Apply phase-based attack speed multiplier
+        const phaseMultiplier = this.boss.phase === 'enraged' ? 0.8 : (this.boss.phase === 'desperate' ? 0.7 : (this.boss.phase === 'finalStand' ? 0.5 : 1.0));
+        const effectiveCooldown = this.boss.attackCooldown * phaseMultiplier;
+        
+        // Randomize attack cooldown slightly
+        const randomCooldown = effectiveCooldown + (Math.random() - 0.5) * (effectiveCooldown * 0.3);
         
         // Attack with randomized timing and patterns
         if (now - this.boss.lastAttack >= randomCooldown) {
@@ -854,12 +936,15 @@ export class Game {
             // Randomly select attack pattern instead of cycling (more unpredictable)
             if (!this.boss) return;
             
-            // 30% chance to use a random pattern, 70% chance to use next in sequence
+            // Select from unlocked attacks
+            const availableAttacks = this.boss.unlockedAttacks || [0, 1, 2, 3];
             let attackPattern;
             if (Math.random() < 0.3) {
-                attackPattern = Math.floor(Math.random() * 4);
+                attackPattern = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
             } else {
-                attackPattern = (this.boss.attackPattern + 1) % 4;
+                const currentIndex = availableAttacks.indexOf(this.boss.attackPattern);
+                const nextIndex = (currentIndex + 1) % availableAttacks.length;
+                attackPattern = availableAttacks[nextIndex];
             }
             this.boss.attackPattern = attackPattern;
             
@@ -877,6 +962,21 @@ export class Game {
                 case 3:
                     this.bossAttackRing();
                     break;
+                case 4:
+                    this.bossAttackWave();
+                    break;
+                case 5:
+                    this.bossAttackCross();
+                    break;
+                case 6:
+                    this.bossAttackHoming();
+                    break;
+                case 7:
+                    this.bossAttackLaser();
+                    break;
+                case 8:
+                    this.bossAttackMinefield();
+                    break;
             }
             
             // Random chance (40-60%) to do a second attack immediately
@@ -884,7 +984,7 @@ export class Game {
                 // 50% chance to use same pattern, 50% chance to use different pattern
                 let secondPattern = attackPattern;
                 if (Math.random() < 0.5) {
-                    secondPattern = Math.floor(Math.random() * 4);
+                    secondPattern = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
                 }
                 
                 switch (secondPattern) {
@@ -900,8 +1000,160 @@ export class Game {
                     case 3:
                         this.bossAttackRing();
                         break;
+                    case 4:
+                        this.bossAttackWave();
+                        break;
+                    case 5:
+                        this.bossAttackCross();
+                        break;
+                    case 6:
+                        this.bossAttackHoming();
+                        break;
+                    case 7:
+                        this.bossAttackLaser();
+                        break;
+                    case 8:
+                        this.bossAttackMinefield();
+                        break;
                 }
             }
+        }
+    }
+    
+    updateBossMovement(deltaTime) {
+        if (!this.boss) return;
+        
+        const timeFactor = deltaTime / 16.67;
+        
+        switch (this.boss.movementType) {
+            case 'circle':
+                // Move in a circle pattern
+                this.boss.movementAngle += 0.02 * timeFactor;
+                const circleRadius = 100;
+                this.boss.x = Math.cos(this.boss.movementAngle) * circleRadius;
+                this.boss.y = Math.sin(this.boss.movementAngle) * circleRadius;
+                break;
+                
+            case 'teleport':
+                // Teleport to random position every few seconds
+                this.boss.teleportTimer += deltaTime;
+                if (this.boss.teleportTimer >= 3000) {
+                    this.boss.teleportTimer = 0;
+                    const maxDistance = 200;
+                    this.boss.x = (Math.random() - 0.5) * maxDistance * 2;
+                    this.boss.y = (Math.random() - 0.5) * maxDistance * 2;
+                    this.addScreenShake(0.5, 200);
+                }
+                break;
+                
+            case 'charge':
+                // Charge toward player occasionally
+                this.boss.chargeTimer += deltaTime;
+                if (this.boss.chargeTimer >= this.boss.chargeCooldown) {
+                    this.boss.chargeTimer = 0;
+                    this.boss.chargeCooldown = 5000 + Math.random() * 3000;
+                    const dx = this.player.x - this.boss.x;
+                    const dy = this.player.y - this.boss.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 0) {
+                        this.boss.speed = 2.0;
+                        this.boss.vx = (dx / dist) * this.boss.speed;
+                        this.boss.vy = (dy / dist) * this.boss.speed;
+                    }
+                }
+                // Apply charge movement
+                if (this.boss.speed > 0) {
+                    this.boss.x += this.boss.vx * timeFactor;
+                    this.boss.y += this.boss.vy * timeFactor;
+                    this.boss.speed *= 0.95; // Decelerate
+                    if (this.boss.speed < 0.1) {
+                        this.boss.speed = 0;
+                    }
+                }
+                break;
+                
+            case 'follow':
+                // Follow player at slow speed
+                const followSpeed = 0.5 * (this.boss.phase === 'desperate' ? 1.3 : (this.boss.phase === 'finalStand' ? 1.5 : 1.0));
+                const followDx = this.player.x - this.boss.x;
+                const followDy = this.player.y - this.boss.y;
+                const followDist = Math.sqrt(followDx * followDx + followDy * followDy);
+                if (followDist > 50) { // Don't get too close
+                    const moveX = (followDx / followDist) * followSpeed * timeFactor;
+                    const moveY = (followDy / followDist) * followSpeed * timeFactor;
+                    this.boss.x += moveX;
+                    this.boss.y += moveY;
+                }
+                break;
+        }
+    }
+    
+    spawnBossMinions() {
+        if (!this.boss) return;
+        
+        let minionCount = 2;
+        if (this.round >= 10) {
+            minionCount = 5 + Math.floor(Math.random() * 4); // 5-8 minions
+        } else if (this.round >= 7) {
+            minionCount = 3 + Math.floor(Math.random() * 3); // 3-5 minions
+        } else if (this.round >= 4) {
+            minionCount = 2 + Math.floor(Math.random() * 2); // 2-3 minions
+        }
+        
+        const spawnDistance = 150;
+        for (let i = 0; i < minionCount; i++) {
+            const angle = (i * Math.PI * 2 / minionCount) + Math.random() * 0.5;
+            const x = this.boss.x + Math.cos(angle) * spawnDistance;
+            const y = this.boss.y + Math.sin(angle) * spawnDistance;
+            
+            // Determine minion type based on round
+            let enemyType = 'normal';
+            if (this.round >= 10 && Math.random() < 0.3) {
+                enemyType = 'big';
+            } else if (this.round >= 7 && Math.random() < 0.4) {
+                enemyType = 'fast';
+            }
+            
+            const roundMultiplier = this.getDifficultyMultiplier();
+            let health = 10;
+            let radius = 12;
+            let baseSpeed = 1.5;
+            let baseDamage = 5;
+            
+            if (enemyType === 'big') {
+                health = 30;
+                radius = 18;
+                baseSpeed = 1.0;
+                baseDamage = 8;
+            } else if (enemyType === 'fast') {
+                health = 5;
+                radius = 15;
+                baseSpeed = 1.5 * 1.5;
+                baseDamage = 4;
+            }
+            
+            const healthMultiplier = roundMultiplier;
+            const damageMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.7;
+            const sizeMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.3;
+            const speedMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.2;
+            
+            const dx = this.player.x - x;
+            const dy = this.player.y - y;
+            const rotation = Math.atan2(dy, dx);
+            
+            this.enemies.push({
+                x: x,
+                y: y,
+                radius: radius * sizeMultiplier,
+                speed: baseSpeed * speedMultiplier,
+                health: health * healthMultiplier,
+                maxHealth: health * healthMultiplier,
+                damage: baseDamage * damageMultiplier,
+                rotation: rotation,
+                color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
+                enemyType: enemyType,
+                goldReward: enemyType === 'big' ? 5 : (enemyType === 'fast' ? 2 : 1)
+            });
         }
     }
     
@@ -909,8 +1161,19 @@ export class Game {
         // Direct shot at player with prediction (aims ahead of player)
         if (!this.boss) return;
         
+        // Round-based projectile count
+        let projectileCount = 1;
+        if (this.round >= 6) {
+            projectileCount = 3 + Math.floor((this.round - 6) / 3); // 3-4 projectiles
+        } else if (this.round >= 3) {
+            projectileCount = 2; // 2-3 projectiles
+        }
+        
+        const baseSpeed = 4.5 * (this.boss.projectileSpeedMultiplier || 1.0);
+        const damage = 15 * (this.boss.damageMultiplier || 1);
+        
         // Calculate predicted position based on player velocity
-        const predictTime = 0.3 + Math.random() * 0.4; // Random prediction time (0.3-0.7s)
+        const predictTime = 0.3 + Math.random() * 0.4;
         const predictedX = this.player.x + this.player.vx * predictTime;
         const predictedY = this.player.y + this.player.vy * predictTime;
         
@@ -918,31 +1181,41 @@ export class Game {
         const targetX = Math.random() < 0.7 ? predictedX : this.player.x;
         const targetY = Math.random() < 0.7 ? predictedY : this.player.y;
         
-        // Add slight random offset to make it less predictable
-        const offsetAngle = (Math.random() - 0.5) * 0.2; // ±0.1 radians (~±6 degrees)
         const dx = targetX - this.boss.x;
         const dy = targetY - this.boss.y;
         const baseAngle = Math.atan2(dy, dx);
-        const angle = baseAngle + offsetAngle;
         
-        const damage = 15 * (this.boss.damageMultiplier || 1);
-        this.bossProjectiles.push({
-            x: this.boss.x,
-            y: this.boss.y,
-            vx: Math.cos(angle) * 4.5,
-            vy: Math.sin(angle) * 4.5,
-            radius: 10,
-            damage: damage,
-            color: '#ff0000'
-        });
+        // Fire multiple projectiles with slight spread if round >= 3
+        for (let i = 0; i < projectileCount; i++) {
+            const spread = projectileCount > 1 ? (i - (projectileCount - 1) / 2) * 0.15 : 0;
+            const angle = baseAngle + spread;
+            
+            this.bossProjectiles.push({
+                x: this.boss.x,
+                y: this.boss.y,
+                vx: Math.cos(angle) * baseSpeed,
+                vy: Math.sin(angle) * baseSpeed,
+                radius: 10,
+                damage: damage,
+                color: '#ff0000'
+            });
+        }
     }
     
     bossAttackSpread() {
-        // Spread shot - 7 projectiles in a cone with prediction
+        // Spread shot - projectiles in a cone with prediction
         if (!this.boss) return;
         
+        // Round-based projectile count
+        let projectileCount = 7;
+        if (this.round >= 6) {
+            projectileCount = 12 + Math.floor((this.round - 6) * 0.75); // 12-15 projectiles
+        } else if (this.round >= 3) {
+            projectileCount = 9 + Math.floor((this.round - 3) * 0.5); // 9-11 projectiles
+        }
+        
         // Calculate predicted position
-        const predictTime = 0.2 + Math.random() * 0.3; // Random prediction time (0.2-0.5s)
+        const predictTime = 0.2 + Math.random() * 0.3;
         const predictedX = this.player.x + this.player.vx * predictTime;
         const predictedY = this.player.y + this.player.vy * predictTime;
         
@@ -953,16 +1226,21 @@ export class Game {
         const dx = targetX - this.boss.x;
         const dy = targetY - this.boss.y;
         const baseAngle = Math.atan2(dy, dx);
-        const spread = Math.PI / 5 + Math.random() * 0.2; // Variable spread (36-50 degrees)
         
+        // Tighter spread at higher rounds
+        const baseSpread = this.round >= 6 ? Math.PI / 6 : (this.round >= 3 ? Math.PI / 5 : Math.PI / 5);
+        const spread = baseSpread + Math.random() * 0.2;
+        
+        const baseSpeed = (4.0 + Math.random() * 1.0) * (this.boss.projectileSpeedMultiplier || 1.0);
         const damage = 12 * (this.boss.damageMultiplier || 1);
-        for (let i = 0; i < 7; i++) {
-            const angle = baseAngle + (i - 3) * (spread / 6);
+        
+        for (let i = 0; i < projectileCount; i++) {
+            const angle = baseAngle + (i - (projectileCount - 1) / 2) * (spread / (projectileCount - 1));
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * (4.0 + Math.random() * 1.0), // Variable speed (4.0-5.0)
-                vy: Math.sin(angle) * (4.0 + Math.random() * 1.0),
+                vx: Math.cos(angle) * baseSpeed,
+                vy: Math.sin(angle) * baseSpeed,
                 radius: 7.5,
                 damage: damage,
                 color: '#ff6600'
@@ -974,22 +1252,50 @@ export class Game {
         // Spiral attack - multiple projectiles in a spiral pattern
         if (!this.boss) return;
         
-        const spiralCount = 12; // Increased from 8 to 12
+        // Round-based projectile count
+        let spiralCount = 12;
+        if (this.round >= 6) {
+            spiralCount = 24; // Multiple spirals at high rounds
+        } else if (this.round >= 3) {
+            spiralCount = 16 + Math.floor((this.round - 3) * 1.33); // 16-20 projectiles
+        }
+        
         // Use a rotating base angle that changes each time this attack is called
         const timeBasedAngle = (Date.now() / 50) % (Math.PI * 2);
-        
+        const baseSpeed = 3.75 * (this.boss.projectileSpeedMultiplier || 1.0);
         const damage = 10 * (this.boss.damageMultiplier || 1);
-        for (let i = 0; i < spiralCount; i++) {
-            const angle = timeBasedAngle + (i * Math.PI * 2 / spiralCount);
-            this.bossProjectiles.push({
-                x: this.boss.x,
-                y: this.boss.y,
-                vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
-                vy: Math.sin(angle) * 3.75,
-                radius: 8.75,
-                damage: damage,
-                color: '#ff00ff'
-            });
+        
+        // At round 6+, create multiple spirals
+        if (this.round >= 6) {
+            const spiralOffset = Math.PI / 12; // Offset between spirals
+            for (let spiral = 0; spiral < 2; spiral++) {
+                const spiralAngle = timeBasedAngle + (spiral * spiralOffset);
+                for (let i = 0; i < spiralCount / 2; i++) {
+                    const angle = spiralAngle + (i * Math.PI * 2 / (spiralCount / 2));
+                    this.bossProjectiles.push({
+                        x: this.boss.x,
+                        y: this.boss.y,
+                        vx: Math.cos(angle) * baseSpeed,
+                        vy: Math.sin(angle) * baseSpeed,
+                        radius: 8.75,
+                        damage: damage,
+                        color: '#ff00ff'
+                    });
+                }
+            }
+        } else {
+            for (let i = 0; i < spiralCount; i++) {
+                const angle = timeBasedAngle + (i * Math.PI * 2 / spiralCount);
+                this.bossProjectiles.push({
+                    x: this.boss.x,
+                    y: this.boss.y,
+                    vx: Math.cos(angle) * baseSpeed,
+                    vy: Math.sin(angle) * baseSpeed,
+                    radius: 8.75,
+                    damage: damage,
+                    color: '#ff00ff'
+                });
+            }
         }
     }
     
@@ -997,19 +1303,218 @@ export class Game {
         // Ring attack - projectiles in all directions
         if (!this.boss) return;
         
-        const ringCount = 16; // Increased from 12 to 16
+        // Round-based projectile count
+        let ringCount = 16;
+        if (this.round >= 6) {
+            ringCount = 32; // Double ring at high rounds
+        } else if (this.round >= 3) {
+            ringCount = 20 + Math.floor((this.round - 3) * 1.33); // 20-24 projectiles
+        }
         
+        const baseSpeed = 3.75 * (this.boss.projectileSpeedMultiplier || 1.0);
         const damage = 9 * (this.boss.damageMultiplier || 1);
-        for (let i = 0; i < ringCount; i++) {
-            const angle = (i * Math.PI * 2 / ringCount);
+        
+        // At round 6+, create double ring (inner + outer)
+        if (this.round >= 6) {
+            // Inner ring
+            for (let i = 0; i < ringCount / 2; i++) {
+                const angle = (i * Math.PI * 2 / (ringCount / 2));
+                this.bossProjectiles.push({
+                    x: this.boss.x,
+                    y: this.boss.y,
+                    vx: Math.cos(angle) * baseSpeed * 0.8, // Slightly slower inner ring
+                    vy: Math.sin(angle) * baseSpeed * 0.8,
+                    radius: 7.5,
+                    damage: damage,
+                    color: '#00ffff'
+                });
+            }
+            // Outer ring
+            for (let i = 0; i < ringCount / 2; i++) {
+                const angle = (i * Math.PI * 2 / (ringCount / 2)) + (Math.PI / (ringCount / 2)); // Offset by half
+                this.bossProjectiles.push({
+                    x: this.boss.x,
+                    y: this.boss.y,
+                    vx: Math.cos(angle) * baseSpeed,
+                    vy: Math.sin(angle) * baseSpeed,
+                    radius: 7.5,
+                    damage: damage,
+                    color: '#00ffff'
+                });
+            }
+        } else {
+            for (let i = 0; i < ringCount; i++) {
+                const angle = (i * Math.PI * 2 / ringCount);
+                this.bossProjectiles.push({
+                    x: this.boss.x,
+                    y: this.boss.y,
+                    vx: Math.cos(angle) * baseSpeed,
+                    vy: Math.sin(angle) * baseSpeed,
+                    radius: 7.5,
+                    damage: damage,
+                    color: '#00ffff'
+                });
+            }
+        }
+    }
+    
+    bossAttackWave() {
+        // Wave attack - horizontal/vertical wave of projectiles (Round 3+)
+        if (!this.boss) return;
+        
+        const waveCount = 8 + Math.floor((this.round - 3) * 1.5); // 8-15 projectiles
+        const isHorizontal = Math.random() < 0.5;
+        const baseSpeed = 4.0 * (this.boss.projectileSpeedMultiplier || 1.0);
+        const damage = 11 * (this.boss.damageMultiplier || 1);
+        
+        if (isHorizontal) {
+            // Horizontal wave
+            const startY = this.boss.y - 100;
+            const spacing = 200 / (waveCount - 1);
+            for (let i = 0; i < waveCount; i++) {
+                const y = startY + (i * spacing);
+                const direction = this.player.x > this.boss.x ? 1 : -1;
+                this.bossProjectiles.push({
+                    x: this.boss.x,
+                    y: y,
+                    vx: direction * baseSpeed,
+                    vy: 0,
+                    radius: 8,
+                    damage: damage,
+                    color: '#00ff00'
+                });
+            }
+        } else {
+            // Vertical wave
+            const startX = this.boss.x - 100;
+            const spacing = 200 / (waveCount - 1);
+            for (let i = 0; i < waveCount; i++) {
+                const x = startX + (i * spacing);
+                const direction = this.player.y > this.boss.y ? 1 : -1;
+                this.bossProjectiles.push({
+                    x: x,
+                    y: this.boss.y,
+                    vx: 0,
+                    vy: direction * baseSpeed,
+                    radius: 8,
+                    damage: damage,
+                    color: '#00ff00'
+                });
+            }
+        }
+    }
+    
+    bossAttackCross() {
+        // Cross attack - 4 directions expanding (Round 5+)
+        if (!this.boss) return;
+        
+        const armsPerDirection = 3 + Math.floor((this.round - 5) * 0.5); // 3-5 projectiles per arm
+        const baseSpeed = 3.5 * (this.boss.projectileSpeedMultiplier || 1.0);
+        const damage = 10 * (this.boss.damageMultiplier || 1);
+        
+        const directions = [
+            { vx: 0, vy: -1 },   // Up
+            { vx: 1, vy: 0 },    // Right
+            { vx: 0, vy: 1 },    // Down
+            { vx: -1, vy: 0 }    // Left
+        ];
+        
+        for (const dir of directions) {
+            for (let i = 0; i < armsPerDirection; i++) {
+                const offset = i * 15; // Spacing between projectiles
+                this.bossProjectiles.push({
+                    x: this.boss.x + dir.vx * offset,
+                    y: this.boss.y + dir.vy * offset,
+                    vx: dir.vx * baseSpeed,
+                    vy: dir.vy * baseSpeed,
+                    radius: 8,
+                    damage: damage,
+                    color: '#ffff00'
+                });
+            }
+        }
+    }
+    
+    bossAttackHoming() {
+        // Homing attack - slow projectiles that track player (Round 7+)
+        if (!this.boss) return;
+        
+        const homingCount = 3 + Math.floor((this.round - 7) * 0.5); // 3-5 homing projectiles
+        const baseSpeed = 2.0 * (this.boss.projectileSpeedMultiplier || 1.0);
+        const damage = 13 * (this.boss.damageMultiplier || 1);
+        
+        for (let i = 0; i < homingCount; i++) {
+            const angle = (i * Math.PI * 2 / homingCount) + Math.random() * 0.5;
             this.bossProjectiles.push({
                 x: this.boss.x,
                 y: this.boss.y,
-                vx: Math.cos(angle) * 3.75, // Increased speed (was 3.125)
-                vy: Math.sin(angle) * 3.75,
-                radius: 7.5,
+                vx: Math.cos(angle) * baseSpeed,
+                vy: Math.sin(angle) * baseSpeed,
+                radius: 9,
                 damage: damage,
-                color: '#00ffff'
+                color: '#ff00ff',
+                isHoming: true,
+                homingStrength: 0.05
+            });
+        }
+    }
+    
+    bossAttackLaser() {
+        // Laser attack - continuous beam (damage over time) (Round 10+)
+        if (!this.boss) return;
+        
+        const laserCount = 1 + Math.floor((this.round - 10) / 3); // 1-2 lasers
+        const damage = 8 * (this.boss.damageMultiplier || 1);
+        
+        for (let i = 0; i < laserCount; i++) {
+            const angle = i === 0 ? Math.atan2(this.player.y - this.boss.y, this.player.x - this.boss.x) : 
+                         Math.atan2(this.player.y - this.boss.y, this.player.x - this.boss.x) + (Math.PI / 4);
+            
+            // Create multiple projectiles in a line to simulate a beam
+            const beamLength = 500;
+            const beamSegments = 20;
+            const segmentSpacing = beamLength / beamSegments;
+            const speed = 6.0 * (this.boss.projectileSpeedMultiplier || 1.0);
+            
+            for (let j = 0; j < beamSegments; j++) {
+                this.bossProjectiles.push({
+                    x: this.boss.x + Math.cos(angle) * (j * segmentSpacing),
+                    y: this.boss.y + Math.sin(angle) * (j * segmentSpacing),
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 6,
+                    damage: damage,
+                    color: '#ff0000',
+                    isLaser: true
+                });
+            }
+        }
+    }
+    
+    bossAttackMinefield() {
+        // Minefield attack - stationary mines that explode on contact (Round 12+)
+        if (!this.boss) return;
+        
+        const mineCount = 8 + Math.floor((this.round - 12) * 2); // 8-12 mines
+        const damage = 20 * (this.boss.damageMultiplier || 1);
+        const mineRadius = 200;
+        
+        for (let i = 0; i < mineCount; i++) {
+            const angle = (i * Math.PI * 2 / mineCount) + Math.random() * 0.3;
+            const distance = 80 + Math.random() * 120;
+            this.bossProjectiles.push({
+                x: this.boss.x + Math.cos(angle) * distance,
+                y: this.boss.y + Math.sin(angle) * distance,
+                vx: 0,
+                vy: 0,
+                radius: 12,
+                damage: damage,
+                color: '#ff8800',
+                isMine: true,
+                explosionRadius: 40,
+                armed: false,
+                armTimer: 0,
+                armTime: 500 // Mines arm after 0.5 seconds
             });
         }
     }
@@ -1023,10 +1528,102 @@ export class Game {
         for (let i = this.bossProjectiles.length - 1; i >= 0; i--) {
             const projectile = this.bossProjectiles[i];
             
+            // Handle delayed projectiles (for cross attack)
+            if (projectile.delay !== undefined) {
+                projectile.delayTimer += deltaTime;
+                if (projectile.delayTimer < projectile.delay) {
+                    continue; // Skip movement until delay is over
+                }
+            }
+            
+            // Handle mine arming
+            if (projectile.isMine) {
+                projectile.armTimer += deltaTime;
+                if (!projectile.armed && projectile.armTimer >= projectile.armTime) {
+                    projectile.armed = true;
+                    projectile.color = '#ff0000'; // Change color when armed
+                }
+                // Mines don't move, but check for player collision
+                if (projectile.armed) {
+                    const dx = this.player.x - projectile.x;
+                    const dy = this.player.y - projectile.y;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < (this.player.radius + projectile.explosionRadius) ** 2) {
+                        // Mine exploded - damage player
+                        this.player.health -= projectile.damage;
+                        this.player.hitFlash = 150;
+                        this.addScreenShake(0.8, 300);
+                        this.spawnParticles(projectile.x, projectile.y, 20, 'hit');
+                        this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
+                        this.bossProjectiles.splice(i, 1);
+                        if (this.player.health <= 0) {
+                            this.player.health = 0;
+                            this.die();
+                        }
+                        continue;
+                    }
+                }
+                // Mines stay in place, skip movement
+                continue;
+            }
+            
+            // Handle homing projectiles
+            if (projectile.isHoming) {
+                const dx = this.player.x - projectile.x;
+                const dy = this.player.y - projectile.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 0.1) {
+                    const angle = Math.atan2(dy, dx);
+                    const speed = Math.sqrt(projectile.vx * projectile.vx + projectile.vy * projectile.vy);
+                    projectile.vx = Math.cos(angle) * speed;
+                    projectile.vy = Math.sin(angle) * speed;
+                    // Gradually increase homing strength
+                    const homingAdjust = projectile.homingStrength || 0.05;
+                    projectile.vx += (dx / dist) * homingAdjust;
+                    projectile.vy += (dy / dist) * homingAdjust;
+                    // Normalize to maintain speed
+                    const newSpeed = Math.sqrt(projectile.vx * projectile.vx + projectile.vy * projectile.vy);
+                    if (newSpeed > 0) {
+                        projectile.vx = (projectile.vx / newSpeed) * speed;
+                        projectile.vy = (projectile.vy / newSpeed) * speed;
+                    }
+                }
+            }
+            
             // Move projectile (frame-rate independent)
             const timeFactor = deltaTime / 16.67;
             projectile.x += projectile.vx * timeFactor;
             projectile.y += projectile.vy * timeFactor;
+            
+            // Check collision with player (skip mines, they handle their own collision)
+            if (!projectile.isMine) {
+                const playerDx = projectile.x - this.player.x;
+                const playerDy = projectile.y - this.player.y;
+                const playerDistSq = playerDx * playerDx + playerDy * playerDy;
+                const playerCollisionDistSq = (projectile.radius + this.player.radius) ** 2;
+                
+                if (playerDistSq < playerCollisionDistSq) {
+                    // Player hit by projectile
+                    this.player.health -= projectile.damage;
+                    this.player.hitFlash = 150;
+                    this.bossProjectiles.splice(i, 1);
+                    
+                    // Screen shake on damage
+                    this.addScreenShake(0.5, 200);
+                    
+                    // Spawn hit particles
+                    this.spawnParticles(this.player.x, this.player.y, 15, 'blood');
+                    
+                    // Spawn damage number
+                    this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
+                    
+                    if (this.player.health <= 0) {
+                        this.player.health = 0;
+                        this.die();
+                    }
+                    continue;
+                }
+            }
             
             // Remove if too far from center (or boss if it exists)
             let centerX = 0;
@@ -1041,8 +1638,8 @@ export class Game {
                 (projectile.y - centerY) ** 2
             );
             
-            // Remove if too far from center or if boss is dead
-            if (dist > Math.max(this.width, this.height) * 1.5 || !this.boss) {
+            // Remove if too far from center or if boss is dead (mines persist until exploded)
+            if (!projectile.isMine && (dist > Math.max(this.width, this.height) * 1.5 || !this.boss)) {
                 this.bossProjectiles.splice(i, 1);
             }
         }
