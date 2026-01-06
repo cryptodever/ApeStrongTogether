@@ -301,9 +301,18 @@ async function onPlayerDied(score) {
 }
 
 // Show upgrade shop modal
-function showUpgradeShop() {
+function showUpgradeShop(fromMainMenu = false) {
     if (upgradeShopEl) {
         upgradeShopEl.style.display = 'flex';
+    }
+    // Show close button if accessed from main menu, hide if from death screen
+    const closeBtn = document.getElementById('closeUpgradeBtn');
+    if (closeBtn) {
+        closeBtn.style.display = fromMainMenu ? 'block' : 'none';
+    }
+    // Hide restart button if from main menu, show if from death screen
+    if (restartBtn) {
+        restartBtn.style.display = fromMainMenu ? 'none' : 'block';
     }
     updateUpgradeShopUI();
 }
@@ -780,6 +789,31 @@ function setupEventListeners() {
                 if (gameUIOverlay) {
                     gameUIOverlay.style.opacity = '1';
                 }
+            }
+        });
+    }
+    
+    // Upgrades button
+    const upgradesBtn = document.getElementById('upgradesBtn');
+    if (upgradesBtn) {
+        upgradesBtn.addEventListener('click', () => {
+            // Hide start screen
+            if (startScreenEl) {
+                startScreenEl.classList.add('hide');
+            }
+            // Show upgrade shop (from main menu)
+            showUpgradeShop(true);
+        });
+    }
+    
+    // Close upgrade button
+    const closeUpgradeBtn = document.getElementById('closeUpgradeBtn');
+    if (closeUpgradeBtn) {
+        closeUpgradeBtn.addEventListener('click', () => {
+            hideUpgradeShop();
+            // Show start screen again
+            if (startScreenEl) {
+                startScreenEl.classList.remove('hide');
             }
         });
     }
