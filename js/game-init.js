@@ -261,9 +261,9 @@ function initializeGame() {
     const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
     const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05); // Level 1 = 100%, Level 2 = 105%, Level 3 = 110%, etc.
     
-    // Power-up spawn rate multiplier: each level increases spawn rate by 0.05%
+    // Power-up spawn rate bonus: each level adds 0.05% to base spawn chances
     const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
-    const powerUpSpawnRateMultiplier = 1 + (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 1.0, Level 2 = 1.0005, etc.
+    const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 0, Level 2 = 0.0005 (0.05%), etc.
     
     // Create game instance
     game = new Game(
@@ -272,8 +272,8 @@ function initializeGame() {
         onPlayerDied
     );
     
-    // Set power-up spawn rate multiplier
-    game.setPowerUpSpawnRateMultiplier(powerUpSpawnRateMultiplier);
+    // Set power-up spawn rate bonus
+    game.setPowerUpSpawnRateBonus(powerUpSpawnRateBonus);
     
     // Apply upgrades
     game.setWeaponDamage(weaponDamage);
