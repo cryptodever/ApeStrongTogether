@@ -1765,16 +1765,53 @@ export class Game {
         const damageMultiplier = this.activeEffects.damage.multiplier || 1.0;
         const effectiveDamage = this.weapon.damage * damageMultiplier;
         
-        // Create bullet with trail
-        this.bullets.push({
-            x: this.player.x,
-            y: this.player.y,
-            vx: Math.cos(angle) * this.weapon.bulletSpeed,
-            vy: Math.sin(angle) * this.weapon.bulletSpeed,
-            radius: 4,
-            damage: effectiveDamage,
-            trail: [] // For bullet trail effect
-        });
+        // Character-specific shooting mechanics
+        if (this.characterType === 2) {
+            // Shotgun: 5 bullet spread in cone pattern (~30 degrees total)
+            const spreadAngle = Math.PI / 6; // 30 degrees in radians
+            const bulletCount = 5;
+            const angleStep = spreadAngle / (bulletCount - 1);
+            const startAngle = angle - spreadAngle / 2;
+            
+            for (let i = 0; i < bulletCount; i++) {
+                const bulletAngle = startAngle + (angleStep * i);
+                this.bullets.push({
+                    x: this.player.x,
+                    y: this.player.y,
+                    vx: Math.cos(bulletAngle) * this.weapon.bulletSpeed,
+                    vy: Math.sin(bulletAngle) * this.weapon.bulletSpeed,
+                    radius: 4,
+                    damage: effectiveDamage,
+                    trail: [], // For bullet trail effect
+                    pierceCount: 0 // Not piercing
+                });
+            }
+        } else if (this.characterType === 3) {
+            // Sniper: Single bullet with piercing (through 3 enemies)
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y,
+                vx: Math.cos(angle) * this.weapon.bulletSpeed,
+                vy: Math.sin(angle) * this.weapon.bulletSpeed,
+                radius: 4,
+                damage: effectiveDamage,
+                trail: [], // For bullet trail effect
+                pierceCount: 3, // Can pierce through 3 enemies
+                hitsRemaining: 3 // Track remaining pierces
+            });
+        } else {
+            // Standard/Pistol: Single bullet
+            this.bullets.push({
+                x: this.player.x,
+                y: this.player.y,
+                vx: Math.cos(angle) * this.weapon.bulletSpeed,
+                vy: Math.sin(angle) * this.weapon.bulletSpeed,
+                radius: 4,
+                damage: effectiveDamage,
+                trail: [], // For bullet trail effect
+                pierceCount: 0 // Not piercing
+            });
+        }
     }
     
     checkCollisions() {
