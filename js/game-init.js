@@ -72,11 +72,11 @@ let goldValueEl, scoreValueEl;
 let upgradeShopEl;
 let powerUpsDisplayEl;
 let shopGoldEl;
-let damageLevelEl, damageCostEl, upgradeDamageBtn;
-let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn;
-let healthLevelEl, healthCostEl, upgradeHealthBtn;
-let speedLevelEl, speedCostEl, upgradeSpeedBtn;
-let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn;
+let damageLevelEl, damageCostEl, upgradeDamageBtn, damageCurrentEl, damageNextEl;
+let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn, fireRateCurrentEl, fireRateNextEl;
+let healthLevelEl, healthCostEl, upgradeHealthBtn, healthCurrentEl, healthNextEl;
+let speedLevelEl, speedCostEl, upgradeSpeedBtn, speedCurrentEl, speedNextEl;
+let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn, powerUpSpawnRateCurrentEl, powerUpSpawnRateNextEl;
 let restartBtn;
 let startScreenEl, startGameBtn;
 let pauseMenuEl, resumeBtn, restartPauseBtn;
@@ -348,6 +348,12 @@ function getUpgradeCost(level) {
 function updateUpgradeShopUI() {
     if (!upgradeShopEl) return;
     
+    // Base values
+    const baseDamage = 5;
+    const baseFireRate = 500;
+    const baseHealth = 20;
+    const baseSpeed = 3;
+    
     // Update gold display
     if (shopGoldEl) {
         shopGoldEl.textContent = userGameData.gameGold;
@@ -358,41 +364,67 @@ function updateUpgradeShopUI() {
     const fireRateLevel = userGameData.gameUpgrades.weaponFireRate;
     const healthLevel = userGameData.gameUpgrades.apeHealth;
     const speedLevel = userGameData.gameUpgrades.apeSpeed || 1;
-    
-    if (damageLevelEl) damageLevelEl.textContent = damageLevel;
-    if (damageCostEl) damageCostEl.textContent = damageLevel >= 100 ? 'MAX' : getUpgradeCost(damageLevel);
-    if (upgradeDamageBtn) {
-        const cost = getUpgradeCost(damageLevel);
-        upgradeDamageBtn.disabled = damageLevel >= 100 || userGameData.gameGold < cost;
-    }
-    
-    if (fireRateLevelEl) fireRateLevelEl.textContent = fireRateLevel;
-    if (fireRateCostEl) fireRateCostEl.textContent = fireRateLevel >= 100 ? 'MAX' : getUpgradeCost(fireRateLevel);
-    if (upgradeFireRateBtn) {
-        const cost = getUpgradeCost(fireRateLevel);
-        upgradeFireRateBtn.disabled = fireRateLevel >= 100 || userGameData.gameGold < cost;
-    }
-    
-    if (healthLevelEl) healthLevelEl.textContent = healthLevel;
-    if (healthCostEl) healthCostEl.textContent = healthLevel >= 100 ? 'MAX' : getUpgradeCost(healthLevel);
-    if (upgradeHealthBtn) {
-        const cost = getUpgradeCost(healthLevel);
-        upgradeHealthBtn.disabled = healthLevel >= 100 || userGameData.gameGold < cost;
-    }
-    
-    if (speedLevelEl) speedLevelEl.textContent = speedLevel;
-    if (speedCostEl) speedCostEl.textContent = speedLevel >= 100 ? 'MAX' : getUpgradeCost(speedLevel);
-    if (upgradeSpeedBtn) {
-        const cost = getUpgradeCost(speedLevel);
-        upgradeSpeedBtn.disabled = speedLevel >= 100 || userGameData.gameGold < cost;
-    }
-    
     const powerUpSpawnRateLevel = userGameData.gameUpgrades.powerUpSpawnRate || 1;
+    
+    // Damage upgrade
+    if (damageLevelEl) damageLevelEl.textContent = damageLevel;
+    const currentDamage = baseDamage * damageLevel;
+    const nextDamage = damageLevel >= 100 ? currentDamage : baseDamage * (damageLevel + 1);
+    if (damageCurrentEl) damageCurrentEl.textContent = currentDamage;
+    if (damageNextEl) damageNextEl.textContent = damageLevel >= 100 ? 'MAX' : nextDamage;
+    const damageCost = damageLevel >= 100 ? 0 : getUpgradeCost(damageLevel);
+    if (damageCostEl) damageCostEl.textContent = damageLevel >= 100 ? 'MAX' : damageCost.toLocaleString();
+    if (upgradeDamageBtn) {
+        upgradeDamageBtn.disabled = damageLevel >= 100 || userGameData.gameGold < damageCost;
+    }
+    
+    // Fire Rate upgrade
+    if (fireRateLevelEl) fireRateLevelEl.textContent = fireRateLevel;
+    const currentFireRate = Math.max(50, baseFireRate / (1 + (fireRateLevel - 1) * 0.5));
+    const nextFireRate = fireRateLevel >= 100 ? currentFireRate : Math.max(50, baseFireRate / (1 + fireRateLevel * 0.5));
+    if (fireRateCurrentEl) fireRateCurrentEl.textContent = Math.round(currentFireRate) + 'ms';
+    if (fireRateNextEl) fireRateNextEl.textContent = fireRateLevel >= 100 ? 'MAX' : Math.round(nextFireRate) + 'ms';
+    const fireRateCost = fireRateLevel >= 100 ? 0 : getUpgradeCost(fireRateLevel);
+    if (fireRateCostEl) fireRateCostEl.textContent = fireRateLevel >= 100 ? 'MAX' : fireRateCost.toLocaleString();
+    if (upgradeFireRateBtn) {
+        upgradeFireRateBtn.disabled = fireRateLevel >= 100 || userGameData.gameGold < fireRateCost;
+    }
+    
+    // Health upgrade
+    if (healthLevelEl) healthLevelEl.textContent = healthLevel;
+    const currentHealth = baseHealth * healthLevel;
+    const nextHealth = healthLevel >= 100 ? currentHealth : baseHealth * (healthLevel + 1);
+    if (healthCurrentEl) healthCurrentEl.textContent = currentHealth;
+    if (healthNextEl) healthNextEl.textContent = healthLevel >= 100 ? 'MAX' : nextHealth;
+    const healthCost = healthLevel >= 100 ? 0 : getUpgradeCost(healthLevel);
+    if (healthCostEl) healthCostEl.textContent = healthLevel >= 100 ? 'MAX' : healthCost.toLocaleString();
+    if (upgradeHealthBtn) {
+        upgradeHealthBtn.disabled = healthLevel >= 100 || userGameData.gameGold < healthCost;
+    }
+    
+    // Speed upgrade
+    if (speedLevelEl) speedLevelEl.textContent = speedLevel;
+    const currentSpeedPercent = Math.round((1 + (speedLevel - 1) * 0.05) * 100);
+    const nextSpeedPercent = speedLevel >= 100 ? currentSpeedPercent : Math.round((1 + speedLevel * 0.05) * 100);
+    if (speedCurrentEl) speedCurrentEl.textContent = currentSpeedPercent + '%';
+    if (speedNextEl) speedNextEl.textContent = speedLevel >= 100 ? 'MAX' : nextSpeedPercent + '%';
+    const speedCost = speedLevel >= 100 ? 0 : getUpgradeCost(speedLevel);
+    if (speedCostEl) speedCostEl.textContent = speedLevel >= 100 ? 'MAX' : speedCost.toLocaleString();
+    if (upgradeSpeedBtn) {
+        upgradeSpeedBtn.disabled = speedLevel >= 100 || userGameData.gameGold < speedCost;
+    }
+    
+    // Power-up Spawn Rate upgrade
     if (powerUpSpawnRateLevelEl) powerUpSpawnRateLevelEl.textContent = powerUpSpawnRateLevel;
-    if (powerUpSpawnRateCostEl) powerUpSpawnRateCostEl.textContent = powerUpSpawnRateLevel >= 100 ? 'MAX' : getUpgradeCost(powerUpSpawnRateLevel);
+    const baseSpawnChance = 0.005; // 0.5% base
+    const currentSpawnRate = (baseSpawnChance + (powerUpSpawnRateLevel - 1) * 0.0005) * 100;
+    const nextSpawnRate = powerUpSpawnRateLevel >= 100 ? currentSpawnRate : (baseSpawnChance + powerUpSpawnRateLevel * 0.0005) * 100;
+    if (powerUpSpawnRateCurrentEl) powerUpSpawnRateCurrentEl.textContent = currentSpawnRate.toFixed(2) + '%';
+    if (powerUpSpawnRateNextEl) powerUpSpawnRateNextEl.textContent = powerUpSpawnRateLevel >= 100 ? 'MAX' : nextSpawnRate.toFixed(2) + '%';
+    const powerUpSpawnRateCost = powerUpSpawnRateLevel >= 100 ? 0 : getUpgradeCost(powerUpSpawnRateLevel);
+    if (powerUpSpawnRateCostEl) powerUpSpawnRateCostEl.textContent = powerUpSpawnRateLevel >= 100 ? 'MAX' : powerUpSpawnRateCost.toLocaleString();
     if (upgradePowerUpSpawnRateBtn) {
-        const cost = getUpgradeCost(powerUpSpawnRateLevel);
-        upgradePowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel >= 100 || userGameData.gameGold < cost;
+        upgradePowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel >= 100 || userGameData.gameGold < powerUpSpawnRateCost;
     }
 }
 
@@ -592,22 +624,32 @@ function setupEventListeners() {
     damageLevelEl = document.getElementById('damageLevel');
     damageCostEl = document.getElementById('damageCost');
     upgradeDamageBtn = document.getElementById('upgradeDamage');
+    damageCurrentEl = document.getElementById('damageCurrent');
+    damageNextEl = document.getElementById('damageNext');
     
     fireRateLevelEl = document.getElementById('fireRateLevel');
     fireRateCostEl = document.getElementById('fireRateCost');
     upgradeFireRateBtn = document.getElementById('upgradeFireRate');
+    fireRateCurrentEl = document.getElementById('fireRateCurrent');
+    fireRateNextEl = document.getElementById('fireRateNext');
     
     healthLevelEl = document.getElementById('healthLevel');
     healthCostEl = document.getElementById('healthCost');
     upgradeHealthBtn = document.getElementById('upgradeHealth');
+    healthCurrentEl = document.getElementById('healthCurrent');
+    healthNextEl = document.getElementById('healthNext');
     
     speedLevelEl = document.getElementById('speedLevel');
     speedCostEl = document.getElementById('speedCost');
     upgradeSpeedBtn = document.getElementById('upgradeSpeed');
+    speedCurrentEl = document.getElementById('speedCurrent');
+    speedNextEl = document.getElementById('speedNext');
     
     powerUpSpawnRateLevelEl = document.getElementById('powerUpSpawnRateLevel');
     powerUpSpawnRateCostEl = document.getElementById('powerUpSpawnRateCost');
     upgradePowerUpSpawnRateBtn = document.getElementById('upgradePowerUpSpawnRate');
+    powerUpSpawnRateCurrentEl = document.getElementById('powerUpSpawnRateCurrent');
+    powerUpSpawnRateNextEl = document.getElementById('powerUpSpawnRateNext');
     
     restartBtn = document.getElementById('restartBtn');
     
