@@ -2325,8 +2325,8 @@ export class Game {
         if (type === 'shield') {
             effect.active = effect.count > 0;
         } else {
-            // Stacking: each power-up adds 0.5x multiplier (so 2 = 1.0x, 3 = 1.5x, etc.)
-            effect.multiplier = 1.0 + (effect.count - 1) * 0.5;
+            // Stacking: each power-up adds 0.5x multiplier (1 = 1.5x, 2 = 2.0x, 3 = 2.5x, etc.)
+            effect.multiplier = 1.0 + effect.count * 0.5;
         }
     }
     
@@ -2361,7 +2361,7 @@ export class Game {
             if (type === 'shield') {
                 effect.active = effect.count > 0;
             } else {
-                effect.multiplier = effect.count > 0 ? (1.0 + (effect.count - 1) * 0.5) : 1.0;
+                effect.multiplier = effect.count > 0 ? (1.0 + effect.count * 0.5) : 1.0;
             }
         }
     }

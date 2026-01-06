@@ -437,6 +437,9 @@ function updateGameUI() {
         scoreValueEl.textContent = score;
     }
     
+    // Update power-ups display
+    updatePowerUpsDisplay();
+    
     // Continue updating
     requestAnimationFrame(updateGameUI);
 }
@@ -463,7 +466,7 @@ function updatePowerUpsDisplay() {
     }
     
     // Damage boost
-    if (activeEffects.damage && activeEffects.damage.count > 0) {
+    if (activeEffects.damage && activeEffects.damage.count > 0 && activeEffects.damage.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.damage.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
         powerUpsHTML.push(`
@@ -477,7 +480,7 @@ function updatePowerUpsDisplay() {
     }
     
     // Fire rate boost
-    if (activeEffects.fireRate && activeEffects.fireRate.count > 0) {
+    if (activeEffects.fireRate && activeEffects.fireRate.count > 0 && activeEffects.fireRate.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.fireRate.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
         powerUpsHTML.push(`
@@ -491,7 +494,7 @@ function updatePowerUpsDisplay() {
     }
     
     // Shield
-    if (activeEffects.shield && activeEffects.shield.active) {
+    if (activeEffects.shield && activeEffects.shield.active && activeEffects.shield.timers.length > 0) {
         const minTimer = Math.min(...activeEffects.shield.timers.map(t => t.remaining));
         const seconds = Math.ceil(minTimer / 1000);
         powerUpsHTML.push(`
