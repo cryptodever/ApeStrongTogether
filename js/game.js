@@ -4,11 +4,12 @@
  */
 
 export class Game {
-    constructor(canvas, onEnemyKill, onPlayerDeath) {
+    constructor(canvas, onEnemyKill, onPlayerDeath, characterType = 1) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d', { alpha: true }); // Ensure alpha channel is preserved
         this.onEnemyKill = onEnemyKill; // Callback for when enemy is killed
         this.onPlayerDeath = onPlayerDeath; // Callback for when player dies
+        this.characterType = characterType; // 1 = Standard, 2 = Shotgun, 3 = Sniper
         
         // Set canvas size
         this.resize();
@@ -148,6 +149,19 @@ export class Game {
         // Start game loop
         this.lastFrame = performance.now();
         this.gameLoop();
+    }
+    
+    getCharacterBaseStats(characterType) {
+        switch(characterType) {
+            case 1: // Standard
+                return { fireRate: 500, speed: 3, bulletSpeed: 8 };
+            case 2: // Shotgun
+                return { fireRate: 750, speed: 3, bulletSpeed: 8 };
+            case 3: // Sniper
+                return { fireRate: 1000, speed: 2.0, bulletSpeed: 8 };
+            default:
+                return { fireRate: 500, speed: 3, bulletSpeed: 8 };
+        }
     }
     
     resize() {
@@ -1768,6 +1782,7 @@ export class Game {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             const bulletRadius = bullet.radius;
+            let bulletRemoved = false;
             
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
@@ -1782,13 +1797,30 @@ export class Game {
                     // Hit!
                     enemy.health -= bullet.damage;
                     enemy.hitFlash = 100; // Flash on hit
-                    this.bullets.splice(i, 1);
                     
                     // Spawn hit particles
                     this.spawnParticles(enemy.x, enemy.y, 5, 'hit');
                     
                     // Spawn damage number
                     this.spawnDamageNumber(enemy.x, enemy.y - enemy.radius, bullet.damage, false);
+                    
+                    // Check if bullet should pierce (sniper character)
+                    const isSniperBullet = bullet.pierceCount > 0 && bullet.hitsRemaining !== undefined;
+                    
+                    if (isSniperBullet && bullet.hitsRemaining > 0) {
+                        // Sniper bullet: reduce hits remaining
+                        bullet.hitsRemaining--;
+                        if (bullet.hitsRemaining <= 0) {
+                            // No more pierces left, remove bullet after this hit
+                            this.bullets.splice(i, 1);
+                            bulletRemoved = true;
+                        }
+                        // Continue to next enemy (bullet keeps going if hitsRemaining > 0)
+                    } else {
+                        // Standard or shotgun bullet: remove after hit
+                        this.bullets.splice(i, 1);
+                        bulletRemoved = true;
+                    }
                     
                     if (enemy.health <= 0) {
                         // Enemy killed
@@ -1822,7 +1854,12 @@ export class Game {
                         this.spawnEnemies(spawnCount);
                     }
                     
-                    break;
+                    // Break out of enemy loop if bullet was removed (standard/shotgun/sniper out of pierces)
+                    // For sniper bullets with hitsRemaining > 0, continue to next enemy
+                    if (bulletRemoved) {
+                        break;
+                    }
+                    // If sniper bullet still has hits remaining, continue checking other enemies
                 }
             }
             
