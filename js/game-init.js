@@ -519,10 +519,10 @@ function updatePowerUpsDisplay() {
         // Set innerHTML first
         powerUpsDisplayEl.innerHTML = htmlContent;
         
-        // Force visibility and positioning with all important flags
+        // Position relative to game container (which has position: relative)
         powerUpsDisplayEl.style.cssText = `
-            position: fixed !important;
-            top: 100px !important;
+            position: absolute !important;
+            top: 20px !important;
             right: 20px !important;
             display: flex !important;
             flex-direction: column !important;
