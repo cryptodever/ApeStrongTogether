@@ -79,6 +79,19 @@ export class Game {
         this.bossSpawned = false; // Track if boss has been spawned
         this.zoomBeforeBoss = null; // Store zoom level before boss spawns
         
+        // Power-ups system
+        this.powerUps = []; // Array of active power-up items on field
+        this.activeEffects = {
+            speed: { count: 0, multiplier: 1.0, timers: [] },
+            damage: { count: 0, multiplier: 1.0, timers: [] },
+            fireRate: { count: 0, multiplier: 1.0, timers: [] },
+            shield: { count: 0, active: false, timers: [] }
+        };
+        this.powerUpDuration = 10000; // 10 seconds in milliseconds
+        this.goldMultiplierKills = 0; // Track kills with gold multiplier active
+        this.goldMultiplierActive = false;
+        this.goldMultiplierKillsRemaining = 0;
+        
         // Visual effects
         this.particles = [];
         this.damageNumbers = [];
@@ -491,12 +504,16 @@ export class Game {
         // Apply movement (frame-rate independent: deltaTime is in ms, normalize to ~16.67ms for 60fps)
         const timeFactor = deltaTime / 16.67;
         
-        // Calculate velocity for boss prediction (before constraints)
-        this.player.vx = dx * this.player.speed;
-        this.player.vy = dy * this.player.speed;
+        // Apply speed boost if active
+        const speedMultiplier = this.activeEffects.speed.multiplier || 1.0;
+        const effectiveSpeed = this.player.speed * speedMultiplier;
         
-        let newX = this.player.x + dx * this.player.speed * timeFactor;
-        let newY = this.player.y + dy * this.player.speed * timeFactor;
+        // Calculate velocity for boss prediction (before constraints)
+        this.player.vx = dx * effectiveSpeed;
+        this.player.vy = dy * effectiveSpeed;
+        
+        let newX = this.player.x + dx * effectiveSpeed * timeFactor;
+        let newY = this.player.y + dy * effectiveSpeed * timeFactor;
         
         // Constrain player within background boundaries
         if (this.imagesLoaded && this.images.background && this.images.background.complete && this.images.background.naturalWidth > 0) {
@@ -742,7 +759,13 @@ export class Game {
             
             if (playerDistSq < collisionDistSq) {
                 // Enemy hit player - use enemy's damage value (scales with rounds)
-                const damage = enemy.damage || 5; // Fallback to 5 if damage not set
+                let damage = enemy.damage || 5; // Fallback to 5 if damage not set
+                
+                // Apply shield effect if active (50% damage reduction)
+                if (this.activeEffects.shield.active) {
+                    damage = Math.ceil(damage * 0.5);
+                }
+                
                 this.player.health -= damage;
                 this.player.hitFlash = 150; // Flash on hit
                 this.enemies.splice(i, 1);
@@ -870,6 +893,20 @@ export class Game {
             
             // Spawn boss death particles
             this.spawnParticles(bossX, bossY, 40, 'bossDeath');
+            
+            // Spawn guaranteed power-ups on boss death (1-2 power-ups)
+            const bossPowerUpCount = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < bossPowerUpCount; i++) {
+                const angle = (i * Math.PI * 2 / bossPowerUpCount) + Math.random() * 0.5;
+                const distance = 50 + Math.random() * 50;
+                const spawnX = bossX + Math.cos(angle) * distance;
+                const spawnY = bossY + Math.sin(angle) * distance;
+                // Boss drops have higher chance for rare types
+                const types = ['speed', 'damage', 'fireRate', 'shield', 'health', 'gold'];
+                const rareTypes = ['shield', 'gold', 'damage'];
+                const type = Math.random() < 0.4 ? rareTypes[Math.floor(Math.random() * rareTypes.length)] : types[Math.floor(Math.random() * types.length)];
+                this.spawnPowerUp(spawnX, spawnY, type);
+            }
             
             // Screen shake on boss death
             this.addScreenShake(1.5, 800);
@@ -1679,7 +1716,12 @@ export class Game {
     
     shoot() {
         const now = Date.now();
-        if (now - this.weapon.lastShot < this.weapon.fireRate) return;
+        
+        // Apply fire rate boost if active
+        const fireRateMultiplier = this.activeEffects.fireRate.multiplier || 1.0;
+        const effectiveFireRate = this.weapon.fireRate / fireRateMultiplier; // Lower fireRate = faster shooting
+        
+        if (now - this.weapon.lastShot < effectiveFireRate) return;
         
         this.weapon.lastShot = now;
         
@@ -1697,6 +1739,10 @@ export class Game {
         const mouseDy = worldY - this.player.y;
         const angle = Math.atan2(mouseDy, mouseDx);
         
+        // Apply damage boost if active
+        const damageMultiplier = this.activeEffects.damage.multiplier || 1.0;
+        const effectiveDamage = this.weapon.damage * damageMultiplier;
+        
         // Create bullet with trail
         this.bullets.push({
             x: this.player.x,
@@ -1704,7 +1750,7 @@ export class Game {
             vx: Math.cos(angle) * this.weapon.bulletSpeed,
             vy: Math.sin(angle) * this.weapon.bulletSpeed,
             radius: 4,
-            damage: this.weapon.damage,
+            damage: effectiveDamage,
             trail: [] // For bullet trail effect
         });
     }
@@ -1740,7 +1786,17 @@ export class Game {
                         // Enemy killed
                         this.kills++; // Increment kill counter
                         
-                        const goldReward = enemy.goldReward || 1;
+                        let goldReward = enemy.goldReward || 1;
+                        
+                        // Apply gold multiplier if active
+                        if (this.goldMultiplierActive) {
+                            goldReward *= 2;
+                            this.goldMultiplierKillsRemaining--;
+                            if (this.goldMultiplierKillsRemaining <= 0) {
+                                this.goldMultiplierActive = false;
+                            }
+                        }
+                        
                         this.score += goldReward * 10; // Score is 10x gold for display
                         if (this.onEnemyKill) {
                             this.onEnemyKill(goldReward);
@@ -1751,6 +1807,9 @@ export class Game {
                         
                         // Spawn gold popup
                         this.spawnGoldPopup(enemy.x, enemy.y, goldReward);
+                        
+                        // Spawn power-up (rare chance)
+                        this.trySpawnPowerUp(enemy.x, enemy.y, enemy.enemyType);
                         
                         this.enemies.splice(j, 1);
                         
@@ -2127,6 +2186,229 @@ export class Game {
         }, 3000);
     }
     
+    trySpawnPowerUp(x, y, enemyType) {
+        // Determine spawn chance based on enemy type
+        let spawnChance = 0.02; // 2% base chance
+        if (enemyType === 'big') {
+            spawnChance = 0.10; // 10% for big enemies
+        } else if (enemyType === 'fast') {
+            spawnChance = 0.05; // 5% for fast enemies
+        }
+        
+        if (Math.random() < spawnChance) {
+            // Weight power-up types based on player health
+            const healthPercent = this.player.health / this.player.maxHealth;
+            let types = ['speed', 'damage', 'fireRate', 'shield', 'health', 'gold'];
+            
+            // If low health, increase chance for health pickups
+            if (healthPercent < 0.3) {
+                // 40% chance for health, 60% for others
+                const type = Math.random() < 0.4 ? 'health' : types[Math.floor(Math.random() * (types.length - 1))];
+                this.spawnPowerUp(x, y, type);
+            } else {
+                // Normal distribution
+                const type = types[Math.floor(Math.random() * types.length)];
+                this.spawnPowerUp(x, y, type);
+            }
+        }
+    }
+    
+    spawnPowerUp(x, y, type) {
+        const powerUpTypes = {
+            'speed': { color: '#00aaff', icon: '→', name: 'Speed' },
+            'damage': { color: '#ff0000', icon: '⚔', name: 'Damage' },
+            'fireRate': { color: '#ffaa00', icon: '⚡', name: 'Fire Rate' },
+            'shield': { color: '#aa00ff', icon: '🛡', name: 'Shield' },
+            'health': { color: '#00ff00', icon: '+', name: 'Health' },
+            'gold': { color: '#ffd700', icon: '★', name: 'Gold' }
+        };
+        
+        const powerUpData = powerUpTypes[type] || powerUpTypes['speed'];
+        
+        this.powerUps.push({
+            x: x,
+            y: y,
+            radius: 12,
+            type: type,
+            color: powerUpData.color,
+            icon: powerUpData.icon,
+            name: powerUpData.name,
+            bobOffset: Math.random() * Math.PI * 2, // Random starting position for bobbing
+            rotation: 0,
+            life: 30000, // Power-ups despawn after 30 seconds if not collected
+            maxLife: 30000
+        });
+    }
+    
+    updatePowerUps(deltaTime) {
+        const timeFactor = deltaTime / 16.67;
+        const playerRadius = this.player.radius;
+        
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            
+            // Update animation
+            powerUp.bobOffset += 0.05 * timeFactor;
+            powerUp.rotation += 0.02 * timeFactor;
+            powerUp.life -= deltaTime;
+            
+            // Remove if expired
+            if (powerUp.life <= 0) {
+                this.powerUps.splice(i, 1);
+                continue;
+            }
+            
+            // Check collection (player collision)
+            const dx = this.player.x - powerUp.x;
+            const dy = this.player.y - powerUp.y;
+            const distSq = dx * dx + dy * dy;
+            const collectionDistSq = (playerRadius + powerUp.radius) ** 2;
+            
+            if (distSq < collectionDistSq) {
+                this.collectPowerUp(powerUp);
+                this.powerUps.splice(i, 1);
+            }
+        }
+    }
+    
+    collectPowerUp(powerUp) {
+        // Visual feedback
+        this.spawnParticles(powerUp.x, powerUp.y, 15, 'gold');
+        this.addScreenShake(0.2, 100);
+        
+        // Apply effect based on type
+        switch (powerUp.type) {
+            case 'speed':
+            case 'damage':
+            case 'fireRate':
+            case 'shield':
+                // Temporary boost - add to active effects
+                this.applyPowerUpEffect(powerUp.type);
+                break;
+            case 'health':
+                // Permanent pickup - restore health
+                const healAmount = Math.ceil(this.player.maxHealth * 0.25);
+                const oldHealth = this.player.health;
+                this.player.health = Math.min(this.player.health + healAmount, this.player.maxHealth);
+                const actualHeal = this.player.health - oldHealth;
+                if (actualHeal > 0) {
+                    this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, actualHeal, true);
+                }
+                break;
+            case 'gold':
+                // Gold multiplier - next 5-10 kills give 2x gold
+                this.goldMultiplierActive = true;
+                this.goldMultiplierKillsRemaining = 5 + Math.floor(Math.random() * 6); // 5-10 kills
+                break;
+        }
+    }
+    
+    applyPowerUpEffect(type) {
+        const effect = this.activeEffects[type];
+        if (!effect) return;
+        
+        // Add timer for this power-up instance
+        effect.timers.push({
+            remaining: this.powerUpDuration,
+            id: Date.now() + Math.random() // Unique ID
+        });
+        
+        // Update count and multiplier
+        effect.count = effect.timers.length;
+        
+        if (type === 'shield') {
+            effect.active = effect.count > 0;
+        } else {
+            // Stacking: each power-up adds 0.5x multiplier (so 2 = 1.0x, 3 = 1.5x, etc.)
+            effect.multiplier = 1.0 + (effect.count - 1) * 0.5;
+        }
+    }
+    
+    removePowerUpEffect(type) {
+        const effect = this.activeEffects[type];
+        if (!effect) return;
+        
+        // Remove expired timers
+        effect.timers = effect.timers.filter(timer => timer.remaining > 0);
+        effect.count = effect.timers.length;
+        
+        if (type === 'shield') {
+            effect.active = effect.count > 0;
+        } else {
+            effect.multiplier = effect.count > 0 ? (1.0 + (effect.count - 1) * 0.5) : 1.0;
+        }
+    }
+    
+    updateActiveEffects(deltaTime) {
+        // Update all effect timers
+        for (const type in this.activeEffects) {
+            const effect = this.activeEffects[type];
+            for (let i = effect.timers.length - 1; i >= 0; i--) {
+                effect.timers[i].remaining -= deltaTime;
+                if (effect.timers[i].remaining <= 0) {
+                    effect.timers.splice(i, 1);
+                }
+            }
+            
+            // Update count and multiplier
+            effect.count = effect.timers.length;
+            if (type === 'shield') {
+                effect.active = effect.count > 0;
+            } else {
+                effect.multiplier = effect.count > 0 ? (1.0 + (effect.count - 1) * 0.5) : 1.0;
+            }
+        }
+    }
+    
+    drawPowerUps() {
+        const viewportLeft = this.cachedViewport.left;
+        const viewportRight = this.cachedViewport.right;
+        const viewportTop = this.cachedViewport.top;
+        const viewportBottom = this.cachedViewport.bottom;
+        
+        for (let i = 0; i < this.powerUps.length; i++) {
+            const powerUp = this.powerUps[i];
+            
+            // Viewport culling
+            if (powerUp.x < viewportLeft || powerUp.x > viewportRight ||
+                powerUp.y < viewportTop || powerUp.y > viewportBottom) {
+                continue;
+            }
+            
+            // Bobbing animation
+            const bobAmount = Math.sin(powerUp.bobOffset) * 5;
+            const drawY = powerUp.y + bobAmount;
+            
+            this.ctx.save();
+            
+            // Glow effect
+            const glowAlpha = 0.3 + Math.sin(powerUp.bobOffset * 2) * 0.2;
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = powerUp.color;
+            
+            // Draw power-up circle (in world space, camera transform already applied)
+            this.ctx.fillStyle = powerUp.color;
+            this.ctx.beginPath();
+            this.ctx.arc(powerUp.x, drawY, powerUp.radius, 0, this.cachedMath.PI2);
+            this.ctx.fill();
+            
+            // Draw border
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            // Draw icon/text
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.shadowBlur = 0;
+            this.ctx.fillText(powerUp.icon, powerUp.x, drawY);
+            
+            this.ctx.restore();
+        }
+    }
+    
     spawnGoldPopup(x, y, gold) {
         // Use damage number system for gold popup (different color)
         if (this.damageNumbers.length >= this.maxDamageNumbers) {
@@ -2228,6 +2510,9 @@ export class Game {
         
         // Draw particles (behind entities but visible)
         this.drawParticles();
+        
+        // Draw power-ups (with viewport culling)
+        this.drawPowerUps();
         
         // Draw bullets (with viewport culling)
         for (let i = 0; i < this.bullets.length; i++) {
