@@ -295,15 +295,33 @@ function hideUpgradeShop() {
     }
 }
 
-// Calculate upgrade cost - 1.2x multiplier per level, rounded up
+// Calculate upgrade cost - optimized scaling (slower growth at high levels)
 function getUpgradeCost(level) {
     // Base cost for level 1
     const baseCost = 10;
-    // Each level costs 1.2x the previous level
-    // Level 1: 10, Level 2: 12, Level 3: 14.4→15, Level 4: 18, etc.
-    const cost = baseCost * Math.pow(1.2, level - 1);
-    // Round up to nearest integer (no decimals)
-    return Math.ceil(cost);
+    
+    // Use a softer exponential curve that grows slower at high levels
+    // Level 1-10: ~1.15x per level
+    // Level 11-30: ~1.12x per level  
+    // Level 31+: ~1.1x per level
+    // This prevents costs from becoming astronomical at high levels
+    
+    if (level <= 10) {
+        // Early levels: 1.15x multiplier
+        const cost = baseCost * Math.pow(1.15, level - 1);
+        return Math.ceil(cost);
+    } else if (level <= 30) {
+        // Mid levels: 1.12x multiplier (slower growth)
+        const earlyCost = baseCost * Math.pow(1.15, 10); // Cost at level 10
+        const cost = earlyCost * Math.pow(1.12, level - 10);
+        return Math.ceil(cost);
+    } else {
+        // High levels: 1.1x multiplier (much slower growth)
+        const earlyCost = baseCost * Math.pow(1.15, 10); // Cost at level 10
+        const midCost = earlyCost * Math.pow(1.12, 20); // Cost at level 30
+        const cost = midCost * Math.pow(1.1, level - 30);
+        return Math.ceil(cost);
+    }
 }
 
 // Update upgrade shop UI

@@ -536,15 +536,30 @@ export class Game {
     }
     
     getDifficultyMultiplier() {
-        // Round-based difficulty: mobs get 2x health per round
-        // Round 1: 1x, Round 2: 2x, Round 3: 4x, etc.
-        return Math.pow(2, this.round - 1);
+        // Optimized round-based difficulty: softer scaling to prevent exponential explosion
+        // Uses tiered multipliers for more balanced progression
+        const round = this.round;
+        
+        if (round === 1) {
+            return 1.0;
+        } else if (round <= 5) {
+            // Early rounds: 1.3x per round (moderate growth)
+            return Math.pow(1.3, round - 1);
+        } else if (round <= 10) {
+            // Mid rounds: 1.25x per round (slower growth)
+            const earlyMultiplier = Math.pow(1.3, 4); // Multiplier at round 5
+            return earlyMultiplier * Math.pow(1.25, round - 5);
+        } else {
+            // Late rounds: 1.2x per round (much slower growth)
+            const earlyMultiplier = Math.pow(1.3, 4); // Multiplier at round 5
+            const midMultiplier = earlyMultiplier * Math.pow(1.25, 5); // Multiplier at round 10
+            return midMultiplier * Math.pow(1.2, round - 10);
+        }
     }
     
     getBossDifficultyMultiplier() {
-        // Boss gets 2x harder per round (health, damage, etc.)
-        // Round 1: 1x, Round 2: 2x, Round 3: 4x, etc.
-        return Math.pow(2, this.round - 1);
+        // Boss gets same optimized scaling as mobs
+        return this.getDifficultyMultiplier();
     }
     
     spawnEnemies(count = 1) {
@@ -587,7 +602,7 @@ export class Game {
                     break;
             }
             
-            // Get round-based difficulty multiplier (2x health per round)
+            // Get round-based difficulty multiplier
             const roundMultiplier = this.getDifficultyMultiplier();
             
             // Determine enemy type: 60% normal, 25% fast, 15% big
@@ -596,6 +611,7 @@ export class Game {
             let baseSpeed = 1.5;
             let health = 10; // Base health values
             let radius = 12;
+            let baseDamage = 5; // Base damage when hitting player
             let goldReward = 1;
             
             if (rand < 0.15) {
@@ -604,6 +620,7 @@ export class Game {
                 baseSpeed = 1.0; // Slower than normal
                 health = 30;
                 radius = 18; // Larger size
+                baseDamage = 8; // Big enemies hit harder
                 goldReward = 5;
             } else if (rand < 0.40) {
                 // Fast enemy (25% chance)
@@ -611,6 +628,7 @@ export class Game {
                 baseSpeed = 1.5 * 1.5; // 1.5x faster
                 health = 5;
                 radius = 15; // Increased from 12 to make speedmob larger
+                baseDamage = 4; // Fast enemies hit slightly less
                 goldReward = 2;
             } else {
                 // Normal enemy (60% chance)
@@ -618,6 +636,7 @@ export class Game {
                 baseSpeed = 1.5;
                 health = 10;
                 radius = 12;
+                baseDamage = 5;
                 goldReward = 1;
             }
             
@@ -626,15 +645,24 @@ export class Game {
             const dy = this.player.y - y;
             const rotation = Math.atan2(dy, dx);
             
-            // Apply round multiplier to health only (mobs get 2x health per round)
-            // Speed and radius stay the same, only health scales
+            // Apply round multiplier to multiple stats (optimized scaling)
+            // Health: full multiplier
+            // Damage: 70% of multiplier (softer scaling)
+            // Size: 30% of multiplier (minimal size increase)
+            // Speed: 20% of multiplier (slight speed increase)
+            const healthMultiplier = roundMultiplier;
+            const damageMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.7; // 70% scaling
+            const sizeMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.3; // 30% scaling
+            const speedMultiplier = 1.0 + (roundMultiplier - 1.0) * 0.2; // 20% scaling
+            
             this.enemies.push({
                 x: x,
                 y: y,
-                radius: radius, // No scaling on radius
-                speed: baseSpeed, // No scaling on speed
-                health: health * roundMultiplier, // Only health scales with rounds
-                maxHealth: health * roundMultiplier,
+                radius: radius * sizeMultiplier, // Slight size increase
+                speed: baseSpeed * speedMultiplier, // Slight speed increase
+                health: health * healthMultiplier, // Full health scaling
+                maxHealth: health * healthMultiplier,
+                damage: baseDamage * damageMultiplier, // Damage scaling
                 rotation: rotation, // Track rotation for directional sprites
                 color: enemyType === 'big' ? '#8b0000' : (enemyType === 'fast' ? '#ff6600' : '#ff0000'),
                 enemyType: enemyType,
@@ -713,8 +741,9 @@ export class Game {
             const collisionDistSq = (enemy.radius + playerRadius) ** 2;
             
             if (playerDistSq < collisionDistSq) {
-                // Enemy hit player
-                this.player.health -= 5;
+                // Enemy hit player - use enemy's damage value (scales with rounds)
+                const damage = enemy.damage || 5; // Fallback to 5 if damage not set
+                this.player.health -= damage;
                 this.player.hitFlash = 150; // Flash on hit
                 this.enemies.splice(i, 1);
                 
@@ -725,7 +754,7 @@ export class Game {
                 this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
                 
                 // Spawn damage number
-                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, 5, false);
+                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, damage, false);
                 
                 if (this.player.health <= 0) {
                     this.player.health = 0;
@@ -1467,8 +1496,22 @@ export class Game {
         // Create round popup element
         const popup = document.createElement('div');
         popup.className = 'round-popup';
-        const multiplier = Math.pow(2, round - 1);
-        popup.innerHTML = `<div class="round-popup-content"><h2>Round ${round}</h2><p>Mobs are now ${multiplier}x stronger!</p></div>`;
+        // Calculate multiplier using the same logic as getDifficultyMultiplier
+        let multiplier;
+        if (round === 1) {
+            multiplier = 1.0;
+        } else if (round <= 5) {
+            multiplier = Math.pow(1.3, round - 1);
+        } else if (round <= 10) {
+            const earlyMultiplier = Math.pow(1.3, 4);
+            multiplier = earlyMultiplier * Math.pow(1.25, round - 5);
+        } else {
+            const earlyMultiplier = Math.pow(1.3, 4);
+            const midMultiplier = earlyMultiplier * Math.pow(1.25, 5);
+            multiplier = midMultiplier * Math.pow(1.2, round - 10);
+        }
+        const multiplierText = multiplier.toFixed(1);
+        popup.innerHTML = `<div class="round-popup-content"><h2>Round ${round}</h2><p>Enemies are stronger!<br>Health: ${multiplierText}x | Damage: ${(1.0 + (multiplier - 1.0) * 0.7).toFixed(1)}x | Size: ${(1.0 + (multiplier - 1.0) * 0.3).toFixed(1)}x</p></div>`;
         document.body.appendChild(popup);
         
         // Animate in
