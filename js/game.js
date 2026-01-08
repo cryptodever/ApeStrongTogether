@@ -21,6 +21,13 @@ export class Game {
         this.kills = 0; // Track total enemies killed for difficulty scaling
         this.round = 1; // Track current round (increases after each boss defeat)
         
+        // Kill streak/combo system
+        this.combo = 0; // Current combo count
+        this.maxCombo = 0; // Highest combo achieved
+        this.lastKillTime = 0; // Timestamp of last kill
+        this.comboDecayTime = 3000; // Combo decays after 3 seconds of no kills
+        this.comboMultiplier = 1.0; // Score multiplier based on combo
+        
         // Image assets
         this.images = {
             player: {}, // Will hold directional ape images
@@ -44,7 +51,8 @@ export class Game {
             y: 0,
             zoom: 2.0, // Start zoomed in at 200% (much closer)
             targetZoom: 2.0, // Target zoom for smooth transitions
-            shake: { intensity: 0, duration: 0, currentTime: 0 }
+            shake: { intensity: 0, duration: 0, currentTime: 0 },
+            flash: { intensity: 0, duration: 0, currentTime: 0, color: '#ffffff' }
         };
         
         // Player
@@ -61,7 +69,15 @@ export class Game {
             vx: 0, // Velocity for prediction
             vy: 0,
             lastX: 0,
-            lastY: 0
+            lastY: 0,
+            // Dash mechanic
+            isDashing: false,
+            dashCooldown: 0,
+            dashCooldownTime: 5000, // 5 seconds cooldown
+            dashDuration: 200, // 200ms dash duration
+            dashTimeRemaining: 0,
+            dashSpeed: 12, // Dash speed multiplier
+            dashTrail: [] // Trail particles for visual effect
         };
         
         // Weapon
@@ -93,6 +109,11 @@ export class Game {
         this.goldMultiplierTimer = 0; // Timer for gold multiplier (in milliseconds)
         this.goldMultiplierDuration = 10000; // 10 seconds duration
         this.powerUpSpawnRateBonus = 0.0; // Bonus added to power-up spawn rate (upgradeable, 0.05% per level)
+        
+        // Gold pickups system
+        this.goldPickups = []; // Array of collectible gold items
+        this.goldMagnetRange = 100; // Range at which gold starts magnetizing
+        this.goldMagnetSpeed = 0.15; // Speed at which gold moves toward player
         
         // Visual effects
         this.particles = [];
@@ -454,6 +475,16 @@ export class Game {
             this.camera.zoom = Math.max(this.camera.zoom - zoomSpeed, this.camera.targetZoom);
         }
         
+        // Check combo decay
+        if (this.combo > 0) {
+            const currentTime = Date.now();
+            if (currentTime - this.lastKillTime >= this.comboDecayTime) {
+                // Combo expired
+                this.combo = 0;
+                this.comboMultiplier = 1.0;
+            }
+        }
+        
         // Spawn boss if 1000 kills reached
         if (this.kills >= 1000 && !this.bossSpawned && !this.boss) {
             this.spawnBoss();
@@ -480,6 +511,7 @@ export class Game {
         this.updateParticles(deltaTime);
         this.updateDamageNumbers(deltaTime);
         this.updateScreenShake(deltaTime);
+        this.updateScreenFlash(deltaTime);
         
         // Update hit flash timers
         if (this.player.hitFlash > 0) {
@@ -495,6 +527,9 @@ export class Game {
         this.updatePowerUps(deltaTime);
         this.updateActiveEffects(deltaTime);
         
+        // Update gold pickups
+        this.updateGoldPickups(deltaTime);
+        
         // Check collisions
         this.checkCollisions();
         
@@ -505,6 +540,31 @@ export class Game {
     }
     
     updatePlayer(deltaTime) {
+        // Update dash cooldown
+        if (this.player.dashCooldown > 0) {
+            this.player.dashCooldown -= deltaTime;
+            if (this.player.dashCooldown < 0) this.player.dashCooldown = 0;
+        }
+        
+        // Update dash duration
+        if (this.player.isDashing) {
+            this.player.dashTimeRemaining -= deltaTime;
+            if (this.player.dashTimeRemaining <= 0) {
+                this.player.isDashing = false;
+                this.player.dashTimeRemaining = 0;
+            }
+        }
+        
+        // Check for dash input (spacebar)
+        if ((this.keys[' '] || this.keys['space']) && !this.player.isDashing && this.player.dashCooldown <= 0) {
+            this.player.isDashing = true;
+            this.player.dashTimeRemaining = this.player.dashDuration;
+            this.player.dashCooldown = this.player.dashCooldownTime;
+            this.addScreenShake(0.2, 100);
+            // Clear dash trail
+            this.player.dashTrail = [];
+        }
+        
         let dx = 0;
         let dy = 0;
         
@@ -523,13 +583,46 @@ export class Game {
         // Apply movement (frame-rate independent: deltaTime is in ms, normalize to ~16.67ms for 60fps)
         const timeFactor = deltaTime / 16.67;
         
-        // Apply speed boost if active
-        const speedMultiplier = this.activeEffects.speed.multiplier || 1.0;
+        // Apply speed boost if active (unless dashing - dash uses fixed speed)
+        const speedMultiplier = this.player.isDashing ? this.player.dashSpeed : (this.activeEffects.speed.multiplier || 1.0);
         const effectiveSpeed = this.player.speed * speedMultiplier;
+        
+        // If no movement input but dashing, dash in last movement direction or toward mouse
+        if (this.player.isDashing && dx === 0 && dy === 0) {
+            // Dash in direction of mouse
+            const screenX = this.mouse.x - this.width / 2;
+            const screenY = this.mouse.y - this.height / 2;
+            const worldX = (screenX / this.camera.zoom) + this.camera.x;
+            const worldY = (screenY / this.camera.zoom) + this.camera.y;
+            const mouseDx = worldX - this.player.x;
+            const mouseDy = worldY - this.player.y;
+            const dist = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
+            if (dist > 0.01) {
+                dx = mouseDx / dist;
+                dy = mouseDy / dist;
+            } else {
+                // Fallback: dash in last movement direction
+                dx = this.player.lastX !== 0 ? (this.player.lastX > 0 ? 1 : -1) : 1;
+                dy = this.player.lastY !== 0 ? (this.player.lastY > 0 ? 1 : -1) : 0;
+            }
+        }
         
         // Calculate velocity for boss prediction (before constraints)
         this.player.vx = dx * effectiveSpeed;
         this.player.vy = dy * effectiveSpeed;
+        
+        // Add dash trail particles
+        if (this.player.isDashing) {
+            if (this.player.dashTrail.length >= 10) {
+                this.player.dashTrail.shift();
+            }
+            this.player.dashTrail.push({ x: this.player.x, y: this.player.y });
+        } else {
+            // Fade trail when not dashing
+            if (this.player.dashTrail.length > 0) {
+                this.player.dashTrail.shift();
+            }
+        }
         
         let newX = this.player.x + dx * effectiveSpeed * timeFactor;
         let newY = this.player.y + dy * effectiveSpeed * timeFactor;
@@ -777,16 +870,20 @@ export class Game {
             const collisionDistSq = (enemy.radius + playerRadius) ** 2;
             
             if (playerDistSq < collisionDistSq) {
-                // Enemy hit player - use enemy's damage value (scales with rounds)
-                let damage = enemy.damage || 5; // Fallback to 5 if damage not set
-                
-                // Apply shield effect if active (50% damage reduction)
-                if (this.activeEffects.shield.active) {
-                    damage = Math.ceil(damage * 0.5);
+                // Enemy hit player - but ignore damage if dashing (invincibility frames)
+                if (!this.player.isDashing) {
+                    // Enemy hit player - use enemy's damage value (scales with rounds)
+                    let damage = enemy.damage || 5; // Fallback to 5 if damage not set
+                    
+                    // Apply shield effect if active (50% damage reduction)
+                    if (this.activeEffects.shield.active) {
+                        damage = Math.ceil(damage * 0.5);
+                    }
+                    
+                    this.player.health -= damage;
+                    this.player.hitFlash = 150; // Flash on hit
                 }
-                
-                this.player.health -= damage;
-                this.player.hitFlash = 150; // Flash on hit
+                // Still remove enemy on contact (even if dashing through)
                 this.enemies.splice(i, 1);
                 
                 // Screen shake on damage
@@ -899,16 +996,24 @@ export class Game {
         
         // Check if boss is dead first, before doing anything else
         if (this.boss.health <= 0) {
-            // Boss defeated - reward gold
+            // Boss defeated - spawn gold pickups around boss
             const goldReward = 50;
-            this.score += goldReward * 10;
-            if (this.onEnemyKill) {
-                this.onEnemyKill(goldReward);
-            }
-            
-            // Save boss position for particles
+            const bossGoldPickupCount = 5 + Math.floor(Math.random() * 5); // 5-9 gold pickups
             const bossX = this.boss.x;
             const bossY = this.boss.y;
+            
+            for (let i = 0; i < bossGoldPickupCount; i++) {
+                const angle = (i * Math.PI * 2 / bossGoldPickupCount) + Math.random() * 0.5;
+                const distance = 30 + Math.random() * 40;
+                const spawnX = bossX + Math.cos(angle) * distance;
+                const spawnY = bossY + Math.sin(angle) * distance;
+                this.spawnGoldPickup(spawnX, spawnY, Math.floor(goldReward / bossGoldPickupCount) + (i < goldReward % bossGoldPickupCount ? 1 : 0));
+            }
+            
+            // Reset combo on boss death (milestone reached)
+            this.combo = 0;
+            this.comboMultiplier = 1.0;
+            this.lastKillTime = 0;
             
             // Spawn boss death particles
             this.spawnParticles(bossX, bossY, 40, 'bossDeath');
@@ -1605,17 +1710,19 @@ export class Game {
                     const dy = this.player.y - projectile.y;
                     const distSq = dx * dx + dy * dy;
                     if (distSq < (this.player.radius + projectile.explosionRadius) ** 2) {
-                        // Mine exploded - damage player
-                        this.player.health -= projectile.damage;
-                        this.player.hitFlash = 150;
-                        this.addScreenShake(0.8, 300);
-                        this.spawnParticles(projectile.x, projectile.y, 20, 'hit');
-                        this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
-                        this.bossProjectiles.splice(i, 1);
-                        if (this.player.health <= 0) {
-                            this.player.health = 0;
-                            this.die();
+                        // Mine exploded - damage player (unless dashing)
+                        if (!this.player.isDashing) {
+                            this.player.health -= projectile.damage;
+                            this.player.hitFlash = 150;
+                            this.addScreenShake(0.8, 300);
+                            this.spawnParticles(projectile.x, projectile.y, 20, 'hit');
+                            this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
+                            if (this.player.health <= 0) {
+                                this.player.health = 0;
+                                this.die();
+                            }
                         }
+                        this.bossProjectiles.splice(i, 1);
                         continue;
                     }
                 }
@@ -1659,24 +1766,27 @@ export class Game {
                 const playerCollisionDistSq = (projectile.radius + this.player.radius) ** 2;
                 
                 if (playerDistSq < playerCollisionDistSq) {
-                    // Player hit by projectile
-                    this.player.health -= projectile.damage;
-                    this.player.hitFlash = 150;
-                    this.bossProjectiles.splice(i, 1);
-                    
-                    // Screen shake on damage
-                    this.addScreenShake(0.5, 200);
-                    
-                    // Spawn hit particles
-                    this.spawnParticles(this.player.x, this.player.y, 15, 'blood');
-                    
-                    // Spawn damage number
-                    this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
-                    
-                    if (this.player.health <= 0) {
-                        this.player.health = 0;
-                        this.die();
+                    // Player hit by projectile (unless dashing)
+                    if (!this.player.isDashing) {
+                        this.player.health -= projectile.damage;
+                        this.player.hitFlash = 150;
+                        
+                        // Screen shake on damage
+                        this.addScreenShake(0.5, 200);
+                        
+                        // Spawn hit particles
+                        this.spawnParticles(this.player.x, this.player.y, 15, 'blood');
+                        
+                        // Spawn damage number
+                        this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
+                        
+                        if (this.player.health <= 0) {
+                            this.player.health = 0;
+                            this.die();
+                        }
                     }
+                    // Remove projectile on contact (even if dashing through)
+                    this.bossProjectiles.splice(i, 1);
                     continue;
                 }
             }
@@ -1863,6 +1973,41 @@ export class Game {
                         // Enemy killed
                         this.kills++; // Increment kill counter
                         
+                        // Update combo system
+                        const currentTime = Date.now();
+                        if (currentTime - this.lastKillTime < this.comboDecayTime) {
+                            // Within combo window, increment combo
+                            this.combo++;
+                        } else {
+                            // Combo expired, reset to 1
+                            this.combo = 1;
+                        }
+                        this.lastKillTime = currentTime;
+                        
+                        // Update max combo
+                        if (this.combo > this.maxCombo) {
+                            this.maxCombo = this.combo;
+                        }
+                        
+                        // Calculate combo multiplier (1x at 0-4, 2x at 5-9, 3x at 10-19, 5x at 20+)
+                        if (this.combo >= 20) {
+                            this.comboMultiplier = 5.0;
+                        } else if (this.combo >= 10) {
+                            this.comboMultiplier = 3.0;
+                        } else if (this.combo >= 5) {
+                            this.comboMultiplier = 2.0;
+                        } else {
+                            this.comboMultiplier = 1.0;
+                        }
+                        
+                        // Visual feedback for combo milestones
+                        if (this.combo === 5 || this.combo === 10 || this.combo === 20 || this.combo === 50) {
+                            this.addScreenShake(0.3, 200);
+                            this.spawnComboNotification(enemy.x, enemy.y, this.combo);
+                        }
+                        
+                        // Reset combo on boss death (handled separately below)
+                        
                         let goldReward = enemy.goldReward || 1;
                         
                         // Apply gold multiplier if active (timer-based)
@@ -1870,16 +2015,33 @@ export class Game {
                             goldReward *= 2;
                         }
                         
+                        // Apply combo multiplier to gold and score
+                        goldReward = Math.floor(goldReward * this.comboMultiplier);
                         this.score += goldReward * 10; // Score is 10x gold for display
+                        
                         if (this.onEnemyKill) {
                             this.onEnemyKill(goldReward);
                         }
                         
-                        // Spawn death particles
-                        this.spawnParticles(enemy.x, enemy.y, 25, 'enemyDeath'); // Increased count for better visibility
+                        // Spawn death particles (more particles with higher combo)
+                        const particleCount = Math.min(30 + (this.combo * 3), 60);
+                        this.spawnParticles(enemy.x, enemy.y, particleCount, 'enemyDeath');
                         
-                        // Spawn gold popup
-                        this.spawnGoldPopup(enemy.x, enemy.y, goldReward);
+                        // Screen flash on kill (subtle)
+                        if (this.combo >= 5) {
+                            // More intense flash at higher combos
+                            const flashIntensity = Math.min(0.2 + (this.combo * 0.01), 0.5);
+                            this.addScreenFlash(flashIntensity, 100);
+                        }
+                        
+                        // Larger explosion effect for big enemies
+                        if (enemy.enemyType === 'big') {
+                            this.addScreenShake(0.4, 200);
+                            this.spawnParticles(enemy.x, enemy.y, 40, 'enemyDeath');
+                        }
+                        
+                        // Spawn gold pickup (collectible item)
+                        this.spawnGoldPickup(enemy.x, enemy.y, goldReward);
                         
                         // Spawn power-up (rare chance)
                         this.trySpawnPowerUp(enemy.x, enemy.y, enemy.enemyType);
@@ -1935,24 +2097,27 @@ export class Game {
             const minDistSq = (projectile.radius + playerRadius) ** 2;
             
             if (distSq < minDistSq) {
-                // Player hit by boss projectile
-                this.player.health -= projectile.damage;
-                this.player.hitFlash = 150; // Flash on hit
-                this.bossProjectiles.splice(i, 1);
-                
-                // Screen shake on damage
-                this.addScreenShake(0.5, 200);
-                
-                // Spawn hit particles
-                this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
-                
-                // Spawn damage number
-                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
-                
-                if (this.player.health <= 0) {
-                    this.player.health = 0;
-                    this.die();
+                // Player hit by boss projectile (unless dashing)
+                if (!this.player.isDashing) {
+                    this.player.health -= projectile.damage;
+                    this.player.hitFlash = 150; // Flash on hit
+                    
+                    // Screen shake on damage
+                    this.addScreenShake(0.5, 200);
+                    
+                    // Spawn hit particles
+                    this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
+                    
+                    // Spawn damage number
+                    this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, projectile.damage, false);
+                    
+                    if (this.player.health <= 0) {
+                        this.player.health = 0;
+                        this.die();
+                    }
                 }
+                // Remove projectile on contact (even if dashing through)
+                this.bossProjectiles.splice(i, 1);
             }
         }
     }
@@ -1963,14 +2128,24 @@ export class Game {
         this.score = 0;
         this.kills = 0; // Reset kill counter
         this.round = 1; // Reset round
+        this.combo = 0; // Reset combo
+        this.maxCombo = 0; // Reset max combo
+        this.comboMultiplier = 1.0; // Reset combo multiplier
+        this.lastKillTime = 0; // Reset last kill time
         this.player.health = this.player.maxHealth;
         this.player.hitFlash = 0;
+        this.player.isDashing = false;
+        this.player.dashCooldown = 0;
+        this.player.dashTimeRemaining = 0;
+        this.player.dashTrail = [];
         this.enemies = [];
         this.bullets = [];
         this.boss = null;
         this.bossProjectiles = [];
         this.bossSpawned = false;
         this.lastSpawn = Date.now();
+        this.powerUps = [];
+        this.goldPickups = [];
         // Reset camera zoom to starting value
         this.camera.zoom = 2.0;
         this.camera.targetZoom = 2.0;
@@ -1978,6 +2153,7 @@ export class Game {
         this.particles = [];
         this.damageNumbers = [];
         this.camera.shake = { intensity: 0, duration: 0, currentTime: 0 };
+        this.camera.flash = { intensity: 0, duration: 0, currentTime: 0, color: '#ffffff' };
     }
     
     pause() {
@@ -2009,7 +2185,8 @@ export class Game {
             'bossDeath': ['#ff0000', '#ff0088', '#8800ff', '#ff6600'],
             'hit': ['#ffff00', '#ffaa00', '#ffffff'],
             'gold': ['#ffd700', '#ffaa00', '#ffff00'],
-            'blood': ['#8b0000', '#a00000', '#cc0000', '#990000', '#660000'] // Darker blood reds
+            'blood': ['#8b0000', '#a00000', '#cc0000', '#990000', '#660000'], // Darker blood reds
+            'combo': ['#4ade80', '#22c55e', '#fbbf24', '#f97316', '#ffffff'] // Green to orange for combo
         };
         
         const colorSet = colors[type] || colors['hit'];
@@ -2132,6 +2309,26 @@ export class Game {
             if (this.camera.shake.currentTime < 0) {
                 this.camera.shake.currentTime = 0;
                 this.camera.shake.intensity = 0;
+            }
+        }
+    }
+    
+    addScreenFlash(intensity, duration, color = '#ffffff') {
+        // Add screen flash effect
+        if (intensity > this.camera.flash.intensity || this.camera.flash.currentTime <= 0) {
+            this.camera.flash.intensity = intensity;
+            this.camera.flash.duration = duration;
+            this.camera.flash.currentTime = duration;
+            this.camera.flash.color = color;
+        }
+    }
+    
+    updateScreenFlash(deltaTime) {
+        if (this.camera.flash.currentTime > 0) {
+            this.camera.flash.currentTime -= deltaTime;
+            if (this.camera.flash.currentTime < 0) {
+                this.camera.flash.currentTime = 0;
+                this.camera.flash.intensity = 0;
             }
         }
     }
@@ -2514,26 +2711,201 @@ export class Game {
         }
     }
     
-    spawnGoldPopup(x, y, gold) {
-        // Use damage number system for gold popup (different color)
+    spawnGoldPickup(x, y, gold) {
+        // Spawn a collectible gold item with magnet effect
+        this.goldPickups.push({
+            x: x,
+            y: y,
+            value: gold,
+            radius: 8,
+            life: 15000, // 15 seconds to collect
+            maxLife: 15000,
+            collected: false,
+            magnetActive: false,
+            bobOffset: Math.random() * Math.PI * 2,
+            rotation: Math.random() * Math.PI * 2
+        });
+        
+        // Also spawn gold particles for visual feedback
+        this.spawnParticles(x, y, 8, 'gold');
+    }
+    
+    updateGoldPickups(deltaTime) {
+        const timeFactor = deltaTime / 16.67;
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        const playerRadius = this.player.radius;
+        
+        for (let i = this.goldPickups.length - 1; i >= 0; i--) {
+            const pickup = this.goldPickups[i];
+            
+            // Update animation
+            pickup.bobOffset += 0.05 * timeFactor;
+            pickup.rotation += 0.02 * timeFactor;
+            pickup.life -= deltaTime;
+            
+            // Remove if expired
+            if (pickup.life <= 0 || pickup.collected) {
+                this.goldPickups.splice(i, 1);
+                continue;
+            }
+            
+            // Calculate distance to player
+            const dx = playerX - pickup.x;
+            const dy = playerY - pickup.y;
+            const distSq = dx * dx + dy * dy;
+            const dist = Math.sqrt(distSq);
+            
+            // Activate magnet if within range
+            if (dist < this.goldMagnetRange) {
+                pickup.magnetActive = true;
+            }
+            
+            // Move toward player if magnet is active
+            if (pickup.magnetActive && dist > 5) {
+                const speed = this.goldMagnetSpeed * timeFactor * (this.player.speed * 2); // Faster magnet
+                const moveX = (dx / dist) * speed;
+                const moveY = (dy / dist) * speed;
+                pickup.x += moveX;
+                pickup.y += moveY;
+            }
+            
+            // Check collection (player collision)
+            const collisionDistSq = (pickup.radius + playerRadius) ** 2;
+            if (distSq < collisionDistSq) {
+                // Collect gold
+                this.collectGoldPickup(pickup);
+                this.goldPickups.splice(i, 1);
+            }
+        }
+    }
+    
+    collectGoldPickup(pickup) {
+        pickup.collected = true;
+        
+        // Visual feedback
+        this.spawnParticles(pickup.x, pickup.y, 12, 'gold');
+        
+        // Spawn floating "+X GOLD" text
         if (this.damageNumbers.length >= this.maxDamageNumbers) {
             this.damageNumbers.shift();
+        }
+        this.damageNumbers.push({
+            x: pickup.x,
+            y: pickup.y,
+            startY: pickup.y,
+            value: `+${pickup.value} GOLD`,
+            life: 1200,
+            maxLife: 1200,
+            color: '#ffd700',
+            size: 18,
+            isGold: true
+        });
+        
+        // Trigger gold callback (this actually adds the gold)
+        if (this.onEnemyKill) {
+            this.onEnemyKill(pickup.value);
+        }
+    }
+    
+    drawGoldPickups() {
+        for (let i = 0; i < this.goldPickups.length; i++) {
+            const pickup = this.goldPickups[i];
+            
+            // Skip if not in viewport
+            const viewportLeft = this.cachedViewport.left;
+            const viewportRight = this.cachedViewport.right;
+            const viewportTop = this.cachedViewport.top;
+            const viewportBottom = this.cachedViewport.bottom;
+            
+            if (pickup.x < viewportLeft || pickup.x > viewportRight ||
+                pickup.y < viewportTop || pickup.y > viewportBottom) {
+                continue;
+            }
+            
+            this.ctx.save();
+            
+            // Bob animation
+            const bobY = Math.sin(pickup.bobOffset) * 3;
+            
+            // Draw gold coin
+            const size = pickup.radius * 2;
+            this.ctx.translate(pickup.x, pickup.y + bobY);
+            this.ctx.rotate(pickup.rotation);
+            
+            // Glow effect if magnet is active
+            if (pickup.magnetActive) {
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, size * 1.5, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1;
+            }
+            
+            // Draw coin
+            this.ctx.fillStyle = '#ffd700';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, size, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Coin outline
+            this.ctx.strokeStyle = '#ffaa00';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            // "$" symbol
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold ' + (size * 0.8) + 'px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('$', 0, 0);
+            
+            this.ctx.restore();
+        }
+    }
+    
+    spawnComboNotification(x, y, combo) {
+        // Spawn a special combo notification
+        if (this.damageNumbers.length >= this.maxDamageNumbers) {
+            this.damageNumbers.shift();
+        }
+        
+        let text = '';
+        let color = '#ffffff';
+        let size = 24;
+        
+        if (combo === 5) {
+            text = 'x2 COMBO!';
+            color = '#4ade80';
+        } else if (combo === 10) {
+            text = 'x3 COMBO!';
+            color = '#22c55e';
+            size = 28;
+        } else if (combo === 20) {
+            text = 'x5 COMBO!';
+            color = '#fbbf24';
+            size = 32;
+        } else if (combo === 50) {
+            text = 'x5 LEGENDARY!';
+            color = '#f97316';
+            size = 36;
         }
         
         this.damageNumbers.push({
             x: x,
             y: y,
             startY: y,
-            value: `+${gold}`,
-            life: 1500,
-            maxLife: 1500,
-            color: '#ffd700',
-            size: 20,
-            isGold: true
+            value: text,
+            life: 2000,
+            maxLife: 2000,
+            color: color,
+            size: size,
+            isCombo: true
         });
         
-        // Also spawn gold particles
-        this.spawnParticles(x, y, 8, 'gold');
+        // Extra particles for combo milestones
+        this.spawnParticles(x, y, 30, 'combo');
     }
     
     render() {
@@ -2619,6 +2991,9 @@ export class Game {
         // Draw power-ups (with viewport culling)
         this.drawPowerUps();
         
+        // Draw gold pickups (with viewport culling)
+        this.drawGoldPickups();
+        
         // Draw bullets (with viewport culling)
         for (let i = 0; i < this.bullets.length; i++) {
             const bullet = this.bullets[i];
@@ -2646,6 +3021,22 @@ export class Game {
         
         // Draw damage numbers (screen space, after camera transform)
         this.drawDamageNumbers();
+        
+        // Draw screen flash (screen space, on top of everything)
+        this.drawScreenFlash();
+    }
+    
+    drawScreenFlash() {
+        if (this.camera.flash.currentTime > 0) {
+            const flashProgress = this.camera.flash.currentTime / this.camera.flash.duration;
+            const flashAlpha = this.camera.flash.intensity * flashProgress * 0.3; // 30% opacity max
+            
+            this.ctx.save();
+            this.ctx.globalAlpha = flashAlpha;
+            this.ctx.fillStyle = this.camera.flash.color;
+            this.ctx.fillRect(0, 0, this.width, this.height);
+            this.ctx.restore();
+        }
     }
     
     drawGrid() {
@@ -2676,6 +3067,28 @@ export class Game {
     drawPlayer() {
         this.ctx.save();
         
+        // Draw dash trail
+        if (this.player.dashTrail && this.player.dashTrail.length > 1) {
+            this.ctx.strokeStyle = '#00aaff';
+            this.ctx.lineWidth = 3;
+            this.ctx.globalAlpha = 0.6;
+            this.ctx.beginPath();
+            const trail = this.player.dashTrail;
+            this.ctx.moveTo(trail[0].x, trail[0].y);
+            for (let i = 1; i < trail.length; i++) {
+                const alpha = i / trail.length;
+                this.ctx.globalAlpha = alpha * 0.4;
+                this.ctx.lineTo(trail[i].x, trail[i].y);
+            }
+            this.ctx.stroke();
+            this.ctx.globalAlpha = 1;
+        }
+        
+        // Dash visual effect - semi-transparent during dash
+        if (this.player.isDashing) {
+            this.ctx.globalAlpha = 0.7;
+        }
+        
         // Hit flash effect
         if (this.player.hitFlash > 0) {
             const flashAlpha = (this.player.hitFlash / 150) * 0.5;
@@ -2684,7 +3097,7 @@ export class Game {
             this.ctx.beginPath();
             this.ctx.arc(this.player.x, this.player.y, this.player.radius * 3.5, 0, Math.PI * 2);
             this.ctx.fill();
-            this.ctx.globalAlpha = 1;
+            this.ctx.globalAlpha = this.player.isDashing ? 0.7 : 1;
         }
         
         if (!this.imagesLoaded) {
