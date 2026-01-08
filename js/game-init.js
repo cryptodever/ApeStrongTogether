@@ -416,7 +416,7 @@ async function initializeGame() {
     const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
     const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 0, Level 2 = 0.0005 (0.05%), etc.
     
-    // Pickup range: each level adds +15 to base range of 100
+    // Pickup range: each level adds +8 to base range of 100 (reduced from +15 for balance)
     // Ensure pickupRange exists, default to 1 if not set
     if (!characterUpgrades.hasOwnProperty('pickupRange') || characterUpgrades.pickupRange === undefined || characterUpgrades.pickupRange === null || isNaN(characterUpgrades.pickupRange)) {
         characterUpgrades.pickupRange = 1;
@@ -424,7 +424,7 @@ async function initializeGame() {
         await saveGameData();
     }
     const pickupRangeLevel = Number(characterUpgrades.pickupRange) || 1;
-    const pickupRange = 100 + (pickupRangeLevel - 1) * 15; // Level 1 = 100, Level 2 = 115, Level 3 = 130, etc.
+    const pickupRange = 100 + (pickupRangeLevel - 1) * 8; // Level 1 = 100, Level 2 = 108, Level 3 = 116, etc.
     
     console.log('Initializing game with pickup range:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange, 'Full characterUpgrades:', JSON.stringify(characterUpgrades)); // Debug log
     
@@ -832,8 +832,8 @@ function updateUpgradeShopUI() {
     const pickupRangeLevel = characterUpgrades.pickupRange || 1;
     if (pickupRangeLevelEl) pickupRangeLevelEl.textContent = pickupRangeLevel;
     const basePickupRange = 100;
-    const currentPickupRange = basePickupRange + (pickupRangeLevel - 1) * 15;
-    const nextPickupRange = pickupRangeLevel >= 100 ? currentPickupRange : basePickupRange + pickupRangeLevel * 15;
+    const currentPickupRange = basePickupRange + (pickupRangeLevel - 1) * 8; // +8 per level
+    const nextPickupRange = pickupRangeLevel >= 100 ? currentPickupRange : basePickupRange + pickupRangeLevel * 8;
     if (pickupRangeCurrentEl) pickupRangeCurrentEl.textContent = currentPickupRange + 'px';
     if (pickupRangeNextEl) pickupRangeNextEl.textContent = pickupRangeLevel >= 100 ? 'MAX' : nextPickupRange + 'px';
     const pickupRangeCost = pickupRangeLevel >= 100 ? 0 : getUpgradeCost(pickupRangeLevel);
@@ -891,7 +891,7 @@ async function purchaseUpgrade(upgradeType) {
     if (game && typeof game.setPickupRange === 'function') {
         if (upgradeType === 'pickupRange') {
             const pickupRangeLevel = Number(characterUpgrades.pickupRange) || 1;
-            const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            const pickupRange = 100 + (pickupRangeLevel - 1) * 8; // +8 per level
             console.log('Updating pickup range to:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange); // Debug log
             game.setPickupRange(pickupRange);
         } else if (upgradeType === 'apeSpeed') {
@@ -965,7 +965,7 @@ async function refundUpgrade(upgradeType) {
         if (upgradeType === 'pickupRange') {
             // Read the value AFTER increment (should be the new level)
             const pickupRangeLevel = characterUpgrades.pickupRange || 1;
-            const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            const pickupRange = 100 + (pickupRangeLevel - 1) * 8; // +8 per level
             console.log('Updating pickup range to:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange, 'Full object:', JSON.stringify(characterUpgrades)); // Debug log
             game.setPickupRange(pickupRange);
         } else if (upgradeType === 'apeSpeed') {
