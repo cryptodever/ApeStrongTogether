@@ -64,21 +64,24 @@ let userGameData = {
             weaponFireRate: 1,
             apeHealth: 1,
             apeSpeed: 1,
-            powerUpSpawnRate: 1
+            powerUpSpawnRate: 1,
+            pickupRange: 1
         },
         character2: {
             weaponDamage: 1,
             weaponFireRate: 1,
             apeHealth: 1,
             apeSpeed: 1,
-            powerUpSpawnRate: 1
+            powerUpSpawnRate: 1,
+            pickupRange: 1
         },
         character3: {
             weaponDamage: 1,
             weaponFireRate: 1,
             apeHealth: 1,
             apeSpeed: 1,
-            powerUpSpawnRate: 1
+            powerUpSpawnRate: 1,
+            pickupRange: 1
         }
     }
 };
@@ -96,6 +99,7 @@ let fireRateLevelEl, fireRateCostEl, upgradeFireRateBtn, fireRateCurrentEl, fire
 let healthLevelEl, healthCostEl, upgradeHealthBtn, healthCurrentEl, healthNextEl, refundHealthBtn;
 let speedLevelEl, speedCostEl, upgradeSpeedBtn, speedCurrentEl, speedNextEl, refundSpeedBtn;
 let powerUpSpawnRateLevelEl, powerUpSpawnRateCostEl, upgradePowerUpSpawnRateBtn, powerUpSpawnRateCurrentEl, powerUpSpawnRateNextEl, refundPowerUpSpawnRateBtn;
+let pickupRangeLevelEl, pickupRangeCostEl, upgradePickupRangeBtn, pickupRangeCurrentEl, pickupRangeNextEl, refundPickupRangeBtn;
 let restartBtn;
 let startScreenEl, startGameBtn;
 let pauseMenuEl, resumeBtn, restartPauseBtn;
@@ -139,21 +143,24 @@ async function loadUserGameData() {
                         weaponFireRate: oldUpgrades.weaponFireRate || 1,
                         apeHealth: oldUpgrades.apeHealth || 1,
                         apeSpeed: oldUpgrades.apeSpeed || 1,
-                        powerUpSpawnRate: oldUpgrades.powerUpSpawnRate || 1
+                        powerUpSpawnRate: oldUpgrades.powerUpSpawnRate || 1,
+                        pickupRange: oldUpgrades.pickupRange || 1
                     },
                     character2: {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     },
                     character3: {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     }
                 };
                 // Save migrated data
@@ -166,21 +173,24 @@ async function loadUserGameData() {
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     },
                     character2: data.gameUpgrades.character2 || {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     },
                     character3: data.gameUpgrades.character3 || {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     }
                 };
             }
@@ -207,21 +217,24 @@ async function loadUserGameData() {
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     },
                     character2: {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     },
                     character3: {
                         weaponDamage: 1,
                         weaponFireRate: 1,
                         apeHealth: 1,
                         apeSpeed: 1,
-                        powerUpSpawnRate: 1
+                        powerUpSpawnRate: 1,
+                        pickupRange: 1
                     }
                 },
                 createdAt: serverTimestamp()
@@ -402,6 +415,10 @@ function initializeGame() {
     const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
     const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 0, Level 2 = 0.0005 (0.05%), etc.
     
+    // Pickup range: each level adds +15 to base range of 100
+    const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+    const pickupRange = 100 + (pickupRangeLevel - 1) * 15; // Level 1 = 100, Level 2 = 115, Level 3 = 130, etc.
+    
     // Create game instance with character type
     game = new Game(
         canvasEl,
@@ -412,6 +429,8 @@ function initializeGame() {
     
     // Set power-up spawn rate bonus
     game.setPowerUpSpawnRateBonus(powerUpSpawnRateBonus);
+    // Set pickup range
+    game.setPickupRange(pickupRange);
     
     // Apply upgrades
     game.setWeaponDamage(weaponDamage);
@@ -520,7 +539,8 @@ async function unlockCharacter(characterId) {
             weaponFireRate: 1,
             apeHealth: 1,
             apeSpeed: 1,
-            powerUpSpawnRate: 1
+            powerUpSpawnRate: 1,
+            pickupRange: 1
         };
     }
     
@@ -796,6 +816,23 @@ function updateUpgradeShopUI() {
     }
     if (refundPowerUpSpawnRateBtn) {
         refundPowerUpSpawnRateBtn.disabled = powerUpSpawnRateLevel <= 1;
+    }
+    
+    // Pickup Range upgrade
+    const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+    if (pickupRangeLevelEl) pickupRangeLevelEl.textContent = pickupRangeLevel;
+    const basePickupRange = 100;
+    const currentPickupRange = basePickupRange + (pickupRangeLevel - 1) * 15;
+    const nextPickupRange = pickupRangeLevel >= 100 ? currentPickupRange : basePickupRange + pickupRangeLevel * 15;
+    if (pickupRangeCurrentEl) pickupRangeCurrentEl.textContent = currentPickupRange + 'px';
+    if (pickupRangeNextEl) pickupRangeNextEl.textContent = pickupRangeLevel >= 100 ? 'MAX' : nextPickupRange + 'px';
+    const pickupRangeCost = pickupRangeLevel >= 100 ? 0 : getUpgradeCost(pickupRangeLevel);
+    if (pickupRangeCostEl) pickupRangeCostEl.textContent = pickupRangeLevel >= 100 ? 'MAX' : pickupRangeCost.toLocaleString();
+    if (upgradePickupRangeBtn) {
+        upgradePickupRangeBtn.disabled = pickupRangeLevel >= 100 || userGameData.gameGold < pickupRangeCost;
+    }
+    if (refundPickupRangeBtn) {
+        refundPickupRangeBtn.disabled = pickupRangeLevel <= 1;
     }
 }
 
@@ -1133,6 +1170,13 @@ function setupEventListeners() {
     powerUpSpawnRateNextEl = document.getElementById('powerUpSpawnRateNext');
     refundPowerUpSpawnRateBtn = document.getElementById('refundPowerUpSpawnRate');
     
+    pickupRangeLevelEl = document.getElementById('pickupRangeLevel');
+    pickupRangeCostEl = document.getElementById('pickupRangeCost');
+    upgradePickupRangeBtn = document.getElementById('upgradePickupRange');
+    pickupRangeCurrentEl = document.getElementById('pickupRangeCurrent');
+    pickupRangeNextEl = document.getElementById('pickupRangeNext');
+    refundPickupRangeBtn = document.getElementById('refundPickupRange');
+    
     restartBtn = document.getElementById('restartBtn');
     
     // Start screen elements
@@ -1166,6 +1210,10 @@ function setupEventListeners() {
         upgradePowerUpSpawnRateBtn.addEventListener('click', () => purchaseUpgrade('powerUpSpawnRate'));
     }
     
+    if (upgradePickupRangeBtn) {
+        upgradePickupRangeBtn.addEventListener('click', () => purchaseUpgrade('pickupRange'));
+    }
+    
     // Refund buttons
     if (refundDamageBtn) {
         refundDamageBtn.addEventListener('click', () => refundUpgrade('weaponDamage'));
@@ -1185,6 +1233,10 @@ function setupEventListeners() {
     
     if (refundPowerUpSpawnRateBtn) {
         refundPowerUpSpawnRateBtn.addEventListener('click', () => refundUpgrade('powerUpSpawnRate'));
+    }
+    
+    if (refundPickupRangeBtn) {
+        refundPickupRangeBtn.addEventListener('click', () => refundUpgrade('pickupRange'));
     }
     
     // Restart button

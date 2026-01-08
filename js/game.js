@@ -112,7 +112,8 @@ export class Game {
         
         // Gold pickups system
         this.goldPickups = []; // Array of collectible gold items
-        this.goldMagnetRange = 100; // Range at which gold starts magnetizing
+        this.goldMagnetRange = 100; // Range at which gold starts magnetizing (will be set by upgrade)
+        this.pickupRange = 100; // Pickup range for gold and power-ups (set by upgrade)
         this.goldMagnetSpeed = 0.15; // Speed at which gold moves toward player
         
         // Visual effects
@@ -2028,11 +2029,11 @@ export class Game {
                         const particleCount = Math.min(30 + (this.combo * 3), 60);
                         this.spawnParticles(enemy.x, enemy.y, particleCount, 'enemyDeath');
                         
-                        // Screen flash on kill (subtle)
-                        if (this.combo >= 5) {
-                            // More intense flash at higher combos
-                            const flashIntensity = Math.min(0.2 + (this.combo * 0.01), 0.5);
-                            this.addScreenFlash(flashIntensity, 100);
+                        // Screen flash on kill (very subtle)
+                        if (this.combo >= 10) {
+                            // Much more subtle flash at higher combos only
+                            const flashIntensity = Math.min(0.05 + (this.combo * 0.002), 0.15);
+                            this.addScreenFlash(flashIntensity, 80);
                         }
                         
                         // Larger explosion effect for big enemies
@@ -2538,14 +2539,35 @@ export class Game {
             }
             
             // Check collection (player collision)
-            // Use larger collection radius for easier pickup
+            // Use pickupRange upgrade for magnet effect and collection
             const dx = this.player.x - powerUp.x;
             const dy = this.player.y - powerUp.y;
             const distSq = dx * dx + dy * dy;
-            const collectionRadius = playerRadius + powerUp.radius + 8; // Add 8px buffer for easier pickup
-            const collectionDistSq = collectionRadius * collectionRadius;
+            const dist = Math.sqrt(distSq);
             
-            if (distSq < collectionDistSq) {
+            // Activate magnet if within pickup range
+            if (dist < this.pickupRange) {
+                // Move power-up toward player (magnet effect)
+                const timeFactor = deltaTime / 16.67;
+                const speed = 0.15 * timeFactor * (this.player.speed * 2);
+                const moveX = (dx / dist) * speed;
+                const moveY = (dy / dist) * speed;
+                powerUp.x += moveX;
+                powerUp.y += moveY;
+                
+                // Recalculate distance after movement
+                const newDx = this.player.x - powerUp.x;
+                const newDy = this.player.y - powerUp.y;
+                const newDistSq = newDx * newDx + newDy * newDy;
+            }
+            
+            // Check collection after potential magnet movement
+            const collectionRadius = playerRadius + powerUp.radius + 5; // Collection buffer
+            const collectionDistSq = collectionRadius * collectionRadius;
+            const finalDistSq = (dist < this.pickupRange) ? 
+                (this.player.x - powerUp.x) ** 2 + (this.player.y - powerUp.y) ** 2 : distSq;
+            
+            if (finalDistSq < collectionDistSq) {
                 this.collectPowerUp(powerUp);
                 this.powerUps.splice(i, 1);
             }
@@ -2718,7 +2740,7 @@ export class Game {
             x: x,
             y: y,
             value: gold,
-            radius: 5, // Reduced from 8 to make pickups smaller
+            radius: 3, // Further reduced to make pickups smaller
             life: 15000, // 15 seconds to collect
             maxLife: 15000,
             collected: false,
@@ -2757,8 +2779,8 @@ export class Game {
             const distSq = dx * dx + dy * dy;
             const dist = Math.sqrt(distSq);
             
-            // Activate magnet if within range
-            if (dist < this.goldMagnetRange) {
+            // Activate magnet if within range (uses pickupRange upgrade)
+            if (dist < this.pickupRange) {
                 pickup.magnetActive = true;
             }
             
@@ -2852,7 +2874,7 @@ export class Game {
             
             // Coin outline
             this.ctx.strokeStyle = '#ffaa00';
-            this.ctx.lineWidth = 1.5; // Reduced proportionally with smaller size
+            this.ctx.lineWidth = 1; // Reduced further for smaller coin
             this.ctx.stroke();
             
             // "$" symbol
@@ -3002,9 +3024,6 @@ export class Game {
             }
         }
         
-        // Draw gold pickups (after bullets so they're more visible and don't overlap enemies)
-        this.drawGoldPickups();
-        
         // Draw boss projectiles (with viewport culling)
         for (let i = 0; i < this.bossProjectiles.length; i++) {
             const projectile = this.bossProjectiles[i];
@@ -3018,6 +3037,9 @@ export class Game {
         // Draw player
         this.drawPlayer();
         
+        // Draw gold pickups last (after player) so they're always visible and never overlap enemies
+        this.drawGoldPickups();
+        
         this.ctx.restore();
         
         // Draw damage numbers (screen space, after camera transform)
@@ -3030,7 +3052,7 @@ export class Game {
     drawScreenFlash() {
         if (this.camera.flash.currentTime > 0) {
             const flashProgress = this.camera.flash.currentTime / this.camera.flash.duration;
-            const flashAlpha = this.camera.flash.intensity * flashProgress * 0.3; // 30% opacity max
+            const flashAlpha = this.camera.flash.intensity * flashProgress * 0.15; // Reduced to 15% max opacity for much subtler flashes
             
             this.ctx.save();
             this.ctx.globalAlpha = flashAlpha;
@@ -3496,6 +3518,11 @@ export class Game {
     
     setPowerUpSpawnRateBonus(bonus) {
         this.powerUpSpawnRateBonus = bonus;
+    }
+    
+    setPickupRange(range) {
+        this.goldMagnetRange = range;
+        this.pickupRange = range;
     }
     
     restart() {
