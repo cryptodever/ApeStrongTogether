@@ -5992,17 +5992,17 @@ body.profile-body > *:not(.modal-overlay) {
 .combo-display {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     font-weight: 700;
     transition: color 0.3s ease;
 }
 
 .combo-value {
-    font-size: 1.25rem;
+    font-size: 1rem;
 }
 
 .combo-multiplier {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 600;
     opacity: 0.8;
 }
@@ -13431,7 +13431,7 @@ body.leaderboard-body > * {
     top: 0;
     left: 0;
     right: 0;
-    padding: 1.5rem;
+    padding: 1rem;
     pointer-events: none;
     z-index: 10;
     opacity: 0;
@@ -13455,25 +13455,25 @@ body.leaderboard-body > * {
 
 .game-stats {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
     flex-wrap: wrap;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .game-stats .stat-item {
     background: rgba(0, 0, 0, 0.8);
-    border: 2px solid rgba(0, 255, 0, 0.5);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
+    border: 1.5px solid rgba(0, 255, 0, 0.5);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    min-width: 150px;
+    gap: 0.5rem;
+    min-width: 110px;
     pointer-events: auto;
 }
 
 .game-stats .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
     text-transform: uppercase;
@@ -13481,7 +13481,7 @@ body.leaderboard-body > * {
 }
 
 .game-stats .stat-value {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: #00ff00;
     font-weight: 700;
     font-family: 'Space Grotesk', sans-serif;
@@ -13489,11 +13489,11 @@ body.leaderboard-body > * {
 
 .health-bar {
     flex: 1;
-    height: 8px;
+    height: 6px;
     background: rgba(255, 0, 0, 0.3);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
-    min-width: 80px;
+    min-width: 60px;
 }
 
 .health-fill {
@@ -14643,16 +14643,20 @@ body.leaderboard-body > * {
     }
     
     .game-stats {
-        gap: 1rem;
+        gap: 0.75rem;
     }
     
     .game-stats .stat-item {
-        min-width: 120px;
-        padding: 0.5rem 0.75rem;
+        min-width: 100px;
+        padding: 0.4rem 0.6rem;
     }
     
     .game-stats .stat-value {
-        font-size: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .game-stats .stat-label {
+        font-size: 0.65rem;
     }
     
     .game-controls-hint {

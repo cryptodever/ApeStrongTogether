@@ -871,9 +871,10 @@ export class Game {
             
             if (playerDistSq < collisionDistSq) {
                 // Enemy hit player - but ignore damage if dashing (invincibility frames)
+                let damage = 0;
                 if (!this.player.isDashing) {
                     // Enemy hit player - use enemy's damage value (scales with rounds)
-                    let damage = enemy.damage || 5; // Fallback to 5 if damage not set
+                    damage = enemy.damage || 5; // Fallback to 5 if damage not set
                     
                     // Apply shield effect if active (50% damage reduction)
                     if (this.activeEffects.shield.active) {
@@ -882,23 +883,23 @@ export class Game {
                     
                     this.player.health -= damage;
                     this.player.hitFlash = 150; // Flash on hit
+                    
+                    // Screen shake on damage
+                    this.addScreenShake(0.5, 200);
+                    
+                    // Spawn hit particles
+                    this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
+                    
+                    // Spawn damage number
+                    this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, damage, false);
+                    
+                    if (this.player.health <= 0) {
+                        this.player.health = 0;
+                        this.die();
+                    }
                 }
                 // Still remove enemy on contact (even if dashing through)
                 this.enemies.splice(i, 1);
-                
-                // Screen shake on damage
-                this.addScreenShake(0.5, 200);
-                
-                // Spawn hit particles
-                this.spawnParticles(this.player.x, this.player.y, 15, 'blood'); // Increased count for better visibility
-                
-                // Spawn damage number
-                this.spawnDamageNumber(this.player.x, this.player.y - this.player.radius, damage, false);
-                
-                if (this.player.health <= 0) {
-                    this.player.health = 0;
-                    this.die();
-                }
             }
         }
     }
