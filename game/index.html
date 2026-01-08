@@ -72,9 +72,20 @@
                             <span class="stat-label">Score</span>
                             <span class="stat-value" id="scoreValue">0</span>
                         </div>
+                        <div class="stat-item combo-display" id="comboDisplay" style="display: none;">
+                            <span class="stat-label">Combo</span>
+                            <span class="stat-value combo-value" id="comboValue">0</span>
+                            <span class="combo-multiplier" id="comboMultiplier">x1</span>
+                        </div>
                     </div>
                     <div class="game-controls-hint">
-                        <p>WASD/Arrows to move • Click/Tap to shoot</p>
+                        <p>WASD/Arrows to move • Click/Tap to shoot • Spacebar to dash</p>
+                    </div>
+                    <div class="dash-indicator" id="dashIndicator" style="display: none;">
+                        <div class="dash-cooldown-bar">
+                            <div class="dash-cooldown-fill" id="dashCooldownFill"></div>
+                        </div>
+                        <span class="dash-label">Dash</span>
                     </div>
                 </div>
                 

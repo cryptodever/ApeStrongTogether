@@ -87,6 +87,7 @@ let userGameData = {
 let canvasEl;
 let healthFillEl, healthValueEl;
 let goldValueEl, scoreValueEl;
+let comboDisplayEl, comboValueEl, comboMultiplierEl;
 let upgradeShopEl;
 let powerUpsDisplayEl;
 let shopGoldEl;
@@ -907,6 +908,77 @@ function updateGameUI() {
     
     if (scoreValueEl) {
         scoreValueEl.textContent = score;
+    }
+    
+    // Update dash cooldown indicator
+    if (game && game.player) {
+        let dashIndicatorEl = document.getElementById('dashIndicator');
+        let dashCooldownFillEl = document.getElementById('dashCooldownFill');
+        
+        if (!dashIndicatorEl) {
+            dashIndicatorEl = document.createElement('div');
+            dashIndicatorEl.id = 'dashIndicator';
+            dashIndicatorEl.className = 'dash-indicator';
+            dashIndicatorEl.innerHTML = `
+                <div class="dash-cooldown-bar">
+                    <div class="dash-cooldown-fill" id="dashCooldownFill"></div>
+                </div>
+                <span class="dash-label">Dash</span>
+            `;
+            // Find game UI overlay and append to it
+            const gameUIEl = document.querySelector('.game-ui-overlay');
+            if (gameUIEl) {
+                gameUIEl.appendChild(dashIndicatorEl);
+            }
+            dashCooldownFillEl = document.getElementById('dashCooldownFill');
+        }
+        
+        if (dashIndicatorEl && dashCooldownFillEl) {
+            if (game.player.dashCooldown > 0) {
+                dashIndicatorEl.style.display = 'flex';
+                const cooldownPercent = ((game.player.dashCooldownTime - game.player.dashCooldown) / game.player.dashCooldownTime) * 100;
+                dashCooldownFillEl.style.width = cooldownPercent + '%';
+            } else {
+                dashIndicatorEl.style.display = 'none';
+            }
+        }
+    }
+    
+    // Update combo display
+    if (game && game.combo !== undefined) {
+        if (!comboDisplayEl) {
+            comboDisplayEl = document.getElementById('comboDisplay');
+            comboValueEl = document.getElementById('comboValue');
+            comboMultiplierEl = document.getElementById('comboMultiplier');
+        }
+        
+        if (comboDisplayEl && comboValueEl && comboMultiplierEl) {
+            if (game.combo > 0) {
+                comboDisplayEl.style.display = 'flex';
+                comboValueEl.textContent = game.combo;
+                
+                // Update multiplier display
+                let multiplierText = 'x1';
+                let multiplierColor = '#ffffff';
+                
+                if (game.combo >= 20) {
+                    multiplierText = 'x5';
+                    multiplierColor = '#f97316';
+                } else if (game.combo >= 10) {
+                    multiplierText = 'x3';
+                    multiplierColor = '#22c55e';
+                } else if (game.combo >= 5) {
+                    multiplierText = 'x2';
+                    multiplierColor = '#4ade80';
+                }
+                
+                comboMultiplierEl.textContent = multiplierText;
+                comboMultiplierEl.style.color = multiplierColor;
+                comboDisplayEl.style.color = multiplierColor;
+            } else {
+                comboDisplayEl.style.display = 'none';
+            }
+        }
     }
     
     // Update power-ups display
