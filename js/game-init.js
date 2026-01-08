@@ -417,8 +417,14 @@ function initializeGame() {
     const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005; // Level 1 = 0, Level 2 = 0.0005 (0.05%), etc.
     
     // Pickup range: each level adds +15 to base range of 100
+    // Ensure pickupRange exists, default to 1 if not set
+    if (!characterUpgrades.hasOwnProperty('pickupRange') || characterUpgrades.pickupRange === undefined || characterUpgrades.pickupRange === null) {
+        characterUpgrades.pickupRange = 1;
+    }
     const pickupRangeLevel = characterUpgrades.pickupRange || 1;
     const pickupRange = 100 + (pickupRangeLevel - 1) * 15; // Level 1 = 100, Level 2 = 115, Level 3 = 130, etc.
+    
+    console.log('Initializing game with pickup range:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades:', characterUpgrades); // Debug log
     
     // Create game instance with character type
     game = new Game(
@@ -432,6 +438,7 @@ function initializeGame() {
     game.setPowerUpSpawnRateBonus(powerUpSpawnRateBonus);
     // Set pickup range
     game.setPickupRange(pickupRange);
+    console.log('Game pickup range after setPickupRange:', game.pickupRange); // Debug log
     
     // Apply upgrades
     game.setWeaponDamage(weaponDamage);
@@ -844,6 +851,11 @@ async function purchaseUpgrade(upgradeType) {
     const characterUpgrades = userGameData.gameUpgrades[characterKey];
     
     if (!characterUpgrades) return;
+    
+    // Ensure upgrade level exists (default to 1 if undefined)
+    if (characterUpgrades[upgradeType] === undefined) {
+        characterUpgrades[upgradeType] = 1;
+    }
     
     const level = characterUpgrades[upgradeType];
     const cost = getUpgradeCost(level);
