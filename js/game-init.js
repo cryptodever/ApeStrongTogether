@@ -339,7 +339,7 @@ async function saveScoreToLeaderboard(score) {
 }
 
 // Initialize game instance
-function initializeGame() {
+async function initializeGame() {
     canvasEl = document.getElementById('gameCanvas');
     if (!canvasEl) return;
     
