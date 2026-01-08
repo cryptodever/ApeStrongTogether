@@ -2718,7 +2718,7 @@ export class Game {
             x: x,
             y: y,
             value: gold,
-            radius: 8,
+            radius: 5, // Reduced from 8 to make pickups smaller
             life: 15000, // 15 seconds to collect
             maxLife: 15000,
             collected: false,
@@ -2852,7 +2852,7 @@ export class Game {
             
             // Coin outline
             this.ctx.strokeStyle = '#ffaa00';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = 1.5; // Reduced proportionally with smaller size
             this.ctx.stroke();
             
             // "$" symbol
@@ -2992,9 +2992,6 @@ export class Game {
         // Draw power-ups (with viewport culling)
         this.drawPowerUps();
         
-        // Draw gold pickups (with viewport culling)
-        this.drawGoldPickups();
-        
         // Draw bullets (with viewport culling)
         for (let i = 0; i < this.bullets.length; i++) {
             const bullet = this.bullets[i];
@@ -3004,6 +3001,9 @@ export class Game {
                 this.drawBullet(bullet);
             }
         }
+        
+        // Draw gold pickups (after bullets so they're more visible and don't overlap enemies)
+        this.drawGoldPickups();
         
         // Draw boss projectiles (with viewport culling)
         for (let i = 0; i < this.bossProjectiles.length; i++) {
