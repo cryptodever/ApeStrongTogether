@@ -357,7 +357,8 @@ function initializeGame() {
         weaponFireRate: 1,
         apeHealth: 1,
         apeSpeed: 1,
-        powerUpSpawnRate: 1
+        powerUpSpawnRate: 1,
+        pickupRange: 1
     };
     
     // Calculate upgrade values
@@ -860,6 +861,49 @@ async function purchaseUpgrade(upgradeType) {
     characterUpgrades[upgradeType] += 1;
     
     await saveGameData();
+    
+    // Update running game instance if it exists
+    if (game) {
+        if (upgradeType === 'pickupRange') {
+            const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+            const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            game.setPickupRange(pickupRange);
+        } else if (upgradeType === 'apeSpeed') {
+            const baseSpeed = 3;
+            const speedLevel = characterUpgrades.apeSpeed || 1;
+            const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05);
+            game.setPlayerSpeed(playerSpeed);
+        } else if (upgradeType === 'weaponDamage') {
+            const baseDamage = 5;
+            const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
+            game.setWeaponDamage(weaponDamage);
+        } else if (upgradeType === 'weaponFireRate') {
+            function getCharacterFireRate(characterType, level) {
+                let startFireRate, endFireRate;
+                switch(characterType) {
+                    case 1: startFireRate = 300; endFireRate = 50; break;
+                    case 2: startFireRate = 600; endFireRate = 200; break;
+                    case 3: startFireRate = 900; endFireRate = 300; break;
+                    default: startFireRate = 300; endFireRate = 50;
+                }
+                if (level >= 100) return endFireRate;
+                const progress = (level - 1) / 99;
+                return startFireRate - (startFireRate - endFireRate) * progress;
+            }
+            const fireRateLevel = characterUpgrades.weaponFireRate;
+            const weaponFireRate = getCharacterFireRate(userGameData.selectedCharacter, fireRateLevel);
+            game.setWeaponFireRate(weaponFireRate);
+        } else if (upgradeType === 'apeHealth') {
+            const baseHealth = 20;
+            const playerHealth = baseHealth * characterUpgrades.apeHealth;
+            game.setPlayerHealth(playerHealth);
+        } else if (upgradeType === 'powerUpSpawnRate') {
+            const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
+            const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005;
+            game.setPowerUpSpawnRateBonus(powerUpSpawnRateBonus);
+        }
+    }
+    
     updateUpgradeShopUI();
     updateUI();
 }
@@ -889,6 +933,49 @@ async function refundUpgrade(upgradeType) {
     userGameData.gameGold += refundAmount;
     
     await saveGameData();
+    
+    // Update running game instance if it exists
+    if (game) {
+        if (upgradeType === 'pickupRange') {
+            const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+            const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            game.setPickupRange(pickupRange);
+        } else if (upgradeType === 'apeSpeed') {
+            const baseSpeed = 3;
+            const speedLevel = characterUpgrades.apeSpeed || 1;
+            const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05);
+            game.setPlayerSpeed(playerSpeed);
+        } else if (upgradeType === 'weaponDamage') {
+            const baseDamage = 5;
+            const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
+            game.setWeaponDamage(weaponDamage);
+        } else if (upgradeType === 'weaponFireRate') {
+            function getCharacterFireRate(characterType, level) {
+                let startFireRate, endFireRate;
+                switch(characterType) {
+                    case 1: startFireRate = 300; endFireRate = 50; break;
+                    case 2: startFireRate = 600; endFireRate = 200; break;
+                    case 3: startFireRate = 900; endFireRate = 300; break;
+                    default: startFireRate = 300; endFireRate = 50;
+                }
+                if (level >= 100) return endFireRate;
+                const progress = (level - 1) / 99;
+                return startFireRate - (startFireRate - endFireRate) * progress;
+            }
+            const fireRateLevel = characterUpgrades.weaponFireRate;
+            const weaponFireRate = getCharacterFireRate(userGameData.selectedCharacter, fireRateLevel);
+            game.setWeaponFireRate(weaponFireRate);
+        } else if (upgradeType === 'apeHealth') {
+            const baseHealth = 20;
+            const playerHealth = baseHealth * characterUpgrades.apeHealth;
+            game.setPlayerHealth(playerHealth);
+        } else if (upgradeType === 'powerUpSpawnRate') {
+            const powerUpSpawnRateLevel = characterUpgrades.powerUpSpawnRate || 1;
+            const powerUpSpawnRateBonus = (powerUpSpawnRateLevel - 1) * 0.0005;
+            game.setPowerUpSpawnRateBonus(powerUpSpawnRateBonus);
+        }
+    }
+    
     updateUpgradeShopUI();
     updateUI();
 }

@@ -2545,8 +2545,11 @@ export class Game {
             const distSq = dx * dx + dy * dy;
             const dist = Math.sqrt(distSq);
             
+            // Ensure pickupRange is set (fallback to 100)
+            const pickupRange = this.pickupRange || 100;
+            
             // Activate magnet if within pickup range
-            if (dist < this.pickupRange) {
+            if (dist < pickupRange) {
                 // Move power-up toward player (magnet effect)
                 const timeFactor = deltaTime / 16.67;
                 const speed = 0.15 * timeFactor * (this.player.speed * 2);
@@ -2564,7 +2567,7 @@ export class Game {
             // Check collection after potential magnet movement
             const collectionRadius = playerRadius + powerUp.radius + 5; // Collection buffer
             const collectionDistSq = collectionRadius * collectionRadius;
-            const finalDistSq = (dist < this.pickupRange) ? 
+            const finalDistSq = (dist < pickupRange) ? 
                 (this.player.x - powerUp.x) ** 2 + (this.player.y - powerUp.y) ** 2 : distSq;
             
             if (finalDistSq < collectionDistSq) {
@@ -2759,6 +2762,9 @@ export class Game {
         const playerY = this.player.y;
         const playerRadius = this.player.radius;
         
+        // Ensure pickupRange is set (fallback to goldMagnetRange or 100)
+        const pickupRange = this.pickupRange || this.goldMagnetRange || 100;
+        
         for (let i = this.goldPickups.length - 1; i >= 0; i--) {
             const pickup = this.goldPickups[i];
             
@@ -2780,7 +2786,7 @@ export class Game {
             const dist = Math.sqrt(distSq);
             
             // Activate magnet if within range (uses pickupRange upgrade)
-            if (dist < this.pickupRange) {
+            if (dist < pickupRange) {
                 pickup.magnetActive = true;
             }
             
