@@ -64,19 +64,35 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         // Clean up listener when user logs out
         if (profileListener) {
-            profileListener();
+            try {
+                profileListener();
+            } catch (e) {
+                // Ignore cleanup errors (listener may already be terminated)
+            }
             profileListener = null;
         }
         if (followersListener) {
-            followersListener();
+            try {
+                followersListener();
+            } catch (e) {
+                // Ignore cleanup errors (listener may already be terminated)
+            }
             followersListener = null;
         }
         if (followingListener) {
-            followingListener();
+            try {
+                followingListener();
+            } catch (e) {
+                // Ignore cleanup errors (listener may already be terminated)
+            }
             followingListener = null;
         }
         if (postsListener) {
-            postsListener();
+            try {
+                postsListener();
+            } catch (e) {
+                // Ignore cleanup errors (listener may already be terminated)
+            }
             postsListener = null;
         }
         currentUser = null;
@@ -1583,12 +1599,21 @@ async function loadFollowStats(userId) {
         const followingRef = collection(db, 'following', userId, 'following');
         
         // Set up real-time listeners
+        // Clean up existing listeners first
         if (followersListener) {
-            followersListener();
+            try {
+                followersListener();
+            } catch (e) {
+                // Ignore cleanup errors
+            }
             followersListener = null;
         }
         if (followingListener) {
-            followingListener();
+            try {
+                followingListener();
+            } catch (e) {
+                // Ignore cleanup errors
+            }
             followingListener = null;
         }
         
@@ -1620,15 +1645,18 @@ async function loadFollowStats(userId) {
                     }
                 },
                 (error) => {
-                    // Only suppress warnings for other users' profiles, not own profile
+                    // Suppress expected errors (listener cleanup, permission denied for other users)
                     if (error.code === 'permission-denied') {
                         if (userId !== currentUser?.uid) {
-                            // Expected for other users' profiles
-                            console.warn('Permission denied for followers listener (viewing other user profile)');
+                            // Expected for other users' profiles - silently ignore
+                            return;
                         } else {
                             // This shouldn't happen for own profile - rules might not be deployed
                             console.error('Permission denied for own followers listener. Make sure Firestore rules are deployed.');
                         }
+                    } else if (error.code === 'cancelled' || error.message?.includes('terminate') || error.message?.includes('Listen')) {
+                        // Listener was cancelled/terminated - this is normal during cleanup
+                        return;
                     } else {
                         console.error('Error in followers listener:', error);
                     }
@@ -1644,15 +1672,18 @@ async function loadFollowStats(userId) {
                     }
                 },
                 (error) => {
-                    // Only suppress warnings for other users' profiles, not own profile
+                    // Suppress expected errors (listener cleanup, permission denied for other users)
                     if (error.code === 'permission-denied') {
                         if (userId !== currentUser?.uid) {
-                            // Expected for other users' profiles
-                            console.warn('Permission denied for following listener (viewing other user profile)');
+                            // Expected for other users' profiles - silently ignore
+                            return;
                         } else {
                             // This shouldn't happen for own profile - rules might not be deployed
                             console.error('Permission denied for own following listener. Make sure Firestore rules are deployed.');
                         }
+                    } else if (error.code === 'cancelled' || error.message?.includes('terminate') || error.message?.includes('Listen')) {
+                        // Listener was cancelled/terminated - this is normal during cleanup
+                        return;
                     } else {
                         console.error('Error in following listener:', error);
                     }
