@@ -740,7 +740,7 @@ export class Game {
             let enemyType = 'normal';
             let baseSpeed = 1.5;
             let health = 10; // Base health values
-            let radius = 12;
+            let radius = 15; // Increased from 12 by 25% (12 * 1.25 = 15)
             let baseDamage = 5; // Base damage when hitting player
             let goldReward = 1;
             
@@ -749,7 +749,7 @@ export class Game {
                 enemyType = 'big';
                 baseSpeed = 1.0; // Slower than normal
                 health = 30;
-                radius = 18; // Larger size
+                radius = 23; // Increased from 18 by 25% (18 * 1.25 = 22.5, rounded to 23)
                 baseDamage = 8; // Big enemies hit harder
                 goldReward = 5;
             } else if (rand < 0.40) {
@@ -757,7 +757,7 @@ export class Game {
                 enemyType = 'fast';
                 baseSpeed = 1.5 * 1.5; // 1.5x faster
                 health = 5;
-                radius = 15; // Increased from 12 to make speedmob larger
+                radius = 19; // Increased from 15 by 25% (15 * 1.25 = 18.75, rounded to 19)
                 baseDamage = 4; // Fast enemies hit slightly less
                 goldReward = 2;
             } else {
@@ -765,7 +765,7 @@ export class Game {
                 enemyType = 'normal';
                 baseSpeed = 1.5;
                 health = 10;
-                radius = 12;
+                radius = 15; // Increased from 12 by 25% (12 * 1.25 = 15)
                 baseDamage = 5;
                 goldReward = 1;
             }
@@ -958,7 +958,7 @@ export class Game {
         this.boss = {
             x: 0,
             y: 0,
-            radius: 40 * bossMultiplier,
+            radius: 60 * bossMultiplier, // Increased from 40 by 50% (40 * 1.5 = 60)
             health: 20000 * bossMultiplier,
             maxHealth: 20000 * bossMultiplier,
             speed: 0,
@@ -1279,18 +1279,18 @@ export class Game {
             
             const roundMultiplier = this.getDifficultyMultiplier();
             let health = 10;
-            let radius = 12;
+            let radius = 15; // Increased from 12 by 25% (12 * 1.25 = 15)
             let baseSpeed = 1.5;
             let baseDamage = 5;
             
             if (enemyType === 'big') {
                 health = 30;
-                radius = 18;
+                radius = 23; // Increased from 18 by 25% (18 * 1.25 = 22.5, rounded to 23)
                 baseSpeed = 1.0;
                 baseDamage = 8;
             } else if (enemyType === 'fast') {
                 health = 5;
-                radius = 15;
+                radius = 19; // Increased from 15 by 25% (15 * 1.25 = 18.75, rounded to 19)
                 baseSpeed = 1.5 * 1.5;
                 baseDamage = 4;
             }
