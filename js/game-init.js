@@ -418,13 +418,15 @@ function initializeGame() {
     
     // Pickup range: each level adds +15 to base range of 100
     // Ensure pickupRange exists, default to 1 if not set
-    if (!characterUpgrades.hasOwnProperty('pickupRange') || characterUpgrades.pickupRange === undefined || characterUpgrades.pickupRange === null) {
+    if (!characterUpgrades.hasOwnProperty('pickupRange') || characterUpgrades.pickupRange === undefined || characterUpgrades.pickupRange === null || isNaN(characterUpgrades.pickupRange)) {
         characterUpgrades.pickupRange = 1;
+        // Save the default value if it was missing
+        await saveGameData();
     }
-    const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+    const pickupRangeLevel = Number(characterUpgrades.pickupRange) || 1;
     const pickupRange = 100 + (pickupRangeLevel - 1) * 15; // Level 1 = 100, Level 2 = 115, Level 3 = 130, etc.
     
-    console.log('Initializing game with pickup range:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades:', characterUpgrades); // Debug log
+    console.log('Initializing game with pickup range:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange, 'Full characterUpgrades:', JSON.stringify(characterUpgrades)); // Debug log
     
     // Create game instance with character type
     game = new Game(
@@ -870,15 +872,27 @@ async function purchaseUpgrade(upgradeType) {
     }
     
     userGameData.gameGold -= cost;
-    characterUpgrades[upgradeType] += 1;
+    // Ensure the upgrade exists before incrementing
+    if (characterUpgrades[upgradeType] === undefined || characterUpgrades[upgradeType] === null || isNaN(characterUpgrades[upgradeType])) {
+        characterUpgrades[upgradeType] = 1;
+    }
+    characterUpgrades[upgradeType] = Number(characterUpgrades[upgradeType]) + 1;
+    
+    console.log('Purchase upgrade:', upgradeType, 'New level:', characterUpgrades[upgradeType], 'characterUpgrades:', JSON.stringify(characterUpgrades)); // Debug
     
     await saveGameData();
+    console.log('Game data saved. userGameData.gameUpgrades:', JSON.stringify(userGameData.gameUpgrades)); // Debug
+    
+    // Update UI first
+    updateUpgradeShopUI();
+    updateUI();
     
     // Update running game instance if it exists
-    if (game) {
+    if (game && typeof game.setPickupRange === 'function') {
         if (upgradeType === 'pickupRange') {
-            const pickupRangeLevel = characterUpgrades.pickupRange || 1;
+            const pickupRangeLevel = Number(characterUpgrades.pickupRange) || 1;
             const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            console.log('Updating pickup range to:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange); // Debug log
             game.setPickupRange(pickupRange);
         } else if (upgradeType === 'apeSpeed') {
             const baseSpeed = 3;
@@ -947,10 +961,12 @@ async function refundUpgrade(upgradeType) {
     await saveGameData();
     
     // Update running game instance if it exists
-    if (game) {
+    if (game && game.setPickupRange) {
         if (upgradeType === 'pickupRange') {
+            // Read the value AFTER increment (should be the new level)
             const pickupRangeLevel = characterUpgrades.pickupRange || 1;
             const pickupRange = 100 + (pickupRangeLevel - 1) * 15;
+            console.log('Updating pickup range to:', pickupRange, 'from level:', pickupRangeLevel, 'characterUpgrades.pickupRange:', characterUpgrades.pickupRange, 'Full object:', JSON.stringify(characterUpgrades)); // Debug log
             game.setPickupRange(pickupRange);
         } else if (upgradeType === 'apeSpeed') {
             const baseSpeed = 3;
