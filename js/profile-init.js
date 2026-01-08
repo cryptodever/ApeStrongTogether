@@ -127,6 +127,18 @@ async function loadProfile() {
         }
     }
     
+    // Show/hide follow button
+    const followBtn = document.getElementById('profileFollowBtn');
+    if (followBtn) {
+        if (!isViewingOwnProfile && currentUser) {
+            followBtn.style.display = 'block';
+            // Update follow button state
+            updateFollowButton(targetUserId);
+        } else {
+            followBtn.style.display = 'none';
+        }
+    }
+    
     try {
         const userDocRef = doc(db, 'users', targetUserId);
         
@@ -269,6 +281,11 @@ async function loadProfile() {
                 
                 // Load followers/following counts
                 await loadFollowStats(targetUserId);
+                
+                // Update follow button state if viewing another user's profile
+                if (!isViewingOwnProfile && currentUser) {
+                    await updateFollowButton(targetUserId);
+                }
                 
                 // Sync followers quest progress after loading stats
                 // Wait a bit for the listener to set followersCount
@@ -1247,6 +1264,42 @@ function setupEventListeners() {
         });
     }
     
+    // Follow/Unfollow button
+    const followBtn = document.getElementById('profileFollowBtn');
+    if (followBtn) {
+        followBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!currentUser) {
+                alert('Please log in to follow users');
+                return;
+            }
+            
+            const targetUserId = viewingUserId || currentUser.uid;
+            if (targetUserId === currentUser.uid) {
+                return; // Can't follow yourself
+            }
+            
+            // Disable button and show loading state
+            followBtn.disabled = true;
+            const originalText = followBtn.textContent;
+            followBtn.textContent = originalText === 'Follow' ? 'Following...' : 'Unfollowing...';
+            
+            try {
+                const isFollowing = await checkIfFollowing(targetUserId);
+                if (isFollowing) {
+                    await unfollowUser(targetUserId);
+                } else {
+                    await followUser(targetUserId);
+                }
+            } catch (error) {
+                console.error('Error toggling follow status:', error);
+                // Button state will be restored in followUser/unfollowUser error handlers
+            }
+        });
+    }
+    
     // Modal close buttons
     const closeFollowersModal = document.getElementById('closeFollowersModal');
     if (closeFollowersModal) {
@@ -1641,6 +1694,9 @@ async function followUser(targetUserId) {
         
         await batch.commit();
         
+        // Update follow button state
+        await updateFollowButton(targetUserId);
+        
         // Track quest progress: daily_follow_3 (only if this was a new follow)
         try {
             const { updateQuestProgress } = await import('/js/quests-init.js');
@@ -1654,6 +1710,12 @@ async function followUser(targetUserId) {
     } catch (error) {
         console.error('Error following user:', error);
         alert('Failed to follow user. Please try again.');
+        // Re-enable button on error
+        const followBtn = document.getElementById('profileFollowBtn');
+        if (followBtn) {
+            followBtn.disabled = false;
+            await updateFollowButton(targetUserId);
+        }
     }
 }
 
@@ -1673,9 +1735,18 @@ async function unfollowUser(targetUserId) {
         batch.delete(followersRef);
         
         await batch.commit();
+        
+        // Update follow button state
+        await updateFollowButton(targetUserId);
     } catch (error) {
         console.error('Error unfollowing user:', error);
         alert('Failed to unfollow user. Please try again.');
+        // Re-enable button on error
+        const followBtn = document.getElementById('profileFollowBtn');
+        if (followBtn) {
+            followBtn.disabled = false;
+            await updateFollowButton(targetUserId);
+        }
     }
 }
 
@@ -1716,6 +1787,22 @@ async function checkIfFollowing(targetUserId) {
     } catch (error) {
         console.error('Error checking follow status:', error);
         return false;
+    }
+}
+
+// Update follow button state
+async function updateFollowButton(targetUserId) {
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
+    
+    const followBtn = document.getElementById('profileFollowBtn');
+    if (!followBtn) return;
+    
+    try {
+        const isFollowing = await checkIfFollowing(targetUserId);
+        followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+        followBtn.disabled = false;
+    } catch (error) {
+        console.error('Error updating follow button:', error);
     }
 }
 
