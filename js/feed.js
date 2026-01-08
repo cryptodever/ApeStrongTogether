@@ -15,12 +15,14 @@ import {
     doc,
     getDoc,
     getDocs,
+    setDoc,
     updateDoc,
     onSnapshot,
     serverTimestamp,
     Timestamp,
     increment
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { withBase } from './base-url.js';
 import {
     ref,
     uploadBytes,
@@ -435,6 +437,16 @@ async function handlePostSubmit(e) {
 function loadPosts() {
     if (!postsFeedEl) return;
     
+    // Check for post parameter in URL for scrolling
+    const urlParams = new URLSearchParams(window.location.search);
+    const postParam = urlParams.get('post');
+    if (postParam) {
+        // Clear URL parameter after reading
+        window.history.replaceState({}, '', window.location.pathname);
+        // Will scroll after posts are rendered
+        setTimeout(() => scrollToPost(postParam), 1000);
+    }
+    
     // Clear existing listener
     if (postsListener) {
         postsListener();
@@ -580,6 +592,19 @@ function renderPost(post) {
     const voteScore = post.voteScore || 0;
     const canDelete = currentUser && post.userId === currentUser.uid;
     
+    // Check if post can be edited (within 5 minutes)
+    const canEdit = currentUser && post.userId === currentUser.uid && post.createdAt && (() => {
+        const createdTime = post.createdAt.toMillis ? post.createdAt.toMillis() : (post.createdAt.seconds * 1000 || Date.now());
+        return (Date.now() - createdTime) < 5 * 60 * 1000;
+    })();
+    
+    // Check if post was edited
+    const editedAt = post.editedAt?.toDate ? post.editedAt.toDate() : (post.editedAt?.seconds ? new Date(post.editedAt.seconds * 1000) : null);
+    const editedIndicator = editedAt ? `<span class="post-edited-indicator">edited ${getTimeAgo(editedAt)}</span>` : '';
+    
+    // Check if user can report (authenticated and not post author)
+    const canReport = currentUser && post.userId !== currentUser.uid;
+    
     return `
         <div class="post-card" data-post-id="${post.id}">
             <div class="post-header">
@@ -589,9 +614,13 @@ function renderPost(post) {
                     <div class="post-author-meta">
                         <span class="post-author-level">LVL ${userLevel}</span>
                         <span class="post-time">${timeAgo}</span>
+                        ${editedIndicator}
                     </div>
                 </div>
-                ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" title="Delete post">×</button>` : ''}
+                <div class="post-header-actions">
+                    ${canEdit ? `<button class="post-edit-btn" data-post-id="${post.id}" title="Edit post">✏️</button>` : ''}
+                    ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" title="Delete post">×</button>` : ''}
+                </div>
             </div>
             
             <div class="post-content">
@@ -628,6 +657,12 @@ function renderPost(post) {
                     <span class="post-action-icon">💬</span>
                     <span class="post-action-count">${post.commentsCount || 0}</span>
                 </button>
+                <button class="post-action-btn share-btn" data-post-id="${post.id}" title="Share post">
+                    <span class="post-action-icon">🔗</span>
+                </button>
+                ${canReport ? `<button class="post-action-btn report-btn" data-post-id="${post.id}" title="Report post">
+                    <span class="post-action-icon">🚩</span>
+                </button>` : ''}
             </div>
             
             <div class="post-comments-section hide" id="commentsSection_${post.id}">
@@ -705,10 +740,28 @@ function setupPostEventListeners(postId, post) {
         });
     }
     
+    // Edit button
+    const editBtn = document.querySelector(`.post-edit-btn[data-post-id="${postId}"]`);
+    if (editBtn) {
+        editBtn.addEventListener('click', () => handleEditPost(postId, post));
+    }
+    
     // Delete button
     const deleteBtn = document.querySelector(`.post-delete-btn[data-post-id="${postId}"]`);
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => handleDeletePost(postId));
+        deleteBtn.addEventListener('click', () => showDeleteConfirmationModal(postId));
+    }
+    
+    // Share button
+    const shareBtn = document.querySelector(`.share-btn[data-post-id="${postId}"]`);
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => handleSharePost(postId));
+    }
+    
+    // Report button
+    const reportBtn = document.querySelector(`.report-btn[data-post-id="${postId}"]`);
+    if (reportBtn) {
+        reportBtn.addEventListener('click', () => handleReportPost(postId, post));
     }
 }
 
@@ -1057,13 +1110,208 @@ async function handleAddComment(postId, commentInputEl) {
     }
 }
 
-// Handle delete post
-async function handleDeletePost(postId) {
+// Toast utility function
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Handle edit post
+function handleEditPost(postId, post) {
+    if (!currentUser || !post) return;
+    
+    // Create edit modal
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'editPostModal';
+    
+    const createdAt = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt?.seconds * 1000 || Date.now());
+    const createdTime = post.createdAt?.toMillis ? post.createdAt.toMillis() : (post.createdAt?.seconds * 1000 || Date.now());
+    const timeRemaining = Math.max(0, 5 * 60 * 1000 - (Date.now() - createdTime));
+    const minutesRemaining = Math.floor(timeRemaining / 60000);
+    const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
+                    Time remaining to edit: ${minutesRemaining}m ${secondsRemaining}s
+                </div>
+                <textarea id="editPostContent" class="post-content-input" maxlength="2000" rows="5" style="width: 100%; margin-bottom: 1rem;">${escapeHtml(post.content || '')}</textarea>
+                <div id="editPostMediaPreview" style="margin-bottom: 1rem;">
+                    ${post.images && post.images.length > 0 ? `
+                        <div class="post-images" style="margin-bottom: 1rem;">
+                            ${post.images.map(img => `<img src="${escapeHtml(img)}" alt="Post image" class="post-image" style="max-width: 100%; border-radius: 8px;" />`).join('')}
+                        </div>
+                    ` : ''}
+                    ${post.videos && post.videos.length > 0 ? `
+                        <div class="post-videos" style="margin-bottom: 1rem;">
+                            ${post.videos.map(vid => `<video src="${escapeHtml(vid)}" class="post-video" controls style="max-width: 100%; border-radius: 8px;"></video>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button class="btn" type="button" id="cancelEditBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
+                    <button class="btn btn-primary" type="button" id="saveEditBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modalOverlay);
+    setTimeout(() => modalOverlay.classList.add('show'), 10);
+    
+    const editContentEl = document.getElementById('editPostContent');
+    if (editContentEl) {
+        editContentEl.focus();
+        editContentEl.setSelectionRange(editContentEl.value.length, editContentEl.value.length);
+    }
+    
+    // Close handlers
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => modalOverlay.remove(), 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+    document.getElementById('saveEditBtn').addEventListener('click', () => handleSaveEdit(postId, editContentEl.value, closeModal));
+    
+    // Close on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    // Close on ESC key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle save edit
+async function handleSaveEdit(postId, newContent, closeModal) {
     if (!currentUser) return;
     
-    if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+    const content = newContent.trim();
+    
+    if (!content) {
+        showToast('Post content cannot be empty');
         return;
     }
+    
+    if (content.length > 2000) {
+        showToast('Post content must be 2000 characters or less');
+        return;
+    }
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        
+        // Check if still within 5-minute window
+        const postDoc = await getDoc(postRef);
+        if (!postDoc.exists()) {
+            showToast('Post not found');
+            return;
+        }
+        
+        const postData = postDoc.data();
+        const createdTime = postData.createdAt?.toMillis ? postData.createdAt.toMillis() : (postData.createdAt?.seconds * 1000 || Date.now());
+        if ((Date.now() - createdTime) >= 5 * 60 * 1000) {
+            showToast('Edit window has expired');
+            closeModal();
+            return;
+        }
+        
+        await updateDoc(postRef, {
+            content: content,
+            editedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        
+        showToast('Post updated successfully');
+        closeModal();
+    } catch (error) {
+        console.error('Error saving edit:', error);
+        showToast('Failed to save edit. Please try again.');
+    }
+}
+
+// Show delete confirmation modal
+function showDeleteConfirmationModal(postId) {
+    if (!currentUser) return;
+    
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'deletePostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: rgba(255, 255, 255, 0.9);">
+                    Are you sure you want to delete this post? This cannot be undone.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button class="btn" type="button" id="cancelDeleteBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
+                    <button class="btn btn-primary" type="button" id="confirmDeleteBtn" style="background: #dc2626;">Delete</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modalOverlay);
+    setTimeout(() => modalOverlay.classList.add('show'), 10);
+    
+    // Close handlers
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => modalOverlay.remove(), 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', closeModal);
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => handleConfirmDelete(postId, closeModal));
+    
+    // Close on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    // Close on ESC key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle confirm delete
+async function handleConfirmDelete(postId, closeModal) {
+    if (!currentUser) return;
     
     try {
         const postRef = doc(db, 'posts', postId);
@@ -1071,10 +1319,198 @@ async function handleDeletePost(postId) {
             deleted: true,
             updatedAt: serverTimestamp()
         });
+        closeModal();
+        showToast('Post deleted');
     } catch (error) {
         console.error('Error deleting post:', error);
-        alert('Failed to delete post. Please try again.');
+        showToast('Failed to delete post. Please try again.');
     }
+}
+
+// Handle share post
+async function handleSharePost(postId) {
+    try {
+        const shareUrl = window.location.origin + withBase(`/feed/?post=${postId}`);
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast('Link copied to clipboard!');
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Link copied to clipboard!');
+            } catch (err) {
+                showToast(`Share URL: ${shareUrl}`);
+            }
+            document.body.removeChild(textArea);
+        }
+    } catch (error) {
+        console.error('Error sharing post:', error);
+        showToast('Failed to copy link. Please try again.');
+    }
+}
+
+// Handle report post
+function handleReportPost(postId, post) {
+    if (!currentUser || !post) return;
+    
+    // Check if already reported (optional optimization)
+    checkIfAlreadyReported(postId, currentUser.uid).then(alreadyReported => {
+        if (alreadyReported) {
+            showToast('You have already reported this post');
+            return;
+        }
+        
+        // Create report modal
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.id = 'reportPostModal';
+        
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Report Post</h3>
+                    <button class="modal-close" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 1.5rem; color: rgba(255, 255, 255, 0.9);">
+                        Why are you reporting this post?
+                    </p>
+                    <div class="report-reasons-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                        <label class="report-reason-label">
+                            <input type="radio" name="reportReason" value="spam" />
+                            <span>Spam</span>
+                        </label>
+                        <label class="report-reason-label">
+                            <input type="radio" name="reportReason" value="harassment" />
+                            <span>Harassment/Bullying</span>
+                        </label>
+                        <label class="report-reason-label">
+                            <input type="radio" name="reportReason" value="inappropriate" />
+                            <span>Inappropriate Content</span>
+                        </label>
+                        <label class="report-reason-label">
+                            <input type="radio" name="reportReason" value="misinformation" />
+                            <span>Misinformation/Fake News</span>
+                        </label>
+                        <label class="report-reason-label">
+                            <input type="radio" name="reportReason" value="other" />
+                            <span>Other</span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button class="btn" type="button" id="cancelReportBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
+                        <button class="btn btn-primary" type="button" id="submitReportBtn" style="background: #dc2626;">Submit</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modalOverlay);
+        setTimeout(() => modalOverlay.classList.add('show'), 10);
+        
+        // Close handlers
+        const closeModal = () => {
+            modalOverlay.classList.remove('show');
+            setTimeout(() => modalOverlay.remove(), 300);
+        };
+        
+        modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+        document.getElementById('cancelReportBtn').addEventListener('click', closeModal);
+        document.getElementById('submitReportBtn').addEventListener('click', () => {
+            const selectedReason = modalOverlay.querySelector('input[name="reportReason"]:checked');
+            if (!selectedReason) {
+                showToast('Please select a reason');
+                return;
+            }
+            handleSubmitReport(postId, post.userId, selectedReason.value, closeModal);
+        });
+        
+        // Close on overlay click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+        
+        // Close on ESC key
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    });
+}
+
+// Check if already reported
+async function checkIfAlreadyReported(postId, userId) {
+    try {
+        const reportId = `${postId}_${userId}`;
+        const reportRef = doc(db, 'reports', reportId);
+        const reportDoc = await getDoc(reportRef);
+        return reportDoc.exists();
+    } catch (error) {
+        console.error('Error checking report:', error);
+        return false;
+    }
+}
+
+// Handle submit report
+async function handleSubmitReport(postId, reportedUserId, reason, closeModal) {
+    if (!currentUser) return;
+    
+    const validReasons = ['spam', 'harassment', 'inappropriate', 'misinformation', 'other'];
+    if (!validReasons.includes(reason)) {
+        showToast('Invalid report reason');
+        return;
+    }
+    
+    try {
+        const reportId = `${postId}_${currentUser.uid}`;
+        const reportRef = doc(db, 'reports', reportId);
+        
+        await setDoc(reportRef, {
+            postId: postId,
+            reportedBy: currentUser.uid,
+            reportedUser: reportedUserId,
+            reason: reason,
+            createdAt: serverTimestamp(),
+            reviewed: false
+        }, { merge: false });
+        
+        showToast('Report submitted. Thank you for keeping the community safe.');
+        closeModal();
+    } catch (error) {
+        console.error('Error submitting report:', error);
+        if (error.code === 'permission-denied') {
+            showToast('You have already reported this post');
+        } else {
+            showToast('Failed to submit report. Please try again.');
+        }
+    }
+}
+
+// Scroll to post on page load if URL has post parameter
+function scrollToPost(postId) {
+    setTimeout(() => {
+        const postCard = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+        if (postCard) {
+            postCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Highlight the post briefly
+            postCard.style.transition = 'box-shadow 0.3s ease';
+            postCard.style.boxShadow = '0 0 20px rgba(74, 222, 128, 0.5)';
+            setTimeout(() => {
+                postCard.style.boxShadow = '';
+            }, 2000);
+        }
+    }, 500); // Delay to ensure posts are rendered
 }
 
 // Handle delete comment
