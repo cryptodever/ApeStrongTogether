@@ -315,6 +315,32 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Reports collection
+    match /reports/{reportId} {
+      // Users can create reports (composite ID prevents duplicates: {postId}_{userId})
+      allow create: if isSignedIn()
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.postId is string
+        && request.resource.data.reportedUser is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason in ['spam', 'harassment', 'inappropriate', 'misinformation', 'other']
+        && request.resource.data.reviewed == false;
+      
+      // Only admins/moderators can read reports
+      allow read: if isAdminOrMod(request.auth.uid);
+      
+      // Only admins/moderators can update review status
+      allow update: if isAdminOrMod(request.auth.uid)
+        && (!('postId' in request.resource.data) || request.resource.data.postId == resource.data.postId)
+        && (!('reportedBy' in request.resource.data) || request.resource.data.reportedBy == resource.data.reportedBy)
+        && (!('reportedUser' in request.resource.data) || request.resource.data.reportedUser == resource.data.reportedUser)
+        && (!('reason' in request.resource.data) || request.resource.data.reason == resource.data.reason)
+        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+      
+      // No deletion (use soft delete via reviewed flag)
+      allow delete: if false;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
