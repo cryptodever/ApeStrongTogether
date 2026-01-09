@@ -1362,13 +1362,23 @@ function handleReportPost(postId, post) {
     if (!currentUser || !post) return;
     
     // Check if already reported (optional optimization)
+    // If check fails due to permissions, proceed anyway (create rule will prevent duplicates)
     checkIfAlreadyReported(postId, currentUser.uid).then(alreadyReported => {
         if (alreadyReported) {
             showToast('You have already reported this post');
             return;
         }
-        
-        // Create report modal
+        showReportModal(postId, post);
+    }).catch(error => {
+        // If permission error, just proceed - create rule will handle duplicates
+        console.warn('Could not check if already reported, proceeding:', error);
+        showReportModal(postId, post);
+    });
+}
+
+// Show report modal
+function showReportModal(postId, post) {
+    // Create report modal
         const modalOverlay = document.createElement('div');
         modalOverlay.className = 'modal-overlay';
         modalOverlay.id = 'reportPostModal';
@@ -1476,6 +1486,14 @@ async function handleSubmitReport(postId, reportedUserId, reason, closeModal) {
         const reportId = `${postId}_${currentUser.uid}`;
         const reportRef = doc(db, 'reports', reportId);
         
+        // Check if report already exists first (using getDoc which will work if document exists)
+        const existingReport = await getDoc(reportRef);
+        if (existingReport.exists()) {
+            showToast('You have already reported this post');
+            closeModal();
+            return;
+        }
+        
         await setDoc(reportRef, {
             postId: postId,
             reportedBy: currentUser.uid,
@@ -1483,7 +1501,7 @@ async function handleSubmitReport(postId, reportedUserId, reason, closeModal) {
             reason: reason,
             createdAt: serverTimestamp(),
             reviewed: false
-        }, { merge: false });
+        });
         
         showToast('Report submitted. Thank you for keeping the community safe.');
         closeModal();
