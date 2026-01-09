@@ -1456,7 +1456,6 @@ function showReportModal(postId, post) {
             }
         };
         document.addEventListener('keydown', escHandler);
-    });
 }
 
 // Check if already reported
