@@ -2002,9 +2002,13 @@ export class Game {
                             this.comboMultiplier = 1.0;
                         }
                         
-                        // Visual feedback for combo milestones
+                        // Visual feedback for combo milestones (screen shake at major milestones)
                         if (this.combo === 5 || this.combo === 10 || this.combo === 20 || this.combo === 50) {
                             this.addScreenShake(0.3, 200);
+                        }
+                        
+                        // Show combo notification for all combos >= 5
+                        if (this.combo >= 5) {
                             this.spawnComboNotification(enemy.x, enemy.y, this.combo);
                         }
                         
@@ -2904,34 +2908,38 @@ export class Game {
         let color = '#ffffff';
         let size = 24;
         
-        if (combo === 5) {
-            text = 'x2 COMBO!';
-            color = '#4ade80';
-        } else if (combo === 10) {
-            text = 'x3 COMBO!';
-            color = '#22c55e';
-            size = 28;
-        } else if (combo === 20) {
-            text = 'x5 COMBO!';
-            color = '#fbbf24';
-            size = 32;
-        } else if (combo === 50) {
-            text = 'x5 LEGENDARY!';
-            color = '#f97316';
-            size = 36;
+        // Show combo notification for all combos >= 5
+        if (combo >= 5) {
+            if (combo >= 50) {
+                text = `${combo}x LEGENDARY!`;
+                color = '#f97316';
+                size = 36;
+            } else if (combo >= 20) {
+                text = `${combo}x COMBO!`;
+                color = '#fbbf24';
+                size = 32;
+            } else if (combo >= 10) {
+                text = `${combo}x COMBO!`;
+                color = '#22c55e';
+                size = 28;
+            } else {
+                text = `${combo}x COMBO!`;
+                color = '#4ade80';
+                size = 24;
+            }
+            
+            this.damageNumbers.push({
+                x: x,
+                y: y,
+                startY: y,
+                value: text,
+                life: 2000,
+                maxLife: 2000,
+                color: color,
+                size: size,
+                isCombo: true
+            });
         }
-        
-        this.damageNumbers.push({
-            x: x,
-            y: y,
-            startY: y,
-            value: text,
-            life: 2000,
-            maxLife: 2000,
-            color: color,
-            size: size,
-            isCombo: true
-        });
         
         // Extra particles for combo milestones
         this.spawnParticles(x, y, 30, 'combo');
