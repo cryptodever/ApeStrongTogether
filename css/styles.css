@@ -8526,29 +8526,39 @@ body.chat-body > * {
     top: 80px;
     left: 50%;
     transform: translateX(-50%) translateY(-100px);
-    background: rgba(30, 30, 30, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(30, 30, 30, 0.98);
+    border: 1px solid rgba(74, 222, 128, 0.3);
     border-radius: 8px;
-    padding: 12px 20px;
+    padding: 12px 24px;
     color: #ffffff;
     font-size: 14px;
-    z-index: 10000;
+    font-weight: 500;
+    z-index: 100001 !important;
     opacity: 0;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(74, 222, 128, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .toast.show {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
+    pointer-events: auto;
 }
 
 /* Mobile: position slightly lower to account for mobile browser UI */
 @media (max-width: 768px) {
     .toast {
         top: 100px;
+        padding: 10px 20px;
+        font-size: 13px;
+        max-width: 85%;
     }
 }
 
