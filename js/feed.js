@@ -1190,8 +1190,25 @@ function handleEditPost(postId, post) {
             </div>
         `;
     
+    // Prevent body scroll
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    // Append to body
     document.body.appendChild(modalOverlay);
-    setTimeout(() => modalOverlay.classList.add('show'), 10);
+    
+    // Force reflow
+    modalOverlay.offsetHeight;
+    
+    // Show modal
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
     
     const editContentEl = document.getElementById('editPostContent');
     if (editContentEl) {
@@ -1202,7 +1219,18 @@ function handleEditPost(postId, post) {
     // Close handlers
     const closeModal = () => {
         modalOverlay.classList.remove('show');
-        setTimeout(() => modalOverlay.remove(), 300);
+        setTimeout(() => {
+            modalOverlay.remove();
+            // Restore body scroll
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
     };
     
     modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
@@ -1298,13 +1326,41 @@ function showDeleteConfirmationModal(postId) {
             </div>
         `;
     
+    // Prevent body scroll
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    // Append to body
     document.body.appendChild(modalOverlay);
-    setTimeout(() => modalOverlay.classList.add('show'), 10);
+    
+    // Force reflow
+    modalOverlay.offsetHeight;
+    
+    // Show modal
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
     
     // Close handlers
     const closeModal = () => {
         modalOverlay.classList.remove('show');
-        setTimeout(() => modalOverlay.remove(), 300);
+        setTimeout(() => {
+            modalOverlay.remove();
+            // Restore body scroll
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
     };
     
     modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
@@ -1396,69 +1452,97 @@ function handleReportPost(postId, post) {
 // Show report modal
 function showReportModal(postId, post) {
     // Create report modal
-        const modalOverlay = document.createElement('div');
-        modalOverlay.className = 'modal-overlay';
-        modalOverlay.id = 'reportPostModal';
-        
-        modalOverlay.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Report Post</h3>
-                    <button class="modal-close" type="button">×</button>
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'reportPostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="report-prompt-text">
+                    Why are you reporting this post?
+                </p>
+                <div class="report-reasons-list">
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="spam" />
+                        <span>Spam</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="harassment" />
+                        <span>Harassment/Bullying</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="inappropriate" />
+                        <span>Inappropriate Content</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="misinformation" />
+                        <span>Misinformation/Fake News</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="other" />
+                        <span>Other</span>
+                    </label>
                 </div>
-                <div class="modal-body">
-                    <p class="report-prompt-text">
-                        Why are you reporting this post?
-                    </p>
-                    <div class="report-reasons-list">
-                        <label class="report-reason-label">
-                            <input type="radio" name="reportReason" value="spam" />
-                            <span>Spam</span>
-                        </label>
-                        <label class="report-reason-label">
-                            <input type="radio" name="reportReason" value="harassment" />
-                            <span>Harassment/Bullying</span>
-                        </label>
-                        <label class="report-reason-label">
-                            <input type="radio" name="reportReason" value="inappropriate" />
-                            <span>Inappropriate Content</span>
-                        </label>
-                        <label class="report-reason-label">
-                            <input type="radio" name="reportReason" value="misinformation" />
-                            <span>Misinformation/Fake News</span>
-                        </label>
-                        <label class="report-reason-label">
-                            <input type="radio" name="reportReason" value="other" />
-                            <span>Other</span>
-                        </label>
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-secondary" type="button" id="cancelReportBtn">Cancel</button>
-                        <button class="btn btn-danger" type="button" id="submitReportBtn">Submit</button>
-                    </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelReportBtn">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="submitReportBtn">Submit</button>
                 </div>
             </div>
-        `;
-        
-        document.body.appendChild(modalOverlay);
-        setTimeout(() => modalOverlay.classList.add('show'), 10);
-        
-        // Close handlers
-        const closeModal = () => {
-            modalOverlay.classList.remove('show');
-            setTimeout(() => modalOverlay.remove(), 300);
-        };
-        
-        modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
-        document.getElementById('cancelReportBtn').addEventListener('click', closeModal);
-        document.getElementById('submitReportBtn').addEventListener('click', () => {
-            const selectedReason = modalOverlay.querySelector('input[name="reportReason"]:checked');
-            if (!selectedReason) {
-                showToast('Please select a reason');
-                return;
-            }
-            handleSubmitReport(postId, post.userId, selectedReason.value, closeModal);
+        </div>
+    `;
+    
+    // Prevent body scroll
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    // Append to body
+    document.body.appendChild(modalOverlay);
+    
+    // Force reflow
+    modalOverlay.offsetHeight;
+    
+    // Show modal
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
         });
+    });
+    
+    // Close handlers
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            // Restore body scroll
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelReportBtn').addEventListener('click', closeModal);
+    document.getElementById('submitReportBtn').addEventListener('click', () => {
+        const selectedReason = modalOverlay.querySelector('input[name="reportReason"]:checked');
+        if (!selectedReason) {
+            showToast('Please select a reason');
+            return;
+        }
+        handleSubmitReport(postId, post.userId, selectedReason.value, closeModal);
+    });
         
         // Close on overlay click
         modalOverlay.addEventListener('click', (e) => {
