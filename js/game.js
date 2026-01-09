@@ -1899,7 +1899,7 @@ export class Game {
                 });
             }
         } else if (this.characterType === 3) {
-            // Sniper: Single bullet with piercing (through 3 enemies)
+            // Sniper: Single bullet with piercing (through 5 enemies)
             this.bullets.push({
                 x: this.player.x,
                 y: this.player.y,
@@ -1908,8 +1908,8 @@ export class Game {
                 radius: 4,
                 damage: effectiveDamage,
                 trail: [], // For bullet trail effect
-                pierceCount: 3, // Can pierce through 3 enemies
-                hitsRemaining: 3 // Track remaining pierces
+                pierceCount: 5, // Can pierce through 5 enemies
+                hitsRemaining: 5 // Track remaining pierces
             });
         } else {
             // Standard/Pistol: Single bullet
