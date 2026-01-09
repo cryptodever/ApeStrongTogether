@@ -1123,10 +1123,10 @@ function showToast(message) {
     // Ensure it's added to body (not inside any container that might clip it)
     document.body.appendChild(toast);
     
-    // Force a reflow to ensure the element is in the DOM
-    toast.offsetHeight;
+    // Force a reflow to ensure the element is in the DOM and CSS is applied
+    const height = toast.offsetHeight;
     
-    // Add show class after a brief delay
+    // Add show class after a brief delay to ensure CSS is loaded
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             toast.classList.add('show');
