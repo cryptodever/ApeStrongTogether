@@ -11,6 +11,7 @@ import {
     getDocs,
     setDoc, 
     deleteDoc,
+    updateDoc,
     writeBatch,
     collection,
     query,
@@ -19,8 +20,10 @@ import {
     limit,
     serverTimestamp,
     onSnapshot,
-    Timestamp
+    Timestamp,
+    increment
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { withBase } from './base-url.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-functions.js';
 
 // Initialize auth gate for profile page
@@ -2345,6 +2348,19 @@ function renderProfilePost(post) {
     const voteScore = post.voteScore || 0;
     const canDelete = currentUser && post.userId === currentUser.uid;
     
+    // Check if post can be edited (within 5 minutes)
+    const canEdit = currentUser && post.userId === currentUser.uid && post.createdAt && (() => {
+        const createdTime = post.createdAt.toMillis ? post.createdAt.toMillis() : (post.createdAt.seconds * 1000 || Date.now());
+        return (Date.now() - createdTime) < 5 * 60 * 1000;
+    })();
+    
+    // Check if post was edited
+    const editedAt = post.editedAt?.toMillis ? post.editedAt.toMillis() : (post.editedAt?.seconds ? post.editedAt.seconds * 1000 : null);
+    const editedIndicator = editedAt ? `<span class="post-edited-indicator">edited ${getTimeAgo({toMillis: () => editedAt})}</span>` : '';
+    
+    // Check if user can report (authenticated and not post author)
+    const canReport = currentUser && post.userId !== currentUser.uid;
+    
     return `
         <div class="post-card" data-post-id="${post.id}">
             <div class="post-header">
@@ -2354,9 +2370,13 @@ function renderProfilePost(post) {
                     <div class="post-author-meta">
                         <span class="post-author-level">LVL ${userLevel}</span>
                         <span class="post-time">${timeAgo}</span>
+                        ${editedIndicator}
                     </div>
                 </div>
-                ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" title="Delete post">×</button>` : ''}
+                <div class="post-header-actions">
+                    ${canEdit ? `<button class="post-edit-btn" data-post-id="${post.id}" title="Edit post">✏️</button>` : ''}
+                    ${canDelete ? `<button class="post-delete-btn" data-post-id="${post.id}" title="Delete post">×</button>` : ''}
+                </div>
             </div>
             
             <div class="post-content">
@@ -2393,6 +2413,12 @@ function renderProfilePost(post) {
                     <span class="post-action-icon">💬</span>
                     <span class="post-action-count">${post.commentsCount || 0}</span>
                 </button>
+                <button class="post-action-btn share-btn" data-post-id="${post.id}" title="Share post">
+                    <span class="post-action-icon">🔗</span>
+                </button>
+                ${canReport ? `<button class="post-action-btn report-btn" data-post-id="${post.id}" title="Report post">
+                    <span class="post-action-icon">🚩</span>
+                </button>` : ''}
             </div>
             
             <div class="post-comments-section hide" id="commentsSection_${post.id}">
@@ -2470,10 +2496,28 @@ function setupProfilePostEventListeners(postId, post) {
         });
     }
     
+    // Edit button
+    const editBtn = document.querySelector(`.post-edit-btn[data-post-id="${postId}"]`);
+    if (editBtn) {
+        editBtn.addEventListener('click', () => handleProfileEditPost(postId, post));
+    }
+    
     // Delete button
     const deleteBtn = document.querySelector(`.post-delete-btn[data-post-id="${postId}"]`);
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => handleProfileDeletePost(postId));
+        deleteBtn.addEventListener('click', () => showProfileDeleteConfirmationModal(postId));
+    }
+    
+    // Share button
+    const shareBtn = document.querySelector(`.share-btn[data-post-id="${postId}"]`);
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => handleProfileSharePost(postId));
+    }
+    
+    // Report button
+    const reportBtn = document.querySelector(`.report-btn[data-post-id="${postId}"]`);
+    if (reportBtn) {
+        reportBtn.addEventListener('click', () => handleProfileReportPost(postId, post));
     }
 }
 
@@ -2824,6 +2868,459 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Toast utility function
+function showProfileToast(message) {
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    const height = toast.offsetHeight;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+    });
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Handle edit post (profile page)
+function handleProfileEditPost(postId, post) {
+    if (!currentUser || !post) return;
+    
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'editPostModal';
+    
+    const createdAt = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt?.seconds * 1000 || Date.now());
+    const createdTime = post.createdAt?.toMillis ? post.createdAt.toMillis() : (post.createdAt?.seconds * 1000 || Date.now());
+    const timeRemaining = Math.max(0, 5 * 60 * 1000 - (Date.now() - createdTime));
+    const minutesRemaining = Math.floor(timeRemaining / 60000);
+    const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-time-remaining">
+                    Time remaining to edit: ${minutesRemaining}m ${secondsRemaining}s
+                </div>
+                <textarea id="editPostContent" class="post-content-input edit-post-textarea" maxlength="2000" rows="5">${escapeHtml(post.content || '')}</textarea>
+                <div id="editPostMediaPreview" class="edit-post-media-preview">
+                    ${post.images && post.images.length > 0 ? `
+                        <div class="post-images edit-post-images">
+                            ${post.images.map(img => `<img src="${escapeHtml(img)}" alt="Post image" class="post-image edit-post-image" />`).join('')}
+                        </div>
+                    ` : ''}
+                    ${post.videos && post.videos.length > 0 ? `
+                        <div class="post-videos edit-post-videos">
+                            ${post.videos.map(vid => `<video src="${escapeHtml(vid)}" class="post-video edit-post-video" controls></video>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelEditBtn">Cancel</button>
+                    <button class="btn btn-primary" type="button" id="saveEditBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    document.body.appendChild(modalOverlay);
+    modalOverlay.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
+    
+    const editContentEl = document.getElementById('editPostContent');
+    if (editContentEl) {
+        editContentEl.focus();
+        editContentEl.setSelectionRange(editContentEl.value.length, editContentEl.value.length);
+    }
+    
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+    document.getElementById('saveEditBtn').addEventListener('click', () => handleProfileSaveEdit(postId, editContentEl.value, closeModal));
+    
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle save edit (profile page)
+async function handleProfileSaveEdit(postId, newContent, closeModal) {
+    if (!currentUser) return;
+    
+    const content = newContent.trim();
+    
+    if (!content) {
+        showProfileToast('Post content cannot be empty');
+        return;
+    }
+    
+    if (content.length > 2000) {
+        showProfileToast('Post content must be 2000 characters or less');
+        return;
+    }
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        if (!postDoc.exists()) {
+            showProfileToast('Post not found');
+            return;
+        }
+        
+        const postData = postDoc.data();
+        const createdTime = postData.createdAt?.toMillis ? postData.createdAt.toMillis() : (postData.createdAt?.seconds * 1000 || Date.now());
+        if ((Date.now() - createdTime) >= 5 * 60 * 1000) {
+            showProfileToast('Edit window has expired');
+            closeModal();
+            return;
+        }
+        
+        await updateDoc(postRef, {
+            content: content,
+            editedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        
+        showProfileToast('Post updated successfully');
+        closeModal();
+        // Reload posts
+        loadProfilePosts();
+    } catch (error) {
+        console.error('Error saving edit:', error);
+        showProfileToast('Failed to save edit. Please try again.');
+    }
+}
+
+// Show delete confirmation modal (profile page)
+function showProfileDeleteConfirmationModal(postId) {
+    if (!currentUser) return;
+    
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'deletePostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-confirmation-text">
+                    Are you sure you want to delete this post? This cannot be undone.
+                </p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelDeleteBtn">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    document.body.appendChild(modalOverlay);
+    modalOverlay.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
+    
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', closeModal);
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => handleProfileConfirmDelete(postId, closeModal));
+    
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle confirm delete (profile page)
+async function handleProfileConfirmDelete(postId, closeModal) {
+    if (!currentUser) return;
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            deleted: true,
+            updatedAt: serverTimestamp()
+        });
+        closeModal();
+        showProfileToast('Post deleted');
+        // Reload posts
+        loadProfilePosts();
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        showProfileToast('Failed to delete post. Please try again.');
+    }
+}
+
+// Handle share post (profile page)
+async function handleProfileSharePost(postId) {
+    try {
+        const shareUrl = window.location.origin + withBase(`/feed/?post=${postId}`);
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            showProfileToast('Link copied to clipboard!');
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showProfileToast('Link copied to clipboard!');
+            } catch (err) {
+                showProfileToast(`Share URL: ${shareUrl}`);
+            }
+            document.body.removeChild(textArea);
+        }
+    } catch (error) {
+        console.error('Error sharing post:', error);
+        showProfileToast('Failed to copy link. Please try again.');
+    }
+}
+
+// Handle report post (profile page)
+function handleProfileReportPost(postId, post) {
+    if (!currentUser || !post) return;
+    
+    checkProfileIfAlreadyReported(postId, currentUser.uid).then(alreadyReported => {
+        if (alreadyReported) {
+            showProfileToast('You have already reported this post');
+            return;
+        }
+        showProfileReportModal(postId, post);
+    }).catch(error => {
+        console.warn('Could not check if already reported, proceeding:', error);
+        showProfileReportModal(postId, post);
+    });
+}
+
+// Check if already reported (profile page)
+async function checkProfileIfAlreadyReported(postId, userId) {
+    try {
+        const reportId = `${postId}_${userId}`;
+        const reportRef = doc(db, 'reports', reportId);
+        const reportDoc = await getDoc(reportRef);
+        return reportDoc.exists();
+    } catch (error) {
+        console.warn('Error checking report, proceeding as if not reported:', error);
+        return false;
+    }
+}
+
+// Show report modal (profile page)
+function showProfileReportModal(postId, post) {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'reportPostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="report-prompt-text">
+                    Why are you reporting this post?
+                </p>
+                <div class="report-reasons-list">
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="spam" />
+                        <span>Spam</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="harassment" />
+                        <span>Harassment/Bullying</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="inappropriate" />
+                        <span>Inappropriate Content</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="misinformation" />
+                        <span>Misinformation/Fake News</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="other" />
+                        <span>Other</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelReportBtn">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="submitReportBtn">Submit</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    document.body.appendChild(modalOverlay);
+    modalOverlay.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
+    
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelReportBtn').addEventListener('click', closeModal);
+    document.getElementById('submitReportBtn').addEventListener('click', () => {
+        const selectedReason = modalOverlay.querySelector('input[name="reportReason"]:checked');
+        if (!selectedReason) {
+            showProfileToast('Please select a reason');
+            return;
+        }
+        handleProfileSubmitReport(postId, post.userId, selectedReason.value, closeModal);
+    });
+    
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle submit report (profile page)
+async function handleProfileSubmitReport(postId, reportedUserId, reason, closeModal) {
+    if (!currentUser) return;
+    
+    try {
+        const reportId = `${postId}_${currentUser.uid}`;
+        const reportRef = doc(db, 'reports', reportId);
+        
+        await setDoc(reportRef, {
+            postId: postId,
+            reportedBy: currentUser.uid,
+            reportedUser: reportedUserId,
+            reason: reason,
+            createdAt: serverTimestamp(),
+            reviewed: false
+        });
+        
+        showProfileToast('Report submitted successfully');
+        closeModal();
+    } catch (error) {
+        console.error('Error submitting report:', error);
+        if (error.code === 'permission-denied') {
+            showProfileToast('You have already reported this post');
+        } else {
+            showProfileToast('Failed to submit report. Please try again.');
+        }
+    }
 }
 
 // Export functions for use in other modules (e.g., chat popup)
