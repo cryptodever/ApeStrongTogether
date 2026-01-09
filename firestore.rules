@@ -317,13 +317,6 @@ service cloud.firestore {
 
     // Reports collection
     match /reports/{reportId} {
-      // Helper function to check if reportId ends with user's ID (format: {postId}_{userId})
-      // We check if the last part of reportId (after the last underscore) matches the user's ID
-      function isOwnReport() {
-        return isSignedIn() && 
-          reportId.matches('.*_' + request.auth.uid);
-      }
-      
       // Users can create reports (composite ID prevents duplicates: {postId}_{userId})
       allow create: if isSignedIn()
         && request.resource.data.reportedBy == request.auth.uid
@@ -333,13 +326,10 @@ service cloud.firestore {
         && request.resource.data.reason in ['spam', 'harassment', 'inappropriate', 'misinformation', 'other']
         && request.resource.data.reviewed == false;
       
-      // Users can read their own reports (to check if already reported)
-      // Document ID format is {postId}_{userId}, so we check if it ends with their userId
-      // Admins/moderators can read all reports
-      allow get: if isSignedIn() && (
-        isOwnReport() || 
-        isAdminOrMod(request.auth.uid)
-      );
+      // Users cannot read reports via get (permission check handled in code with error catching)
+      // Only admins/moderators can read reports for moderation
+      // Note: checkIfAlreadyReported will get permission error, which is handled gracefully
+      allow get: if isAdminOrMod(request.auth.uid);
       
       // Only admins/moderators can list/query reports
       allow list: if isAdminOrMod(request.auth.uid);

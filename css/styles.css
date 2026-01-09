@@ -8522,21 +8522,23 @@ body.chat-body > * {
 
 /* Toast Notification */
 .toast {
-    position: fixed;
-    top: 80px;
-    left: 50%;
+    position: fixed !important;
+    top: 80px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
     transform: translateX(-50%) translateY(-100px);
-    background: rgba(30, 30, 30, 0.98);
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    border-radius: 8px;
-    padding: 12px 24px;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 500;
+    background: rgba(30, 30, 30, 0.98) !important;
+    border: 1px solid rgba(74, 222, 128, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    color: #ffffff !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
     z-index: 100001 !important;
     opacity: 0;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(74, 222, 128, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(74, 222, 128, 0.2) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     pointer-events: none;
@@ -8544,20 +8546,22 @@ body.chat-body > * {
     max-width: 90%;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin: 0 !important;
 }
 
 .toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
+    transform: translateX(-50%) translateY(0) !important;
+    opacity: 1 !important;
     pointer-events: auto;
 }
 
 /* Mobile: position slightly lower to account for mobile browser UI */
 @media (max-width: 768px) {
     .toast {
-        top: 100px;
-        padding: 10px 20px;
-        font-size: 13px;
+        top: 100px !important;
+        bottom: auto !important;
+        padding: 10px 20px !important;
+        font-size: 13px !important;
         max-width: 85%;
     }
 }
