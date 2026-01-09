@@ -1112,18 +1112,35 @@ async function handleAddComment(postId, commentInputEl) {
 
 // Toast utility function
 function showToast(message) {
+    // Remove any existing toasts first
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+    
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
+    
+    // Ensure it's added to body (not inside any container that might clip it)
     document.body.appendChild(toast);
     
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
+    // Force a reflow to ensure the element is in the DOM
+    toast.offsetHeight;
     
+    // Add show class after a brief delay
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+    });
+    
+    // Remove after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
     }, 3000);
 }
 
