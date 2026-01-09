@@ -12651,7 +12651,91 @@ body.leaderboard-body > * {
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
+/* Edit modal styles */
+.edit-time-remaining {
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.edit-post-textarea {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.edit-post-media-preview {
+    margin-bottom: 1rem;
+}
+
+.edit-post-images,
+.edit-post-videos {
+    margin-bottom: 1rem;
+}
+
+.edit-post-image,
+.edit-post-video {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+/* Modal action buttons */
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-danger {
+    background: #dc2626;
+    border: 1px solid #dc2626;
+    color: #ffffff;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+/* Delete modal styles */
+.delete-confirmation-text {
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
 /* Report modal styles */
+.report-prompt-text {
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.report-reasons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
 .report-reason-label {
     display: flex;
     align-items: center;
