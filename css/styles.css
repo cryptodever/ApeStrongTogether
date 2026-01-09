@@ -12157,11 +12157,35 @@ body:has(.modal-overlay.show) {
 }
 
 .post-create-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 1.5rem;
-    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.75rem;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.post-create-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.02) 0%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.post-create-card > * {
+    position: relative;
+    z-index: 1;
 }
 
 .post-create-form {
@@ -12176,15 +12200,21 @@ body:has(.modal-overlay.show) {
 
 .post-content-input {
     width: 100%;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
     color: #ffffff;
     font-size: 1rem;
     font-family: 'Inter', sans-serif;
-    resize: vertical;
-    min-height: 120px;
+    resize: none;
+    min-height: 80px;
+    max-height: 600px;
+    overflow-y: auto;
+    line-height: 1.7;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .post-content-input::placeholder {
@@ -12194,8 +12224,11 @@ body:has(.modal-overlay.show) {
 
 .post-content-input:focus {
     outline: none;
-    border-color: rgba(74, 222, 128, 0.5);
+    border-color: rgba(74, 222, 128, 0.6);
     background: rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 0 0 3px rgba(74, 222, 128, 0.1),
+        0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .post-content-input:focus::placeholder {
@@ -12203,9 +12236,13 @@ body:has(.modal-overlay.show) {
 }
 
 .post-char-count {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.6);
     margin-right: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
 }
 
 .post-media-previews {
@@ -12219,10 +12256,20 @@ body:has(.modal-overlay.show) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 0.75rem;
+    padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 0.5rem;
+    margin-top: 1rem;
     position: relative;
+}
+
+.post-create-toolbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
 }
 
 .post-attach-buttons {
@@ -12235,19 +12282,34 @@ body:has(.modal-overlay.show) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .post-attach-btn:hover {
     background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
     color: #ffffff;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.post-attach-btn:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-attach-btn:focus {
+    outline: 2px solid rgba(74, 222, 128, 0.5);
+    outline-offset: 2px;
 }
 
 .post-attach-icon {
@@ -12360,7 +12422,7 @@ body:has(.modal-overlay.show) {
 .post-toolbar-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .post-option-input {
@@ -12534,23 +12596,61 @@ body:has(.modal-overlay.show) {
     padding: 0.75rem 2rem;
     background: linear-gradient(135deg, #4ade80, #22c55e);
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     color: #000000;
     font-size: 1rem;
     font-weight: 700;
     font-family: 'Space Grotesk', sans-serif;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 2px 8px rgba(74, 222, 128, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.post-submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.post-submit-btn:hover:not(:disabled)::before {
+    left: 100%;
 }
 
 .post-submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
+    box-shadow: 
+        0 6px 20px rgba(74, 222, 128, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #5eea8f, #2dd66b);
+}
+
+.post-submit-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 
+        0 2px 8px rgba(74, 222, 128, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.post-submit-btn:focus {
+    outline: 2px solid rgba(74, 222, 128, 0.6);
+    outline-offset: 2px;
 }
 
 .post-submit-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
+    filter: grayscale(0.3);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Posts Feed */
