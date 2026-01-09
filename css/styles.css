@@ -5995,16 +5995,145 @@ body.profile-body > *:not(.modal-overlay) {
     gap: 0.4rem;
     font-weight: 700;
     transition: color 0.3s ease;
+    position: relative;
+    overflow: visible;
+    min-height: 2.5rem; /* Ensure space for floating text */
 }
 
 .combo-value {
     font-size: 1rem;
+    transition: transform 0.2s ease;
 }
 
 .combo-multiplier {
     font-size: 0.85rem;
     font-weight: 600;
     opacity: 0.8;
+    transition: transform 0.2s ease;
+}
+
+/* Combo Animation Classes */
+.combo-pop {
+    animation: comboPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.combo-pop-large {
+    animation: comboPopLarge 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.combo-pop-legendary {
+    animation: comboPopLegendary 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.combo-value-pop {
+    animation: comboValuePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.combo-multiplier-pop {
+    animation: comboMultiplierPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes comboPop {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.15);
+        filter: brightness(1.3);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+@keyframes comboPopLarge {
+    0% {
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 0px currentColor);
+    }
+    30% {
+        transform: scale(1.25);
+        filter: brightness(1.5) drop-shadow(0 0 10px currentColor);
+    }
+    60% {
+        transform: scale(1.1);
+        filter: brightness(1.3) drop-shadow(0 0 8px currentColor);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 0px currentColor);
+    }
+}
+
+@keyframes comboPopLegendary {
+    0% {
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 0px currentColor);
+    }
+    20% {
+        transform: scale(1.4);
+        filter: brightness(1.8) drop-shadow(0 0 15px currentColor);
+    }
+    40% {
+        transform: scale(1.15) rotate(-3deg);
+        filter: brightness(1.5) drop-shadow(0 0 12px currentColor);
+    }
+    60% {
+        transform: scale(1.2) rotate(3deg);
+        filter: brightness(1.6) drop-shadow(0 0 14px currentColor);
+    }
+    80% {
+        transform: scale(1.05) rotate(-1deg);
+        filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1) drop-shadow(0 0 0px currentColor);
+    }
+}
+
+@keyframes comboValuePop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes comboMultiplierPop {
+    0% {
+        transform: scale(1) translateY(0);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.2) translateY(-5px);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 0.8;
+    }
+}
+
+@keyframes comboTextFloat {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(0px) scale(0.8);
+    }
+    30% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-25px) scale(0.9);
+    }
 }
 
 /* Dash Indicator */
@@ -14062,6 +14191,7 @@ body:has(.modal-overlay.show) {
     gap: 1rem;
     flex-wrap: wrap;
     margin-bottom: 0.5rem;
+    overflow: visible; /* Allow combo text to float outside */
 }
 
 .game-stats .stat-item {
@@ -14074,6 +14204,7 @@ body:has(.modal-overlay.show) {
     gap: 0.5rem;
     min-width: 110px;
     pointer-events: auto;
+    overflow: visible; /* Allow combo text to float outside */
 }
 
 .game-stats .stat-label {
