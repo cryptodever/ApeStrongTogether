@@ -54,6 +54,7 @@ if (isMobile) {
 // State
 let currentUser = null;
 let game = null;
+let lastCombo = 0; // Track last combo value for change detection
 let userGameData = {
     gameGold: 0,
     selectedCharacter: 1, // Default character (1 = Pistol, 2 = Shotgun, 3 = Sniper)
@@ -448,6 +449,9 @@ async function initializeGame() {
     game.setWeaponFireRate(weaponFireRate);
     game.setPlayerHealth(playerHealth);
     game.setPlayerSpeed(playerSpeed);
+    
+    // Reset combo tracker for new game
+    lastCombo = 0;
     
     // Start update loop for UI
     updateGameUI();
@@ -1032,6 +1036,100 @@ function hidePauseMenu() {
     }
 }
 
+// Trigger exciting combo animation in HUD
+function triggerComboAnimation(comboDisplayEl, comboValueEl, comboMultiplierEl, combo) {
+    // Remove any existing animation classes
+    comboDisplayEl.classList.remove('combo-pop', 'combo-pop-large', 'combo-pop-legendary');
+    comboValueEl.classList.remove('combo-value-pop');
+    comboMultiplierEl.classList.remove('combo-multiplier-pop');
+    
+    // Force reflow to ensure classes are removed
+    void comboDisplayEl.offsetWidth;
+    
+    // Determine animation intensity based on combo level
+    let animationClass = 'combo-pop';
+    let textClass = 'combo-value-pop';
+    
+    // Create floating combo text for combos >= 5
+    if (combo >= 5) {
+        const comboText = document.createElement('span');
+        comboText.className = 'combo-notification-text';
+        
+        // Determine text, color, and size based on combo level
+        let animationDuration;
+        if (combo >= 50) {
+            animationClass = 'combo-pop-legendary';
+            comboText.textContent = `${combo}x LEGENDARY!`;
+            comboText.style.fontSize = '1.2rem';
+            comboText.style.fontWeight = '900';
+            comboText.style.color = '#f97316';
+            comboText.style.textShadow = '0 0 10px #f97316, 0 0 20px #f97316, 0 0 30px #f97316';
+            comboText.style.animation = 'comboTextFloat 1s ease-out forwards';
+            comboText.style.top = '-35px';
+            animationDuration = 1000;
+        } else if (combo >= 20) {
+            animationClass = 'combo-pop-large';
+            comboText.textContent = `${combo}x COMBO!`;
+            comboText.style.fontSize = '1rem';
+            comboText.style.fontWeight = '800';
+            comboText.style.color = '#fbbf24';
+            comboText.style.textShadow = '0 0 8px #fbbf24, 0 0 16px #fbbf24';
+            comboText.style.animation = 'comboTextFloat 0.8s ease-out forwards';
+            comboText.style.top = '-30px';
+            animationDuration = 800;
+        } else if (combo >= 10) {
+            animationClass = 'combo-pop-large';
+            comboText.textContent = `${combo}x COMBO!`;
+            comboText.style.fontSize = '0.95rem';
+            comboText.style.fontWeight = '800';
+            comboText.style.color = '#22c55e';
+            comboText.style.textShadow = '0 0 6px #22c55e, 0 0 12px #22c55e';
+            comboText.style.animation = 'comboTextFloat 0.7s ease-out forwards';
+            comboText.style.top = '-28px';
+            animationDuration = 700;
+        } else {
+            comboText.textContent = `${combo}x COMBO!`;
+            comboText.style.fontSize = '0.85rem';
+            comboText.style.fontWeight = '700';
+            comboText.style.color = '#4ade80';
+            comboText.style.textShadow = '0 0 4px #4ade80, 0 0 8px #4ade80';
+            comboText.style.animation = 'comboTextFloat 0.6s ease-out forwards';
+            comboText.style.top = '-25px';
+            animationDuration = 600;
+        }
+        
+        // Common styles for all combo texts
+        comboText.style.position = 'absolute';
+        comboText.style.left = '50%';
+        comboText.style.transform = 'translateX(-50%)';
+        comboText.style.whiteSpace = 'nowrap';
+        comboText.style.zIndex = '10001';
+        comboText.style.pointerEvents = 'none';
+        comboText.style.userSelect = 'none';
+        
+        comboDisplayEl.appendChild(comboText);
+        
+        // Remove text after animation
+        setTimeout(() => {
+            if (comboText.parentNode) {
+                comboText.remove();
+            }
+        }, animationDuration);
+    }
+    
+    // Add animation classes
+    comboDisplayEl.classList.add(animationClass);
+    comboValueEl.classList.add(textClass);
+    comboMultiplierEl.classList.add('combo-multiplier-pop');
+    
+    // Remove animation classes after animation completes
+    setTimeout(() => {
+        comboDisplayEl.classList.remove(animationClass);
+        comboValueEl.classList.remove(textClass);
+        comboMultiplierEl.classList.remove('combo-multiplier-pop');
+    }, 600);
+}
+
 // Update game UI (health, score)
 function updateGameUI() {
     if (!game) {
@@ -1108,6 +1206,13 @@ function updateGameUI() {
         }
         
         if (comboDisplayEl && comboValueEl && comboMultiplierEl) {
+            // Detect combo change and trigger animation
+            if (game.combo !== lastCombo && game.combo > 0) {
+                // Combo changed - trigger exciting animation
+                triggerComboAnimation(comboDisplayEl, comboValueEl, comboMultiplierEl, game.combo);
+                lastCombo = game.combo;
+            }
+            
             if (game.combo > 0) {
                 comboDisplayEl.style.display = 'flex';
                 comboValueEl.textContent = game.combo;
@@ -1132,6 +1237,7 @@ function updateGameUI() {
                 comboDisplayEl.style.color = multiplierColor;
             } else {
                 comboDisplayEl.style.display = 'none';
+                lastCombo = 0;
             }
         }
     }

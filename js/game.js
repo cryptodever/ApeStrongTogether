@@ -2007,10 +2007,8 @@ export class Game {
                             this.addScreenShake(0.3, 200);
                         }
                         
-                        // Show combo notification for all combos >= 5
-                        if (this.combo >= 5) {
-                            this.spawnComboNotification(enemy.x, enemy.y, this.combo);
-                        }
+                        // Combo notifications are now shown in the HUD instead of on-screen
+                        // The HUD will animate when combo changes (handled in game-init.js)
                         
                         // Reset combo on boss death (handled separately below)
                         
