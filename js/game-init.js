@@ -1065,37 +1065,37 @@ function triggerComboAnimation(comboDisplayEl, comboValueEl, comboMultiplierEl, 
             comboText.style.color = '#f97316';
             comboText.style.textShadow = '0 0 10px #f97316, 0 0 20px #f97316, 0 0 30px #f97316';
             comboText.style.animation = 'comboTextFloat 1s ease-out forwards';
-            comboText.style.top = '-35px';
-            animationDuration = 1000;
-        } else if (combo >= 20) {
-            animationClass = 'combo-pop-large';
-            comboText.textContent = `${combo}x COMBO!`;
-            comboText.style.fontSize = '1rem';
-            comboText.style.fontWeight = '800';
-            comboText.style.color = '#fbbf24';
-            comboText.style.textShadow = '0 0 8px #fbbf24, 0 0 16px #fbbf24';
-            comboText.style.animation = 'comboTextFloat 0.8s ease-out forwards';
             comboText.style.top = '-30px';
             animationDuration = 800;
-        } else if (combo >= 10) {
+        } else if (combo >= 20) {
             animationClass = 'combo-pop-large';
             comboText.textContent = `${combo}x COMBO!`;
             comboText.style.fontSize = '0.95rem';
             comboText.style.fontWeight = '800';
-            comboText.style.color = '#22c55e';
-            comboText.style.textShadow = '0 0 6px #22c55e, 0 0 12px #22c55e';
-            comboText.style.animation = 'comboTextFloat 0.7s ease-out forwards';
+            comboText.style.color = '#fbbf24';
+            comboText.style.textShadow = '0 0 6px #fbbf24, 0 0 12px #fbbf24';
+            comboText.style.animation = 'comboTextFloat 0.6s ease-out forwards';
             comboText.style.top = '-28px';
-            animationDuration = 700;
+            animationDuration = 600;
+        } else if (combo >= 10) {
+            animationClass = 'combo-pop-large';
+            comboText.textContent = `${combo}x COMBO!`;
+            comboText.style.fontSize = '0.9rem';
+            comboText.style.fontWeight = '800';
+            comboText.style.color = '#22c55e';
+            comboText.style.textShadow = '0 0 5px #22c55e, 0 0 10px #22c55e';
+            comboText.style.animation = 'comboTextFloat 0.5s ease-out forwards';
+            comboText.style.top = '-26px';
+            animationDuration = 500;
         } else {
             comboText.textContent = `${combo}x COMBO!`;
             comboText.style.fontSize = '0.85rem';
             comboText.style.fontWeight = '700';
             comboText.style.color = '#4ade80';
-            comboText.style.textShadow = '0 0 4px #4ade80, 0 0 8px #4ade80';
-            comboText.style.animation = 'comboTextFloat 0.6s ease-out forwards';
-            comboText.style.top = '-25px';
-            animationDuration = 600;
+            comboText.style.textShadow = '0 0 3px #4ade80, 0 0 6px #4ade80';
+            comboText.style.animation = 'comboTextFloat 0.5s ease-out forwards';
+            comboText.style.top = '-24px';
+            animationDuration = 500;
         }
         
         // Common styles for all combo texts
@@ -1127,7 +1127,7 @@ function triggerComboAnimation(comboDisplayEl, comboValueEl, comboMultiplierEl, 
         comboDisplayEl.classList.remove(animationClass);
         comboValueEl.classList.remove(textClass);
         comboMultiplierEl.classList.remove('combo-multiplier-pop');
-    }, 600);
+    }, 400);
 }
 
 // Update game UI (health, score)
