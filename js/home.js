@@ -313,18 +313,12 @@ async function loadActivityFeed() {
             activityFeedEl.querySelectorAll('.activity-post-vote-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const postId = btn.dataset.postId;
-                    const voteType = btn.dataset.voteType;
-                    if (postId && voteType) {
-                        handleActivityVote(postId, voteType);
+                    if (!currentUser) {
+                        alert('Please log in to vote');
+                        const loginBtn = document.getElementById('headerLoginBtn');
+                        if (loginBtn) loginBtn.click();
+                        return;
                     }
-                });
-            });
-            
-            // Add vote button handlers for trending posts
-            activityFeedEl.querySelectorAll('.activity-post-vote-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
                     const postId = btn.dataset.postId;
                     const voteType = btn.dataset.voteType;
                     if (postId && voteType) {
@@ -337,6 +331,12 @@ async function loadActivityFeed() {
             activityFeedEl.querySelectorAll('.activity-post-comment-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (!currentUser) {
+                        alert('Please log in to view comments');
+                        const loginBtn = document.getElementById('headerLoginBtn');
+                        if (loginBtn) loginBtn.click();
+                        return;
+                    }
                     const postId = btn.dataset.postId;
                     if (postId) {
                         toggleActivityComments(postId);
@@ -393,6 +393,12 @@ async function loadActivityFeed() {
             activityFeedEl.querySelectorAll('.share-btn[data-post-id]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (!currentUser) {
+                        alert('Please log in to share posts');
+                        const loginBtn = document.getElementById('headerLoginBtn');
+                        if (loginBtn) loginBtn.click();
+                        return;
+                    }
                     const postId = btn.dataset.postId;
                     if (postId) {
                         handleHomeSharePost(postId);
@@ -495,20 +501,34 @@ function createActivityItem(activity) {
                 </div>
                 <div class="activity-post-footer">
                     <div class="activity-post-vote-section">
-                        <button class="activity-post-vote-btn activity-upvote-btn ${hasUpvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="upvote" title="Upvote">
-                            <span class="activity-post-vote-icon">↑</span>
-                        </button>
-                        <span class="activity-post-vote-score" data-post-id="${activity.postId}">${voteScore}</span>
-                        <button class="activity-post-vote-btn activity-downvote-btn ${hasDownvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="downvote" title="Downvote">
-                            <span class="activity-post-vote-icon">↓</span>
-                        </button>
+                        ${currentUser ? `
+                            <button class="activity-post-vote-btn activity-upvote-btn ${hasUpvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="upvote" title="Upvote">
+                                <span class="activity-post-vote-icon">↑</span>
+                            </button>
+                            <span class="activity-post-vote-score" data-post-id="${activity.postId}">${voteScore}</span>
+                            <button class="activity-post-vote-btn activity-downvote-btn ${hasDownvote ? 'voted' : ''}" data-post-id="${activity.postId}" data-vote-type="downvote" title="Downvote">
+                                <span class="activity-post-vote-icon">↓</span>
+                            </button>
+                        ` : `
+                            <div class="activity-post-vote-btn activity-upvote-btn disabled" title="Log in to vote">
+                                <span class="activity-post-vote-icon">↑</span>
+                            </div>
+                            <span class="activity-post-vote-score" data-post-id="${activity.postId}">${voteScore}</span>
+                            <div class="activity-post-vote-btn activity-downvote-btn disabled" title="Log in to vote">
+                                <span class="activity-post-vote-icon">↓</span>
+                            </div>
+                        `}
                     </div>
-                    <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
+                    ${currentUser ? `<button class="activity-post-comment-btn" data-post-id="${activity.postId}">
                         💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
-                    </button>
-                    <button class="post-action-btn share-btn" data-post-id="${activity.postId}" title="Share post">
+                    </button>` : `<div class="activity-post-comment-btn disabled" title="Log in to comment">
+                        💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
+                    </div>`}
+                    ${currentUser ? `<button class="post-action-btn share-btn" data-post-id="${activity.postId}" title="Share post">
                         <span class="post-action-icon">🔗</span>
-                    </button>
+                    </button>` : `<div class="post-action-btn share-btn disabled" title="Log in to share">
+                        <span class="post-action-icon">🔗</span>
+                    </div>`}
                     ${canReport ? `<button class="post-action-btn report-btn" data-post-id="${activity.postId}" title="Report post">
                         <span class="post-action-icon">🚩</span>
                     </button>` : ''}
@@ -1647,6 +1667,11 @@ async function handleHomeConfirmDelete(postId, closeModal) {
 
 // Handle share post (home page)
 async function handleHomeSharePost(postId) {
+    if (!currentUser) {
+        alert('Please log in to share posts');
+        return;
+    }
+    
     try {
         const shareUrl = window.location.origin + withBase(`/feed/?post=${postId}`);
         
