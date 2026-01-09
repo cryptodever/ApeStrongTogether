@@ -17,10 +17,12 @@ import {
     getDoc,
     addDoc,
     updateDoc,
+    setDoc,
     serverTimestamp,
     increment,
     Timestamp
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { withBase } from './base-url.js';
 
 // Constants
 const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -246,13 +248,18 @@ async function loadActivityFeed() {
             // Add click handlers for activity items
             activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    // Don't navigate if clicking on vote buttons, comment button, or comments section
+                    // Don't navigate if clicking on vote buttons, comment button, comments section, or action buttons
                     if (e.target.closest('.activity-post-vote-btn') ||
                         e.target.closest('.activity-post-vote-section') ||
                         e.target.closest('.activity-post-comment-btn') || 
                         e.target.closest('.activity-post-comments-section') ||
                         e.target.closest('.activity-post-comment-input-wrapper') ||
-                        e.target.closest('.activity-post-comment-submit')) {
+                        e.target.closest('.activity-post-comment-submit') ||
+                        e.target.closest('.post-edit-btn') ||
+                        e.target.closest('.post-delete-btn') ||
+                        e.target.closest('.share-btn') ||
+                        e.target.closest('.report-btn') ||
+                        e.target.closest('.post-header-actions')) {
                         return;
                     }
                     
@@ -359,6 +366,50 @@ async function loadActivityFeed() {
                     }
                 });
             });
+            
+            // Add edit button handlers
+            activityFeedEl.querySelectorAll('.post-edit-btn[data-post-id]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        handleHomeEditPost(postId);
+                    }
+                });
+            });
+            
+            // Add delete button handlers
+            activityFeedEl.querySelectorAll('.post-delete-btn[data-post-id]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        showHomeDeleteConfirmationModal(postId);
+                    }
+                });
+            });
+            
+            // Add share button handlers
+            activityFeedEl.querySelectorAll('.share-btn[data-post-id]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        handleHomeSharePost(postId);
+                    }
+                });
+            });
+            
+            // Add report button handlers
+            activityFeedEl.querySelectorAll('.report-btn[data-post-id]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const postId = btn.dataset.postId;
+                    if (postId) {
+                        handleHomeReportPost(postId);
+                    }
+                });
+            });
         }
         
     } catch (error) {
@@ -399,6 +450,14 @@ function createActivityItem(activity) {
         const hasUpvote = currentUser && activity.upvotes && activity.upvotes[currentUser.uid] === true;
         const hasDownvote = currentUser && activity.downvotes && activity.downvotes[currentUser.uid] === true;
         const voteScore = activity.voteScore || 0;
+        const canDelete = currentUser && activity.userId === currentUser.uid;
+        const canEdit = currentUser && activity.userId === currentUser.uid && activity.timestamp && (() => {
+            const createdTime = activity.timestamp.toMillis ? activity.timestamp.toMillis() : (activity.timestamp.seconds * 1000 || Date.now());
+            return (Date.now() - createdTime) < 5 * 60 * 1000;
+        })();
+        const editedAt = activity.editedAt?.toMillis ? activity.editedAt.toMillis() : (activity.editedAt?.seconds ? activity.editedAt.seconds * 1000 : null);
+        const editedIndicator = editedAt ? `<span class="post-edited-indicator">edited ${getTimeAgo({toMillis: () => editedAt})}</span>` : '';
+        const canReport = currentUser && activity.userId !== currentUser.uid;
         
         content = `
             <div class="activity-item activity-post activity-post-full" data-user-id="${activity.userId}" data-post-id="${activity.postId}">
@@ -409,7 +468,12 @@ function createActivityItem(activity) {
                         <div class="activity-post-meta">
                             <span class="activity-post-level">LVL ${userLevel}</span>
                             <span class="activity-time">${timeAgo}</span>
+                            ${editedIndicator}
                         </div>
+                    </div>
+                    <div class="post-header-actions">
+                        ${canEdit ? `<button class="post-edit-btn" data-post-id="${activity.postId}" title="Edit post">✏️</button>` : ''}
+                        ${canDelete ? `<button class="post-delete-btn" data-post-id="${activity.postId}" title="Delete post">×</button>` : ''}
                     </div>
                 </div>
                 <div class="activity-post-body">
@@ -442,6 +506,12 @@ function createActivityItem(activity) {
                     <button class="activity-post-comment-btn" data-post-id="${activity.postId}">
                         💬 <span class="activity-post-comment-count">${activity.commentsCount || 0}</span>
                     </button>
+                    <button class="post-action-btn share-btn" data-post-id="${activity.postId}" title="Share post">
+                        <span class="post-action-icon">🔗</span>
+                    </button>
+                    ${canReport ? `<button class="post-action-btn report-btn" data-post-id="${activity.postId}" title="Report post">
+                        <span class="post-action-icon">🚩</span>
+                    </button>` : ''}
                 </div>
                 <div class="activity-post-comments-section hide" id="activityCommentsSection_${activity.postId}">
                     <div class="activity-post-comments-list" id="activityCommentsList_${activity.postId}"></div>
@@ -1292,5 +1362,495 @@ async function handleActivityDeleteComment(postId, commentId) {
     } catch (error) {
         console.error('Error deleting comment:', error);
         alert('Failed to delete comment. Please try again.');
+    }
+}
+
+// Toast utility function
+function showHomeToast(message) {
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    const height = toast.offsetHeight;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+    });
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Handle edit post (home page)
+async function handleHomeEditPost(postId) {
+    if (!currentUser) return;
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (!postDoc.exists()) {
+            showHomeToast('Post not found');
+            return;
+        }
+        
+        const post = { id: postDoc.id, ...postDoc.data() };
+        
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.id = 'editPostModal';
+        
+        const createdTime = post.createdAt?.toMillis ? post.createdAt.toMillis() : (post.createdAt?.seconds * 1000 || Date.now());
+        const timeRemaining = Math.max(0, 5 * 60 * 1000 - (Date.now() - createdTime));
+        const minutesRemaining = Math.floor(timeRemaining / 60000);
+        const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
+        
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Post</h3>
+                    <button class="modal-close" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="edit-time-remaining">
+                        Time remaining to edit: ${minutesRemaining}m ${secondsRemaining}s
+                    </div>
+                    <textarea id="editPostContent" class="post-content-input edit-post-textarea" maxlength="2000" rows="5">${escapeHtml(post.content || '')}</textarea>
+                    <div id="editPostMediaPreview" class="edit-post-media-preview">
+                        ${post.images && post.images.length > 0 ? `
+                            <div class="post-images edit-post-images">
+                                ${post.images.map(img => `<img src="${escapeHtml(img)}" alt="Post image" class="post-image edit-post-image" />`).join('')}
+                            </div>
+                        ` : ''}
+                        ${post.videos && post.videos.length > 0 ? `
+                            <div class="post-videos edit-post-videos">
+                                ${post.videos.map(vid => `<video src="${escapeHtml(vid)}" class="post-video edit-post-video" controls></video>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" type="button" id="cancelEditBtn">Cancel</button>
+                        <button class="btn btn-primary" type="button" id="saveEditBtn">Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        
+        document.body.appendChild(modalOverlay);
+        modalOverlay.offsetHeight;
+        
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                modalOverlay.classList.add('show');
+            });
+        });
+        
+        const editContentEl = document.getElementById('editPostContent');
+        if (editContentEl) {
+            editContentEl.focus();
+            editContentEl.setSelectionRange(editContentEl.value.length, editContentEl.value.length);
+        }
+        
+        const closeModal = () => {
+            modalOverlay.classList.remove('show');
+            setTimeout(() => {
+                modalOverlay.remove();
+                const scrollY = document.body.style.top;
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                document.body.style.overflow = '';
+                if (scrollY) {
+                    window.scrollTo(0, parseInt(scrollY || '0') * -1);
+                }
+            }, 300);
+        };
+        
+        modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+        document.getElementById('cancelEditBtn').addEventListener('click', closeModal);
+        document.getElementById('saveEditBtn').addEventListener('click', () => handleHomeSaveEdit(postId, editContentEl.value, closeModal));
+        
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+        
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    } catch (error) {
+        console.error('Error loading post for edit:', error);
+        showHomeToast('Failed to load post. Please try again.');
+    }
+}
+
+// Handle save edit (home page)
+async function handleHomeSaveEdit(postId, newContent, closeModal) {
+    if (!currentUser) return;
+    
+    const content = newContent.trim();
+    
+    if (!content) {
+        showHomeToast('Post content cannot be empty');
+        return;
+    }
+    
+    if (content.length > 2000) {
+        showHomeToast('Post content must be 2000 characters or less');
+        return;
+    }
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        if (!postDoc.exists()) {
+            showHomeToast('Post not found');
+            return;
+        }
+        
+        const postData = postDoc.data();
+        const createdTime = postData.createdAt?.toMillis ? postData.createdAt.toMillis() : (postData.createdAt?.seconds * 1000 || Date.now());
+        if ((Date.now() - createdTime) >= 5 * 60 * 1000) {
+            showHomeToast('Edit window has expired');
+            closeModal();
+            return;
+        }
+        
+        await updateDoc(postRef, {
+            content: content,
+            editedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        
+        showHomeToast('Post updated successfully');
+        closeModal();
+        // Reload activity feed
+        loadActivityFeed();
+    } catch (error) {
+        console.error('Error saving edit:', error);
+        showHomeToast('Failed to save edit. Please try again.');
+    }
+}
+
+// Show delete confirmation modal (home page)
+function showHomeDeleteConfirmationModal(postId) {
+    if (!currentUser) return;
+    
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'deletePostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-confirmation-text">
+                    Are you sure you want to delete this post? This cannot be undone.
+                </p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelDeleteBtn">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    document.body.appendChild(modalOverlay);
+    modalOverlay.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
+    
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', closeModal);
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => handleHomeConfirmDelete(postId, closeModal));
+    
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle confirm delete (home page)
+async function handleHomeConfirmDelete(postId, closeModal) {
+    if (!currentUser) return;
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        await updateDoc(postRef, {
+            deleted: true,
+            updatedAt: serverTimestamp()
+        });
+        closeModal();
+        showHomeToast('Post deleted');
+        // Reload activity feed
+        loadActivityFeed();
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        showHomeToast('Failed to delete post. Please try again.');
+    }
+}
+
+// Handle share post (home page)
+async function handleHomeSharePost(postId) {
+    try {
+        const shareUrl = window.location.origin + withBase(`/feed/?post=${postId}`);
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            showHomeToast('Link copied to clipboard!');
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showHomeToast('Link copied to clipboard!');
+            } catch (err) {
+                showHomeToast(`Share URL: ${shareUrl}`);
+            }
+            document.body.removeChild(textArea);
+        }
+    } catch (error) {
+        console.error('Error sharing post:', error);
+        showHomeToast('Failed to copy link. Please try again.');
+    }
+}
+
+// Handle report post (home page)
+async function handleHomeReportPost(postId) {
+    if (!currentUser) return;
+    
+    try {
+        const postRef = doc(db, 'posts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (!postDoc.exists()) {
+            showHomeToast('Post not found');
+            return;
+        }
+        
+        const post = { id: postDoc.id, ...postDoc.data() };
+        
+        // Check if already reported
+        const alreadyReported = await checkHomeIfAlreadyReported(postId, currentUser.uid);
+        if (alreadyReported) {
+            showHomeToast('You have already reported this post');
+            return;
+        }
+        
+        showHomeReportModal(postId, post);
+    } catch (error) {
+        console.warn('Could not check if already reported, proceeding:', error);
+        try {
+            const postRef = doc(db, 'posts', postId);
+            const postDoc = await getDoc(postRef);
+            if (postDoc.exists()) {
+                const post = { id: postDoc.id, ...postDoc.data() };
+                showHomeReportModal(postId, post);
+            }
+        } catch (err) {
+            console.error('Error loading post for report:', err);
+            showHomeToast('Failed to load post. Please try again.');
+        }
+    }
+}
+
+// Check if already reported (home page)
+async function checkHomeIfAlreadyReported(postId, userId) {
+    try {
+        const reportId = `${postId}_${userId}`;
+        const reportRef = doc(db, 'reports', reportId);
+        const reportDoc = await getDoc(reportRef);
+        return reportDoc.exists();
+    } catch (error) {
+        console.warn('Error checking report, proceeding as if not reported:', error);
+        return false;
+    }
+}
+
+// Show report modal (home page)
+function showHomeReportModal(postId, post) {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'reportPostModal';
+    
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Post</h3>
+                <button class="modal-close" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="report-prompt-text">
+                    Why are you reporting this post?
+                </p>
+                <div class="report-reasons-list">
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="spam" />
+                        <span>Spam</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="harassment" />
+                        <span>Harassment/Bullying</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="inappropriate" />
+                        <span>Inappropriate Content</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="misinformation" />
+                        <span>Misinformation/Fake News</span>
+                    </label>
+                    <label class="report-reason-label">
+                        <input type="radio" name="reportReason" value="other" />
+                        <span>Other</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" type="button" id="cancelReportBtn">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="submitReportBtn">Submit</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    document.body.appendChild(modalOverlay);
+    modalOverlay.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modalOverlay.classList.add('show');
+        });
+    });
+    
+    const closeModal = () => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+            modalOverlay.remove();
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }, 300);
+    };
+    
+    modalOverlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.getElementById('cancelReportBtn').addEventListener('click', closeModal);
+    document.getElementById('submitReportBtn').addEventListener('click', () => {
+        const selectedReason = modalOverlay.querySelector('input[name="reportReason"]:checked');
+        if (!selectedReason) {
+            showHomeToast('Please select a reason');
+            return;
+        }
+        handleHomeSubmitReport(postId, post.userId, selectedReason.value, closeModal);
+    });
+    
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+    
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Handle submit report (home page)
+async function handleHomeSubmitReport(postId, reportedUserId, reason, closeModal) {
+    if (!currentUser) return;
+    
+    try {
+        const reportId = `${postId}_${currentUser.uid}`;
+        const reportRef = doc(db, 'reports', reportId);
+        
+        await setDoc(reportRef, {
+            postId: postId,
+            reportedBy: currentUser.uid,
+            reportedUser: reportedUserId,
+            reason: reason,
+            createdAt: serverTimestamp(),
+            reviewed: false
+        });
+        
+        showHomeToast('Report submitted successfully');
+        closeModal();
+    } catch (error) {
+        console.error('Error submitting report:', error);
+        if (error.code === 'permission-denied') {
+            showHomeToast('You have already reported this post');
+        } else {
+            showHomeToast('Failed to submit report. Please try again.');
+        }
     }
 }
