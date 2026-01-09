@@ -5997,7 +5997,7 @@ body.profile-body > *:not(.modal-overlay) {
     transition: color 0.3s ease;
     position: absolute;
     top: 1rem;
-    left: 1rem;
+    right: 1rem;
     overflow: visible;
     min-height: 2.5rem; /* Ensure space for floating text */
     background: rgba(0, 0, 0, 0.8);
