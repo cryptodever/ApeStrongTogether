@@ -117,6 +117,10 @@ function setupEventListeners() {
     // Character count
     if (postContentEl) {
         postContentEl.addEventListener('input', updateCharCount);
+        // Auto-expand textarea
+        postContentEl.addEventListener('input', autoExpandTextarea);
+        // Set initial height
+        autoExpandTextarea.call(postContentEl);
     }
     
     // Image file input
@@ -171,6 +175,31 @@ function setupEventListeners() {
             closeEmojiPicker();
         }
     });
+}
+
+// Auto-expand textarea based on content
+function autoExpandTextarea() {
+    const textarea = this;
+    if (!textarea) return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height based on content
+    const scrollHeight = textarea.scrollHeight;
+    const minHeight = 80; // matches CSS min-height
+    const maxHeight = 600; // matches CSS max-height
+    
+    // Set height, clamping between min and max
+    const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+    
+    // Show scrollbar only if content exceeds max height
+    if (scrollHeight > maxHeight) {
+        textarea.style.overflowY = 'auto';
+    } else {
+        textarea.style.overflowY = 'hidden';
+    }
 }
 
 // Update character count
@@ -400,7 +429,11 @@ async function handlePostSubmit(e) {
         }
         
         // Reset form
-        if (postContentEl) postContentEl.value = '';
+        if (postContentEl) {
+            postContentEl.value = '';
+            // Reset textarea height
+            autoExpandTextarea.call(postContentEl);
+        }
         if (postImageFileEl) postImageFileEl.value = '';
         if (postVideoFileEl) postVideoFileEl.value = '';
         selectedImageFile = null;
