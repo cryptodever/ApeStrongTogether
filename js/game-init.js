@@ -362,7 +362,8 @@ async function initializeGame() {
     };
     
     // Calculate upgrade values
-    const baseDamage = 5;
+    // Character-specific base damage: Sniper gets 2x damage
+    const baseDamage = selectedCharacter === 3 ? 10 : 5; // Sniper (character 3) gets 2x damage
     const baseHealth = 20; // Base health starts at 20
     const baseSpeed = 3;
     
@@ -699,8 +700,8 @@ function updateUpgradeShopUI() {
         powerUpSpawnRate: 1
     };
     
-    // Base values
-    const baseDamage = 5;
+    // Character-specific base damage: Sniper gets 2x damage
+    const baseDamage = selectedCharacter === 3 ? 10 : 5; // Sniper (character 3) gets 2x damage
     const baseHealth = 20;
     const baseSpeed = 3;
     
@@ -900,7 +901,8 @@ async function purchaseUpgrade(upgradeType) {
             const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05);
             game.setPlayerSpeed(playerSpeed);
         } else if (upgradeType === 'weaponDamage') {
-            const baseDamage = 5;
+            // Character-specific base damage: Sniper gets 2x damage
+            const baseDamage = selectedCharacter === 3 ? 10 : 5; // Sniper (character 3) gets 2x damage
             const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
             game.setWeaponDamage(weaponDamage);
         } else if (upgradeType === 'weaponFireRate') {
@@ -974,7 +976,8 @@ async function refundUpgrade(upgradeType) {
             const playerSpeed = baseSpeed * (1 + (speedLevel - 1) * 0.05);
             game.setPlayerSpeed(playerSpeed);
         } else if (upgradeType === 'weaponDamage') {
-            const baseDamage = 5;
+            // Character-specific base damage: Sniper gets 2x damage
+            const baseDamage = selectedCharacter === 3 ? 10 : 5; // Sniper (character 3) gets 2x damage
             const weaponDamage = baseDamage * characterUpgrades.weaponDamage;
             game.setWeaponDamage(weaponDamage);
         } else if (upgradeType === 'weaponFireRate') {
