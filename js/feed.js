@@ -1142,36 +1142,36 @@ function handleEditPost(postId, post) {
     const minutesRemaining = Math.floor(timeRemaining / 60000);
     const secondsRemaining = Math.floor((timeRemaining % 60000) / 1000);
     
-    modalOverlay.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Post</h3>
-                <button class="modal-close" type="button">×</button>
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Post</h3>
+                    <button class="modal-close" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="edit-time-remaining">
+                        Time remaining to edit: ${minutesRemaining}m ${secondsRemaining}s
+                    </div>
+                    <textarea id="editPostContent" class="post-content-input edit-post-textarea" maxlength="2000" rows="5">${escapeHtml(post.content || '')}</textarea>
+                    <div id="editPostMediaPreview" class="edit-post-media-preview">
+                        ${post.images && post.images.length > 0 ? `
+                            <div class="post-images edit-post-images">
+                                ${post.images.map(img => `<img src="${escapeHtml(img)}" alt="Post image" class="post-image edit-post-image" />`).join('')}
+                            </div>
+                        ` : ''}
+                        ${post.videos && post.videos.length > 0 ? `
+                            <div class="post-videos edit-post-videos">
+                                ${post.videos.map(vid => `<video src="${escapeHtml(vid)}" class="post-video edit-post-video" controls></video>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" type="button" id="cancelEditBtn">Cancel</button>
+                        <button class="btn btn-primary" type="button" id="saveEditBtn">Save</button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <div style="margin-bottom: 1rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">
-                    Time remaining to edit: ${minutesRemaining}m ${secondsRemaining}s
-                </div>
-                <textarea id="editPostContent" class="post-content-input" maxlength="2000" rows="5" style="width: 100%; margin-bottom: 1rem;">${escapeHtml(post.content || '')}</textarea>
-                <div id="editPostMediaPreview" style="margin-bottom: 1rem;">
-                    ${post.images && post.images.length > 0 ? `
-                        <div class="post-images" style="margin-bottom: 1rem;">
-                            ${post.images.map(img => `<img src="${escapeHtml(img)}" alt="Post image" class="post-image" style="max-width: 100%; border-radius: 8px;" />`).join('')}
-                        </div>
-                    ` : ''}
-                    ${post.videos && post.videos.length > 0 ? `
-                        <div class="post-videos" style="margin-bottom: 1rem;">
-                            ${post.videos.map(vid => `<video src="${escapeHtml(vid)}" class="post-video" controls style="max-width: 100%; border-radius: 8px;"></video>`).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button class="btn" type="button" id="cancelEditBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
-                    <button class="btn btn-primary" type="button" id="saveEditBtn">Save</button>
-                </div>
-            </div>
-        </div>
-    `;
+        `;
     
     document.body.appendChild(modalOverlay);
     setTimeout(() => modalOverlay.classList.add('show'), 10);
@@ -1263,23 +1263,23 @@ function showDeleteConfirmationModal(postId) {
     modalOverlay.className = 'modal-overlay';
     modalOverlay.id = 'deletePostModal';
     
-    modalOverlay.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Delete Post</h3>
-                <button class="modal-close" type="button">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 1.5rem; color: rgba(255, 255, 255, 0.9);">
-                    Are you sure you want to delete this post? This cannot be undone.
-                </p>
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button class="btn" type="button" id="cancelDeleteBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
-                    <button class="btn btn-primary" type="button" id="confirmDeleteBtn" style="background: #dc2626;">Delete</button>
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Delete Post</h3>
+                    <button class="modal-close" type="button">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="delete-confirmation-text">
+                        Are you sure you want to delete this post? This cannot be undone.
+                    </p>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" type="button" id="cancelDeleteBtn">Cancel</button>
+                        <button class="btn btn-danger" type="button" id="confirmDeleteBtn">Delete</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
     
     document.body.appendChild(modalOverlay);
     setTimeout(() => modalOverlay.classList.add('show'), 10);
@@ -1380,10 +1380,10 @@ function handleReportPost(postId, post) {
                     <button class="modal-close" type="button">×</button>
                 </div>
                 <div class="modal-body">
-                    <p style="margin-bottom: 1.5rem; color: rgba(255, 255, 255, 0.9);">
+                    <p class="report-prompt-text">
                         Why are you reporting this post?
                     </p>
-                    <div class="report-reasons-list" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <div class="report-reasons-list">
                         <label class="report-reason-label">
                             <input type="radio" name="reportReason" value="spam" />
                             <span>Spam</span>
@@ -1405,9 +1405,9 @@ function handleReportPost(postId, post) {
                             <span>Other</span>
                         </label>
                     </div>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button class="btn" type="button" id="cancelReportBtn" style="background: rgba(255, 255, 255, 0.1);">Cancel</button>
-                        <button class="btn btn-primary" type="button" id="submitReportBtn" style="background: #dc2626;">Submit</button>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" type="button" id="cancelReportBtn">Cancel</button>
+                        <button class="btn btn-danger" type="button" id="submitReportBtn">Submit</button>
                     </div>
                 </div>
             </div>

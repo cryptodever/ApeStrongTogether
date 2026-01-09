@@ -326,8 +326,14 @@ service cloud.firestore {
         && request.resource.data.reason in ['spam', 'harassment', 'inappropriate', 'misinformation', 'other']
         && request.resource.data.reviewed == false;
       
-      // Only admins/moderators can read reports
-      allow read: if isAdminOrMod(request.auth.uid);
+      // Users can read their own reports (to check if already reported), admins/moderators can read all
+      allow get: if isSignedIn() && (
+        resource.data.reportedBy == request.auth.uid || 
+        isAdminOrMod(request.auth.uid)
+      );
+      
+      // Only admins/moderators can list/query reports
+      allow list: if isAdminOrMod(request.auth.uid);
       
       // Only admins/moderators can update review status
       allow update: if isAdminOrMod(request.auth.uid)
