@@ -8523,9 +8523,9 @@ body.chat-body > * {
 /* Toast Notification */
 .toast {
     position: fixed;
-    bottom: 20px;
+    top: 80px;
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateX(-50%) translateY(-100px);
     background: rgba(30, 30, 30, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -8536,11 +8536,20 @@ body.chat-body > * {
     opacity: 0;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .toast.show {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
+}
+
+/* Mobile: position slightly lower to account for mobile browser UI */
+@media (max-width: 768px) {
+    .toast {
+        top: 100px;
+    }
 }
 
 /* Mobile Responsive */
