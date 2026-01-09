@@ -2553,8 +2553,14 @@ export class Game {
             // Activate magnet if within pickup range
             if (dist < pickupRange) {
                 // Move power-up toward player (magnet effect)
-                const timeFactor = deltaTime / 16.67;
-                const speed = 0.15 * timeFactor * (this.player.speed * 2);
+                // Speed increases as item gets closer to player (accelerates over time)
+                const baseSpeed = 0.15;
+                // Acceleration factor: speed increases as distance decreases (max 3x speed when very close)
+                const maxDist = pickupRange;
+                const minDist = 10; // Minimum distance before max speed
+                const normalizedDist = Math.max(0, Math.min(1, (dist - minDist) / (maxDist - minDist)));
+                const accelerationFactor = 1 + (2 * (1 - normalizedDist)); // 1x to 3x speed
+                const speed = baseSpeed * accelerationFactor * timeFactor * (this.player.speed * 2);
                 const moveX = (dx / dist) * speed;
                 const moveY = (dy / dist) * speed;
                 powerUp.x += moveX;
@@ -2794,7 +2800,14 @@ export class Game {
             
             // Move toward player if magnet is active
             if (pickup.magnetActive && dist > 5) {
-                const speed = this.goldMagnetSpeed * timeFactor * (this.player.speed * 2); // Faster magnet
+                // Speed increases as item gets closer to player (accelerates over time)
+                const baseSpeed = this.goldMagnetSpeed;
+                // Acceleration factor: speed increases as distance decreases (max 3x speed when very close)
+                const maxDist = pickupRange;
+                const minDist = 10; // Minimum distance before max speed
+                const normalizedDist = Math.max(0, Math.min(1, (dist - minDist) / (maxDist - minDist)));
+                const accelerationFactor = 1 + (2 * (1 - normalizedDist)); // 1x to 3x speed
+                const speed = baseSpeed * accelerationFactor * timeFactor * (this.player.speed * 2);
                 const moveX = (dx / dist) * speed;
                 const moveY = (dy / dist) * speed;
                 pickup.x += moveX;
