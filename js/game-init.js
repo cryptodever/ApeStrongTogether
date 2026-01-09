@@ -517,7 +517,7 @@ function getCharacterDescription(characterId) {
     switch(characterId) {
         case 1: return 'Pistol weapon with balanced stats';
         case 2: return '5 bullet spread, slower fire rate';
-        case 3: return 'Piercing bullets, slower fire rate and movement';
+        case 3: return 'Piercing bullets, 2x damage, slower fire rate and movement';
         default: return '';
     }
 }
