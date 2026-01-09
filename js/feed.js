@@ -653,13 +653,18 @@ function renderPost(post) {
                         <span class="post-vote-icon">↓</span>
                     </button>
                 </div>
-                <button class="post-action-btn comment-btn" data-post-id="${post.id}">
+                ${currentUser ? `<button class="post-action-btn comment-btn" data-post-id="${post.id}">
                     <span class="post-action-icon">💬</span>
                     <span class="post-action-count">${post.commentsCount || 0}</span>
-                </button>
-                <button class="post-action-btn share-btn" data-post-id="${post.id}" title="Share post">
+                </button>` : `<div class="post-action-btn comment-btn disabled" title="Log in to comment">
+                    <span class="post-action-icon">💬</span>
+                    <span class="post-action-count">${post.commentsCount || 0}</span>
+                </div>`}
+                ${currentUser ? `<button class="post-action-btn share-btn" data-post-id="${post.id}" title="Share post">
                     <span class="post-action-icon">🔗</span>
-                </button>
+                </button>` : `<div class="post-action-btn share-btn disabled" title="Log in to share">
+                    <span class="post-action-icon">🔗</span>
+                </div>`}
                 ${canReport ? `<button class="post-action-btn report-btn" data-post-id="${post.id}" title="Report post">
                     <span class="post-action-icon">🚩</span>
                 </button>` : ''}
@@ -703,14 +708,34 @@ function setupPostEventListeners(postId, post) {
         }
     }
     
-    // Vote buttons
-    const upvoteBtn = document.querySelector(`.upvote-btn[data-post-id="${postId}"]`);
-    const downvoteBtn = document.querySelector(`.downvote-btn[data-post-id="${postId}"]`);
-    if (upvoteBtn) {
-        upvoteBtn.addEventListener('click', () => handleVote(postId, 'upvote'));
-    }
-    if (downvoteBtn) {
-        downvoteBtn.addEventListener('click', () => handleVote(postId, 'downvote'));
+    // Vote buttons (only if logged in)
+    if (currentUser) {
+        const upvoteBtn = document.querySelector(`.upvote-btn[data-post-id="${postId}"]`);
+        const downvoteBtn = document.querySelector(`.downvote-btn[data-post-id="${postId}"]`);
+        if (upvoteBtn) {
+            upvoteBtn.addEventListener('click', () => handleVote(postId, 'upvote'));
+        }
+        if (downvoteBtn) {
+            downvoteBtn.addEventListener('click', () => handleVote(postId, 'downvote'));
+        }
+    } else {
+        // Show login prompt for vote buttons
+        const upvoteBtn = document.querySelector(`.upvote-btn[data-post-id="${postId}"]`);
+        const downvoteBtn = document.querySelector(`.downvote-btn[data-post-id="${postId}"]`);
+        if (upvoteBtn) {
+            upvoteBtn.addEventListener('click', () => {
+                alert('Please log in to vote');
+                const loginBtn = document.getElementById('headerLoginBtn');
+                if (loginBtn) loginBtn.click();
+            });
+        }
+        if (downvoteBtn) {
+            downvoteBtn.addEventListener('click', () => {
+                alert('Please log in to vote');
+                const loginBtn = document.getElementById('headerLoginBtn');
+                if (loginBtn) loginBtn.click();
+            });
+        }
     }
     
     // Comment button
@@ -718,6 +743,12 @@ function setupPostEventListeners(postId, post) {
     const commentsSection = document.getElementById(`commentsSection_${postId}`);
     if (commentBtn && commentsSection) {
         commentBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                alert('Please log in to view comments');
+                const loginBtn = document.getElementById('headerLoginBtn');
+                if (loginBtn) loginBtn.click();
+                return;
+            }
             const isVisible = !commentsSection.classList.contains('hide');
             if (isVisible) {
                 commentsSection.classList.add('hide');
@@ -728,16 +759,18 @@ function setupPostEventListeners(postId, post) {
         });
     }
     
-    // Comment submit
-    const commentSubmit = document.querySelector(`.post-comment-submit[data-post-id="${postId}"]`);
-    const commentInput = document.getElementById(`commentInput_${postId}`);
-    if (commentSubmit && commentInput) {
-        commentSubmit.addEventListener('click', () => handleAddComment(postId, commentInput));
-        commentInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleAddComment(postId, commentInput);
-            }
-        });
+    // Comment submit (only if logged in)
+    if (currentUser) {
+        const commentSubmit = document.querySelector(`.post-comment-submit[data-post-id="${postId}"]`);
+        const commentInput = document.getElementById(`commentInput_${postId}`);
+        if (commentSubmit && commentInput) {
+            commentSubmit.addEventListener('click', () => handleAddComment(postId, commentInput));
+            commentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleAddComment(postId, commentInput);
+                }
+            });
+        }
     }
     
     // Edit button
@@ -752,7 +785,7 @@ function setupPostEventListeners(postId, post) {
         deleteBtn.addEventListener('click', () => showDeleteConfirmationModal(postId));
     }
     
-    // Share button
+    // Share button (only if logged in)
     const shareBtn = document.querySelector(`.share-btn[data-post-id="${postId}"]`);
     if (shareBtn) {
         shareBtn.addEventListener('click', () => handleSharePost(postId));
@@ -1402,6 +1435,11 @@ async function handleConfirmDelete(postId, closeModal) {
 
 // Handle share post
 async function handleSharePost(postId) {
+    if (!currentUser) {
+        alert('Please log in to share posts');
+        return;
+    }
+    
     try {
         const shareUrl = window.location.origin + withBase(`/feed/?post=${postId}`);
         
