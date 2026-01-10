@@ -626,7 +626,7 @@ function setupActivityHandlers() {
                 });
     });
     
-    // Add Enter key handler for comment inputs
+            // Add Enter key handler for comment inputs
             activityFeedEl.querySelectorAll('.activity-post-comment-input').forEach(input => {
                 input.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -635,7 +635,13 @@ function setupActivityHandlers() {
                         handleActivityAddComment(postId, input);
                     }
                 });
-    });
+            });
+            
+            // Setup emoji pickers for comment inputs
+            activityFeedEl.querySelectorAll('.activity-comment-emoji-btn').forEach(btn => {
+                const postId = btn.dataset.postId;
+                setupActivityCommentEmojiPicker(postId);
+            });
     
     // Add edit button handlers
             activityFeedEl.querySelectorAll('.post-edit-btn[data-post-id]').forEach(btn => {
@@ -801,8 +807,18 @@ function createActivityItem(activity) {
                     <div class="activity-post-comments-list" id="activityCommentsList_${activity.postId}"></div>
                     ${currentUser ? `
                         <div class="activity-post-comment-input-wrapper">
+                            <button type="button" class="activity-comment-emoji-btn" data-post-id="${activity.postId}" title="Add emoji">😀</button>
                             <input type="text" class="activity-post-comment-input" id="activityCommentInput_${activity.postId}" placeholder="Write a comment..." maxlength="500" />
                             <button class="activity-post-comment-submit" data-post-id="${activity.postId}">Post</button>
+                        </div>
+                        <div class="activity-comment-emoji-picker hide" id="activityCommentEmojiPicker_${activity.postId}">
+                            <div class="emoji-picker-header">
+                                <span class="emoji-picker-title">Choose an emoji</span>
+                                <button type="button" class="emoji-picker-close" data-post-id="${activity.postId}">×</button>
+                            </div>
+                            <div class="emoji-picker-grid" id="activityCommentEmojiGrid_${activity.postId}">
+                                <!-- Emojis will be populated by JavaScript -->
+                            </div>
                         </div>
                     ` : '<div class="activity-post-comment-login">Please log in to comment</div>'}
                 </div>
@@ -1513,6 +1529,9 @@ async function loadActivityComments(postId) {
                 }
             }
         });
+        
+        // Setup emoji picker for comment input
+        setupActivityCommentEmojiPicker(postId);
         
     } catch (error) {
         console.error('Error loading comments:', error);
