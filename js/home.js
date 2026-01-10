@@ -202,9 +202,9 @@ async function loadActivityFeed(feedType = 'trending') {
         // Render activities
         if (displayActivities.length === 0) {
             if (feedType === 'following') {
-                activityFeedEl.innerHTML = '<div class="activity-empty">No posts from users you follow yet. Start following some apes!</div>';
+                activityFeedEl.innerHTML = '<div class="activity-empty">no apes your following have posted...</div>';
             } else {
-                activityFeedEl.innerHTML = '<div class="activity-empty">No recent activity. Check back soon!</div>';
+                activityFeedEl.innerHTML = '<div class="activity-empty">no apes trending...</div>';
             }
         } else {
             activityFeedEl.innerHTML = displayActivities.map(activity => createActivityItem(activity)).join('');
