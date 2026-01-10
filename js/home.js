@@ -470,7 +470,7 @@ function createActivityItem(activity) {
                 <div class="activity-post-header">
                     <img src="${bannerImage}" alt="${escapeHtml(activity.username)}" class="activity-post-avatar" />
                     <div class="activity-post-author">
-                        <div class="activity-post-username">@${escapeHtml(activity.username)}</div>
+                        <div class="activity-post-username">@${escapeHtml(activity.username)}${(activity.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}</div>
                         <div class="activity-post-meta">
                             <span class="activity-post-level">LVL ${userLevel}</span>
                             <span class="activity-time">${timeAgo}</span>
@@ -634,7 +634,7 @@ async function loadTrendingUsers() {
             trendingUsersEl.innerHTML = trending.map((user, index) => `
                 <div class="trending-user" data-user-id="${user.userId}">
                     <span class="trending-rank">${index + 1}</span>
-                    <span class="trending-username">@${escapeHtml(user.username)}</span>
+                    <span class="trending-username">@${escapeHtml(user.username)}${(user.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}</span>
                     <span class="trending-level">LVL ${user.level}</span>
                 </div>
             `).join('');
@@ -1268,7 +1268,7 @@ function renderActivityComment(comment, postId) {
             <img src="${bannerImage}" alt="${comment.username}" class="comment-author-avatar" />
             <div class="comment-content">
                 <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(comment.username)}</span>
+                    <span class="comment-author">${escapeHtml(comment.username)}${(comment.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}</span>
                     <span class="comment-time">${timeAgo}</span>
                     ${canDelete ? `<button class="comment-delete-btn" data-comment-id="${comment.id}" title="Delete comment">×</button>` : ''}
                 </div>

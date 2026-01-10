@@ -643,7 +643,7 @@ function renderPost(post) {
             <div class="post-header">
                 <img src="${bannerImage}" alt="${post.username}" class="post-author-avatar" />
                 <div class="post-author-info">
-                    <div class="post-author-name">${escapeHtml(post.username)}</div>
+                    <div class="post-author-name">${escapeHtml(post.username)}${(post.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}</div>
                     <div class="post-author-meta">
                         <span class="post-author-level">LVL ${userLevel}</span>
                         <span class="post-time">${timeAgo}</span>
@@ -1120,7 +1120,7 @@ function renderComment(comment, postId) {
             <img src="${bannerImage}" alt="${comment.username}" class="comment-author-avatar" />
             <div class="comment-content">
                 <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(comment.username)}</span>
+                    <span class="comment-author">${escapeHtml(comment.username)}${(comment.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}</span>
                     <span class="comment-time">${timeAgo}</span>
                     ${canDelete ? `<button class="comment-delete-btn" data-comment-id="${comment.id}" title="Delete comment">×</button>` : ''}
                 </div>
