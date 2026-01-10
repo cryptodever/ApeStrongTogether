@@ -11749,11 +11749,18 @@ body:has(.modal-overlay.show) {
 
 .activity-feed-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feed-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .activity-feed-header h2 {
@@ -11762,6 +11769,42 @@ body:has(.modal-overlay.show) {
     color: #ffffff;
     margin: 0;
     font-family: 'Space Grotesk', sans-serif;
+}
+
+.feed-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.feed-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+.feed-tab:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.feed-tab.active {
+    color: #4ade80;
+    border-bottom-color: #4ade80;
+    background: transparent;
+}
+
+.feed-tab.active:hover {
+    color: #4ade80;
 }
 
 .feed-controls {
@@ -12261,9 +12304,30 @@ body:has(.modal-overlay.show) {
     }
     
     .activity-feed-header {
+        gap: 0.75rem;
+    }
+    
+    .feed-header-top {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.75rem;
+    }
+    
+    .feed-tabs {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .feed-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .feed-tab {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
     }
     
     .feed-controls {

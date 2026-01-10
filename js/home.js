@@ -33,12 +33,14 @@ const TRENDING_LIMIT = 5; // Top 5 trending users
 let currentUser = null;
 let pollInterval = null;
 let lastUpdateTime = null;
+let currentFeedType = 'trending'; // 'trending' or 'following'
 
 // DOM Elements
 let activityFeedEl, lastUpdatedEl, refreshBtnEl;
 let userStatsSectionEl;
 let trendingUsersEl, activeChannelsEl;
 let chatOnlineCountEl, questsCompletedCountEl;
+let trendingTabEl, followingTabEl;
 
 // Initialize home page
 export function initHome() {
@@ -51,6 +53,8 @@ export function initHome() {
     activeChannelsEl = document.getElementById('activeChannels');
     chatOnlineCountEl = document.getElementById('chatOnlineCount');
     questsCompletedCountEl = document.getElementById('questsCompletedCount');
+    trendingTabEl = document.getElementById('trendingTab');
+    followingTabEl = document.getElementById('followingTab');
 
     // Copy token address functionality
     const copyButton = document.getElementById('copyButton');
@@ -65,9 +69,35 @@ export function initHome() {
         });
     }
 
+    // Feed tab switching
+    if (trendingTabEl) {
+        trendingTabEl.addEventListener('click', () => switchFeedType('trending'));
+    }
+    if (followingTabEl) {
+        followingTabEl.addEventListener('click', () => switchFeedType('following'));
+    }
+    
+    // Hide following tab if not logged in (will be shown when user logs in)
+    if (followingTabEl) {
+        followingTabEl.style.display = currentUser ? 'inline-block' : 'none';
+    }
+
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
+        
+        // Show/hide following tab based on login status
+        if (followingTabEl) {
+            if (user) {
+                followingTabEl.style.display = 'inline-block';
+            } else {
+                followingTabEl.style.display = 'none';
+                // Switch to trending if following tab was active
+                if (currentFeedType === 'following') {
+                    switchFeedType('trending');
+                }
+            }
+        }
         
         if (user) {
             // Show user stats section
@@ -95,6 +125,24 @@ export function initHome() {
     });
 }
 
+// Switch feed type between trending and following
+function switchFeedType(feedType) {
+    if (feedType === currentFeedType) return;
+    
+    currentFeedType = feedType;
+    
+    // Update tab active states
+    if (trendingTabEl) {
+        trendingTabEl.classList.toggle('active', feedType === 'trending');
+    }
+    if (followingTabEl) {
+        followingTabEl.classList.toggle('active', feedType === 'following');
+    }
+    
+    // Reload feed with new type
+    loadAllData(true);
+}
+
 // Load all homepage data
 async function loadAllData(manualRefresh = false) {
     try {
@@ -104,7 +152,7 @@ async function loadAllData(manualRefresh = false) {
         
         // Load all data in parallel
         await Promise.all([
-            loadActivityFeed(),
+            loadActivityFeed(currentFeedType),
             loadTrendingUsers(),
             loadActiveChannels(),
             loadFeatureStats()
@@ -128,14 +176,52 @@ async function loadAllData(manualRefresh = false) {
 }
 
 // Load activity feed
-async function loadActivityFeed() {
+async function loadActivityFeed(feedType = 'trending') {
     if (!activityFeedEl) return;
     
     try {
         const activities = [];
         
-        // Load trending posts (most likes in last 24 hours)
-        try {
+        if (feedType === 'following') {
+            // Load posts from users you follow
+            await loadFollowingFeed(activities);
+        } else {
+            // Load trending posts (most likes in last 24 hours)
+            await loadTrendingFeed(activities);
+        }
+        
+        // Sort activities by timestamp (newest first)
+        activities.sort((a, b) => {
+            const timeA = a.sortTime || (a.timestamp?.toMillis?.() || a.timestamp?.seconds * 1000 || 0);
+            const timeB = b.sortTime || (b.timestamp?.toMillis?.() || b.timestamp?.seconds * 1000 || 0);
+            return timeB - timeA;
+        });
+        
+        const displayActivities = activities.slice(0, ACTIVITY_LIMIT);
+        
+        // Render activities
+        if (displayActivities.length === 0) {
+            if (feedType === 'following') {
+                activityFeedEl.innerHTML = '<div class="activity-empty">No posts from users you follow yet. Start following some apes!</div>';
+            } else {
+                activityFeedEl.innerHTML = '<div class="activity-empty">No recent activity. Check back soon!</div>';
+            }
+        } else {
+            activityFeedEl.innerHTML = displayActivities.map(activity => createActivityItem(activity)).join('');
+            
+            // Add click handlers for activity items
+            setupActivityHandlers();
+        }
+        
+    } catch (error) {
+        console.error('Error loading activity feed:', error);
+        activityFeedEl.innerHTML = '<div class="activity-error">Error loading feed. Please try again.</div>';
+    }
+}
+
+// Load trending feed
+async function loadTrendingFeed(activities) {
+    try {
             const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
             const trendingPosts = [];
             let postsSnapshot;
@@ -232,21 +318,174 @@ async function loadActivityFeed() {
             });
             activities.push(...trendingPosts.slice(0, 25));
         } catch (error) {
-            console.error('[loadActivityFeed] Error loading trending posts:', error);
+            console.error('[loadTrendingFeed] Error loading trending posts:', error);
             // Continue even if posts fail to load
         }
+}
+
+// Load following feed - posts from users you follow
+async function loadFollowingFeed(activities) {
+    if (!currentUser) {
+        return; // Can't load following feed if not logged in
+    }
+    
+    try {
+        // Get list of users you're following
+        const followingRef = collection(db, 'following', currentUser.uid, 'following');
+        const followingSnapshot = await getDocs(followingRef);
         
-        // Posts are already sorted by hotScore, so no need to sort again
-        const displayActivities = activities;
+        if (followingSnapshot.empty) {
+            console.log('[loadFollowingFeed] Not following any users yet');
+            return;
+        }
         
-        // Render activities
-        if (displayActivities.length === 0) {
-            activityFeedEl.innerHTML = '<div class="activity-empty">No recent activity. Check back soon!</div>';
-        } else {
-            activityFeedEl.innerHTML = displayActivities.map(activity => createActivityItem(activity)).join('');
+        const followingUserIds = [];
+        followingSnapshot.forEach((doc) => {
+            followingUserIds.push(doc.id);
+        });
+        
+        if (followingUserIds.length === 0) {
+            return;
+        }
+        
+        console.log(`[loadFollowingFeed] Following ${followingUserIds.length} user(s), fetching their posts...`);
+        
+        // Fetch posts from each user you follow
+        // Note: Firestore 'in' query is limited to 10 items, so we need to batch
+        const BATCH_SIZE = 10;
+        const allPosts = [];
+        
+        for (let i = 0; i < followingUserIds.length; i += BATCH_SIZE) {
+            const batch = followingUserIds.slice(i, i + BATCH_SIZE);
             
-            // Add click handlers for activity items
-            activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
+            try {
+                const postsQuery = query(
+                    collection(db, 'posts'),
+                    where('userId', 'in', batch),
+                    where('deleted', '==', false),
+                    orderBy('createdAt', 'desc'),
+                    limit(50) // Limit per batch to avoid too many reads
+                );
+                
+                const postsSnapshot = await getDocs(postsQuery);
+                
+                for (const postDoc of postsSnapshot.docs) {
+                    const postData = postDoc.data();
+                    
+                    // Skip deleted posts
+                    if (postData.deleted === true) continue;
+                    
+                    if (!postData.createdAt || !postData.userId) {
+                        console.warn('[loadFollowingFeed] Post missing createdAt or userId:', postDoc.id);
+                        continue;
+                    }
+                    
+                    // Get post timestamp
+                    let postTime;
+                    if (postData.createdAt && typeof postData.createdAt.toMillis === 'function') {
+                        postTime = postData.createdAt.toMillis();
+                    } else if (postData.createdAt && postData.createdAt.seconds) {
+                        postTime = postData.createdAt.seconds * 1000;
+                    } else {
+                        continue;
+                    }
+                    
+                    // Get user info
+                    const userDoc = await getDoc(doc(db, 'users', postData.userId));
+                    const userData = userDoc.exists() ? userDoc.data() : null;
+                    const username = userData?.username || 'Anonymous';
+                    
+                    // Calculate vote score
+                    const voteScore = postData.voteScore || 0;
+                    const comments = postData.commentsCount || 0;
+                    
+                    allPosts.push({
+                        type: 'post',
+                        userId: postData.userId,
+                        username: username,
+                        postId: postDoc.id,
+                        content: postData.content || '',
+                        images: postData.images || [],
+                        videos: postData.videos || [],
+                        upvotes: postData.upvotes || {},
+                        downvotes: postData.downvotes || {},
+                        voteScore: voteScore,
+                        commentsCount: comments,
+                        timestamp: postData.createdAt,
+                        sortTime: postTime,
+                        userData: userData
+                    });
+                }
+            } catch (batchError) {
+                console.error(`[loadFollowingFeed] Error fetching batch ${i}-${i + BATCH_SIZE}:`, batchError);
+                // Try fallback: query without orderBy if index doesn't exist
+                try {
+                    const fallbackQuery = query(
+                        collection(db, 'posts'),
+                        where('userId', 'in', batch),
+                        where('deleted', '==', false),
+                        limit(100)
+                    );
+                    const fallbackSnapshot = await getDocs(fallbackQuery);
+                    
+                    for (const postDoc of fallbackSnapshot.docs) {
+                        const postData = postDoc.data();
+                        if (postData.deleted === true) continue;
+                        if (!postData.createdAt || !postData.userId) continue;
+                        
+                        let postTime;
+                        if (postData.createdAt && typeof postData.createdAt.toMillis === 'function') {
+                            postTime = postData.createdAt.toMillis();
+                        } else if (postData.createdAt && postData.createdAt.seconds) {
+                            postTime = postData.createdAt.seconds * 1000;
+                        } else {
+                            continue;
+                        }
+                        
+                        const userDoc = await getDoc(doc(db, 'users', postData.userId));
+                        const userData = userDoc.exists() ? userDoc.data() : null;
+                        const username = userData?.username || 'Anonymous';
+                        const voteScore = postData.voteScore || 0;
+                        const comments = postData.commentsCount || 0;
+                        
+                        allPosts.push({
+                            type: 'post',
+                            userId: postData.userId,
+                            username: username,
+                            postId: postDoc.id,
+                            content: postData.content || '',
+                            images: postData.images || [],
+                            videos: postData.videos || [],
+                            upvotes: postData.upvotes || {},
+                            downvotes: postData.downvotes || {},
+                            voteScore: voteScore,
+                            commentsCount: comments,
+                            timestamp: postData.createdAt,
+                            sortTime: postTime,
+                            userData: userData
+                        });
+                    }
+                } catch (fallbackError) {
+                    console.error(`[loadFollowingFeed] Fallback query also failed for batch:`, fallbackError);
+                }
+            }
+        }
+        
+        // Sort by timestamp (newest first) and add to activities
+        allPosts.sort((a, b) => b.sortTime - a.sortTime);
+        activities.push(...allPosts);
+        
+        console.log(`[loadFollowingFeed] Loaded ${allPosts.length} post(s) from followed users`);
+        
+    } catch (error) {
+        console.error('[loadFollowingFeed] Error loading following feed:', error);
+        // Continue even if following feed fails to load
+    }
+}
+
+function setupActivityHandlers() {
+    // Add click handlers for activity items
+    activityFeedEl.querySelectorAll('.activity-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     // Don't navigate if clicking on vote buttons, comment button, comments section, or action buttons
                     if (e.target.closest('.activity-post-vote-btn') ||
@@ -1565,7 +1804,7 @@ async function handleHomeSaveEdit(postId, newContent, closeModal) {
         showHomeToast('Post updated successfully');
         closeModal();
         // Reload activity feed
-        loadActivityFeed();
+        loadActivityFeed(currentFeedType);
     } catch (error) {
         console.error('Error saving edit:', error);
         showHomeToast('Failed to save edit. Please try again.');
@@ -1658,7 +1897,7 @@ async function handleHomeConfirmDelete(postId, closeModal) {
         closeModal();
         showHomeToast('Post deleted');
         // Reload activity feed
-        loadActivityFeed();
+        loadActivityFeed(currentFeedType);
     } catch (error) {
         console.error('Error deleting post:', error);
         showHomeToast('Failed to delete post. Please try again.');
