@@ -714,6 +714,7 @@ function displayMessage(messageId, messageData) {
         <div class="message-content">
             <div class="message-header">
                 <span class="message-username clickable-username" data-user-id="${messageData.userId}" data-username="${escapeHtml(messageData.username)}" title="Click to view profile">${escapeHtml(messageData.username)}</span>
+                ${(messageData.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge" title="Owner">OWNER</span>' : ''}
                 ${messageData.xAccountVerified ? '<span class="verified-badge" title="Verified X account">✓</span>' : ''}
                 <span class="message-time" title="${dateStr}">${timeStr}</span>
                 ${messageData.editedAt ? '<span class="message-edited">(edited)</span>' : ''}
@@ -1331,6 +1332,7 @@ function updateOnlineUsersList(users) {
                 <div class="chat-user-info">
                     <div class="chat-user-name-row">
                         <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
+                        ${(user.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge-small" title="Owner">OWNER</span>' : ''}
                         ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
                     </div>
                     <div class="chat-user-last-seen">
