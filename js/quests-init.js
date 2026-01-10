@@ -760,8 +760,15 @@ function createQuestCard(quest) {
         completedAt: null
     };
 
-    const progress = userQuest.progress || 0;
+    let progress = userQuest.progress || 0;
     const completed = userQuest.completed || false;
+    
+    // Cap progress at target value for display (fixes old incorrect data)
+    // For level achievements, don't show progress exceeding the target
+    if (quest.type === 'achievement' && quest.id && quest.id.startsWith('achievement_level_')) {
+        progress = Math.min(progress, quest.targetValue);
+    }
+    
     const progressPercent = Math.min((progress / quest.targetValue) * 100, 100);
 
     const card = document.createElement('div');
@@ -1442,7 +1449,11 @@ async function syncAchievementProgress() {
         ];
         
         for (const achievement of levelAchievements) {
-            if (currentLevel >= achievement.target) {
+            // For level achievements, progress should be capped at the target value
+            // If user is level 22 and achievement is for level 10, show 10/10, not 22/10
+            const targetProgress = Math.min(currentLevel, achievement.target);
+            
+            if (targetProgress > 0) {
                 const userQuestId = `${currentUser.uid}_${achievement.id}`;
                 const userQuestRef = doc(db, 'userQuests', userQuestId);
                 const userQuestDoc = await getDoc(userQuestRef);
@@ -1452,8 +1463,9 @@ async function syncAchievementProgress() {
                     currentProgress = userQuestDoc.data().progress || 0;
                 }
                 
-                if (currentLevel > currentProgress) {
-                    await updateQuestProgress(achievement.id, currentLevel);
+                // Only update if the capped progress is greater than current progress
+                if (targetProgress > currentProgress) {
+                    await updateQuestProgress(achievement.id, targetProgress);
                 }
             }
         }
