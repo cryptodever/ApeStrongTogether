@@ -1318,10 +1318,21 @@ function updatePowerUpsDisplay() {
         // Set innerHTML first
         powerUpsDisplayEl.innerHTML = htmlContent;
         
+        // Check if combo display is visible to adjust position
+        const comboDisplayEl = document.getElementById('comboDisplay');
+        let topPosition = 90; // Default position below combo display area
+        if (comboDisplayEl && comboDisplayEl.style.display !== 'none' && comboDisplayEl.offsetHeight > 0) {
+            // Position power-ups below combo display with some spacing
+            const comboRect = comboDisplayEl.getBoundingClientRect();
+            const gameContainer = document.querySelector('.game-canvas-wrapper');
+            const containerRect = gameContainer ? gameContainer.getBoundingClientRect() : { top: 0 };
+            topPosition = comboRect.bottom - containerRect.top + 10; // 10px spacing
+        }
+        
         // Position relative to game container (which has position: relative)
         powerUpsDisplayEl.style.cssText = `
             position: absolute !important;
-            top: 20px !important;
+            top: ${topPosition}px !important;
             right: 20px !important;
             display: flex !important;
             flex-direction: column !important;
