@@ -12349,12 +12349,37 @@ body:has(.modal-overlay.show) {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.feed-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(74, 222, 128, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(138, 43, 226, 0.05) 0%, transparent 50%);
+    animation: backgroundShift 20s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes backgroundShift {
+    0% { transform: translateX(0) translateY(0) scale(1); }
+    100% { transform: translateX(-2%) translateY(-1%) scale(1.02); }
 }
 
 .feed-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
 }
 
 .feed-header {
@@ -12371,11 +12396,15 @@ body:has(.modal-overlay.show) {
 
 .feed-header-top h1 {
     font-family: 'Inter', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: #ffffff;
     margin: 0 0 0.25rem 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 
+        0 0 20px rgba(74, 222, 128, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.02em;
 }
 
 .feed-header-top p {
@@ -12388,45 +12417,104 @@ body:has(.modal-overlay.show) {
 .feed-header .feed-tabs {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
-    padding: 0.5rem 0;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px 8px 0 0;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     margin-top: 0.5rem;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .feed-header .feed-tab {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    color: #ffffff;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.75rem 1.75rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.01em;
+}
+
+.feed-header .feed-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
 }
 
 .feed-header .feed-tab:hover {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.feed-header .feed-tab:hover::before {
+    left: 100%;
 }
 
 .feed-header .feed-tab.active {
-    color: #4ade80;
-    background: rgba(74, 222, 128, 0.15);
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(74, 222, 128, 0.1));
     border-color: #4ade80;
-    border-bottom-color: #4ade80;
-    box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+    box-shadow: 
+        0 0 20px rgba(74, 222, 128, 0.4),
+        0 0 40px rgba(74, 222, 128, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-shadow: 
+        0 0 10px rgba(74, 222, 128, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.feed-header .feed-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #4ade80, transparent);
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+    animation: tabGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes tabGlow {
+    0% { 
+        width: 60%;
+        opacity: 0.8;
+    }
+    100% { 
+        width: 80%;
+        opacity: 1;
+    }
 }
 
 .feed-header .feed-tab.active:hover {
-    color: #4ade80;
-    background: rgba(74, 222, 128, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 0 25px rgba(74, 222, 128, 0.5),
+        0 0 50px rgba(74, 222, 128, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Post Creation Section */
@@ -12435,16 +12523,18 @@ body:has(.modal-overlay.show) {
 }
 
 .post-create-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 1.75rem;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 2rem;
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
     box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(74, 222, 128, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
@@ -12456,9 +12546,40 @@ body:has(.modal-overlay.show) {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.02) 0%, rgba(255, 255, 255, 0.02) 100%);
+    background: 
+        linear-gradient(135deg, rgba(74, 222, 128, 0.08) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
+    opacity: 0.6;
+}
+
+.post-create-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: cardPulse 8s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    50% { transform: translate(10%, 10%) scale(1.1); opacity: 0.5; }
+}
+
+.post-create-card:hover {
+    border-color: rgba(74, 222, 128, 0.3);
+    box-shadow: 
+        0 12px 48px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(74, 222, 128, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 60px rgba(74, 222, 128, 0.15);
+    transform: translateY(-2px);
 }
 
 .post-create-card > * {
@@ -12478,35 +12599,41 @@ body:has(.modal-overlay.show) {
 
 .post-content-input {
     width: 100%;
-    padding: 1.25rem;
+    padding: 1.5rem;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
     color: #ffffff;
     font-size: 1rem;
     font-family: 'Inter', sans-serif;
     resize: none;
-    min-height: 80px;
+    min-height: 100px;
     max-height: 600px;
     overflow-y: auto;
-    line-height: 1.7;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    line-height: 1.8;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(15px) saturate(120%);
+    -webkit-backdrop-filter: blur(15px) saturate(120%);
+    box-shadow: 
+        inset 0 2px 8px rgba(0, 0, 0, 0.1),
+        0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .post-content-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     opacity: 1;
 }
 
 .post-content-input:focus {
     outline: none;
-    border-color: rgba(74, 222, 128, 0.6);
+    border-color: #4ade80;
     background: rgba(255, 255, 255, 0.08);
     box-shadow: 
-        0 0 0 3px rgba(74, 222, 128, 0.1),
-        0 4px 12px rgba(0, 0, 0, 0.15);
+        0 0 0 4px rgba(74, 222, 128, 0.15),
+        0 8px 24px rgba(0, 0, 0, 0.2),
+        0 0 40px rgba(74, 222, 128, 0.1),
+        inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
 
 .post-content-input:focus::placeholder {
@@ -12534,9 +12661,9 @@ body:has(.modal-overlay.show) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin-top: 1.5rem;
     position: relative;
 }
 
@@ -12546,8 +12673,14 @@ body:has(.modal-overlay.show) {
     top: 0;
     left: 0;
     right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    height: 1.5px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(74, 222, 128, 0.2) 25%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(74, 222, 128, 0.2) 75%,
+        transparent 100%);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.1);
 }
 
 .post-attach-buttons {
@@ -12560,21 +12693,55 @@ body:has(.modal-overlay.show) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    color: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(15px) saturate(120%);
+    -webkit-backdrop-filter: blur(15px) saturate(120%);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.post-attach-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
 }
 
 .post-attach-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        0 0 20px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.post-attach-btn:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+.post-attach-btn:active {
+    transform: translateY(0) scale(0.95);
+}
     color: #ffffff;
     transform: translateY(-1px) scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -12848,44 +13015,25 @@ body:has(.modal-overlay.show) {
 }
 
 .post-submit-btn {
-    padding: 0.5rem 1.5rem;
-    background: #4ade80;
-    border: none;
-    border-radius: 8px;
-    color: #000000;
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.post-submit-btn:hover:not(:disabled) {
-    background: #22c55e;
-    transform: translateY(-1px);
-}
-
-.post-submit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.post-submit-btn {
-    padding: 0.75rem 2rem;
-    background: linear-gradient(135deg, #4ade80, #22c55e);
-    border: none;
-    border-radius: 12px;
+    padding: 0.875rem 2.5rem;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+    border: 2px solid #4ade80;
+    border-radius: 14px;
     color: #000000;
     font-size: 1rem;
     font-weight: 700;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 
-        0 2px 8px rgba(74, 222, 128, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        0 4px 16px rgba(74, 222, 128, 0.4),
+        0 0 0 1px rgba(74, 222, 128, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .post-submit-btn::before {
@@ -12895,8 +13043,26 @@ body:has(.modal-overlay.show) {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+    z-index: 1;
+}
+
+.post-submit-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: buttonShine 3s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes buttonShine {
+    0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }
 }
 
 .post-submit-btn:hover:not(:disabled)::before {
@@ -12904,23 +13070,33 @@ body:has(.modal-overlay.show) {
 }
 
 .post-submit-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
+    transform: translateY(-3px) scale(1.02);
     box-shadow: 
-        0 6px 20px rgba(74, 222, 128, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    background: linear-gradient(135deg, #5eea8f, #2dd66b);
+        0 8px 32px rgba(74, 222, 128, 0.5),
+        0 0 0 2px rgba(74, 222, 128, 0.4),
+        0 0 60px rgba(74, 222, 128, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #5eea8f 0%, #2dd66b 50%, #22c55e 100%);
+    border-color: #5eea8f;
 }
 
 .post-submit-btn:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(-1px) scale(0.98);
     box-shadow: 
-        0 2px 8px rgba(74, 222, 128, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        0 4px 16px rgba(74, 222, 128, 0.4),
+        0 0 0 1px rgba(74, 222, 128, 0.3),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .post-submit-btn:focus {
-    outline: 2px solid rgba(74, 222, 128, 0.6);
-    outline-offset: 2px;
+    outline: 3px solid rgba(74, 222, 128, 0.5);
+    outline-offset: 3px;
+}
+
+.post-submit-btn > * {
+    position: relative;
+    z-index: 2;
 }
 
 .post-submit-btn:disabled {
@@ -12939,7 +13115,7 @@ body:has(.modal-overlay.show) {
 .posts-feed {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .posts-loading,
@@ -12957,16 +13133,18 @@ body:has(.modal-overlay.show) {
 
 /* Post Card */
 .post-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 1.75rem;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 2rem;
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
     box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(74, 222, 128, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
@@ -12978,9 +13156,24 @@ body:has(.modal-overlay.show) {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.02) 0%, rgba(255, 255, 255, 0.02) 100%);
+    background: 
+        linear-gradient(135deg, rgba(74, 222, 128, 0.06) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(255, 215, 0, 0.04) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
+    opacity: 0.7;
+}
+
+.post-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.4), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .post-card > * {
@@ -12989,11 +13182,18 @@ body:has(.modal-overlay.show) {
 }
 
 .post-card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(74, 222, 128, 0.4);
     box-shadow: 
-        0 12px 32px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: translateY(-3px);
+        0 16px 48px rgba(0, 0, 0, 0.4),
+        0 0 0 1.5px rgba(74, 222, 128, 0.2),
+        0 0 60px rgba(74, 222, 128, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+}
+
+.post-card:hover::after {
+    opacity: 1;
 }
 
 .post-header {
@@ -13005,20 +13205,66 @@ body:has(.modal-overlay.show) {
 }
 
 .post-author-avatar {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 3px solid rgba(74, 222, 128, 0.6);
-    box-shadow: 0 0 12px rgba(74, 222, 128, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 
+        0 0 20px rgba(74, 222, 128, 0.4),
+        0 0 40px rgba(74, 222, 128, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.post-author-avatar::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.4), rgba(255, 215, 0, 0.3));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+    filter: blur(8px);
 }
 
 .post-author-avatar:hover {
-    transform: scale(1.08);
-    border-color: rgba(74, 222, 128, 0.8);
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.5), 0 4px 12px rgba(74, 222, 128, 0.3);
+    transform: scale(1.1);
+    border-color: rgba(74, 222, 128, 0.9);
+    box-shadow: 
+        0 0 30px rgba(74, 222, 128, 0.6),
+        0 0 60px rgba(74, 222, 128, 0.4),
+        0 8px 16px rgba(74, 222, 128, 0.3),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.post-author-avatar:hover::before {
+    opacity: 1;
+}
+
+/* High level user glow */
+.post-author-avatar[data-level="high"] {
+    border-color: rgba(255, 215, 0, 0.8);
+    box-shadow: 
+        0 0 25px rgba(255, 215, 0, 0.5),
+        0 0 50px rgba(255, 215, 0, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.post-author-avatar[data-level="high"]:hover {
+    border-color: rgba(255, 215, 0, 1);
+    box-shadow: 
+        0 0 40px rgba(255, 215, 0, 0.7),
+        0 0 80px rgba(255, 215, 0, 0.5),
+        0 8px 16px rgba(255, 215, 0, 0.4);
 }
 
 .post-author-info {
@@ -13029,15 +13275,23 @@ body:has(.modal-overlay.show) {
 .post-author-name {
     font-weight: 700;
     color: #4ade80;
-    font-size: 1rem;
+    font-size: 1.0625rem;
     cursor: pointer;
-    line-height: 1.4;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    line-height: 1.5;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+    text-shadow: 
+        0 0 10px rgba(74, 222, 128, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
 }
 
 .post-author-name:hover {
     color: #5eea8f;
-    text-decoration: underline;
+    text-shadow: 
+        0 0 15px rgba(74, 222, 128, 0.5),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+    transform: translateX(2px);
 }
 
 .post-author-meta {
@@ -13251,10 +13505,13 @@ body:has(.modal-overlay.show) {
 
 .post-text {
     color: rgba(255, 255, 255, 0.95);
-    font-size: 0.9375rem;
-    line-height: 1.65;
+    font-size: 1rem;
+    line-height: 1.75;
     white-space: pre-wrap;
     word-wrap: break-word;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     margin: 0 0 1rem 0;
     font-weight: 400;
 }
