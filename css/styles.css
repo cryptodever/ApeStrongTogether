@@ -12373,8 +12373,9 @@ body:has(.modal-overlay.show) {
     font-family: 'Inter', sans-serif;
     font-size: 1.25rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    color: #ffffff;
     margin: 0 0 0.25rem 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .feed-header-top p {
@@ -12396,22 +12397,23 @@ body:has(.modal-overlay.show) {
 }
 
 .feed-header .feed-tab {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: rgba(255, 255, 255, 0.8);
+    color: #ffffff;
     padding: 0.625rem 1.25rem;
     font-size: 0.9rem;
     font-weight: 600;
     transition: all 0.2s ease;
     margin-bottom: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .feed-header .feed-tab:hover {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .feed-header .feed-tab.active {
