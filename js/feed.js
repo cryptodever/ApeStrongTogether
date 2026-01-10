@@ -744,6 +744,7 @@ async function renderPosts(postDocs) {
     posts.forEach(post => {
         setupPostEventListeners(post.id, post);
         setupPostImageErrors(post.id);
+        setupCommentEmojiPicker(post.id);
     });
 }
 
@@ -853,8 +854,18 @@ function renderPost(post) {
                 <div class="post-comments-list" id="commentsList_${post.id}"></div>
                 ${currentUser ? `
                     <div class="post-comment-input-wrapper">
+                        <button type="button" class="post-comment-emoji-btn" data-post-id="${post.id}" title="Add emoji">😀</button>
                         <input type="text" class="post-comment-input" id="commentInput_${post.id}" placeholder="Write a comment..." maxlength="500" />
                         <button class="post-comment-submit" data-post-id="${post.id}">Post</button>
+                    </div>
+                    <div class="post-comment-emoji-picker hide" id="commentEmojiPicker_${post.id}">
+                        <div class="emoji-picker-header">
+                            <span class="emoji-picker-title">Choose an emoji</span>
+                            <button type="button" class="emoji-picker-close" data-post-id="${post.id}">×</button>
+                        </div>
+                        <div class="emoji-picker-grid" id="commentEmojiGrid_${post.id}">
+                            <!-- Emojis will be populated by JavaScript -->
+                        </div>
                     </div>
                 ` : '<div class="post-comment-login">Please log in to comment</div>'}
             </div>
@@ -1893,6 +1904,7 @@ function getTimeAgo(date) {
 }
 
 // Emoji picker functionality
+// Common emojis for emoji pickers
 const commonEmojis = [
     '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
     '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
