@@ -127,9 +127,14 @@ export function initHome() {
 
 // Switch feed type between trending and following
 function switchFeedType(feedType) {
-    if (feedType === currentFeedType) return;
+    console.log('[switchFeedType] Switching to:', feedType, 'current:', currentFeedType);
+    if (feedType === currentFeedType) {
+        console.log('[switchFeedType] Already on this feed type, returning');
+        return;
+    }
     
     currentFeedType = feedType;
+    console.log('[switchFeedType] Updated currentFeedType to:', currentFeedType);
     
     // Update tab active states
     if (trendingTabEl) {
@@ -140,6 +145,7 @@ function switchFeedType(feedType) {
     }
     
     // Reload feed with new type
+    console.log('[switchFeedType] Calling loadAllData with feedType:', currentFeedType);
     loadAllData(true);
 }
 
@@ -184,7 +190,9 @@ async function loadActivityFeed(feedType = 'trending') {
         
         if (feedType === 'following') {
             // Load posts from users you follow
+            console.log('[loadActivityFeed] Loading following feed, currentUser:', currentUser?.uid);
             await loadFollowingFeed(activities);
+            console.log('[loadActivityFeed] Following feed completed, activities.length:', activities.length);
         } else {
             // Load trending posts (most likes in last 24 hours)
             await loadTrendingFeed(activities);
@@ -202,7 +210,11 @@ async function loadActivityFeed(feedType = 'trending') {
         // Render activities
         if (displayActivities.length === 0) {
             if (feedType === 'following') {
-                activityFeedEl.innerHTML = '<div class="activity-empty">no apes your following have posted...</div>';
+                if (!currentUser) {
+                    activityFeedEl.innerHTML = '<div class="activity-empty">Please log in to see posts from users you follow.</div>';
+                } else {
+                    activityFeedEl.innerHTML = '<div class="activity-empty">no apes your following have posted...</div>';
+                }
             } else {
                 activityFeedEl.innerHTML = '<div class="activity-empty">no apes trending...</div>';
             }
@@ -215,7 +227,17 @@ async function loadActivityFeed(feedType = 'trending') {
         
     } catch (error) {
         console.error('Error loading activity feed:', error);
-        activityFeedEl.innerHTML = '<div class="activity-error">Error loading feed. Please try again.</div>';
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            feedType: feedType,
+            stack: error.stack
+        });
+        if (feedType === 'following') {
+            activityFeedEl.innerHTML = '<div class="activity-error">Error loading following feed. Please try again.</div>';
+        } else {
+            activityFeedEl.innerHTML = '<div class="activity-error">Error loading feed. Please try again.</div>';
+        }
     }
 }
 
@@ -326,6 +348,7 @@ async function loadTrendingFeed(activities) {
 // Load following feed - posts from users you follow
 async function loadFollowingFeed(activities) {
     if (!currentUser) {
+        console.log('[loadFollowingFeed] No current user');
         return; // Can't load following feed if not logged in
     }
     
@@ -336,6 +359,7 @@ async function loadFollowingFeed(activities) {
         
         if (followingSnapshot.empty) {
             console.log('[loadFollowingFeed] Not following any users yet');
+            // Don't return - let the empty activities array trigger the empty message
             return;
         }
         
@@ -345,6 +369,7 @@ async function loadFollowingFeed(activities) {
         });
         
         if (followingUserIds.length === 0) {
+            console.log('[loadFollowingFeed] No following user IDs found');
             return;
         }
         
@@ -400,7 +425,7 @@ async function loadFollowingFeed(activities) {
                     const comments = postData.commentsCount || 0;
                     
                     allPosts.push({
-                        type: 'post',
+                        type: 'trending_post',
                         userId: postData.userId,
                         username: username,
                         postId: postDoc.id,
@@ -479,7 +504,13 @@ async function loadFollowingFeed(activities) {
         
     } catch (error) {
         console.error('[loadFollowingFeed] Error loading following feed:', error);
-        // Continue even if following feed fails to load
+        console.error('[loadFollowingFeed] Error details:', {
+            code: error.code,
+            message: error.message,
+            stack: error.stack
+        });
+        // Don't throw - let the empty activities array trigger the empty message
+        // The error will be handled by loadActivityFeed's empty state check
     }
 }
 
