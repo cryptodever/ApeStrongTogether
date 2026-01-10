@@ -744,8 +744,25 @@ async function renderPosts(postDocs) {
     posts.forEach(post => {
         setupPostEventListeners(post.id, post);
         setupPostImageErrors(post.id);
-        setupCommentEmojiPicker(post.id);
+        if (!document.querySelector(`.post-comment-emoji-btn[data-post-id="${post.id}"]`)?.dataset.emojiSetup) {
+            setupCommentEmojiPicker(post.id);
+        }
     });
+    
+    // Single global click handler to close comment emoji pickers when clicking outside (only add once)
+    if (!postsFeedEl.dataset.emojiClickHandler) {
+        postsFeedEl.dataset.emojiClickHandler = 'true';
+        document.addEventListener('click', (e) => {
+            // Don't close if clicking on an emoji button or inside a picker
+            if (e.target.closest('.post-comment-emoji-btn') || 
+                e.target.closest('.post-comment-emoji-picker') ||
+                e.target.closest('.emoji-picker-close')) {
+                return;
+            }
+            // Close all comment emoji pickers
+            closeAllCommentEmojiPickers();
+        });
+    }
 }
 
 // Set up image error handlers for a post
@@ -1994,4 +2011,103 @@ function insertEmoji(emoji) {
     
     // Close picker
     closeEmojiPicker();
+}
+
+// Insert emoji into any input field
+function insertEmojiIntoInput(inputEl, emoji) {
+    if (!inputEl) return;
+    
+    const cursorPos = inputEl.selectionStart || inputEl.value.length;
+    const textBefore = inputEl.value.substring(0, cursorPos);
+    const textAfter = inputEl.value.substring(inputEl.selectionEnd || cursorPos);
+    const newText = textBefore + emoji + textAfter;
+    
+    // Check if adding emoji would exceed max length
+    const maxLength = inputEl.getAttribute('maxlength') ? parseInt(inputEl.getAttribute('maxlength')) : Infinity;
+    if (newText.length > maxLength) {
+        alert('Comment is too long! Maximum ' + maxLength + ' characters.');
+        return;
+    }
+    
+    inputEl.value = newText;
+    
+    // Set cursor position after inserted emoji
+    const newCursorPos = cursorPos + emoji.length;
+    inputEl.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus back on input
+    inputEl.focus();
+}
+
+// Close all comment emoji pickers
+function closeAllCommentEmojiPickers() {
+    document.querySelectorAll('.post-comment-emoji-picker').forEach(picker => {
+        picker.classList.add('hide');
+    });
+}
+
+// Setup emoji picker for comment inputs
+function setupCommentEmojiPicker(postId) {
+    const emojiBtn = document.querySelector(`.post-comment-emoji-btn[data-post-id="${postId}"]`);
+    const emojiPicker = document.getElementById(`commentEmojiPicker_${postId}`);
+    const emojiGrid = document.getElementById(`commentEmojiGrid_${postId}`);
+    const closeBtn = emojiPicker?.querySelector('.emoji-picker-close[data-post-id="' + postId + '"]');
+    const commentInput = document.getElementById(`commentInput_${postId}`);
+    
+    if (!emojiBtn || !emojiPicker || !emojiGrid || !commentInput) return;
+    
+    // Prevent duplicate event listeners
+    if (emojiBtn.dataset.emojiSetup === 'true') return;
+    emojiBtn.dataset.emojiSetup = 'true';
+    
+    // Populate emoji grid if not already populated
+    if (emojiGrid.children.length === 0) {
+        commonEmojis.forEach(emoji => {
+            const emojiBtnEl = document.createElement('button');
+            emojiBtnEl.type = 'button';
+            emojiBtnEl.className = 'emoji-item';
+            emojiBtnEl.textContent = emoji;
+            emojiBtnEl.title = emoji;
+            emojiBtnEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                insertEmojiIntoInput(commentInput, emoji);
+                emojiPicker.classList.add('hide');
+            });
+            emojiGrid.appendChild(emojiBtnEl);
+        });
+    }
+    
+    // Toggle emoji picker
+    const togglePicker = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isHidden = emojiPicker.classList.contains('hide');
+        
+        // Close all other pickers first
+        closeAllCommentEmojiPickers();
+        
+        if (isHidden) {
+            emojiPicker.classList.remove('hide');
+            // Position picker relative to button
+            const wrapper = emojiBtn.closest('.post-comment-input-wrapper');
+            if (wrapper) {
+                emojiPicker.style.position = 'absolute';
+                emojiPicker.style.bottom = 'calc(100% + 10px)';
+                emojiPicker.style.left = '0';
+                emojiPicker.style.zIndex = '1000';
+            }
+        }
+    };
+    
+    emojiBtn.addEventListener('click', togglePicker);
+    
+    // Close button
+    if (closeBtn) {
+        const closeHandler = (e) => {
+            e.stopPropagation();
+            emojiPicker.classList.add('hide');
+        };
+        closeBtn.addEventListener('click', closeHandler);
+    }
 }

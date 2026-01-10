@@ -640,8 +640,25 @@ function setupActivityHandlers() {
             // Setup emoji pickers for comment inputs
             activityFeedEl.querySelectorAll('.activity-comment-emoji-btn').forEach(btn => {
                 const postId = btn.dataset.postId;
-                setupActivityCommentEmojiPicker(postId);
+                if (postId && !btn.dataset.emojiSetup) {
+                    setupActivityCommentEmojiPicker(postId);
+                }
             });
+            
+            // Single global click handler to close pickers when clicking outside
+            if (!activityFeedEl.dataset.emojiClickHandler) {
+                activityFeedEl.dataset.emojiClickHandler = 'true';
+                document.addEventListener('click', (e) => {
+                    // Don't close if clicking on an emoji button or inside a picker
+                    if (e.target.closest('.activity-comment-emoji-btn') || 
+                        e.target.closest('.activity-comment-emoji-picker') ||
+                        e.target.closest('.emoji-picker-close')) {
+                        return;
+                    }
+                    // Close all activity comment emoji pickers
+                    closeAllActivityCommentEmojiPickers();
+                });
+            }
     
     // Add edit button handlers
             activityFeedEl.querySelectorAll('.post-edit-btn[data-post-id]').forEach(btn => {
@@ -1427,6 +1444,13 @@ function insertEmojiIntoInput(inputEl, emoji) {
     inputEl.focus();
 }
 
+// Close all activity comment emoji pickers
+function closeAllActivityCommentEmojiPickers() {
+    document.querySelectorAll('.activity-comment-emoji-picker').forEach(picker => {
+        picker.classList.add('hide');
+    });
+}
+
 // Setup emoji picker for activity comment inputs
 function setupActivityCommentEmojiPicker(postId) {
     const emojiBtn = document.querySelector(`.activity-comment-emoji-btn[data-post-id="${postId}"]`);
@@ -1437,6 +1461,10 @@ function setupActivityCommentEmojiPicker(postId) {
     
     if (!emojiBtn || !emojiPicker || !emojiGrid || !commentInput) return;
     
+    // Prevent duplicate event listeners
+    if (emojiBtn.dataset.emojiSetup === 'true') return;
+    emojiBtn.dataset.emojiSetup = 'true';
+    
     // Populate emoji grid if not already populated
     if (emojiGrid.children.length === 0) {
         commonEmojis.forEach(emoji => {
@@ -1445,7 +1473,8 @@ function setupActivityCommentEmojiPicker(postId) {
             emojiBtnEl.className = 'emoji-item';
             emojiBtnEl.textContent = emoji;
             emojiBtnEl.title = emoji;
-            emojiBtnEl.addEventListener('click', () => {
+            emojiBtnEl.addEventListener('click', (e) => {
+                e.stopPropagation();
                 insertEmojiIntoInput(commentInput, emoji);
                 emojiPicker.classList.add('hide');
             });
@@ -1454,36 +1483,39 @@ function setupActivityCommentEmojiPicker(postId) {
     }
     
     // Toggle emoji picker
-    emojiBtn.addEventListener('click', (e) => {
+    const togglePicker = (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        if (emojiPicker.classList.contains('hide')) {
+        const isHidden = emojiPicker.classList.contains('hide');
+        
+        // Close all other pickers first
+        closeAllActivityCommentEmojiPickers();
+        
+        if (isHidden) {
             emojiPicker.classList.remove('hide');
             // Position picker relative to button
             const btnRect = emojiBtn.getBoundingClientRect();
-            emojiPicker.style.position = 'absolute';
-            emojiPicker.style.bottom = 'calc(100% + 10px)';
-            emojiPicker.style.left = '0';
-            emojiPicker.style.zIndex = '1000';
-        } else {
-            emojiPicker.classList.add('hide');
+            const wrapper = emojiBtn.closest('.activity-post-comment-input-wrapper');
+            if (wrapper) {
+                emojiPicker.style.position = 'absolute';
+                emojiPicker.style.bottom = 'calc(100% + 10px)';
+                emojiPicker.style.left = '0';
+                emojiPicker.style.zIndex = '1000';
+            }
         }
-    });
+    };
+    
+    emojiBtn.addEventListener('click', togglePicker);
     
     // Close button
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        const closeHandler = (e) => {
+            e.stopPropagation();
             emojiPicker.classList.add('hide');
-        });
+        };
+        closeBtn.addEventListener('click', closeHandler);
     }
-    
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-            emojiPicker.classList.add('hide');
-        }
-    });
 }
 
 // Toggle comments section for activity post
