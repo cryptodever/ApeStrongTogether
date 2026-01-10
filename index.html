@@ -90,10 +90,20 @@
                 <!-- Activity Feed (Main Content) -->
                 <section class="activity-feed-section">
                     <div class="activity-feed-header">
-                        <h2>Trending Apes</h2>
-                        <div class="feed-controls">
-                            <span class="last-updated" id="lastUpdated">Loading...</span>
-                            <button class="refresh-btn" id="refreshFeedBtn" title="Refresh">🔄</button>
+                        <div class="feed-header-top">
+                            <h2>Community Feed</h2>
+                            <div class="feed-controls">
+                                <span class="last-updated" id="lastUpdated">Loading...</span>
+                                <button class="refresh-btn" id="refreshFeedBtn" title="Refresh">🔄</button>
+                            </div>
+                        </div>
+                        <div class="feed-tabs">
+                            <button class="feed-tab active" data-feed-type="trending" id="trendingTab">
+                                🔥 Trending
+                            </button>
+                            <button class="feed-tab" data-feed-type="following" id="followingTab">
+                                👥 Following
+                            </button>
                         </div>
                     </div>
                     <div class="activity-feed" id="activityFeed">
