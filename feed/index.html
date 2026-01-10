@@ -27,8 +27,20 @@
     <main class="feed-page">
         <div class="feed-container">
             <header class="feed-header">
-                <h1>Community Feed 📱</h1>
-                <p>Share your thoughts, memes, and updates with the Ape community</p>
+                <div class="feed-header-top">
+                    <div>
+                        <h1>Community Feed 📱</h1>
+                        <p>Share your thoughts, memes, and updates with the Ape community</p>
+                    </div>
+                </div>
+                <div class="feed-tabs">
+                    <button class="feed-tab active" data-feed-type="trending" id="trendingTab">
+                        🔥 Trending
+                    </button>
+                    <button class="feed-tab" data-feed-type="following" id="followingTab">
+                        👥 Following
+                    </button>
+                </div>
             </header>
 
             <!-- Post Creation Form (only visible when logged in) -->

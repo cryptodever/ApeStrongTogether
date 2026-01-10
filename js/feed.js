@@ -33,6 +33,7 @@ import {
 let currentUser = null;
 let userProfile = null;
 let postsListener = null;
+let currentFeedType = 'trending'; // 'trending' or 'following'
 
 // DOM Elements
 let postsFeedEl, postCreateSectionEl, postCreateFormEl;
@@ -41,6 +42,7 @@ let postCharCountEl, postSubmitBtnEl;
 let removeImageBtnEl, imagePreviewContainerEl, imagePreviewEl;
 let removeVideoBtnEl, videoPreviewContainerEl, videoPreviewEl;
 let emojiBtnEl, emojiPickerEl, emojiPickerGridEl, emojiPickerCloseEl;
+let trendingTabEl, followingTabEl;
 let selectedImageFile = null;
 let selectedVideoFile = null;
 let videoPreviewUrl = null;
@@ -66,10 +68,25 @@ export function initFeed() {
     emojiPickerEl = document.getElementById('emojiPicker');
     emojiPickerGridEl = document.getElementById('emojiPickerGrid');
     emojiPickerCloseEl = document.getElementById('emojiPickerClose');
+    trendingTabEl = document.getElementById('trendingTab');
+    followingTabEl = document.getElementById('followingTab');
 
     // Set up auth state listener
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
+        
+        // Show/hide following tab based on login status
+        if (followingTabEl) {
+            if (user) {
+                followingTabEl.style.display = 'inline-block';
+            } else {
+                followingTabEl.style.display = 'none';
+                // Switch to trending if following tab was active
+                if (currentFeedType === 'following') {
+                    switchFeedType('trending');
+                }
+            }
+        }
         
         if (user) {
             // Load user profile
@@ -99,6 +116,16 @@ export function initFeed() {
             loadPosts();
         }
     });
+    
+    // Feed tab switching
+    if (trendingTabEl) {
+        trendingTabEl.addEventListener('click', () => switchFeedType('trending'));
+    }
+    if (followingTabEl) {
+        followingTabEl.addEventListener('click', () => switchFeedType('following'));
+        // Hide following tab initially if not logged in
+        followingTabEl.style.display = currentUser ? 'inline-block' : 'none';
+    }
 
     // Set up event listeners
     setupEventListeners();
@@ -175,6 +202,24 @@ function setupEventListeners() {
             closeEmojiPicker();
         }
     });
+}
+
+// Switch feed type between trending and following
+function switchFeedType(feedType) {
+    if (feedType === currentFeedType) return;
+    
+    currentFeedType = feedType;
+    
+    // Update tab active states
+    if (trendingTabEl) {
+        trendingTabEl.classList.toggle('active', feedType === 'trending');
+    }
+    if (followingTabEl) {
+        followingTabEl.classList.toggle('active', feedType === 'following');
+    }
+    
+    // Reload posts with new type
+    loadPosts();
 }
 
 // Auto-expand textarea based on content
@@ -489,6 +534,17 @@ function loadPosts() {
     // Set loading state
     postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
     
+    if (currentFeedType === 'following') {
+        // Load following feed (uses getDocs, not real-time listener)
+        loadFollowingFeed();
+    } else {
+        // Load trending feed (uses real-time listener)
+        loadTrendingFeed();
+    }
+}
+
+// Load trending feed (all posts, real-time)
+function loadTrendingFeed() {
     try {
         // Try with composite query first (requires index)
         let postsQuery;
@@ -530,6 +586,92 @@ function loadPosts() {
     }
 }
 
+// Load following feed - posts from users you follow
+async function loadFollowingFeed() {
+    if (!currentUser) {
+        postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
+        return;
+    }
+    
+    try {
+        // Get list of users you're following
+        const followingRef = collection(db, 'following', currentUser.uid, 'following');
+        const followingSnapshot = await getDocs(followingRef);
+        
+        if (followingSnapshot.empty) {
+            postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
+            return;
+        }
+        
+        const followingUserIds = [];
+        followingSnapshot.forEach((doc) => {
+            followingUserIds.push(doc.id);
+        });
+        
+        if (followingUserIds.length === 0) {
+            postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
+            return;
+        }
+        
+        // Fetch posts from each user you follow
+        // Note: Firestore 'in' query is limited to 10 items, so we need to batch
+        const BATCH_SIZE = 10;
+        const allPostDocs = [];
+        
+        for (let i = 0; i < followingUserIds.length; i += BATCH_SIZE) {
+            const batch = followingUserIds.slice(i, i + BATCH_SIZE);
+            
+            try {
+                const postsQuery = query(
+                    collection(db, 'posts'),
+                    where('userId', 'in', batch),
+                    where('deleted', '==', false),
+                    orderBy('createdAt', 'desc'),
+                    limit(50) // Limit per batch to avoid too many reads
+                );
+                
+                const postsSnapshot = await getDocs(postsQuery);
+                allPostDocs.push(...postsSnapshot.docs);
+            } catch (batchError) {
+                console.error(`[loadFollowingFeed] Error fetching batch ${i}-${i + BATCH_SIZE}:`, batchError);
+                // Try fallback: query without orderBy if index doesn't exist
+                try {
+                    const fallbackQuery = query(
+                        collection(db, 'posts'),
+                        where('userId', 'in', batch),
+                        where('deleted', '==', false),
+                        limit(100)
+                    );
+                    const fallbackSnapshot = await getDocs(fallbackQuery);
+                    allPostDocs.push(...fallbackSnapshot.docs);
+                } catch (fallbackError) {
+                    console.error(`[loadFollowingFeed] Fallback query also failed for batch:`, fallbackError);
+                }
+            }
+        }
+        
+        // Sort by createdAt (newest first)
+        allPostDocs.sort((a, b) => {
+            const timeA = a.data().createdAt?.toMillis?.() || a.data().createdAt?.seconds * 1000 || 0;
+            const timeB = b.data().createdAt?.toMillis?.() || b.data().createdAt?.seconds * 1000 || 0;
+            return timeB - timeA;
+        });
+        
+        // Limit to 50 posts
+        const limitedDocs = allPostDocs.slice(0, 50);
+        
+        if (limitedDocs.length === 0) {
+            postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
+        } else {
+            renderPosts(limitedDocs);
+        }
+        
+    } catch (error) {
+        console.error('[loadFollowingFeed] Error loading following feed:', error);
+        postsFeedEl.innerHTML = '<div class="posts-error">Error loading following feed. Please refresh the page.</div>';
+    }
+}
+
 // Fallback posts listener (simpler query, filters in JavaScript)
 function setupFallbackPostsListener() {
     try {
@@ -566,7 +708,11 @@ async function renderPosts(postDocs) {
     if (!postsFeedEl) return;
     
     if (postDocs.length === 0) {
-        postsFeedEl.innerHTML = '<div class="posts-empty">No posts yet. Be the first to post!</div>';
+        if (currentFeedType === 'following') {
+            postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
+        } else {
+            postsFeedEl.innerHTML = '<div class="posts-empty">no apes trending...</div>';
+        }
         return;
     }
     
