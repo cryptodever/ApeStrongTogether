@@ -521,9 +521,9 @@ function setupActivityHandlers() {
                         if (loginBtn) loginBtn.click();
                     }
                 });
-            });
-            
-            // Add profile navigation for trending post authors (avatar and username)
+    });
+    
+    // Add profile navigation for trending post authors (avatar and username)
             activityFeedEl.querySelectorAll('.activity-post').forEach(item => {
                 const userId = item.dataset.userId;
                 if (userId) {
@@ -546,9 +546,9 @@ function setupActivityHandlers() {
                         authorSection.addEventListener('click', navigateToProfile);
                     }
                 }
-            });
-            
-            // Add vote button handlers for trending posts
+    });
+    
+    // Add vote button handlers for trending posts
             activityFeedEl.querySelectorAll('.activity-post-vote-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -564,9 +564,9 @@ function setupActivityHandlers() {
                         handleActivityVote(postId, voteType);
                     }
                 });
-            });
-            
-            // Add comment button handlers for trending posts
+    });
+    
+    // Add comment button handlers for trending posts
             activityFeedEl.querySelectorAll('.activity-post-comment-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -581,9 +581,9 @@ function setupActivityHandlers() {
                         toggleActivityComments(postId);
                     }
                 });
-            });
-            
-            // Add comment submit handlers
+    });
+    
+    // Add comment submit handlers
             activityFeedEl.querySelectorAll('.activity-post-comment-submit').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -593,9 +593,9 @@ function setupActivityHandlers() {
                         handleActivityAddComment(postId, input);
                     }
                 });
-            });
-            
-            // Add Enter key handler for comment inputs
+    });
+    
+    // Add Enter key handler for comment inputs
             activityFeedEl.querySelectorAll('.activity-post-comment-input').forEach(input => {
                 input.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -604,9 +604,9 @@ function setupActivityHandlers() {
                         handleActivityAddComment(postId, input);
                     }
                 });
-            });
-            
-            // Add edit button handlers
+    });
+    
+    // Add edit button handlers
             activityFeedEl.querySelectorAll('.post-edit-btn[data-post-id]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -615,9 +615,9 @@ function setupActivityHandlers() {
                         handleHomeEditPost(postId);
                     }
                 });
-            });
-            
-            // Add delete button handlers
+    });
+    
+    // Add delete button handlers
             activityFeedEl.querySelectorAll('.post-delete-btn[data-post-id]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -626,9 +626,9 @@ function setupActivityHandlers() {
                         showHomeDeleteConfirmationModal(postId);
                     }
                 });
-            });
-            
-            // Add share button handlers
+    });
+    
+    // Add share button handlers
             activityFeedEl.querySelectorAll('.share-btn[data-post-id]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -643,9 +643,9 @@ function setupActivityHandlers() {
                         handleHomeSharePost(postId);
                     }
                 });
-            });
-            
-            // Add report button handlers
+    });
+    
+    // Add report button handlers
             activityFeedEl.querySelectorAll('.report-btn[data-post-id]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -655,12 +655,6 @@ function setupActivityHandlers() {
                     }
                 });
             });
-        }
-        
-    } catch (error) {
-        console.error('Error loading activity feed:', error);
-        activityFeedEl.innerHTML = '<div class="activity-error">Error loading activity feed.</div>';
-    }
 }
 
 // Get quest info from quest ID
