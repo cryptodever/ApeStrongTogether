@@ -34,6 +34,9 @@ let currentUser = null;
 let userProfile = null;
 let postsListener = null;
 let currentFeedType = 'trending'; // 'trending' or 'following'
+let allSortedPosts = []; // Store all fetched and sorted posts
+let displayedPostCount = 0; // Track how many posts are currently displayed
+let isLoadingMore = false; // Prevent multiple simultaneous loads
 
 // DOM Elements
 let postsFeedEl, postCreateSectionEl, postCreateFormEl;
@@ -625,6 +628,11 @@ function loadPosts() {
         postsListener = null;
     }
     
+    // Reset pagination state
+    allSortedPosts = [];
+    displayedPostCount = 0;
+    isLoadingMore = false;
+    
     // Set loading state
     postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
     
@@ -632,7 +640,7 @@ function loadPosts() {
         // Load following feed (uses getDocs, not real-time listener)
         loadFollowingFeed();
     } else {
-        // Load trending feed (uses real-time listener)
+        // Load trending feed (uses getDocs for pagination)
         loadTrendingFeed();
     }
 }
@@ -649,49 +657,67 @@ function calculateHotScore(voteScore, comments, createdAt) {
     return hotScore;
 }
 
-// Load trending feed (all posts, real-time)
-function loadTrendingFeed() {
+// Load trending feed (with pagination)
+async function loadTrendingFeed() {
     try {
-        // Try with composite query first (requires index)
+        isLoadingMore = true;
+        
+        // Fetch posts (get more to allow for filtering and sorting)
         let postsQuery;
         try {
-            // Fetch more posts to allow for karma filtering and hot score sorting
             postsQuery = query(
                 collection(db, 'posts'),
                 where('deleted', '==', false),
                 orderBy('createdAt', 'desc'),
-                limit(100) // Fetch more to filter and sort
+                limit(50) // Fetch batch for filtering and sorting
             );
             
-            // Set up real-time listener with the composite query
-            postsListener = onSnapshot(
-                postsQuery,
-                (snapshot) => {
-                    // Filter and sort posts by hot score
-                    const filteredDocs = filterAndSortPosts(snapshot.docs);
-                    renderPosts(filteredDocs.slice(0, 50)); // Limit to 50 for display
-                },
-                (error) => {
-                    // If index error, fall back to simpler query
-                    if (error.code === 'failed-precondition' || error.message.includes('index')) {
-                        setupFallbackPostsListener();
-                    } else {
-                        console.error('Error loading posts:', error);
-                        postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
-                    }
-                }
-            );
+            const snapshot = await getDocs(postsQuery);
+            
+            // Filter and sort posts by hot score
+            const filteredDocs = await filterAndSortPosts(snapshot.docs);
+            
+            // Store all sorted posts
+            allSortedPosts = filteredDocs;
+            displayedPostCount = 0;
+            
+            // Display first 5 posts
+            await displayNextPosts(5);
+            
         } catch (indexError) {
-            // If query setup fails due to missing index, use fallback
+            // If index error, use fallback query
             if (indexError.code === 'failed-precondition' || indexError.message.includes('index')) {
-                setupFallbackPostsListener();
+                try {
+                    const fallbackQuery = query(
+                        collection(db, 'posts'),
+                        orderBy('createdAt', 'desc'),
+                        limit(50)
+                    );
+                    
+                    const snapshot = await getDocs(fallbackQuery);
+                    const nonDeletedDocs = snapshot.docs.filter(doc => {
+                        const data = doc.data();
+                        return !data.deleted || data.deleted === false;
+                    });
+                    
+                    const filteredDocs = await filterAndSortPosts(nonDeletedDocs);
+                    allSortedPosts = filteredDocs;
+                    displayedPostCount = 0;
+                    
+                    displayNextPosts(5);
+                } catch (fallbackError) {
+                    console.error('Error loading posts:', fallbackError);
+                    postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
+                }
             } else {
                 throw indexError;
             }
         }
     } catch (error) {
-        console.error('Error setting up posts listener:', error);
+        console.error('Error loading posts:', error);
         postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
+    } finally {
+        isLoadingMore = false;
     }
 }
 
@@ -804,13 +830,15 @@ async function loadFollowingFeed() {
             return timeB - timeA;
         });
         
-        // Limit to 50 posts
-        const limitedDocs = allPostDocs.slice(0, 50);
+        // Store all posts for pagination
+        allSortedPosts = allPostDocs;
+        displayedPostCount = 0;
         
-        if (limitedDocs.length === 0) {
+        // Display first 5 posts
+        if (allSortedPosts.length === 0) {
             postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
         } else {
-            renderPosts(limitedDocs);
+            await displayNextPosts(5);
         }
         
     } catch (error) {
@@ -851,11 +879,11 @@ function setupFallbackPostsListener() {
     }
 }
 
-// Render posts
-async function renderPosts(postDocs) {
+// Display next batch of posts
+async function displayNextPosts(count = 5) {
     if (!postsFeedEl) return;
     
-    if (postDocs.length === 0) {
+    if (allSortedPosts.length === 0) {
         if (currentFeedType === 'following') {
             postsFeedEl.innerHTML = '<div class="posts-empty">no apes your following have posted...</div>';
         } else {
@@ -864,8 +892,20 @@ async function renderPosts(postDocs) {
         return;
     }
     
-    // Get user data for all posts
-    const posts = await Promise.all(postDocs.map(async (postDoc) => {
+    // Get next batch of posts to display
+    const postsToDisplay = allSortedPosts.slice(displayedPostCount, displayedPostCount + count);
+    
+    if (postsToDisplay.length === 0) {
+        // No more posts to display
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        return;
+    }
+    
+    // Get user data for posts to display
+    const posts = await Promise.all(postsToDisplay.map(async (postDoc) => {
         const postData = postDoc.data();
         try {
             const userDoc = await getDoc(doc(db, 'users', postData.userId));
@@ -885,10 +925,22 @@ async function renderPosts(postDocs) {
         }
     }));
     
-    // Render posts
-    postsFeedEl.innerHTML = posts.map(post => renderPost(post)).join('');
+    // Render posts (append if not first batch)
+    if (displayedPostCount === 0) {
+        postsFeedEl.innerHTML = posts.map(post => renderPost(post)).join('');
+    } else {
+        // Remove load more button temporarily
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        
+        // Append new posts
+        const existingHTML = postsFeedEl.innerHTML;
+        postsFeedEl.innerHTML = existingHTML + posts.map(post => renderPost(post)).join('');
+    }
     
-    // Set up event listeners for each post
+    // Set up event listeners for new posts
     posts.forEach(post => {
         setupPostEventListeners(post.id, post);
         setupPostImageErrors(post.id);
@@ -896,6 +948,14 @@ async function renderPosts(postDocs) {
             setupCommentEmojiPicker(post.id);
         }
     });
+    
+    // Update displayed count
+    displayedPostCount += postsToDisplay.length;
+    
+    // Add "Load More" button if there are more posts
+    if (displayedPostCount < allSortedPosts.length) {
+        addLoadMoreButton();
+    }
     
     // Single global click handler to close comment emoji pickers when clicking outside (only add once)
     if (!postsFeedEl.dataset.emojiClickHandler) {
@@ -911,6 +971,48 @@ async function renderPosts(postDocs) {
             closeAllCommentEmojiPickers();
         });
     }
+}
+
+// Add "Load More" button
+function addLoadMoreButton() {
+    // Remove existing button if any
+    const existingBtn = document.getElementById('loadMoreBtn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+    
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'loadMoreBtn';
+    loadMoreBtn.className = 'load-more-btn';
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.addEventListener('click', handleLoadMore);
+    
+    postsFeedEl.appendChild(loadMoreBtn);
+}
+
+// Handle "Load More" button click
+function handleLoadMore() {
+    if (isLoadingMore) return;
+    
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+    }
+    
+    displayNextPosts(5).then(() => {
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More';
+        }
+    });
+}
+
+// Render posts (kept for compatibility, but uses displayNextPosts internally)
+async function renderPosts(postDocs) {
+    allSortedPosts = postDocs;
+    displayedPostCount = 0;
+    await displayNextPosts(5);
 }
 
 // Set up image error handlers for a post
