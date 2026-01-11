@@ -309,6 +309,12 @@ async function loadTrendingFeed(activities) {
                 const userData = userDoc.exists() ? userDoc.data() : null;
                 const username = userData?.username || 'Anonymous';
                 
+                // Filter out posts from users with very negative karma (spam prevention)
+                const userKarma = userData?.karma || 0;
+                if (userKarma < -10) {
+                    continue; // Skip posts from users with karma < -10
+                }
+                
                 // Calculate hot score for this post using vote score
                 const voteScore = postData.voteScore || 0;
                 const comments = postData.commentsCount || 0;

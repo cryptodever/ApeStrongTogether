@@ -350,6 +350,78 @@ function handleVideoFileSelect(e) {
     }
 }
 
+// Check if user can post (cooldown check)
+async function checkPostCooldown() {
+    if (!currentUser) return false;
+    
+    try {
+        // Query user's most recent post
+        const userPostsQuery = query(
+            collection(db, 'posts'),
+            where('userId', '==', currentUser.uid),
+            where('deleted', '==', false),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+        );
+        
+        const snapshot = await getDocs(userPostsQuery);
+        
+        if (snapshot.empty) {
+            return true; // No posts yet, allow
+        }
+        
+        const lastPost = snapshot.docs[0].data();
+        const lastPostTime = lastPost.createdAt?.toMillis?.() || 
+                           (lastPost.createdAt?.seconds * 1000) || 0;
+        const cooldownMs = 90 * 1000; // 90 second cooldown
+        const timeSinceLastPost = Date.now() - lastPostTime;
+        
+        if (timeSinceLastPost < cooldownMs) {
+            const secondsRemaining = Math.ceil((cooldownMs - timeSinceLastPost) / 1000);
+            alert(`Please wait ${secondsRemaining} seconds before posting again.`);
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        // If query fails (e.g., missing index), allow post but log error
+        console.warn('Error checking cooldown (allowing post):', error);
+        return true;
+    }
+}
+
+// Check for duplicate content
+async function checkDuplicateContent(content) {
+    if (!content || content.length < 10) return false; // Skip short posts
+    
+    try {
+        // Check last 50 posts for similar content (recent spam check)
+        const recentPostsQuery = query(
+            collection(db, 'posts'),
+            where('deleted', '==', false),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        
+        const snapshot = await getDocs(recentPostsQuery);
+        const contentLower = content.toLowerCase().trim();
+        
+        for (const doc of snapshot.docs) {
+            const postContent = doc.data().content?.toLowerCase().trim() || '';
+            // Check for exact match
+            if (postContent === contentLower && postContent.length >= 10) {
+                alert('You\'ve already posted this content recently. Please post something new.');
+                return true;
+            }
+        }
+        
+        return false;
+    } catch (error) {
+        console.warn('Error checking duplicates (allowing post):', error);
+        return false; // Allow post if check fails
+    }
+}
+
 // Handle post submission
 async function handlePostSubmit(e) {
     e.preventDefault();
@@ -369,6 +441,28 @@ async function handlePostSubmit(e) {
     if (content.length > 2000) {
         alert('Post content must be 2000 characters or less');
         return;
+    }
+    
+    // Check cooldown
+    const canPost = await checkPostCooldown();
+    if (!canPost) {
+        if (postSubmitBtnEl) {
+            postSubmitBtnEl.disabled = false;
+            postSubmitBtnEl.textContent = 'Post';
+        }
+        return;
+    }
+    
+    // Check for duplicate content
+    if (content) {
+        const isDuplicate = await checkDuplicateContent(content);
+        if (isDuplicate) {
+            if (postSubmitBtnEl) {
+                postSubmitBtnEl.disabled = false;
+                postSubmitBtnEl.textContent = 'Post';
+            }
+            return;
+        }
     }
     
     // Disable submit button
@@ -543,24 +637,39 @@ function loadPosts() {
     }
 }
 
+// Calculate hot score for trending algorithm
+function calculateHotScore(voteScore, comments, createdAt) {
+    const createdAtMs = createdAt?.toMillis?.() || (createdAt?.seconds * 1000) || Date.now();
+    const hoursSincePost = (Date.now() - createdAtMs) / (1000 * 60 * 60);
+    const commentWeight = 1.5; // Comments count 1.5x more than votes
+    const gravity = 1.8; // How quickly posts lose momentum
+    const timeOffset = 2; // Prevents division by zero for brand new posts
+    const engagement = voteScore + ((comments || 0) * commentWeight);
+    const hotScore = engagement / Math.pow(hoursSincePost + timeOffset, gravity);
+    return hotScore;
+}
+
 // Load trending feed (all posts, real-time)
 function loadTrendingFeed() {
     try {
         // Try with composite query first (requires index)
         let postsQuery;
         try {
+            // Fetch more posts to allow for karma filtering and hot score sorting
             postsQuery = query(
                 collection(db, 'posts'),
                 where('deleted', '==', false),
                 orderBy('createdAt', 'desc'),
-                limit(50)
+                limit(100) // Fetch more to filter and sort
             );
             
             // Set up real-time listener with the composite query
             postsListener = onSnapshot(
                 postsQuery,
                 (snapshot) => {
-                    renderPosts(snapshot.docs);
+                    // Filter and sort posts by hot score
+                    const filteredDocs = filterAndSortPosts(snapshot.docs);
+                    renderPosts(filteredDocs.slice(0, 50)); // Limit to 50 for display
                 },
                 (error) => {
                     // If index error, fall back to simpler query
@@ -584,6 +693,44 @@ function loadTrendingFeed() {
         console.error('Error setting up posts listener:', error);
         postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts. Please refresh the page.</div>';
     }
+}
+
+// Filter posts by karma and sort by hot score
+async function filterAndSortPosts(postDocs) {
+    // Filter out posts from users with very negative karma
+    const filteredDocs = [];
+    for (const doc of postDocs) {
+        const postData = doc.data();
+        try {
+            const userDoc = await getDoc(doc(db, 'users', postData.userId));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const userKarma = userData.karma || 0;
+                // Allow posts from users with karma >= -10 (filter out heavy spammers)
+                if (userKarma >= -10) {
+                    filteredDocs.push({ doc, userKarma });
+                }
+            } else {
+                // If user doesn't exist, allow the post (new user)
+                filteredDocs.push({ doc, userKarma: 0 });
+            }
+        } catch (error) {
+            // If error loading user data, allow the post
+            filteredDocs.push({ doc, userKarma: 0 });
+        }
+    }
+    
+    // Sort by hot score (voteScore weighted by time)
+    filteredDocs.sort((a, b) => {
+        const aData = a.doc.data();
+        const bData = b.doc.data();
+        const aHotScore = calculateHotScore(aData.voteScore || 0, aData.commentsCount || 0, aData.createdAt);
+        const bHotScore = calculateHotScore(bData.voteScore || 0, bData.commentsCount || 0, bData.createdAt);
+        return bHotScore - aHotScore; // Descending order
+    });
+    
+    // Return just the docs
+    return filteredDocs.map(item => item.doc);
 }
 
 // Load following feed - posts from users you follow
@@ -683,14 +830,15 @@ function setupFallbackPostsListener() {
         
         postsListener = onSnapshot(
             postsQuery,
-            (snapshot) => {
+            async (snapshot) => {
                 // Filter out deleted posts in JavaScript
                 const nonDeletedDocs = snapshot.docs.filter(doc => {
                     const data = doc.data();
                     return !data.deleted || data.deleted === false;
                 });
-                // Limit to 50 after filtering
-                renderPosts(nonDeletedDocs.slice(0, 50));
+                // Filter and sort by hot score, then limit to 50
+                const filteredDocs = await filterAndSortPosts(nonDeletedDocs);
+                renderPosts(filteredDocs.slice(0, 50));
             },
             (error) => {
                 console.error('Error loading posts:', error);
