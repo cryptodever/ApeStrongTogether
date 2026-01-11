@@ -655,6 +655,12 @@ function displayQuests() {
     if (!dailyQuestsEl || !weeklyQuestsEl) return;
 
     const dailyQuests = availableQuests.filter(q => q.type === 'daily' && q.isActive);
+    // Move "Quest Completer" to the top
+    dailyQuests.sort((a, b) => {
+        if (a.id === 'daily_complete_quest') return -1;
+        if (b.id === 'daily_complete_quest') return 1;
+        return 0;
+    });
     const weeklyQuests = availableQuests.filter(q => q.type === 'weekly' && q.isActive);
     const achievementQuests = availableQuests.filter(q => q.type === 'achievement' && q.isActive);
 

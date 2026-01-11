@@ -28,12 +28,16 @@ import { withBase } from './base-url.js';
 const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 const ACTIVITY_LIMIT = 30; // Max activity items to show
 const TRENDING_LIMIT = 5; // Top 5 trending users
+const POSTS_PER_PAGE = 5; // Number of posts to show per page
 
 // State
 let currentUser = null;
 let pollInterval = null;
 let lastUpdateTime = null;
 let currentFeedType = 'trending'; // 'trending' or 'following'
+let allActivities = []; // Store all fetched activities
+let displayedActivityCount = 0; // Track how many activities are currently displayed
+let isLoadingMoreActivities = false; // Prevent multiple simultaneous loads
 
 // DOM Elements
 let activityFeedEl, lastUpdatedEl, refreshBtnEl;
@@ -198,6 +202,11 @@ async function loadActivityFeed(feedType = 'trending') {
             await loadTrendingFeed(activities);
         }
         
+        // Reset pagination state
+        allActivities = [];
+        displayedActivityCount = 0;
+        isLoadingMoreActivities = false;
+        
         // Sort activities by timestamp (newest first)
         activities.sort((a, b) => {
             const timeA = a.sortTime || (a.timestamp?.toMillis?.() || a.timestamp?.seconds * 1000 || 0);
@@ -205,10 +214,12 @@ async function loadActivityFeed(feedType = 'trending') {
             return timeB - timeA;
         });
         
-        const displayActivities = activities.slice(0, ACTIVITY_LIMIT);
+        // Store all activities for pagination
+        allActivities = activities;
+        displayedActivityCount = 0;
         
-        // Render activities
-        if (displayActivities.length === 0) {
+        // Display first 5 activities
+        if (allActivities.length === 0) {
             if (feedType === 'following') {
                 if (!currentUser) {
                     activityFeedEl.innerHTML = '<div class="activity-empty">Please log in to see posts from users you follow.</div>';
@@ -219,10 +230,7 @@ async function loadActivityFeed(feedType = 'trending') {
                 activityFeedEl.innerHTML = '<div class="activity-empty">no apes trending...</div>';
             }
         } else {
-            activityFeedEl.innerHTML = displayActivities.map(activity => createActivityItem(activity)).join('');
-            
-            // Add click handlers for activity items
-            setupActivityHandlers();
+            await displayNextActivities(POSTS_PER_PAGE);
         }
         
     } catch (error) {
@@ -349,6 +357,99 @@ async function loadTrendingFeed(activities) {
             console.error('[loadTrendingFeed] Error loading trending posts:', error);
             // Continue even if posts fail to load
         }
+}
+
+// Display next batch of activities
+async function displayNextActivities(count = 5) {
+    if (!activityFeedEl) return;
+    
+    if (allActivities.length === 0) {
+        if (currentFeedType === 'following') {
+            if (!currentUser) {
+                activityFeedEl.innerHTML = '<div class="activity-empty">Please log in to see posts from users you follow.</div>';
+            } else {
+                activityFeedEl.innerHTML = '<div class="activity-empty">no apes your following have posted...</div>';
+            }
+        } else {
+            activityFeedEl.innerHTML = '<div class="activity-empty">no apes trending...</div>';
+        }
+        return;
+    }
+    
+    // Get next batch of activities to display
+    const activitiesToDisplay = allActivities.slice(displayedActivityCount, displayedActivityCount + count);
+    
+    if (activitiesToDisplay.length === 0) {
+        // No more activities to display
+        const loadMoreBtn = document.getElementById('loadMoreActivitiesBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        return;
+    }
+    
+    // Render activities (append if not first batch)
+    if (displayedActivityCount === 0) {
+        activityFeedEl.innerHTML = activitiesToDisplay.map(activity => createActivityItem(activity)).join('');
+    } else {
+        // Remove load more button temporarily
+        const loadMoreBtn = document.getElementById('loadMoreActivitiesBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        
+        // Append new activities
+        const existingHTML = activityFeedEl.innerHTML;
+        activityFeedEl.innerHTML = existingHTML + activitiesToDisplay.map(activity => createActivityItem(activity)).join('');
+    }
+    
+    // Update displayed count
+    displayedActivityCount += activitiesToDisplay.length;
+    
+    // Add click handlers for new activities
+    setupActivityHandlers();
+    
+    // Add "Load More" button if there are more activities
+    if (displayedActivityCount < allActivities.length) {
+        addLoadMoreActivitiesButton();
+    }
+}
+
+// Add "Load More" button for activities
+function addLoadMoreActivitiesButton() {
+    // Remove existing button if any
+    const existingBtn = document.getElementById('loadMoreActivitiesBtn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+    
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'loadMoreActivitiesBtn';
+    loadMoreBtn.className = 'load-more-btn';
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.addEventListener('click', handleLoadMoreActivities);
+    
+    activityFeedEl.appendChild(loadMoreBtn);
+}
+
+// Handle "Load More" button click for activities
+async function handleLoadMoreActivities() {
+    if (isLoadingMoreActivities) return;
+    
+    isLoadingMoreActivities = true;
+    const loadMoreBtn = document.getElementById('loadMoreActivitiesBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+    }
+    
+    await displayNextActivities(POSTS_PER_PAGE);
+    
+    isLoadingMoreActivities = false;
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More';
+    }
 }
 
 // Load following feed - posts from users you follow

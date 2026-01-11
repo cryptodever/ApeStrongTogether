@@ -48,6 +48,9 @@ let postsListener = null;
 let isSaving = false;
 let isVerifying = false;
 let viewingUserId = null; // User ID of the profile being viewed
+let allProfilePosts = []; // Store all fetched profile posts
+let displayedProfilePostCount = 0; // Track how many posts are currently displayed
+let isLoadingMoreProfilePosts = false; // Prevent multiple simultaneous loads
 
 // Get viewing user ID from URL
 function getViewingUserId() {
@@ -2178,11 +2181,16 @@ async function loadProfilePosts() {
         postsListener = null;
     }
     
+    // Reset pagination state
+    allProfilePosts = [];
+    displayedProfilePostCount = 0;
+    isLoadingMoreProfilePosts = false;
+    
     // Set loading state
     postsFeedEl.innerHTML = '<div class="posts-loading">Loading posts...</div>';
     
     try {
-        // Query posts for target user
+        // Query posts for target user (fetch all, then paginate)
         let postsQuery;
         try {
             postsQuery = query(
@@ -2193,31 +2201,20 @@ async function loadProfilePosts() {
                 limit(50)
             );
             
-            // Set up real-time listener
-            postsListener = onSnapshot(
-                postsQuery,
-                async (snapshot) => {
-                    await renderProfilePosts(snapshot.docs);
-                },
-                (error) => {
-                    console.error('Error loading posts:', error);
-                    // Try fallback if index error
-                    if (error.code === 'failed-precondition' || error.message.includes('index')) {
-                        console.warn('Index not found for posts, using fallback query');
-                        loadProfilePostsFallback();
-                    } else {
-                        if (postsFeedEl) {
-                            postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
-                        }
-                    }
-                }
-            );
+            // Use getDocs instead of onSnapshot for pagination
+            const snapshot = await getDocs(postsQuery);
+            allProfilePosts = snapshot.docs;
+            displayedProfilePostCount = 0;
+            
+            // Display first 5 posts
+            await displayNextProfilePosts(5);
+            
         } catch (indexError) {
             console.warn('Index not found for posts, using fallback query:', indexError);
-            loadProfilePostsFallback();
+            await loadProfilePostsFallback();
         }
     } catch (error) {
-        console.error('Error setting up posts listener:', error);
+        console.error('Error setting up posts:', error);
         if (postsFeedEl) {
             postsFeedEl.innerHTML = '<div class="posts-error">Error loading posts</div>';
         }
@@ -2256,7 +2253,9 @@ async function loadProfilePostsFallback() {
                 return bTime - aTime; // DESC order
             });
             
-            await renderProfilePosts(postsArray);
+            allProfilePosts = postsArray;
+            displayedProfilePostCount = 0;
+            await displayNextProfilePosts(5);
         } catch (fallbackError) {
             console.error('Fallback query also failed:', fallbackError);
             // Final fallback: get all user posts and filter/sort in JavaScript
@@ -2282,7 +2281,9 @@ async function loadProfilePostsFallback() {
                     return bTime - aTime; // DESC order
                 });
             
-            await renderProfilePosts(postsArray);
+            allProfilePosts = postsArray;
+            displayedProfilePostCount = 0;
+            await displayNextProfilePosts(5);
         }
     } catch (error) {
         console.error('Error setting up posts listener:', error);
@@ -2292,18 +2293,30 @@ async function loadProfilePostsFallback() {
     }
 }
 
-// Render profile posts
-async function renderProfilePosts(postDocs) {
+// Display next batch of profile posts
+async function displayNextProfilePosts(count = 5) {
     const postsFeedEl = document.getElementById('profilePostsFeed');
     if (!postsFeedEl) return;
     
-    if (postDocs.length === 0) {
+    if (allProfilePosts.length === 0) {
         postsFeedEl.innerHTML = '<div class="posts-empty">No posts yet. Share your first post on the <a href="/feed/">Feed</a>!</div>';
         return;
     }
     
-    // Get user data for posts
-    const posts = await Promise.all(postDocs.map(async (postDoc) => {
+    // Get next batch of posts to display
+    const postsToDisplay = allProfilePosts.slice(displayedProfilePostCount, displayedProfilePostCount + count);
+    
+    if (postsToDisplay.length === 0) {
+        // No more posts to display
+        const loadMoreBtn = document.getElementById('loadMoreProfilePostsBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        return;
+    }
+    
+    // Get user data for posts to display
+    const posts = await Promise.all(postsToDisplay.map(async (postDoc) => {
         const postData = postDoc.data();
         try {
             const userDoc = await getDoc(doc(db, 'users', postData.userId));
@@ -2322,18 +2335,81 @@ async function renderProfilePosts(postDocs) {
         }
     }));
     
-    // Render posts
-    postsFeedEl.innerHTML = posts.map(post => renderProfilePost(post)).join('');
+    // Render posts (append if not first batch)
+    if (displayedProfilePostCount === 0) {
+        postsFeedEl.innerHTML = posts.map(post => renderProfilePost(post)).join('');
+    } else {
+        // Remove load more button temporarily
+        const loadMoreBtn = document.getElementById('loadMoreProfilePostsBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.remove();
+        }
+        
+        // Append new posts
+        const existingHTML = postsFeedEl.innerHTML;
+        postsFeedEl.innerHTML = existingHTML + posts.map(post => renderProfilePost(post)).join('');
+    }
     
-    // Set up event listeners for posts
+    // Set up event listeners for new posts
     posts.forEach(post => {
         setupProfilePostEventListeners(post.id, post);
-    });
-    
-    // Set up image error handling
-    posts.forEach(post => {
         setupPostImageErrors(post.id);
     });
+    
+    // Update displayed count
+    displayedProfilePostCount += postsToDisplay.length;
+    
+    // Add "Load More" button if there are more posts
+    if (displayedProfilePostCount < allProfilePosts.length) {
+        addLoadMoreProfilePostsButton();
+    }
+}
+
+// Add "Load More" button for profile posts
+function addLoadMoreProfilePostsButton() {
+    const postsFeedEl = document.getElementById('profilePostsFeed');
+    if (!postsFeedEl) return;
+    
+    // Remove existing button if any
+    const existingBtn = document.getElementById('loadMoreProfilePostsBtn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+    
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'loadMoreProfilePostsBtn';
+    loadMoreBtn.className = 'load-more-btn';
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.addEventListener('click', handleLoadMoreProfilePosts);
+    
+    postsFeedEl.appendChild(loadMoreBtn);
+}
+
+// Handle "Load More" button click for profile posts
+async function handleLoadMoreProfilePosts() {
+    if (isLoadingMoreProfilePosts) return;
+    
+    isLoadingMoreProfilePosts = true;
+    const loadMoreBtn = document.getElementById('loadMoreProfilePostsBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+    }
+    
+    await displayNextProfilePosts(5);
+    
+    isLoadingMoreProfilePosts = false;
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More';
+    }
+}
+
+// Render profile posts (kept for compatibility, but uses displayNextProfilePosts internally)
+async function renderProfilePosts(postDocs) {
+    allProfilePosts = postDocs;
+    displayedProfilePostCount = 0;
+    await displayNextProfilePosts(5);
 }
 
 // Render single profile post
