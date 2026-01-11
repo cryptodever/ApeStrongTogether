@@ -3230,16 +3230,12 @@ function handleProfileReportPost(postId, post) {
 }
 
 // Check if already reported (profile page)
+// Note: Regular users cannot read reports (only admins can), so this always returns false
+// We can't check if a report exists, so we'll just try to create it and handle duplicates via error handling
 async function checkProfileIfAlreadyReported(postId, userId) {
-    try {
-        const reportId = `${postId}_${userId}`;
-        const reportRef = doc(db, 'reports', reportId);
-        const reportDoc = await getDoc(reportRef);
-        return reportDoc.exists();
-    } catch (error) {
-        console.warn('Error checking report, proceeding as if not reported:', error);
-        return false;
-    }
+    // Users can't read reports, so we can't check if it exists
+    // Just return false - the create attempt will fail if it's a duplicate
+    return false;
 }
 
 // Show report modal (profile page)
@@ -3350,6 +3346,11 @@ async function handleProfileSubmitReport(postId, reportedUserId, reason, closeMo
         const reportId = `${postId}_${currentUser.uid}`;
         const reportRef = doc(db, 'reports', reportId);
         
+        // Try to create the report
+        // Note: Regular users cannot read reports, so we can't check if it exists first
+        // We use setDoc which will create if it doesn't exist
+        // If the document already exists, setDoc will try to update it, which users can't do (only admins can update)
+        // So if we get permission-denied, it likely means the report already exists
         await setDoc(reportRef, {
             postId: postId,
             reportedBy: currentUser.uid,
@@ -3362,10 +3363,13 @@ async function handleProfileSubmitReport(postId, reportedUserId, reason, closeMo
         showProfileToast('Report submitted successfully');
         closeModal();
     } catch (error) {
-        console.error('Error submitting report:', error);
+        // Handle permission errors - if we get permission-denied on setDoc for a new document,
+        // it might mean the document already exists (setDoc tries to update, which users can't do)
         if (error.code === 'permission-denied') {
             showProfileToast('You have already reported this post');
+            closeModal();
         } else {
+            console.error('Error submitting report:', error);
             showProfileToast('Failed to submit report. Please try again.');
         }
     }
