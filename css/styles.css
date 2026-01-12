@@ -7880,9 +7880,11 @@ body.chat-body > * {
     .chat-main-panel {
         border-radius: 12px;
         height: auto;
-        min-height: 500px;
+        min-height: calc(100vh - 180px);
         display: flex;
         flex-direction: column;
+        width: 100%;
+        max-width: 100%;
         box-shadow: 
             0 18px 50px rgba(0, 0, 0, 0.55),
             inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -7922,6 +7924,8 @@ body.chat-body > * {
         gap: 2px;
         flex: 1;
         min-height: 0;
+        width: 100%;
+        max-width: 100%;
     }
 
     .chat-message {
@@ -9431,30 +9435,7 @@ body.chat-body > * {
         flex-shrink: 0;
     }
 
-    .chat-content {
-        flex-direction: column;
-        height: calc(100vh - 320px);
-        max-height: none;
-        border-radius: 12px;
-    }
-
-    .chat-sidebar {
-        width: 100%;
-        max-height: 180px;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 16px;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-
-    .chat-sidebar-header {
-        margin-bottom: 16px;
-    }
-
-    .chat-user-list {
-        gap: 10px;
-    }
+    /* Chat sidebars are hidden on mobile - removed old sidebar styles */
 
     .chat-messages {
         padding: 16px;
@@ -9489,107 +9470,9 @@ body.chat-body > * {
 }
 
 @media (max-width: 480px) {
-    .chat-sidebar {
-        width: 100%;
-        max-height: 140px;
-        min-height: 100px;
-        padding: 10px 12px;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        overflow: visible;
-        display: flex;
-        flex-direction: column;
-    }
+    /* Chat sidebars are hidden on mobile - removed old sidebar styles */
 
-    .chat-sidebar-header {
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        flex-shrink: 0;
-    }
 
-    .chat-sidebar-header h3 {
-        font-size: 14px;
-    }
-
-    .online-count {
-        font-size: 11px;
-        padding: 3px 8px;
-    }
-
-    .chat-user-list {
-        flex-direction: row;
-        gap: 8px;
-        overflow-x: auto;
-        overflow-y: visible;
-        padding-bottom: 8px;
-        padding-right: 4px;
-        flex: 1;
-        min-height: 0;
-        /* Custom scrollbar for mobile */
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(74, 222, 128, 0.5) rgba(0, 0, 0, 0.1);
-    }
-
-    .chat-user-list::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .chat-user-list::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 3px;
-    }
-
-    .chat-user-list::-webkit-scrollbar-thumb {
-        background: rgba(74, 222, 128, 0.5);
-        border-radius: 3px;
-    }
-
-    .chat-user-item {
-        min-width: 110px;
-        max-width: 110px;
-        flex-shrink: 0;
-        padding: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 6px;
-    }
-
-    .chat-user-avatar {
-        width: 36px;
-        height: 36px;
-        flex-shrink: 0;
-    }
-
-    .chat-user-avatar img {
-        width: 36px;
-        height: 36px;
-    }
-
-    .chat-user-info {
-        min-width: 0;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .chat-username {
-        font-size: 11px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-
-    .chat-user-last-seen {
-        font-size: 9px;
-        line-height: 1.2;
-        text-align: center;
-    }
 
     .chat-message.own-message {
         flex-direction: row;
@@ -13990,7 +13873,7 @@ body:has(.modal-overlay.show) {
         inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to visible to allow comment inputs to be fully visible */
 }
 
 .post-card::before {
@@ -14930,7 +14813,7 @@ body:has(.modal-overlay.show) {
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to visible to allow comment inputs to be fully visible */
 }
 
 .activity-post-full::before {
@@ -15391,6 +15274,7 @@ body:has(.modal-overlay.show) {
     
     .post-card {
         padding: 1rem;
+        overflow: visible; /* Allow comment inputs to be visible */
     }
     
     .post-header {
@@ -15404,6 +15288,102 @@ body:has(.modal-overlay.show) {
     
     .post-actions {
         gap: 1rem;
+    }
+    
+    /* Ensure comment inputs are visible on mobile */
+    .post-comments-section {
+        overflow: visible;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .post-comment-input-wrapper {
+        position: relative;
+        z-index: 20;
+        margin-top: 1rem;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .post-comment-input {
+        min-width: 0;
+        flex: 1 1 auto;
+        width: 100%;
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 0.75rem;
+        -webkit-appearance: none;
+        border-radius: 8px;
+    }
+    
+    .post-comment-emoji-btn {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        z-index: 21;
+    }
+    
+    .post-comment-submit {
+        flex: 1 1 100%;
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Activity post comment inputs */
+    .activity-post-comments-section {
+        overflow: visible;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .activity-post-comment-input-wrapper {
+        position: relative;
+        z-index: 20;
+        margin-top: 0.5rem;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .activity-post-comment-input {
+        min-width: 0;
+        flex: 1 1 auto;
+        width: 100%;
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 0.5rem 0.75rem;
+        -webkit-appearance: none;
+        border-radius: 8px;
+    }
+    
+    .activity-comment-emoji-btn {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        z-index: 21;
+    }
+    
+    .activity-post-comment-submit {
+        flex: 1 1 100%;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Ensure emoji pickers are visible on mobile */
+    .post-comment-emoji-picker,
+    .activity-comment-emoji-picker {
+        position: fixed !important;
+        bottom: auto !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90vw !important;
+        max-width: 320px !important;
+        max-height: 50vh !important;
+        z-index: 9999 !important;
     }
 }
 
