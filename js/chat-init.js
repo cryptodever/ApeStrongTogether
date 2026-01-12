@@ -111,17 +111,73 @@ let currentChannelNameEl, currentChannelDescEl;
     }
 })();
 
+// Owner username check
+const OWNER_USERNAME = 'apelover69';
+
+// Check if current user is owner
+function isOwner() {
+    if (!userProfile || !userProfile.username) return false;
+    return userProfile.username.toLowerCase() === OWNER_USERNAME.toLowerCase();
+}
+
 // Initialize chat when auth state changes
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         await loadUserProfile();
-        initializeChat();
+        
+        // Check if user is owner
+        if (isOwner()) {
+            // Owner can see chat
+            showChatInterface();
+            initializeChat();
+        } else {
+            // Non-owners see maintenance message
+            showMaintenanceMessage();
+        }
     } else {
         currentUser = null;
+        userProfile = null;
         cleanupChat();
+        showMaintenanceMessage();
     }
 });
+
+// Show maintenance message
+function showMaintenanceMessage() {
+    const maintenanceEl = document.getElementById('chatMaintenanceMessage');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    if (maintenanceEl) {
+        maintenanceEl.classList.remove('hide');
+    }
+    
+    if (chatContainer) {
+        chatContainer.classList.add('hide');
+    }
+    
+    if (document.querySelector('.chat-utility-bar')) {
+        document.querySelector('.chat-utility-bar').classList.add('hide');
+    }
+}
+
+// Show chat interface (owner only)
+function showChatInterface() {
+    const maintenanceEl = document.getElementById('chatMaintenanceMessage');
+    const chatContainer = document.querySelector('.chat-container');
+    
+    if (maintenanceEl) {
+        maintenanceEl.classList.add('hide');
+    }
+    
+    if (chatContainer) {
+        chatContainer.classList.remove('hide');
+    }
+    
+    if (document.querySelector('.chat-utility-bar')) {
+        document.querySelector('.chat-utility-bar').classList.remove('hide');
+    }
+}
 
 // Load user profile data
 async function loadUserProfile() {

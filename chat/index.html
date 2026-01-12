@@ -25,8 +25,17 @@
     <script type="module" src="/js/header.js?v=2"></script>
 
     <main class="chat-page">
+        <!-- Maintenance Message (shown to non-owners) -->
+        <div class="chat-maintenance-message" id="chatMaintenanceMessage">
+            <div class="maintenance-content">
+                <div class="maintenance-icon">🔧</div>
+                <h2>CHAT is undergoing changes</h2>
+                <p>Check back later</p>
+            </div>
+        </div>
+
         <!-- Crypto Utility Bar -->
-        <div class="chat-utility-bar">
+        <div class="chat-utility-bar hide">
             <div class="utility-item">
                 <span class="utility-label">APE</span>
                 <span class="utility-value" id="apePrice">$0.00</span>
@@ -42,7 +51,7 @@
             </div>
         </div>
 
-        <div class="chat-container">
+        <div class="chat-container hide">
             <div class="chat-layout">
                 <!-- Left Panel: Online Users -->
                 <aside class="chat-sidebar chat-sidebar-left" id="chatSidebar">
