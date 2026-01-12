@@ -7648,6 +7648,46 @@ body.chat-body > * {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+}
+
+.chat-container > .chat-layout {
+    background: var(--chat-panel-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--chat-border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 
+        0 18px 50px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.chat-sidebar-left,
+.chat-sidebar-right {
+    display: none !important;
+}
+
+.chat-desktop-header {
+    display: none !important;
+}
+
+.chat-main-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
 }
 
 @media (max-width: 1200px) {
