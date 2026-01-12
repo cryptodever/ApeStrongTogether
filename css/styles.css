@@ -7531,8 +7531,10 @@ body.chat-body > * {
 
 .chat-page {
     position: relative;
-    min-height: calc(100vh - 80px);
+    height: 100vh;
+    max-height: 100vh;
     padding-top: 80px;
+    overflow: hidden;
 }
 
 /* ============================================
@@ -7641,9 +7643,11 @@ body.chat-body > * {
     margin: 0 auto;
     padding: 24px;
     position: relative;
-    height: calc(100vh - 160px);
+    height: calc(100vh - 80px);
+    max-height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 @media (max-width: 1200px) {
