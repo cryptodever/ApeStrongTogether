@@ -7404,8 +7404,8 @@ body.chat-body > * {
     transform: translateX(-50%);
     z-index: 10;
     display: flex;
-    gap: 48px;
-    padding: 20px 48px;
+    gap: 64px;
+    padding: 24px 64px;
     background: var(--chat-panel-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -7419,9 +7419,9 @@ body.chat-body > * {
 .utility-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     font-size: 15px;
-    padding: 6px 0;
+    padding: 10px 0;
     flex-shrink: 0;
     min-width: fit-content;
 }
@@ -7431,7 +7431,7 @@ body.chat-body > * {
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-size: 11px;
+    font-size: 12px;
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -7440,15 +7440,15 @@ body.chat-body > * {
     color: var(--chat-text-primary);
     font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 17px;
+    font-size: 19px;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .utility-change {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    padding: 3px 8px;
+    padding: 5px 12px;
     border-radius: 6px;
     white-space: nowrap;
     flex-shrink: 0;
@@ -7861,8 +7861,8 @@ body.chat-body > * {
         left: 0;
         right: 0;
         width: 100%;
-        padding: 14px 1rem;
-        gap: 20px;
+        padding: 16px 1rem;
+        gap: 24px;
         border-radius: 0;
         border-left: none;
         border-right: none;
@@ -7871,27 +7871,27 @@ body.chat-body > * {
     }
 
     .utility-item {
-        font-size: 13px;
-        gap: 6px;
+        font-size: 14px;
+        gap: 8px;
         flex: 1;
         justify-content: center;
-        padding: 4px 0;
+        padding: 6px 0;
         min-width: 0;
     }
 
     .utility-label {
-        font-size: 10px;
+        font-size: 11px;
         letter-spacing: 0.3px;
     }
 
     .utility-value {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
     }
 
     .utility-change {
-        font-size: 11px;
-        padding: 2px 6px;
+        font-size: 12px;
+        padding: 3px 8px;
     }
 
     .chat-main-panel {
