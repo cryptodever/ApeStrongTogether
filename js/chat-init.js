@@ -319,6 +319,10 @@ function initializeChat() {
 
     // Setup channel switcher
     setupChannelSwitcher();
+    setupMobileChannelList();
+    
+    // Setup mobile drawer
+    setupMobileDrawer();
     
     // Setup event listeners
     setupEventListeners();
@@ -351,20 +355,149 @@ function initializeChat() {
 // Setup channel switcher UI
 function setupChannelSwitcher() {
     const channelButtonsEl = document.getElementById('channelButtons');
-    if (!channelButtonsEl) return;
+    const channelButtonsMobileEl = document.getElementById('channelButtonsMobile');
     
-    // Clear existing buttons
-    channelButtonsEl.innerHTML = '';
+    // Desktop channel buttons
+    if (channelButtonsEl) {
+        channelButtonsEl.innerHTML = '';
+        AVAILABLE_CHANNELS.forEach(channel => {
+            const button = document.createElement('button');
+            button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
+            button.setAttribute('data-channel', channel.id);
+            button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
+            button.addEventListener('click', () => switchChannel(channel.id));
+            channelButtonsEl.appendChild(button);
+        });
+    }
     
-    // Create buttons for each channel
+    // Mobile channel buttons
+    if (channelButtonsMobileEl) {
+        channelButtonsMobileEl.innerHTML = '';
+        AVAILABLE_CHANNELS.forEach(channel => {
+            const button = document.createElement('button');
+            button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
+            button.setAttribute('data-channel', channel.id);
+            button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
+            button.addEventListener('click', () => switchChannel(channel.id));
+            channelButtonsMobileEl.appendChild(button);
+        });
+    }
+}
+
+// Setup mobile channel list in drawer
+function setupMobileChannelList() {
+    const mobileChannelsEl = document.getElementById('chatMobileChannels');
+    if (!mobileChannelsEl) return;
+    
+    mobileChannelsEl.innerHTML = '';
+    
     AVAILABLE_CHANNELS.forEach(channel => {
-        const button = document.createElement('button');
-        button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
-        button.setAttribute('data-channel', channel.id);
-        button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
-        button.addEventListener('click', () => switchChannel(channel.id));
-        channelButtonsEl.appendChild(button);
+        const item = document.createElement('div');
+        item.className = `chat-mobile-channel-item ${channel.id === currentChannel ? 'active' : ''}`;
+        item.setAttribute('data-channel', channel.id);
+        item.innerHTML = `
+            <span class="channel-emoji" style="font-size: 20px;">${channel.emoji}</span>
+            <span class="channel-name" style="font-weight: 600;">${channel.name}</span>
+        `;
+        item.addEventListener('click', () => {
+            switchChannel(channel.id);
+            closeMobileDrawer();
+        });
+        mobileChannelsEl.appendChild(item);
     });
+}
+
+// Setup mobile drawer
+function setupMobileDrawer() {
+    const menuBtn = document.getElementById('chatMenuBtn');
+    const drawerOverlay = document.getElementById('chatDrawerOverlay');
+    const drawer = document.getElementById('chatMobileDrawer');
+    const drawerClose = document.getElementById('chatDrawerClose');
+    const drawerTabs = document.querySelectorAll('.chat-drawer-tab');
+    const drawerPanels = document.querySelectorAll('.chat-drawer-panel');
+    
+    if (!menuBtn || !drawer || !drawerOverlay) return;
+    
+    // Open drawer
+    menuBtn.addEventListener('click', () => {
+        openMobileDrawer();
+    });
+    
+    // Close drawer
+    if (drawerClose) {
+        drawerClose.addEventListener('click', () => {
+            closeMobileDrawer();
+        });
+    }
+    
+    // Close drawer on overlay click
+    drawerOverlay.addEventListener('click', () => {
+        closeMobileDrawer();
+    });
+    
+    // Drawer tab switching
+    drawerTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            
+            // Update active tab
+            drawerTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Update active panel
+            drawerPanels.forEach(p => {
+                if (p.getAttribute('data-panel') === targetTab) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+        });
+    });
+}
+
+// Open mobile drawer
+function openMobileDrawer() {
+    const drawerOverlay = document.getElementById('chatDrawerOverlay');
+    const drawer = document.getElementById('chatMobileDrawer');
+    
+    if (drawerOverlay && drawer) {
+        drawerOverlay.classList.remove('hide');
+        drawer.classList.remove('hide');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Close mobile drawer
+function closeMobileDrawer() {
+    const drawerOverlay = document.getElementById('chatDrawerOverlay');
+    const drawer = document.getElementById('chatMobileDrawer');
+    
+    if (drawerOverlay && drawer) {
+        drawerOverlay.classList.add('hide');
+        drawer.classList.add('hide');
+        document.body.style.overflow = '';
+    }
+}
+
+// Update mobile header channel name
+function updateMobileChannelName() {
+    const mobileChannelNameEl = document.getElementById('chatMobileChannelName');
+    if (!mobileChannelNameEl) return;
+    
+    const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
+    if (channel) {
+        mobileChannelNameEl.textContent = `${channel.emoji} ${channel.name}`;
+    }
+}
+
+// Update mobile header online count
+function updateMobileOnlineCount() {
+    const mobileOnlineCountEl = document.getElementById('chatMobileOnlineCount');
+    if (!mobileOnlineCountEl || !onlineCountEl) return;
+    
+    const count = parseInt(onlineCountEl.textContent) || 0;
+    mobileOnlineCountEl.textContent = count;
 }
 
 // Initialize utility bar
@@ -436,6 +569,15 @@ function updateChannelInfo() {
     
     currentChannelNameEl.textContent = channel.name;
     currentChannelDescEl.textContent = channelDescriptions[channel.id] || 'Channel description';
+    
+    // Update mobile channel info
+    const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
+    const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
+    if (mobileChannelNameEl) mobileChannelNameEl.textContent = channel.name;
+    if (mobileChannelDescEl) mobileChannelDescEl.textContent = channelDescriptions[channel.id] || 'Channel description';
+    
+    // Update mobile header channel name
+    updateMobileChannelName();
 }
 
 // Setup mobile swipe gestures
@@ -491,6 +633,7 @@ function switchChannel(channelId) {
     
     // Update UI
     setupChannelSwitcher();
+    setupMobileChannelList();
     updateChannelInfo();
     
     // Clear current messages and tracked message IDs
@@ -987,6 +1130,7 @@ function setupRealtimeListeners() {
         const count = onlineUsers.length;
         if (onlineCountEl) onlineCountEl.textContent = count;
         if (onlineCounterEl) onlineCounterEl.textContent = count;
+        updateMobileOnlineCount();
         
         // Update last seen times every minute for real-time updates
         if (!lastSeenUpdateInterval) {
@@ -1632,44 +1776,52 @@ function formatRelativeTime(timestamp) {
 function updateOnlineUsersList(users) {
     if (!chatUserListEl) return;
 
-    if (users.length === 0) {
-        chatUserListEl.innerHTML = '<div class="chat-user-item">No other users online</div>';
-        return;
-    }
-
-    chatUserListEl.innerHTML = users.map(user => {
-        const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
-        const defaultImage = '/pfp_apes/bg1.png';
-        const lastSeen = user.lastSeen ? formatRelativeTime(user.lastSeen) : 'Unknown';
-        const isOnline = user.isOnline !== false; // Default to true if not specified
-        
-        return `
-            <div class="chat-user-item">
-                <div class="chat-user-avatar">
-                    <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
-                    ${isOnline ? '<span class="online-indicator" title="Online"></span>' : ''}
-                </div>
-                <div class="chat-user-info">
-                    <div class="chat-user-name-row">
-                        <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
-                        ${(user.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge-small" title="Owner">OWNER</span>' : ''}
-                        ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
+    const userListHTML = users.length === 0
+        ? '<div class="chat-user-item">No other users online</div>'
+        : users.map(user => {
+            const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
+            const defaultImage = '/pfp_apes/bg1.png';
+            const lastSeen = user.lastSeen ? formatRelativeTime(user.lastSeen) : 'Unknown';
+            const isOnline = user.isOnline !== false; // Default to true if not specified
+            
+            return `
+                <div class="chat-user-item">
+                    <div class="chat-user-avatar">
+                        <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
+                        ${isOnline ? '<span class="online-indicator" title="Online"></span>' : ''}
                     </div>
-                    <div class="chat-user-last-seen">
-                        ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
+                    <div class="chat-user-info">
+                        <div class="chat-user-name-row">
+                            <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
+                            ${(user.username || '').toLowerCase() === 'apelover69' ? '<span class="owner-badge-small" title="Owner">OWNER</span>' : ''}
+                            ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
+                        </div>
+                        <div class="chat-user-last-seen">
+                            ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
     
-    // Add image error handling for user list (CSP-compliant)
-    chatUserListEl.querySelectorAll('img').forEach(img => {
-        img.addEventListener('error', function() {
-            const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
-            if (this.src !== fallback) {
-                this.src = fallback;
-            }
+    // Update desktop user list
+    chatUserListEl.innerHTML = userListHTML;
+    
+    // Update mobile user list
+    const mobileUserListEl = document.getElementById('chatMobileUserList');
+    if (mobileUserListEl) {
+        mobileUserListEl.innerHTML = userListHTML;
+    }
+    
+    // Add image error handling for user lists (CSP-compliant)
+    [chatUserListEl, mobileUserListEl].filter(Boolean).forEach(listEl => {
+        listEl.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+                if (this.src !== fallback) {
+                    this.src = fallback;
+                }
+            });
         });
     });
 }
