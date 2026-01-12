@@ -396,8 +396,8 @@ function setupMobileChannelList() {
         item.className = `chat-mobile-channel-item ${channel.id === currentChannel ? 'active' : ''}`;
         item.setAttribute('data-channel', channel.id);
         item.innerHTML = `
-            <span class="channel-emoji" style="font-size: 20px;">${channel.emoji}</span>
-            <span class="channel-name" style="font-weight: 600;">${channel.name}</span>
+            <span class="channel-emoji chat-mobile-drawer-emoji">${channel.emoji}</span>
+            <span class="channel-name chat-mobile-drawer-name">${channel.name}</span>
         `;
         item.addEventListener('click', () => {
             switchChannel(channel.id);
