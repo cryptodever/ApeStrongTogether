@@ -21,11 +21,12 @@ import {
     where,
     Timestamp,
     deleteDoc,
-    writeBatch
+    writeBatch,
+    startAfter
 } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 // Constants
-const MESSAGES_PER_PAGE = 50;
+const MESSAGES_PER_PAGE = 30; // Reduced to load only recent messages
 const MAX_MESSAGE_LENGTH = 1000;
 // Rate limits per channel (in seconds)
 const RATE_LIMITS = {
@@ -80,6 +81,9 @@ let lastSeenUpdateInterval = null;
 let currentOnlineUsers = []; // Store current online users for periodic updates
 let isInitialSnapshot = true; // Flag to track if we're handling the initial snapshot
 let loadedMessageIds = new Set(); // Track which messages have been loaded
+let oldestMessageDoc = null; // Track oldest message document for pagination
+let isLoadingOlderMessages = false; // Flag to prevent multiple simultaneous loads
+let hasMoreMessages = true; // Flag to track if there are more messages to load
 // Available channels
 const AVAILABLE_CHANNELS = [
     { id: 'general', name: 'GENERAL', emoji: '💬' },
@@ -495,6 +499,14 @@ function switchChannel(channelId) {
     }
     loadedMessageIds.clear();
     isInitialSnapshot = true;
+    oldestMessageDoc = null;
+    hasMoreMessages = true;
+    isLoadingOlderMessages = false;
+    
+    // Remove scroll listener
+    if (chatMessagesEl) {
+        chatMessagesEl.removeEventListener('scroll', handleScroll);
+    }
     
     // Remove old listeners
     if (messagesListener) {
@@ -642,6 +654,11 @@ function setupEventListeners() {
 function loadMessages() {
     if (!currentUser) return;
 
+    // Reset pagination state
+    oldestMessageDoc = null;
+    hasMoreMessages = true;
+    isLoadingOlderMessages = false;
+
     // Always hide loading after a timeout, even if query fails
     const loadingTimeout = setTimeout(() => {
         if (chatLoadingEl && !chatLoadingEl.classList.contains('hide')) {
@@ -671,12 +688,21 @@ function loadMessages() {
         
         if (snapshot.empty) {
             chatEmptyEl.classList.remove('hide');
+            hasMoreMessages = false;
             return;
         }
 
         chatEmptyEl.classList.add('hide');
         
-        // Reverse to show oldest first
+        // Check if there might be more messages
+        hasMoreMessages = snapshot.docs.length === MESSAGES_PER_PAGE;
+        
+        // Store oldest message document for pagination
+        if (snapshot.docs.length > 0) {
+            oldestMessageDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        
+        // Reverse to show oldest first (newest at bottom)
         const messages = snapshot.docs.reverse();
         messages.forEach((doc) => {
             loadedMessageIds.add(doc.id);
@@ -684,6 +710,7 @@ function loadMessages() {
         });
 
         scrollToBottom();
+        setupScrollListener();
     }).catch((error) => {
         clearTimeout(loadingTimeout);
         console.error('Error loading messages:', error);
@@ -696,6 +723,99 @@ function loadMessages() {
             <p class="chat-error-detail">Error: ${escapeHtml(error.message)}</p>
         `;
     });
+}
+
+// Load older messages when scrolling to top
+async function loadOlderMessages() {
+    if (!currentUser || isLoadingOlderMessages || !hasMoreMessages || !oldestMessageDoc) {
+        return;
+    }
+
+    isLoadingOlderMessages = true;
+    
+    try {
+        const messagesRef = collection(db, 'messages');
+        const q = query(
+            messagesRef,
+            where('channel', '==', currentChannel),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            startAfter(oldestMessageDoc),
+            limit(MESSAGES_PER_PAGE)
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            hasMoreMessages = false;
+            isLoadingOlderMessages = false;
+            return;
+        }
+
+        // Check if there might be more messages
+        hasMoreMessages = snapshot.docs.length === MESSAGES_PER_PAGE;
+
+        // Store new oldest message document
+        if (snapshot.docs.length > 0) {
+            oldestMessageDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+
+        // Store scroll position before adding messages
+        const scrollContainer = chatMessagesEl;
+        const previousScrollHeight = scrollContainer.scrollHeight;
+        const previousScrollTop = scrollContainer.scrollTop;
+
+        // Reverse to show oldest first, then prepend to container
+        const messagesToAdd = snapshot.docs.reverse();
+        
+        messagesToAdd.forEach((doc) => {
+            if (!loadedMessageIds.has(doc.id)) {
+                loadedMessageIds.add(doc.id);
+                const messageEl = document.createElement('div');
+                messageEl.innerHTML = ''; // Will be set by displayMessage
+                displayMessage(doc.id, doc.data(), true); // true = prepend
+            }
+        });
+
+        // Restore scroll position after a brief delay to allow DOM updates
+        setTimeout(() => {
+            const newScrollHeight = scrollContainer.scrollHeight;
+            scrollContainer.scrollTop = previousScrollTop + (newScrollHeight - previousScrollHeight);
+        }, 0);
+
+        isLoadingOlderMessages = false;
+
+    } catch (error) {
+        console.error('Error loading older messages:', error);
+        isLoadingOlderMessages = false;
+        hasMoreMessages = false;
+    }
+}
+
+// Setup scroll listener for loading older messages
+function setupScrollListener() {
+    if (!chatMessagesEl) return;
+
+    // Remove existing listener if any
+    chatMessagesEl.removeEventListener('scroll', handleScroll);
+    
+    chatMessagesEl.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+let scrollTimeout = null;
+function handleScroll() {
+    if (!chatMessagesEl || isLoadingOlderMessages || !hasMoreMessages) return;
+
+    // Throttle scroll events
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+        scrollTimeout = null;
+        
+        // Load more when scrolled near the top (within 200px)
+        if (chatMessagesEl.scrollTop < 200) {
+            loadOlderMessages();
+        }
+    }, 100);
 }
 
 // Setup real-time message listener
@@ -878,7 +998,7 @@ function setupRealtimeListeners() {
 }
 
 // Display a message in the chat
-function displayMessage(messageId, messageData) {
+function displayMessage(messageId, messageData, prepend = false) {
     if (!chatMessagesEl) return;
 
     const messageEl = document.createElement('div');
@@ -925,7 +1045,11 @@ function displayMessage(messageId, messageData) {
         </div>
     `;
 
-    chatMessagesEl.appendChild(messageEl);
+    if (prepend) {
+        chatMessagesEl.insertBefore(messageEl, chatMessagesEl.firstChild);
+    } else {
+        chatMessagesEl.appendChild(messageEl);
+    }
     
     // Add image error handling (CSP-compliant)
     const avatarImg = messageEl.querySelector('.message-avatar img');

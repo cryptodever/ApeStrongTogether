@@ -7396,20 +7396,21 @@ body.chat-body > * {
     z-index: 1;
 }
 
-/* Crypto Utility Bar - Top Left */
+/* Crypto Utility Bar - Centered on Desktop */
 .chat-utility-bar {
     position: fixed;
     top: 80px;
-    left: 24px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
     display: flex;
-    gap: 20px;
-    padding: 12px 20px;
+    gap: 32px;
+    padding: 16px 32px;
     background: var(--chat-panel-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--chat-border);
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 
         0 18px 50px rgba(0, 0, 0, 0.55),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -7418,9 +7419,9 @@ body.chat-body > * {
 .utility-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    padding: 4px 0;
+    gap: 12px;
+    font-size: 15px;
+    padding: 6px 0;
 }
 
 .utility-label {
@@ -7428,7 +7429,7 @@ body.chat-body > * {
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-size: 10px;
+    font-size: 11px;
     white-space: nowrap;
 }
 
@@ -7436,15 +7437,15 @@ body.chat-body > * {
     color: var(--chat-text-primary);
     font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     white-space: nowrap;
 }
 
 .utility-change {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
 }
 
 .utility-change.positive {
