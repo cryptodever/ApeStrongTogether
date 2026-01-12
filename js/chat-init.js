@@ -98,6 +98,8 @@ let chatTypingEl, typingTextEl, charCountEl, rateLimitInfoEl;
 let chatUserListEl, onlineCountEl;
 let messageContextMenuEl, reactionPickerEl, emojiPickerEl;
 let userProfilePopupEl, userProfilePopupOverlayEl, userProfilePopupCloseEl;
+let apePriceEl, apeChangeEl, onlineCounterEl, raidTimerEl;
+let currentChannelNameEl, currentChannelDescEl;
 
 // Initialize auth gate for chat page
 (async () => {
@@ -241,6 +243,14 @@ function initializeChat() {
     userProfilePopupEl = document.getElementById('userProfilePopup');
     userProfilePopupOverlayEl = document.getElementById('userProfilePopupOverlay');
     userProfilePopupCloseEl = document.getElementById('userProfilePopupClose');
+    
+    // Utility bar elements
+    apePriceEl = document.getElementById('apePrice');
+    apeChangeEl = document.getElementById('apeChange');
+    onlineCounterEl = document.getElementById('onlineCounter');
+    raidTimerEl = document.getElementById('raidTimer');
+    currentChannelNameEl = document.getElementById('currentChannelName');
+    currentChannelDescEl = document.getElementById('currentChannelDesc');
 
     if (!chatMessagesEl || !chatInputEl || !sendBtn) {
         console.error('Chat DOM elements not found');
@@ -250,11 +260,14 @@ function initializeChat() {
     // Setup channel switcher
     setupChannelSwitcher();
     
-    // Setup channel switcher
-    setupChannelSwitcher();
-    
     // Setup event listeners
     setupEventListeners();
+    
+    // Initialize utility bar
+    initializeUtilityBar();
+    
+    // Update channel info
+    updateChannelInfo();
     
     // Load messages
     loadMessages();
@@ -270,6 +283,9 @@ function initializeChat() {
     
     // Setup user profile popup
     setupUserProfilePopup();
+    
+    // Setup mobile swipe gestures
+    setupMobileSwipe();
 }
 
 // Setup channel switcher UI
@@ -291,6 +307,113 @@ function setupChannelSwitcher() {
     });
 }
 
+// Initialize utility bar
+function initializeUtilityBar() {
+    // Update online counter (will be updated by presence system)
+    if (onlineCounterEl && onlineCountEl) {
+        const count = parseInt(onlineCountEl.textContent) || 0;
+        onlineCounterEl.textContent = count;
+    }
+    
+    // Initialize APE price (mock for now - can be replaced with real API)
+    updateApePrice();
+    setInterval(updateApePrice, 30000); // Update every 30 seconds
+    
+    // Initialize raid timer
+    updateRaidTimer();
+    setInterval(updateRaidTimer, 1000); // Update every second
+}
+
+// Update APE price (mock implementation)
+function updateApePrice() {
+    if (!apePriceEl || !apeChangeEl) return;
+    
+    // Mock price - replace with real API call
+    const mockPrice = 0.00123 + (Math.random() - 0.5) * 0.0001;
+    const mockChange = (Math.random() - 0.5) * 0.1;
+    
+    apePriceEl.textContent = `$${mockPrice.toFixed(5)}`;
+    apeChangeEl.textContent = `${mockChange >= 0 ? '+' : ''}${mockChange.toFixed(2)}%`;
+    apeChangeEl.className = `utility-change ${mockChange >= 0 ? 'positive' : 'negative'}`;
+}
+
+// Update raid timer
+function updateRaidTimer() {
+    if (!raidTimerEl) return;
+    
+    // Mock raid timer - replace with real logic
+    const lastRaid = localStorage.getItem('lastRaidTime');
+    if (!lastRaid) {
+        raidTimerEl.textContent = '--:--';
+        return;
+    }
+    
+    const now = Date.now();
+    const elapsed = Math.floor((now - parseInt(lastRaid)) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    
+    if (minutes > 60) {
+        raidTimerEl.textContent = `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+    } else {
+        raidTimerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+}
+
+// Update channel info display
+function updateChannelInfo() {
+    if (!currentChannelNameEl || !currentChannelDescEl) return;
+    
+    const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
+    if (!channel) return;
+    
+    const channelDescriptions = {
+        'general': 'General discussion for the Ape community',
+        'raid': 'Coordinate raids and community actions',
+        'trading': 'Share trading tips and market insights',
+        'support': 'Get help and support from the community'
+    };
+    
+    currentChannelNameEl.textContent = channel.name;
+    currentChannelDescEl.textContent = channelDescriptions[channel.id] || 'Channel description';
+}
+
+// Setup mobile swipe gestures
+function setupMobileSwipe() {
+    if (window.innerWidth > 768) return; // Only on mobile
+    
+    const chatMainPanel = document.querySelector('.chat-main-panel');
+    if (!chatMainPanel) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    chatMainPanel.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    chatMainPanel.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            const currentIndex = AVAILABLE_CHANNELS.findIndex(c => c.id === currentChannel);
+            if (diff > 0 && currentIndex < AVAILABLE_CHANNELS.length - 1) {
+                // Swipe left - next channel
+                switchChannel(AVAILABLE_CHANNELS[currentIndex + 1].id);
+            } else if (diff < 0 && currentIndex > 0) {
+                // Swipe right - previous channel
+                switchChannel(AVAILABLE_CHANNELS[currentIndex - 1].id);
+            }
+        }
+    }
+}
+
 // Switch to a different channel
 function switchChannel(channelId) {
     if (channelId === currentChannel) return;
@@ -308,6 +431,7 @@ function switchChannel(channelId) {
     
     // Update UI
     setupChannelSwitcher();
+    updateChannelInfo();
     
     // Clear current messages and tracked message IDs
     if (chatMessagesEl) {
@@ -670,7 +794,9 @@ function setupRealtimeListeners() {
 
         currentOnlineUsers = onlineUsers; // Store for periodic updates
         updateOnlineUsersList(onlineUsers);
-        onlineCountEl.textContent = onlineUsers.length; // Count includes current user now
+        const count = onlineUsers.length;
+        if (onlineCountEl) onlineCountEl.textContent = count;
+        if (onlineCounterEl) onlineCounterEl.textContent = count;
         
         // Update last seen times every minute for real-time updates
         if (!lastSeenUpdateInterval) {
