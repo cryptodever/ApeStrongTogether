@@ -8235,44 +8235,9 @@ body.chat-body > * {
         border: none;
     }
 
-    /* Mobile Sticky Channel Bar */
+    /* Mobile Sticky Channel Bar - Hidden since we have menu drawer */
     .chat-mobile-channel-bar {
-        display: block;
-        position: sticky;
-        top: 116px;
-        z-index: 100;
-        background: var(--chat-panel-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-bottom: 1px solid var(--chat-border);
-        padding: 12px 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .channel-buttons-mobile {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding-bottom: 4px;
-    }
-
-    .channel-buttons-mobile::-webkit-scrollbar {
-        display: none;
-    }
-
-    .channel-buttons-mobile .channel-button {
-        padding: 10px 18px;
-        font-size: 14px;
-        white-space: nowrap;
-        flex-shrink: 0;
-        min-height: 44px;
-    }
-
-    .channel-buttons-mobile .channel-emoji {
-        font-size: 18px;
+        display: none !important;
     }
 
     /* Chat Messages Area */
