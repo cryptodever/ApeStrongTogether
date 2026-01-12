@@ -518,6 +518,20 @@ function setupEventListeners() {
         });
     }
     
+    // Sticker button - insert ape sticker (🦍)
+    const stickerBtn = document.getElementById('stickerBtn');
+    if (stickerBtn) {
+        stickerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Insert ape emoji
+            insertTextAtCursor(chatInputEl, '🦍');
+            chatInputEl.focus();
+            // Trigger input event to update character count
+            chatInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+    
     // Setup emoji picker options
     if (emojiPickerEl) {
         const emojiOptions = emojiPickerEl.querySelectorAll('.emoji-picker-option');
