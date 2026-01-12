@@ -7404,8 +7404,8 @@ body.chat-body > * {
     transform: translateX(-50%);
     z-index: 10;
     display: flex;
-    gap: 32px;
-    padding: 16px 32px;
+    gap: 48px;
+    padding: 20px 48px;
     background: var(--chat-panel-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -7419,9 +7419,11 @@ body.chat-body > * {
 .utility-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     font-size: 15px;
     padding: 6px 0;
+    flex-shrink: 0;
+    min-width: fit-content;
 }
 
 .utility-label {
@@ -7431,14 +7433,16 @@ body.chat-body > * {
     letter-spacing: 0.5px;
     font-size: 11px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .utility-value {
     color: var(--chat-text-primary);
     font-weight: 600;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 16px;
+    font-size: 17px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .utility-change {
@@ -7446,6 +7450,8 @@ body.chat-body > * {
     font-weight: 600;
     padding: 3px 8px;
     border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .utility-change.positive {
