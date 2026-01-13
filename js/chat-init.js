@@ -481,7 +481,8 @@ function renderCommunityIcon(community, isDefault) {
     const icon = document.createElement('div');
     icon.className = `community-icon ${isDefault ? 'community-icon-default' : ''}`;
     icon.setAttribute('data-community', community.id);
-    icon.title = community.name || 'Community';
+    // Use aria-label for accessibility instead of title to avoid tooltip conflicts
+    icon.setAttribute('aria-label', community.name || 'Community');
     
     // Create background
     const bg = document.createElement('div');

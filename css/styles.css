@@ -7680,9 +7680,16 @@ body.chat-body > * {
     display: none !important;
 }
 
-/* Right sidebar should be visible */
+/* Right sidebar should be visible on desktop */
 .chat-sidebar-right {
     display: flex !important;
+}
+
+/* Ensure right sidebar is visible on desktop */
+@media (min-width: 769px) {
+    .chat-sidebar-right {
+        display: flex !important;
+    }
 }
 
 .chat-main-panel {
@@ -17748,7 +17755,9 @@ body:has(.modal-overlay.show) {
     position: relative;
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    min-width: 48px;
+    min-height: 48px;
+    border-radius: 50% !important;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid transparent;
     cursor: pointer;
@@ -17758,6 +17767,9 @@ body:has(.modal-overlay.show) {
     transition: all 0.2s ease;
     flex-shrink: 0;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
+    text-indent: -9999px; /* Hide any text content */
 }
 
 .community-icon:hover {
@@ -17807,6 +17819,8 @@ body:has(.modal-overlay.show) {
     z-index: 1;
     text-transform: uppercase;
     user-select: none;
+    text-indent: 0; /* Reset text-indent for the text element */
+    pointer-events: none;
 }
 
 .community-icon-default {
