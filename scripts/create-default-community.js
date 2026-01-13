@@ -17,16 +17,44 @@
  */
 
 const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
     try {
-        admin.initializeApp({
-            projectId: 'apes-365b0'
-        });
+        let serviceAccount;
+        
+        // Try to load from environment variable first
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+            const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+            if (fs.existsSync(keyPath)) {
+                serviceAccount = require(keyPath);
+            }
+        }
+        
+        // Fallback: try to load from project root
+        if (!serviceAccount) {
+            const keyPath = path.join(__dirname, '..', 'service-account-key.json');
+            if (fs.existsSync(keyPath)) {
+                serviceAccount = require(keyPath);
+            }
+        }
+        
+        if (serviceAccount) {
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: serviceAccount.project_id || 'apes-365b0'
+            });
+        } else {
+            // If no key found, try with just project ID (will use default credentials)
+            admin.initializeApp({
+                projectId: 'apes-365b0'
+            });
+        }
     } catch (error) {
         console.error('❌ Failed to initialize Firebase Admin:', error.message);
-        console.error('   Make sure GOOGLE_APPLICATION_CREDENTIALS is set or provide credentials');
+        console.error('   Make sure GOOGLE_APPLICATION_CREDENTIALS is set or service-account-key.json exists in project root');
         process.exit(1);
     }
 }
