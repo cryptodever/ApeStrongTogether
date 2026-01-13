@@ -1,0 +1,9 @@
+# Firebase service account keys
+service-account-key.json
+*-service-account*.json
+
+# Allow important JSON files
+!package.json
+!package-lock.json
+!firebase.json
+!firestore.indexes.json
