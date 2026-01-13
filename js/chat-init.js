@@ -87,15 +87,10 @@ let hasMoreMessages = true; // Flag to track if there are more messages to load
 // Default community ID
 const DEFAULT_COMMUNITY_ID = 'default';
 
-// Available channels (will be loaded from default community)
-let AVAILABLE_CHANNELS = [
-    { id: 'general', name: 'GENERAL', emoji: '💬' },
-    { id: 'raid', name: 'RAID', emoji: '⚔️' },
-    { id: 'trading', name: 'TRADING', emoji: '📈' },
-    { id: 'support', name: 'SUPPORT', emoji: '🆘' }
-];
+// Available channels (loaded from default community)
+let AVAILABLE_CHANNELS = [];
 
-// Get channel from localStorage or default to 'general'
+// Get channel from localStorage or default to 'general' (will be updated when channels load)
 let currentChannel = localStorage.getItem('selectedChannel') || 'general';
 let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID; // Default to default community
 let messageContextMenuMessageId = null;
@@ -2472,10 +2467,27 @@ async function loadDefaultCommunityChannels() {
             // Sort by order
             channels.sort((a, b) => a.order - b.order);
             AVAILABLE_CHANNELS = channels;
+            
+            // Update channel switcher with loaded channels
+            setupChannelSwitcher();
+            setupMobileChannelList();
+            
+            // If current channel is not in loaded channels, switch to first channel
+            if (AVAILABLE_CHANNELS.length > 0) {
+                const channelExists = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
+                if (!channelExists) {
+                    currentChannel = AVAILABLE_CHANNELS[0].id;
+                    localStorage.setItem('selectedChannel', currentChannel);
+                    // Reload messages for the new channel
+                    if (currentUser) {
+                        loadMessages();
+                    }
+                }
+            }
         }
     } catch (error) {
         console.error('Error loading default community channels:', error);
-        // Keep default channels if loading fails
+        // If loading fails, channels will remain empty
     }
 }
 
@@ -3085,8 +3097,8 @@ async function handleMuteCommand(username, minutes) {
 // Admin command: Clear all messages in a channel
 async function handleClearCommand(channelName) {
     try {
-        // Validate channel name
-        const validChannels = ['general', 'raid', 'trading', 'support'];
+        // Validate channel name against loaded channels
+        const validChannels = AVAILABLE_CHANNELS.map(c => c.id);
         if (!validChannels.includes(channelName)) {
             alert(`Invalid channel name. Valid channels: ${validChannels.join(', ')}`);
             return;
