@@ -381,10 +381,14 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp;
       
       // Only community owner/admins can update community settings
+      // For default community, allow updating memberCount (for auto-join) - simplified check
       allow update: if isSignedIn() && (
         resource.data.creatorId == request.auth.uid ||
         (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
-          && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
+          && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin']) ||
+        (communityId == 'default' && 
+         'memberCount' in request.resource.data &&
+         request.resource.data.memberCount is int)
       );
       
       // Only owner can delete community
@@ -404,8 +408,10 @@ service cloud.firestore {
         
         // Users can add themselves when joining
         // Owner/admins can add other users
+        // For default community, allow any authenticated user to add themselves
         allow create: if isSignedIn() && (
           (memberId == request.auth.uid && request.resource.data.userId == request.auth.uid) ||
+          (communityId == 'default' && memberId == request.auth.uid && request.resource.data.userId == request.auth.uid) ||
           (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
             && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
         );
@@ -461,13 +467,17 @@ service cloud.firestore {
       // Community messages subcollection
       match /messages/{messageId} {
         // Members can read messages
+        // Default community (ID: 'default') messages are readable by all authenticated users
         allow read: if isSignedIn() && (
-          exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+          exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) ||
+          communityId == 'default'
         );
         
         // Members can create messages
+        // For default community, allow if user is authenticated (will auto-join)
         allow create: if isSignedIn() && (
-          exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) &&
+          (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) ||
+           communityId == 'default') &&
           request.resource.data.userId == request.auth.uid &&
           request.resource.data.username is string &&
           request.resource.data.text is string &&

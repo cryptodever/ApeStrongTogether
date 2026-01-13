@@ -2376,14 +2376,19 @@ async function autoJoinDefaultCommunity(userId) {
             joinedAt: serverTimestamp()
         });
         
-        // Update member count
-        const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
-        const communityDoc = await getDoc(communityRef);
-        if (communityDoc.exists()) {
-            const communityData = communityDoc.data();
-            batch.update(communityRef, {
-                memberCount: (communityData.memberCount || 0) + 1
-            });
+        // Update member count (optional - if it fails, that's okay)
+        try {
+            const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
+            const communityDoc = await getDoc(communityRef);
+            if (communityDoc.exists()) {
+                const communityData = communityDoc.data();
+                batch.update(communityRef, {
+                    memberCount: (communityData.memberCount || 0) + 1
+                });
+            }
+        } catch (countError) {
+            // If we can't update member count, that's okay - just add the member
+            console.warn('Could not update member count:', countError);
         }
         
         await batch.commit();
