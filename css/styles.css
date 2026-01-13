@@ -8044,7 +8044,7 @@ body.chat-body > * {
         align-items: center;
         justify-content: space-between;
         position: fixed;
-        top: 60px;
+        top: 60px; /* Site header height */
         left: 0;
         right: 0;
         height: 56px;
@@ -8127,7 +8127,7 @@ body.chat-body > * {
         display: flex;
         flex-direction: column;
         position: fixed;
-        top: 116px;
+        top: 116px; /* Site header (60px) + mobile header (56px) */
         left: 0;
         bottom: 0;
         width: 280px;
@@ -8265,11 +8265,11 @@ body.chat-body > * {
 
     .chat-container {
         padding: 0;
-        height: calc(100vh - 116px);
-        min-height: calc(100vh - 116px);
+        height: calc(100vh - 60px); /* Account for site header only */
+        min-height: calc(100vh - 60px);
         max-width: 100%;
         width: 100%;
-        margin-top: 116px;
+        margin-top: 60px; /* Site header height */
     }
 
     .chat-layout {
@@ -8297,6 +8297,7 @@ body.chat-body > * {
         box-shadow: none;
         background: transparent;
         border: none;
+        padding-top: 56px; /* Account for fixed mobile header */
     }
 
     /* Mobile Sticky Channel Bar - Hidden since we have menu drawer */
@@ -8316,6 +8317,7 @@ body.chat-body > * {
     .chat-messages {
         flex: 1;
         padding: 16px;
+        padding-bottom: 100px; /* Space for fixed input at bottom */
         gap: 12px;
         min-height: 0;
         width: 100%;
@@ -8390,7 +8392,7 @@ body.chat-body > * {
         border-top: 1px solid var(--chat-border);
         border-radius: 0;
         box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3);
-        z-index: 999;
+        z-index: 1001; /* Above mobile header */
     }
 
     .chat-input-wrapper {
