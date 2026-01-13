@@ -546,6 +546,12 @@ async function loadUserCommunities() {
         if (!window.communityModule) {
             window.communityModule = {};
         }
+        // Update userCommunities - delete and recreate if it exists as a getter
+        try {
+            delete window.communityModule.userCommunities;
+        } catch (e) {
+            // Ignore if can't delete
+        }
         window.communityModule.userCommunities = userCommunities;
         
         // Update channel switcher if it exists
