@@ -634,26 +634,64 @@ function updateRaidTimer() {
 async function updateChannelInfo() {
     if (!currentChannelNameEl || !currentChannelDescEl) return;
     
-    // Check if we're in a community
-    if (currentCommunityId) {
-        try {
-            const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
-            if (communityDoc.exists()) {
-                const communityData = communityDoc.data();
-                currentChannelNameEl.textContent = communityData.name || 'Community';
-                currentChannelDescEl.textContent = communityData.description || 'Community chat';
+    // Ensure default community
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+    }
+    
+    // Load community and channel info
+    try {
+        const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
+        if (communityDoc.exists()) {
+            const communityData = communityDoc.data();
+            
+            // Try to load channel info
+            try {
+                const channelRef = doc(db, 'communities', currentCommunityId, 'channels', currentChannel);
+                const channelDoc = await getDoc(channelRef);
+                
+                if (channelDoc.exists()) {
+                    const channelData = channelDoc.data();
+                    currentChannelNameEl.textContent = `${communityData.name || 'Community'} > ${channelData.name || currentChannel}`;
+                    currentChannelDescEl.textContent = channelData.description || 'Channel discussion';
+                    
+                    // Update mobile
+                    const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
+                    const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
+                    if (mobileChannelNameEl) mobileChannelNameEl.textContent = channelData.name || currentChannel;
+                    if (mobileChannelDescEl) mobileChannelDescEl.textContent = channelData.description || 'Channel discussion';
+                    
+                    updateMobileChannelName();
+                    return;
+                }
+            } catch (channelError) {
+                // If channel read fails, fall through to fallback
+                console.warn('Could not load channel info:', channelError);
+            }
+            
+            // Fallback to channel name
+            const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
+            if (channel) {
+                currentChannelNameEl.textContent = `${communityData.name || 'Community'} > ${channel.name}`;
+                currentChannelDescEl.textContent = getChannelDescription(currentChannel);
                 
                 // Update mobile
                 const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
                 const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
-                if (mobileChannelNameEl) mobileChannelNameEl.textContent = communityData.name || 'Community';
-                if (mobileChannelDescEl) mobileChannelDescEl.textContent = communityData.description || 'Community chat';
-                
-                updateMobileChannelName();
-                return;
+                if (mobileChannelNameEl) mobileChannelNameEl.textContent = channel.name;
+                if (mobileChannelDescEl) mobileChannelDescEl.textContent = getChannelDescription(currentChannel);
             }
-        } catch (error) {
-            console.error('Error loading community info:', error);
+            
+            updateMobileChannelName();
+            return;
+        }
+    } catch (error) {
+        console.error('Error loading community/channel info:', error);
+        // Fallback to basic channel info
+        const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
+        if (channel) {
+            currentChannelNameEl.textContent = channel.name;
+            currentChannelDescEl.textContent = getChannelDescription(currentChannel);
         }
     }
     
@@ -1204,7 +1242,13 @@ async function setupRealtimeListeners() {
     // Ensure default community
     if (!currentCommunityId) {
         currentCommunityId = DEFAULT_COMMUNITY_ID;
+    }
+    
+    // Try to ensure default community, but don't fail if it doesn't exist
+    try {
         await ensureDefaultCommunity();
+    } catch (error) {
+        console.warn('Could not ensure default community, continuing anyway:', error);
     }
 
     // Query messages from community messages subcollection
@@ -2363,13 +2407,23 @@ async function ensureDefaultCommunity() {
             return;
         }
         
-        // Ensure user is a member
-        await autoJoinDefaultCommunity(currentUser.uid);
+        // Ensure user is a member (this might fail if user doesn't have write permissions yet)
+        try {
+            await autoJoinDefaultCommunity(currentUser.uid);
+        } catch (joinError) {
+            // If auto-join fails, try to check if already a member
+            const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
+            const memberDoc = await getDoc(memberRef);
+            if (!memberDoc.exists()) {
+                console.warn('Could not auto-join default community. User may need to be added manually.');
+            }
+        }
         
         // Load channels from default community
         await loadDefaultCommunityChannels();
     } catch (error) {
         console.error('Error ensuring default community:', error);
+        // Don't throw - allow page to continue loading even if default community setup fails
     }
 }
 
