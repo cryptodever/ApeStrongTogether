@@ -2268,8 +2268,8 @@ function showReactionPicker(messageId, button) {
     messageContextMenuMessageId = messageId;
     const rect = button.getBoundingClientRect();
     reactionPickerEl.classList.remove('hide');
-    reactionPickerEl.style.setProperty('left', rect.left + 'px');
-    reactionPickerEl.style.setProperty('top', (rect.top - 60) + 'px');
+    reactionPickerEl.style.setProperty('--reaction-picker-x', rect.left + 'px');
+    reactionPickerEl.style.setProperty('--reaction-picker-y', (rect.top - 60) + 'px');
 }
 
 // Show emoji picker for chat input

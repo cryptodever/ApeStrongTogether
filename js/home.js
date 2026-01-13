@@ -1126,7 +1126,7 @@ async function loadActiveChannels() {
             activeChannelsEl.innerHTML = '<div class="channels-empty">No active channels</div>';
         } else {
             activeChannelsEl.innerHTML = channelStats.map(channel => `
-                <a href="/chat/?channel=${channel.name.toLowerCase()}" class="channel-item">
+                <a href="/community/?channel=${channel.name.toLowerCase()}" class="channel-item">
                     <span class="channel-name">#${channel.name}</span>
                     <span class="channel-count">${channel.count} messages</span>
                 </a>
