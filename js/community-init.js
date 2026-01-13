@@ -325,32 +325,55 @@ async function loadUserCommunities() {
         
         // Always include default community first
         const defaultCommunityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
-        const defaultCommunityDoc = await getDoc(defaultCommunityRef);
+        let defaultCommunityDoc;
+        
+        try {
+            defaultCommunityDoc = await getDoc(defaultCommunityRef);
+        } catch (readError) {
+            // If we can't read, the community might not exist or we don't have permission
+            console.warn('Could not read default community:', readError);
+            defaultCommunityDoc = { exists: () => false };
+        }
         
         const communities = [];
         
         // Add default community if it exists
-        if (defaultCommunityDoc.exists()) {
+        if (defaultCommunityDoc.exists && defaultCommunityDoc.exists()) {
             const defaultData = defaultCommunityDoc.data();
             // Check if user is a member
-            const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
-            const memberDoc = await getDoc(memberRef);
-            
-            if (memberDoc.exists() || defaultData.isDefault) {
-                // Auto-join if not already a member
-                if (!memberDoc.exists()) {
-                    await setDoc(memberRef, {
-                        userId: currentUser.uid,
-                        role: 'member',
-                        joinedAt: serverTimestamp()
+            try {
+                const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
+                const memberDoc = await getDoc(memberRef);
+                
+                if (memberDoc.exists() || defaultData.isDefault) {
+                    // Auto-join if not already a member
+                    if (!memberDoc.exists()) {
+                        try {
+                            await setDoc(memberRef, {
+                                userId: currentUser.uid,
+                                role: 'member',
+                                joinedAt: serverTimestamp()
+                            });
+                        } catch (joinError) {
+                            console.warn('Could not auto-join default community:', joinError);
+                        }
+                    }
+                    
+                    communities.push({ 
+                        id: DEFAULT_COMMUNITY_ID, 
+                        ...defaultData,
+                        isDefault: true
                     });
                 }
-                
-                communities.push({ 
-                    id: DEFAULT_COMMUNITY_ID, 
-                    ...defaultData,
-                    isDefault: true
-                });
+            } catch (memberError) {
+                // If we can't check/add membership, still add the community if it's the default
+                if (defaultData.isDefault) {
+                    communities.push({ 
+                        id: DEFAULT_COMMUNITY_ID, 
+                        ...defaultData,
+                        isDefault: true
+                    });
+                }
             }
         }
         

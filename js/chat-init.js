@@ -2404,7 +2404,15 @@ async function ensureDefaultCommunity() {
     
     try {
         const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
-        const communityDoc = await getDoc(communityRef);
+        let communityDoc;
+        
+        try {
+            communityDoc = await getDoc(communityRef);
+        } catch (readError) {
+            // If we can't read the community, it might not exist or we don't have permission
+            console.warn('Could not read default community. It may not exist yet. Please run create-default-community.js script.');
+            return;
+        }
         
         if (!communityDoc.exists()) {
             console.log('Default community does not exist. Please run create-default-community.js script first.');
@@ -2417,15 +2425,24 @@ async function ensureDefaultCommunity() {
             await autoJoinDefaultCommunity(currentUser.uid);
         } catch (joinError) {
             // If auto-join fails, try to check if already a member
-            const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
-            const memberDoc = await getDoc(memberRef);
-            if (!memberDoc.exists()) {
-                console.warn('Could not auto-join default community. User may need to be added manually.');
+            try {
+                const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
+                const memberDoc = await getDoc(memberRef);
+                if (!memberDoc.exists()) {
+                    console.warn('Could not auto-join default community. User may need to be added manually.');
+                }
+            } catch (memberCheckError) {
+                console.warn('Could not check membership:', memberCheckError);
             }
         }
         
         // Load channels from default community
-        await loadDefaultCommunityChannels();
+        try {
+            await loadDefaultCommunityChannels();
+        } catch (channelError) {
+            console.warn('Could not load channels from default community:', channelError);
+            // Continue with default channels
+        }
     } catch (error) {
         console.error('Error ensuring default community:', error);
         // Don't throw - allow page to continue loading even if default community setup fails
