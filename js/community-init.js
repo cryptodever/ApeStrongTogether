@@ -372,25 +372,35 @@ async function loadUserCommunities() {
         // Get communities where user is a member (by checking members subcollection)
         // Note: This is limited - we check known communities
         // For better performance, consider maintaining a userCommunities array in user profile
-        const allCommunitiesQuery = query(
-            communitiesRef,
-            where('isPublic', '==', true),
-            limit(50)
-        );
-        const allCommunitiesSnapshot = await getDocs(allCommunitiesQuery);
-        
-        for (const commDoc of allCommunitiesSnapshot.docs) {
-            if (commDoc.id === DEFAULT_COMMUNITY_ID) continue; // Already added
+        try {
+            const allCommunitiesQuery = query(
+                communitiesRef,
+                where('isPublic', '==', true),
+                limit(50)
+            );
+            const allCommunitiesSnapshot = await getDocs(allCommunitiesQuery);
             
-            const memberRef = doc(db, 'communities', commDoc.id, 'members', currentUser.uid);
-            const memberDoc = await getDoc(memberRef);
-            
-            if (memberDoc.exists()) {
-                // Check if already in list
-                if (!communities.find(c => c.id === commDoc.id)) {
-                    communities.push({ id: commDoc.id, ...commDoc.data() });
+            for (const commDoc of allCommunitiesSnapshot.docs) {
+                if (commDoc.id === DEFAULT_COMMUNITY_ID) continue; // Already added
+                
+                try {
+                    const memberRef = doc(db, 'communities', commDoc.id, 'members', currentUser.uid);
+                    const memberDoc = await getDoc(memberRef);
+                    
+                    if (memberDoc.exists()) {
+                        // Check if already in list
+                        if (!communities.find(c => c.id === commDoc.id)) {
+                            communities.push({ id: commDoc.id, ...commDoc.data() });
+                        }
+                    }
+                } catch (memberError) {
+                    // Skip if we can't check membership (permission issue)
+                    console.warn(`Could not check membership for community ${commDoc.id}:`, memberError);
                 }
             }
+        } catch (queryError) {
+            // If query fails, just continue with what we have
+            console.warn('Could not query public communities:', queryError);
         }
         
         userCommunities = communities;

@@ -2312,6 +2312,118 @@ async function verifyCommunityMembership(communityId) {
     }
 }
 
+// Auto-join user to default community
+async function autoJoinDefaultCommunity(userId) {
+    if (!userId) return;
+    
+    try {
+        const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', userId);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (memberDoc.exists()) {
+            return; // Already a member
+        }
+        
+        // Add user as member
+        const batch = writeBatch(db);
+        batch.set(memberRef, {
+            userId: userId,
+            role: 'member',
+            joinedAt: serverTimestamp()
+        });
+        
+        // Update member count
+        const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
+        const communityDoc = await getDoc(communityRef);
+        if (communityDoc.exists()) {
+            const communityData = communityDoc.data();
+            batch.update(communityRef, {
+                memberCount: (communityData.memberCount || 0) + 1
+            });
+        }
+        
+        await batch.commit();
+        console.log('User auto-joined default community');
+    } catch (error) {
+        console.error('Error auto-joining default community:', error);
+    }
+}
+
+// Ensure default community exists
+async function ensureDefaultCommunity() {
+    if (!currentUser) return;
+    
+    try {
+        const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
+        const communityDoc = await getDoc(communityRef);
+        
+        if (!communityDoc.exists()) {
+            console.log('Default community does not exist. Please run create-default-community.js script first.');
+            // Could create it here, but better to use the script for owner setup
+            return;
+        }
+        
+        // Ensure user is a member
+        await autoJoinDefaultCommunity(currentUser.uid);
+        
+        // Load channels from default community
+        await loadDefaultCommunityChannels();
+    } catch (error) {
+        console.error('Error ensuring default community:', error);
+    }
+}
+
+// Load channels from default community
+async function loadDefaultCommunityChannels() {
+    try {
+        const channelsRef = collection(db, 'communities', DEFAULT_COMMUNITY_ID, 'channels');
+        const q = query(channelsRef, orderBy('order', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+            const channels = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                channels.push({
+                    id: doc.id,
+                    name: data.name || doc.id.toUpperCase(),
+                    emoji: getChannelEmoji(doc.id),
+                    order: data.order || 0
+                });
+            });
+            
+            // Sort by order
+            channels.sort((a, b) => a.order - b.order);
+            AVAILABLE_CHANNELS = channels;
+        }
+    } catch (error) {
+        console.error('Error loading default community channels:', error);
+        // Keep default channels if loading fails
+    }
+}
+
+// Get emoji for channel ID
+function getChannelEmoji(channelId) {
+    const emojiMap = {
+        'general': '💬',
+        'raid': '⚔️',
+        'trading': '📈',
+        'support': '🆘'
+    };
+    return emojiMap[channelId] || '💬';
+}
+
+// Get channel description
+function getChannelDescription(channelId) {
+    const descriptions = {
+        'general': 'General discussion for the Ape community',
+        'raid': 'Coordinate raids and community actions',
+        'trading': 'Share trading tips and market insights',
+        'support': 'Get help and support from the community'
+    };
+    return descriptions[channelId] || 'Channel discussion';
+}
+
 function formatTime(date) {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }

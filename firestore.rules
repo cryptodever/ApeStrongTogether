@@ -390,8 +390,10 @@ service cloud.firestore {
       
       // Community members subcollection
       match /members/{memberId} {
-        // Users can read members of communities they belong to
+        // Users can read their own member document (to check membership)
+        // Users can also read members of communities they belong to
         allow get: if isSignedIn() && (
+          memberId == request.auth.uid ||
           exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
         );
         allow list: if isSignedIn() && (
