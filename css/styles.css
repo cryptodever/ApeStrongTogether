@@ -7668,10 +7668,10 @@ body.chat-body > * {
         0 18px 50px rgba(0, 0, 0, 0.55),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
     padding: 16px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 12px;
     height: 100%;
-    flex: 1;
     min-height: 0;
     overflow: hidden;
 }
@@ -7683,17 +7683,12 @@ body.chat-body > * {
 /* Right sidebar should be visible on desktop */
 .chat-sidebar-right {
     display: flex !important;
-}
-
-/* Ensure right sidebar is visible on desktop */
-@media (min-width: 769px) {
-    .chat-sidebar-right {
-        display: flex !important;
-    }
+    flex-direction: column;
+    grid-column: 2;
 }
 
 .chat-main-panel {
-    flex: 1;
+    grid-column: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -7701,6 +7696,7 @@ body.chat-body > * {
     border: none;
     box-shadow: none;
     border-radius: 0;
+    overflow: hidden;
 }
 
 .chat-desktop-header {
@@ -7733,7 +7729,6 @@ body.chat-body > * {
         grid-template-columns: 1fr 260px;
         gap: 12px;
         padding: 12px;
-        margin-left: 72px;
     }
     
     .chat-utility-bar::before {
