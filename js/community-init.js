@@ -32,10 +32,16 @@ let userCommunities = []; // Communities the user is a member of
 let createCommunityBtn, createCommunityBtnMobile, createCommunityBtnDrawer;
 let communityModal, communityModalOverlay, communityModalClose;
 let communityCreateForm, communityNameInput, communityDescriptionInput, communityIsPublicInput;
+let communityBannerInput, bannerPreview, bannerPreviewImage, bannerRemoveBtn, bannerPlaceholder;
+let nameCharCount, descriptionCharCount;
 let communityJoinModal, communityJoinModalOverlay, communityJoinModalClose;
 let communityDiscoveryModal, communityDiscoveryModalOverlay, communityDiscoveryModalClose;
 let communitySettingsModal, communitySettingsModalOverlay, communitySettingsModalClose;
 let communityMembersModal, communityMembersModalOverlay, communityMembersModalClose;
+
+// Banner state
+let bannerFile = null;
+let bannerDataUrl = null;
 
 // Initialize when auth state changes
 onAuthStateChanged(auth, async (user) => {
@@ -80,6 +86,13 @@ function initializeCommunityUI() {
     communityNameInput = document.getElementById('communityName');
     communityDescriptionInput = document.getElementById('communityDescription');
     communityIsPublicInput = document.getElementById('communityIsPublic');
+    communityBannerInput = document.getElementById('communityBanner');
+    bannerPreview = document.getElementById('bannerPreview');
+    bannerPreviewImage = document.getElementById('bannerPreviewImage');
+    bannerRemoveBtn = document.getElementById('bannerRemoveBtn');
+    bannerPlaceholder = bannerPreview?.querySelector('.banner-placeholder');
+    nameCharCount = document.getElementById('nameCharCount');
+    descriptionCharCount = document.getElementById('descriptionCharCount');
     
     communityJoinModal = document.getElementById('communityJoinModal');
     communityJoinModalOverlay = document.getElementById('communityJoinModalOverlay');
@@ -148,6 +161,36 @@ function initializeCommunityUI() {
     
     if (communityCreateForm) {
         communityCreateForm.addEventListener('submit', handleCreateCommunity);
+    }
+    
+    // Banner upload handlers
+    if (communityBannerInput) {
+        communityBannerInput.addEventListener('change', handleBannerUpload);
+    }
+    if (bannerRemoveBtn) {
+        bannerRemoveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleBannerRemove();
+        });
+    }
+    if (bannerPreview) {
+        bannerPreview.addEventListener('click', () => {
+            if (communityBannerInput && !bannerFile) {
+                communityBannerInput.click();
+            }
+        });
+    }
+    
+    // Character counters
+    if (communityNameInput && nameCharCount) {
+        communityNameInput.addEventListener('input', () => {
+            nameCharCount.textContent = communityNameInput.value.length;
+        });
+    }
+    if (communityDescriptionInput && descriptionCharCount) {
+        communityDescriptionInput.addEventListener('input', () => {
+            descriptionCharCount.textContent = communityDescriptionInput.value.length;
+        });
     }
     
     // Join modal
@@ -223,16 +266,79 @@ async function generateUniqueInviteCode() {
 function openCommunityModal() {
     if (!communityModal) return;
     communityModal.classList.remove('hide');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('no-scroll');
     if (communityNameInput) communityNameInput.focus();
+}
+
+// Handle banner upload
+function handleBannerUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+    }
+    
+    bannerFile = file;
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        bannerDataUrl = event.target.result;
+        if (bannerPreviewImage) {
+            bannerPreviewImage.src = bannerDataUrl;
+            bannerPreviewImage.classList.remove('hide');
+        }
+        if (bannerPlaceholder) {
+            bannerPlaceholder.classList.add('hide');
+        }
+        if (bannerRemoveBtn) {
+            bannerRemoveBtn.classList.remove('hide');
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Handle banner removal
+function handleBannerRemove() {
+    bannerFile = null;
+    bannerDataUrl = null;
+    if (communityBannerInput) {
+        communityBannerInput.value = '';
+    }
+    if (bannerPreviewImage) {
+        bannerPreviewImage.src = '';
+        bannerPreviewImage.classList.add('hide');
+    }
+    if (bannerPlaceholder) {
+        bannerPlaceholder.classList.remove('hide');
+    }
+    if (bannerRemoveBtn) {
+        bannerRemoveBtn.classList.add('hide');
+    }
 }
 
 // Close community creation modal
 function closeCommunityModal() {
     if (!communityModal) return;
     communityModal.classList.add('hide');
-    document.body.style.overflow = '';
-    if (communityCreateForm) communityCreateForm.reset();
+    document.body.classList.remove('no-scroll');
+    if (communityCreateForm) {
+        communityCreateForm.reset();
+        // Reset banner
+        handleBannerRemove();
+        // Reset character counters
+        if (nameCharCount) nameCharCount.textContent = '0';
+        if (descriptionCharCount) descriptionCharCount.textContent = '0';
+    }
 }
 
 // Handle create community form submission
@@ -277,6 +383,7 @@ async function handleCreateCommunity(e) {
             isPublic: isPublic,
             inviteCode: inviteCode,
             memberCount: 1,
+            bannerUrl: bannerDataUrl || null, // Store banner as data URL (or upload to Storage later)
             settings: {
                 allowInvites: true,
                 approvalRequired: false

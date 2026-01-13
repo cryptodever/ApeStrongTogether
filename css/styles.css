@@ -17294,3 +17294,412 @@ body:has(.modal-overlay.show) {
         gap: 1.5rem;
     }
 }
+
+/* ============================================
+   ENHANCED COMMUNITY CREATION MODAL
+   ============================================ */
+
+.community-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.community-modal.hide {
+    display: none;
+}
+
+.community-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.community-modal-content {
+    position: relative;
+    background: rgba(20, 20, 30, 0.95);
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 2001;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.community-create-modal {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(74, 222, 128, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.community-modal-header {
+    text-align: center;
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.modal-header-icon {
+    font-size: 48px;
+    margin-bottom: 1rem;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.community-modal-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, #ffffff 0%, #4ade80 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-header-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    margin: 0;
+}
+
+.community-modal-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.community-modal-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: rotate(90deg);
+}
+
+.community-modal-body {
+    padding: 2rem;
+}
+
+/* Banner Upload */
+.banner-upload-group {
+    margin-bottom: 2rem;
+}
+
+.banner-upload-container {
+    position: relative;
+}
+
+.banner-preview {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px dashed rgba(74, 222, 128, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banner-preview:hover {
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+.banner-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    padding: 1rem;
+}
+
+.banner-placeholder svg {
+    color: rgba(74, 222, 128, 0.6);
+}
+
+.banner-placeholder span {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.banner-placeholder small {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.banner-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.banner-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.banner-remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.banner-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.9);
+    transform: scale(1.1);
+}
+
+.banner-upload-info {
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+.banner-upload-info p {
+    margin: 0.25rem 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.banner-help-text {
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-size: 12px !important;
+}
+
+/* Enhanced Form Inputs */
+.form-input-enhanced,
+.form-textarea-enhanced {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-input-enhanced::placeholder,
+.form-textarea-enhanced::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.form-input-enhanced:focus,
+.form-textarea-enhanced:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 
+        0 0 0 4px rgba(74, 222, 128, 0.15),
+        0 4px 12px rgba(74, 222, 128, 0.1);
+}
+
+.form-textarea-enhanced {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+.label-icon {
+    margin-right: 0.5rem;
+    font-size: 16px;
+}
+
+.char-counter {
+    text-align: right;
+    margin-top: 0.5rem;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Privacy Toggle */
+.privacy-group {
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.privacy-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    margin: 0;
+}
+
+.privacy-toggle-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.privacy-toggle-icon {
+    font-size: 24px;
+}
+
+.privacy-toggle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.privacy-toggle-title {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 15px;
+}
+
+.privacy-toggle-subtitle {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.privacy-toggle {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0;
+}
+
+.privacy-toggle:checked {
+    background: #4ade80;
+}
+
+.privacy-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.privacy-toggle:checked + .privacy-toggle-slider {
+    transform: translateX(24px);
+}
+
+/* Enhanced Buttons */
+.btn-create-community {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-create-community:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .community-modal-content {
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        max-height: 95vh;
+    }
+
+    .community-modal-header {
+        padding: 1.5rem 1.5rem 1rem;
+    }
+
+    .modal-header-icon {
+        font-size: 40px;
+    }
+
+    .community-modal-header h2 {
+        font-size: 24px;
+    }
+
+    .community-modal-body {
+        padding: 1.5rem;
+    }
+
+    .banner-preview {
+        height: 150px;
+    }
+}
