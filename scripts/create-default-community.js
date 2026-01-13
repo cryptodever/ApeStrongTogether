@@ -49,12 +49,12 @@ async function findOwnerUserId() {
         // First, try to find via usernames collection
         const usernameDoc = await db.collection('usernames').doc(OWNER_USERNAME.toLowerCase()).get();
         
-        if (usernameDoc.exists()) {
+        if (usernameDoc.exists) {
             const data = usernameDoc.data();
             if (data.uid) {
                 // Verify the user exists
                 const userDoc = await db.collection('users').doc(data.uid).get();
-                if (userDoc.exists()) {
+                if (userDoc.exists) {
                     return data.uid;
                 }
             }
@@ -82,7 +82,7 @@ async function createDefaultCommunity(ownerUserId) {
     const communityRef = db.collection('communities').doc(DEFAULT_COMMUNITY_ID);
     const communityDoc = await communityRef.get();
     
-    if (communityDoc.exists()) {
+    if (communityDoc.exists) {
         console.log('✅ Default community already exists');
         return communityDoc.id;
     }
@@ -138,7 +138,7 @@ async function createChannels(communityId) {
         const channelRef = channelsRef.doc(channel.id);
         const channelDoc = await channelRef.get();
         
-        if (channelDoc.exists()) {
+        if (channelDoc.exists) {
             console.log(`   ⏭️  Channel '${channel.name}' already exists`);
             continue;
         }
