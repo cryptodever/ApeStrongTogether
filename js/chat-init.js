@@ -541,7 +541,7 @@ function openMobileDrawer() {
     if (drawerOverlay && drawer) {
         drawerOverlay.classList.remove('hide');
         drawer.classList.remove('hide');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('no-scroll');
     }
 }
 
@@ -553,7 +553,7 @@ function closeMobileDrawer() {
     if (drawerOverlay && drawer) {
         drawerOverlay.classList.add('hide');
         drawer.classList.add('hide');
-        document.body.style.overflow = '';
+        document.body.classList.remove('no-scroll');
     }
 }
 
@@ -1037,10 +1037,11 @@ function setupEventListeners() {
         }
     });
 
-    // Auto-resize textarea
+    // Auto-resize textarea using CSS variable
     chatInputEl.addEventListener('input', () => {
-        chatInputEl.style.setProperty('height', 'auto');
-        chatInputEl.style.setProperty('height', Math.min(chatInputEl.scrollHeight, 150) + 'px');
+        const newHeight = Math.min(chatInputEl.scrollHeight, 150);
+        document.documentElement.style.setProperty('--chat-input-height', newHeight + 'px');
+        chatInputEl.classList.add('auto-height');
     });
 }
 
@@ -1827,7 +1828,8 @@ async function handleSendMessage() {
 
         // Clear input
         chatInputEl.value = '';
-        chatInputEl.style.setProperty('height', 'auto');
+        document.documentElement.style.setProperty('--chat-input-height', 'auto');
+        chatInputEl.classList.remove('auto-height');
         charCountEl.textContent = `0/${MAX_MESSAGE_LENGTH}`;
         lastMessageTime = now;
         rateLimitInfoEl.classList.add('hide');
@@ -2244,8 +2246,9 @@ function showMessageContextMenu(event, messageId, messageData, canEdit, canDelet
     }
 
     messageContextMenuEl.classList.remove('hide');
-    messageContextMenuEl.style.setProperty('left', event.pageX + 'px');
-    messageContextMenuEl.style.setProperty('top', event.pageY + 'px');
+    // Use CSS variables for positioning to avoid CSP violation
+    document.documentElement.style.setProperty('--context-menu-left', event.pageX + 'px');
+    document.documentElement.style.setProperty('--context-menu-top', event.pageY + 'px');
 }
 
 // Setup reaction picker
@@ -3566,7 +3569,7 @@ function setupFollowModals() {
             if (modal) {
                 modal.classList.remove('show');
                 modal.classList.add('hide');
-                document.body.style.overflow = '';
+                document.body.classList.remove('no-scroll');
             }
         });
     }
@@ -3578,7 +3581,7 @@ function setupFollowModals() {
             if (modal) {
                 modal.classList.remove('show');
                 modal.classList.add('hide');
-                document.body.style.overflow = '';
+                document.body.classList.remove('no-scroll');
             }
         });
     }
@@ -3590,7 +3593,7 @@ function setupFollowModals() {
             if (e.target === followersModal) {
                 followersModal.classList.remove('show');
                 followersModal.classList.add('hide');
-                document.body.style.overflow = '';
+                document.body.classList.remove('no-scroll');
             }
         });
     }
@@ -3601,7 +3604,7 @@ function setupFollowModals() {
             if (e.target === followingModal) {
                 followingModal.classList.remove('show');
                 followingModal.classList.add('hide');
-                document.body.style.overflow = '';
+                document.body.classList.remove('no-scroll');
             }
         });
     }
