@@ -1,0 +1,1040 @@
+/**
+ * Community Management Module
+ * Handles user-created community chat functionality
+ */
+
+import { auth, db } from './firebase.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
+import {
+    collection,
+    query,
+    orderBy,
+    limit,
+    addDoc,
+    updateDoc,
+    setDoc,
+    doc,
+    getDoc,
+    getDocs,
+    where,
+    serverTimestamp,
+    deleteDoc,
+    writeBatch,
+    Timestamp
+} from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+
+// State
+let currentUser = null;
+let userProfile = null;
+let userCommunities = []; // Communities the user is a member of
+
+// DOM Elements
+let createCommunityBtn, createCommunityBtnMobile, createCommunityBtnDrawer;
+let communityModal, communityModalOverlay, communityModalClose;
+let communityCreateForm, communityNameInput, communityDescriptionInput, communityIsPublicInput;
+let communityJoinModal, communityJoinModalOverlay, communityJoinModalClose;
+let communityDiscoveryModal, communityDiscoveryModalOverlay, communityDiscoveryModalClose;
+let communitySettingsModal, communitySettingsModalOverlay, communitySettingsModalClose;
+let communityMembersModal, communityMembersModalOverlay, communityMembersModalClose;
+
+// Initialize when auth state changes
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadUserProfile();
+        initializeCommunityUI();
+        loadUserCommunities();
+    } else {
+        currentUser = null;
+        userProfile = null;
+        userCommunities = [];
+    }
+});
+
+// Load user profile
+async function loadUserProfile() {
+    if (!currentUser) return;
+    
+    try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists()) {
+            userProfile = userDoc.data();
+        }
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+    }
+}
+
+// Initialize community UI elements
+function initializeCommunityUI() {
+    // Get DOM elements
+    createCommunityBtn = document.getElementById('createCommunityBtn');
+    createCommunityBtnMobile = document.getElementById('createCommunityBtnMobile');
+    createCommunityBtnDrawer = document.getElementById('createCommunityBtnDrawer');
+    
+    communityModal = document.getElementById('communityModal');
+    communityModalOverlay = document.getElementById('communityModalOverlay');
+    communityModalClose = document.getElementById('communityModalClose');
+    
+    communityCreateForm = document.getElementById('communityCreateForm');
+    communityNameInput = document.getElementById('communityName');
+    communityDescriptionInput = document.getElementById('communityDescription');
+    communityIsPublicInput = document.getElementById('communityIsPublic');
+    
+    communityJoinModal = document.getElementById('communityJoinModal');
+    communityJoinModalOverlay = document.getElementById('communityJoinModalOverlay');
+    communityJoinModalClose = document.getElementById('communityJoinModalClose');
+    
+    communityDiscoveryModal = document.getElementById('communityDiscoveryModal');
+    communityDiscoveryModalOverlay = document.getElementById('communityDiscoveryModalOverlay');
+    communityDiscoveryModalClose = document.getElementById('communityDiscoveryModalClose');
+    
+    communitySettingsModal = document.getElementById('communitySettingsModal');
+    communitySettingsModalOverlay = document.getElementById('communitySettingsModalOverlay');
+    communitySettingsModalClose = document.getElementById('communitySettingsModalClose');
+    
+    communityMembersModal = document.getElementById('communityMembersModal');
+    communityMembersModalOverlay = document.getElementById('communityMembersModalOverlay');
+    communityMembersModalClose = document.getElementById('communityMembersModalClose');
+    
+    // Setup event listeners
+    if (createCommunityBtn) {
+        createCommunityBtn.addEventListener('click', () => openCommunityModal());
+    }
+    if (createCommunityBtnMobile) {
+        createCommunityBtnMobile.addEventListener('click', () => openCommunityModal());
+    }
+    if (createCommunityBtnDrawer) {
+        createCommunityBtnDrawer.addEventListener('click', () => {
+            openCommunityModal();
+            closeMobileDrawer();
+        });
+    }
+    
+    if (communityModalClose) {
+        communityModalClose.addEventListener('click', () => closeCommunityModal());
+    }
+    if (communityModalOverlay) {
+        communityModalOverlay.addEventListener('click', () => closeCommunityModal());
+    }
+    
+    if (communityJoinModalClose) {
+        communityJoinModalClose.addEventListener('click', () => closeCommunityJoinModal());
+    }
+    if (communityJoinModalOverlay) {
+        communityJoinModalOverlay.addEventListener('click', () => closeCommunityJoinModal());
+    }
+    
+    if (communityDiscoveryModalClose) {
+        communityDiscoveryModalClose.addEventListener('click', () => closeCommunityDiscoveryModal());
+    }
+    if (communityDiscoveryModalOverlay) {
+        communityDiscoveryModalOverlay.addEventListener('click', () => closeCommunityDiscoveryModal());
+    }
+    
+    if (communitySettingsModalClose) {
+        communitySettingsModalClose.addEventListener('click', () => closeCommunitySettingsModal());
+    }
+    if (communitySettingsModalOverlay) {
+        communitySettingsModalOverlay.addEventListener('click', () => closeCommunitySettingsModal());
+    }
+    
+    if (communityMembersModalClose) {
+        communityMembersModalClose.addEventListener('click', () => closeCommunityMembersModal());
+    }
+    if (communityMembersModalOverlay) {
+        communityMembersModalOverlay.addEventListener('click', () => closeCommunityMembersModal());
+    }
+    
+    if (communityCreateForm) {
+        communityCreateForm.addEventListener('submit', handleCreateCommunity);
+    }
+    
+    // Join modal
+    const communityJoinSubmitBtn = document.getElementById('communityJoinSubmitBtn');
+    const communityJoinCancelBtn = document.getElementById('communityJoinCancelBtn');
+    if (communityJoinSubmitBtn) {
+        communityJoinSubmitBtn.addEventListener('click', handleJoinCommunity);
+    }
+    if (communityJoinCancelBtn) {
+        communityJoinCancelBtn.addEventListener('click', () => closeCommunityJoinModal());
+    }
+    
+    // Discovery modal
+    const communitySearchInput = document.getElementById('communitySearchInput');
+    if (communitySearchInput) {
+        communitySearchInput.addEventListener('input', handleCommunitySearch);
+    }
+    
+    // Settings modal
+    const communitySettingsForm = document.getElementById('communitySettingsForm');
+    if (communitySettingsForm) {
+        communitySettingsForm.addEventListener('submit', handleUpdateCommunitySettings);
+    }
+    
+    const copyInviteLinkBtn = document.getElementById('copyInviteLinkBtn');
+    const regenerateInviteCodeBtn = document.getElementById('regenerateInviteCodeBtn');
+    if (copyInviteLinkBtn) {
+        copyInviteLinkBtn.addEventListener('click', handleCopyInviteLink);
+    }
+    if (regenerateInviteCodeBtn) {
+        regenerateInviteCodeBtn.addEventListener('click', handleRegenerateInviteCode);
+    }
+}
+
+// Generate unique invite code
+function generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Check if invite code is unique
+async function isInviteCodeUnique(code) {
+    try {
+        const communitiesRef = collection(db, 'communities');
+        const q = query(communitiesRef, where('inviteCode', '==', code));
+        const snapshot = await getDocs(q);
+        return snapshot.empty;
+    } catch (error) {
+        console.error('Error checking invite code uniqueness:', error);
+        return false;
+    }
+}
+
+// Generate unique invite code
+async function generateUniqueInviteCode() {
+    let code = generateInviteCode();
+    let attempts = 0;
+    while (!(await isInviteCodeUnique(code)) && attempts < 10) {
+        code = generateInviteCode();
+        attempts++;
+    }
+    if (attempts >= 10) {
+        throw new Error('Failed to generate unique invite code');
+    }
+    return code;
+}
+
+// Open community creation modal
+function openCommunityModal() {
+    if (!communityModal) return;
+    communityModal.classList.remove('hide');
+    document.body.style.overflow = 'hidden';
+    if (communityNameInput) communityNameInput.focus();
+}
+
+// Close community creation modal
+function closeCommunityModal() {
+    if (!communityModal) return;
+    communityModal.classList.add('hide');
+    document.body.style.overflow = '';
+    if (communityCreateForm) communityCreateForm.reset();
+}
+
+// Handle create community form submission
+async function handleCreateCommunity(e) {
+    e.preventDefault();
+    
+    if (!currentUser || !userProfile) {
+        alert('You must be logged in to create a community');
+        return;
+    }
+    
+    const name = communityNameInput.value.trim();
+    const description = communityDescriptionInput.value.trim();
+    const isPublic = communityIsPublicInput.checked;
+    
+    if (!name) {
+        alert('Please enter a community name');
+        return;
+    }
+    
+    if (name.length > 50) {
+        alert('Community name must be 50 characters or less');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('communitySubmitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+    }
+    
+    try {
+        // Generate unique invite code
+        const inviteCode = await generateUniqueInviteCode();
+        
+        // Create community document
+        const communityData = {
+            name: name,
+            description: description || '',
+            creatorId: currentUser.uid,
+            createdAt: serverTimestamp(),
+            isPublic: isPublic,
+            inviteCode: inviteCode,
+            memberCount: 1,
+            settings: {
+                allowInvites: true,
+                approvalRequired: false
+            }
+        };
+        
+        const communityRef = await addDoc(collection(db, 'communities'), communityData);
+        const communityId = communityRef.id;
+        
+        // Add creator as owner in members subcollection
+        await setDoc(doc(db, 'communities', communityId, 'members', currentUser.uid), {
+            userId: currentUser.uid,
+            role: 'owner',
+            joinedAt: serverTimestamp()
+        });
+        
+        // Close modal
+        closeCommunityModal();
+        
+        // Reload user communities and switch to new community
+        await loadUserCommunities();
+        
+        // Switch to the new community chat
+        if (window.switchToCommunity) {
+            window.switchToCommunity(communityId);
+        }
+        
+        showToast('Community created successfully!');
+    } catch (error) {
+        console.error('Error creating community:', error);
+        alert('Failed to create community. Please try again.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Community';
+        }
+    }
+}
+
+// Load user's communities
+async function loadUserCommunities() {
+    if (!currentUser) return;
+    
+    try {
+        const communitiesRef = collection(db, 'communities');
+        const q = query(
+            communitiesRef,
+            where('creatorId', '==', currentUser.uid)
+        );
+        const snapshot = await getDocs(q);
+        
+        const createdCommunities = [];
+        snapshot.forEach(doc => {
+            createdCommunities.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Also get communities where user is a member
+        // Note: This requires a different approach since we can't query subcollections directly
+        // We'll load all public communities and filter by membership in the channel switcher
+        userCommunities = createdCommunities;
+        
+        // Update channel switcher if it exists
+        if (window.updateChannelSwitcher) {
+            window.updateChannelSwitcher();
+        }
+    } catch (error) {
+        console.error('Error loading user communities:', error);
+    }
+}
+
+// Open join community modal
+function openCommunityJoinModal() {
+    if (!communityJoinModal) return;
+    communityJoinModal.classList.remove('hide');
+    document.body.style.overflow = 'hidden';
+    const inviteCodeInput = document.getElementById('inviteCode');
+    if (inviteCodeInput) inviteCodeInput.focus();
+}
+
+// Close join community modal
+function closeCommunityJoinModal() {
+    if (!communityJoinModal) return;
+    communityJoinModal.classList.add('hide');
+    document.body.style.overflow = '';
+    const inviteCodeInput = document.getElementById('inviteCode');
+    if (inviteCodeInput) inviteCodeInput.value = '';
+}
+
+// Handle join community
+async function handleJoinCommunity() {
+    if (!currentUser || !userProfile) {
+        alert('You must be logged in to join a community');
+        return;
+    }
+    
+    const inviteCodeInput = document.getElementById('inviteCode');
+    if (!inviteCodeInput) return;
+    
+    const inviteCode = inviteCodeInput.value.trim().toUpperCase();
+    
+    if (!inviteCode) {
+        alert('Please enter an invite code');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('communityJoinSubmitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Joining...';
+    }
+    
+    try {
+        // Find community by invite code
+        const communitiesRef = collection(db, 'communities');
+        const q = query(communitiesRef, where('inviteCode', '==', inviteCode));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            alert('Invalid invite code');
+            return;
+        }
+        
+        const communityDoc = snapshot.docs[0];
+        const communityId = communityDoc.id;
+        const communityData = communityDoc.data();
+        
+        // Check if user is already a member
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (memberDoc.exists()) {
+            alert('You are already a member of this community');
+            closeCommunityJoinModal();
+            if (window.switchToCommunity) {
+                window.switchToCommunity(communityId);
+            }
+            return;
+        }
+        
+        // Add user as member
+        const batch = writeBatch(db);
+        
+        batch.set(memberRef, {
+            userId: currentUser.uid,
+            role: 'member',
+            joinedAt: serverTimestamp()
+        });
+        
+        // Update member count
+        batch.update(doc(db, 'communities', communityId), {
+            memberCount: (communityData.memberCount || 0) + 1
+        });
+        
+        await batch.commit();
+        
+        closeCommunityJoinModal();
+        
+        // Reload communities and switch to joined community
+        await loadUserCommunities();
+        
+        if (window.switchToCommunity) {
+            window.switchToCommunity(communityId);
+        }
+        
+        showToast('Successfully joined community!');
+    } catch (error) {
+        console.error('Error joining community:', error);
+        alert('Failed to join community. Please try again.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Join';
+        }
+    }
+}
+
+// Open community discovery modal
+function openCommunityDiscoveryModal() {
+    if (!communityDiscoveryModal) return;
+    communityDiscoveryModal.classList.remove('hide');
+    document.body.style.overflow = 'hidden';
+    loadPublicCommunities();
+}
+
+// Close community discovery modal
+function closeCommunityDiscoveryModal() {
+    if (!communityDiscoveryModal) return;
+    communityDiscoveryModal.classList.add('hide');
+    document.body.style.overflow = '';
+    const searchInput = document.getElementById('communitySearchInput');
+    if (searchInput) searchInput.value = '';
+}
+
+// Load public communities
+async function loadPublicCommunities(searchTerm = '') {
+    const communityList = document.getElementById('communityList');
+    if (!communityList) return;
+    
+    communityList.innerHTML = '<div class="community-loading">Loading communities...</div>';
+    
+    try {
+        const communitiesRef = collection(db, 'communities');
+        let q = query(
+            communitiesRef,
+            where('isPublic', '==', true),
+            orderBy('createdAt', 'desc'),
+            limit(50)
+        );
+        
+        const snapshot = await getDocs(q);
+        const communities = [];
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!searchTerm || data.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                (data.description && data.description.toLowerCase().includes(searchTerm.toLowerCase()))) {
+                communities.push({ id: doc.id, ...data });
+            }
+        });
+        
+        if (communities.length === 0) {
+            communityList.innerHTML = '<div class="community-empty">No communities found</div>';
+            return;
+        }
+        
+        // Check which communities user is already a member of
+        const memberPromises = communities.map(async (community) => {
+            if (!currentUser) return { ...community, isMember: false };
+            const memberRef = doc(db, 'communities', community.id, 'members', currentUser.uid);
+            const memberDoc = await getDoc(memberRef);
+            return { ...community, isMember: memberDoc.exists() };
+        });
+        
+        const communitiesWithMembership = await Promise.all(memberPromises);
+        
+        communityList.innerHTML = communitiesWithMembership.map(community => {
+            const createdAt = community.createdAt?.toDate ? community.createdAt.toDate() : new Date();
+            const dateStr = createdAt.toLocaleDateString();
+            
+            return `
+                <div class="community-item">
+                    <div class="community-item-header">
+                        <h3>${escapeHtml(community.name)}</h3>
+                        <span class="community-member-count">${community.memberCount || 0} members</span>
+                    </div>
+                    ${community.description ? `<p class="community-item-description">${escapeHtml(community.description)}</p>` : ''}
+                    <div class="community-item-footer">
+                        <span class="community-item-date">Created ${dateStr}</span>
+                        ${community.isMember 
+                            ? '<button class="btn btn-secondary btn-sm" disabled>Joined</button>'
+                            : `<button class="btn btn-primary btn-sm" data-community-id="${community.id}" data-join-community>Join</button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Add event listeners to join buttons
+        communityList.querySelectorAll('[data-join-community]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const communityId = btn.getAttribute('data-community-id');
+                await joinCommunityById(communityId);
+            });
+        });
+    } catch (error) {
+        console.error('Error loading public communities:', error);
+        communityList.innerHTML = '<div class="community-error">Error loading communities</div>';
+    }
+}
+
+// Join community by ID
+async function joinCommunityById(communityId) {
+    if (!currentUser) {
+        alert('You must be logged in to join a community');
+        return;
+    }
+    
+    try {
+        // Check if already a member
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (memberDoc.exists()) {
+            alert('You are already a member of this community');
+            if (window.switchToCommunity) {
+                window.switchToCommunity(communityId);
+            }
+            return;
+        }
+        
+        // Get community data
+        const communityDoc = await getDoc(doc(db, 'communities', communityId));
+        if (!communityDoc.exists()) {
+            alert('Community not found');
+            return;
+        }
+        
+        const communityData = communityDoc.data();
+        
+        // Add user as member
+        const batch = writeBatch(db);
+        
+        batch.set(memberRef, {
+            userId: currentUser.uid,
+            role: 'member',
+            joinedAt: serverTimestamp()
+        });
+        
+        // Update member count
+        batch.update(doc(db, 'communities', communityId), {
+            memberCount: (communityData.memberCount || 0) + 1
+        });
+        
+        await batch.commit();
+        
+        // Reload communities and switch
+        await loadUserCommunities();
+        await loadPublicCommunities();
+        
+        if (window.switchToCommunity) {
+            window.switchToCommunity(communityId);
+        }
+        
+        showToast('Successfully joined community!');
+    } catch (error) {
+        console.error('Error joining community:', error);
+        alert('Failed to join community. Please try again.');
+    }
+}
+
+// Handle community search
+function handleCommunitySearch(e) {
+    const searchTerm = e.target.value.trim();
+    loadPublicCommunities(searchTerm);
+}
+
+// Open community settings modal
+async function openCommunitySettingsModal(communityId) {
+    if (!communitySettingsModal || !currentUser) return;
+    
+    try {
+        const communityDoc = await getDoc(doc(db, 'communities', communityId));
+        if (!communityDoc.exists()) {
+            alert('Community not found');
+            return;
+        }
+        
+        const communityData = communityDoc.data();
+        
+        // Check if user is owner/admin
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists()) {
+            alert('You do not have permission to edit this community');
+            return;
+        }
+        
+        const memberData = memberDoc.data();
+        if (!['owner', 'admin'].includes(memberData.role)) {
+            alert('Only owners and admins can edit community settings');
+            return;
+        }
+        
+        // Populate form
+        const nameInput = document.getElementById('settingsCommunityName');
+        const descInput = document.getElementById('settingsCommunityDescription');
+        const isPublicInput = document.getElementById('settingsCommunityIsPublic');
+        const inviteLinkInput = document.getElementById('communityInviteLink');
+        
+        if (nameInput) nameInput.value = communityData.name || '';
+        if (descInput) descInput.value = communityData.description || '';
+        if (isPublicInput) isPublicInput.checked = communityData.isPublic || false;
+        if (inviteLinkInput) {
+            const inviteUrl = `${window.location.origin}/chat?invite=${communityData.inviteCode}`;
+            inviteLinkInput.value = inviteUrl;
+        }
+        
+        // Store community ID for form submission
+        communitySettingsModal.setAttribute('data-community-id', communityId);
+        
+        communitySettingsModal.classList.remove('hide');
+        document.body.style.overflow = 'hidden';
+    } catch (error) {
+        console.error('Error opening community settings:', error);
+        alert('Failed to load community settings');
+    }
+}
+
+// Close community settings modal
+function closeCommunitySettingsModal() {
+    if (!communitySettingsModal) return;
+    communitySettingsModal.classList.add('hide');
+    document.body.style.overflow = '';
+    const form = document.getElementById('communitySettingsForm');
+    if (form) form.reset();
+}
+
+// Handle update community settings
+async function handleUpdateCommunitySettings(e) {
+    e.preventDefault();
+    
+    if (!currentUser) return;
+    
+    const communityId = communitySettingsModal.getAttribute('data-community-id');
+    if (!communityId) return;
+    
+    const nameInput = document.getElementById('settingsCommunityName');
+    const descInput = document.getElementById('settingsCommunityDescription');
+    const isPublicInput = document.getElementById('settingsCommunityIsPublic');
+    
+    const name = nameInput.value.trim();
+    const description = descInput.value.trim();
+    const isPublic = isPublicInput.checked;
+    
+    if (!name) {
+        alert('Please enter a community name');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('communitySettingsSubmitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+    }
+    
+    try {
+        await updateDoc(doc(db, 'communities', communityId), {
+            name: name,
+            description: description || '',
+            isPublic: isPublic
+        });
+        
+        closeCommunitySettingsModal();
+        await loadUserCommunities();
+        
+        if (window.updateChannelSwitcher) {
+            window.updateChannelSwitcher();
+        }
+        
+        showToast('Community settings updated!');
+    } catch (error) {
+        console.error('Error updating community settings:', error);
+        alert('Failed to update community settings');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        }
+    }
+}
+
+// Handle copy invite link
+function handleCopyInviteLink() {
+    const inviteLinkInput = document.getElementById('communityInviteLink');
+    if (!inviteLinkInput) return;
+    
+    inviteLinkInput.select();
+    inviteLinkInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showToast('Invite link copied!');
+    } catch (error) {
+        // Fallback for modern browsers
+        navigator.clipboard.writeText(inviteLinkInput.value).then(() => {
+            showToast('Invite link copied!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy invite link');
+        });
+    }
+}
+
+// Handle regenerate invite code
+async function handleRegenerateInviteCode() {
+    if (!currentUser) return;
+    
+    const communityId = communitySettingsModal.getAttribute('data-community-id');
+    if (!communityId) return;
+    
+    if (!confirm('Are you sure you want to regenerate the invite code? The old code will no longer work.')) {
+        return;
+    }
+    
+    try {
+        const newCode = await generateUniqueInviteCode();
+        
+        await updateDoc(doc(db, 'communities', communityId), {
+            inviteCode: newCode
+        });
+        
+        // Update invite link display
+        const inviteLinkInput = document.getElementById('communityInviteLink');
+        if (inviteLinkInput) {
+            const inviteUrl = `${window.location.origin}/chat?invite=${newCode}`;
+            inviteLinkInput.value = inviteUrl;
+        }
+        
+        showToast('Invite code regenerated!');
+    } catch (error) {
+        console.error('Error regenerating invite code:', error);
+        alert('Failed to regenerate invite code');
+    }
+}
+
+// Open community members modal
+async function openCommunityMembersModal(communityId) {
+    if (!communityMembersModal || !currentUser) return;
+    
+    try {
+        // Check if user is a member
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists()) {
+            alert('You must be a member to view members');
+            return;
+        }
+        
+        const memberData = memberDoc.data();
+        const isOwnerOrAdmin = ['owner', 'admin'].includes(memberData.role);
+        
+        // Load members
+        const membersRef = collection(db, 'communities', communityId, 'members');
+        const q = query(membersRef, orderBy('joinedAt', 'asc'));
+        const snapshot = await getDocs(q);
+        
+        const members = [];
+        snapshot.forEach(doc => {
+            members.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Load user profiles for members
+        const membersList = document.getElementById('communityMembersList');
+        if (!membersList) return;
+        
+        membersList.innerHTML = '<div class="community-loading">Loading members...</div>';
+        
+        const membersWithProfiles = await Promise.all(members.map(async (member) => {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', member.userId));
+                if (userDoc.exists()) {
+                    return { ...member, profile: userDoc.data() };
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            }
+            return { ...member, profile: null };
+        }));
+        
+        // Sort by role (owner, admin, moderator, member)
+        const roleOrder = { owner: 0, admin: 1, moderator: 2, member: 3 };
+        membersWithProfiles.sort((a, b) => {
+            return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+        });
+        
+        membersList.innerHTML = membersWithProfiles.map(member => {
+            const profile = member.profile;
+            const username = profile?.username || 'Unknown';
+            const joinedAt = member.joinedAt?.toDate ? member.joinedAt.toDate() : new Date();
+            const dateStr = joinedAt.toLocaleDateString();
+            
+            return `
+                <div class="community-member-item">
+                    <div class="community-member-info">
+                        <span class="community-member-name">${escapeHtml(username)}</span>
+                        <span class="community-member-role">${member.role}</span>
+                    </div>
+                    <div class="community-member-meta">
+                        <span class="community-member-date">Joined ${dateStr}</span>
+                        ${isOwnerOrAdmin && member.role !== 'owner' && member.userId !== currentUser.uid
+                            ? `<button class="btn btn-danger btn-sm" data-remove-member data-member-id="${member.userId}">Remove</button>`
+                            : ''
+                        }
+                        ${memberData.role === 'owner' && member.role === 'member'
+                            ? `<button class="btn btn-secondary btn-sm" data-promote-member data-member-id="${member.userId}">Make Admin</button>`
+                            : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Add event listeners
+        membersList.querySelectorAll('[data-remove-member]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const memberId = btn.getAttribute('data-member-id');
+                handleRemoveMember(communityId, memberId);
+            });
+        });
+        
+        membersList.querySelectorAll('[data-promote-member]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const memberId = btn.getAttribute('data-member-id');
+                handlePromoteMember(communityId, memberId);
+            });
+        });
+        
+        communityMembersModal.setAttribute('data-community-id', communityId);
+        communityMembersModal.classList.remove('hide');
+        document.body.style.overflow = 'hidden';
+    } catch (error) {
+        console.error('Error opening community members:', error);
+        alert('Failed to load members');
+    }
+}
+
+// Close community members modal
+function closeCommunityMembersModal() {
+    if (!communityMembersModal) return;
+    communityMembersModal.classList.add('hide');
+    document.body.style.overflow = '';
+}
+
+// Handle remove member
+async function handleRemoveMember(communityId, memberId) {
+    if (!currentUser) return;
+    
+    if (!confirm('Are you sure you want to remove this member?')) {
+        return;
+    }
+    
+    try {
+        // Check permissions
+        const currentMemberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const currentMemberDoc = await getDoc(currentMemberRef);
+        
+        if (!currentMemberDoc.exists()) {
+            alert('You do not have permission');
+            return;
+        }
+        
+        const currentMemberData = currentMemberDoc.data();
+        if (!['owner', 'admin'].includes(currentMemberData.role)) {
+            alert('Only owners and admins can remove members');
+            return;
+        }
+        
+        // Get member to remove
+        const memberRef = doc(db, 'communities', communityId, 'members', memberId);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists()) {
+            alert('Member not found');
+            return;
+        }
+        
+        const memberData = memberDoc.data();
+        
+        // Prevent removing owner
+        if (memberData.role === 'owner') {
+            alert('Cannot remove the community owner');
+            return;
+        }
+        
+        // Remove member
+        const batch = writeBatch(db);
+        batch.delete(memberRef);
+        
+        // Update member count
+        const communityDoc = await getDoc(doc(db, 'communities', communityId));
+        const communityData = communityDoc.data();
+        batch.update(doc(db, 'communities', communityId), {
+            memberCount: Math.max(0, (communityData.memberCount || 1) - 1)
+        });
+        
+        await batch.commit();
+        
+        // Reload members list
+        await openCommunityMembersModal(communityId);
+        
+        showToast('Member removed');
+    } catch (error) {
+        console.error('Error removing member:', error);
+        alert('Failed to remove member');
+    }
+}
+
+// Handle promote member to admin
+async function handlePromoteMember(communityId, memberId) {
+    if (!currentUser) return;
+    
+    if (!confirm('Promote this member to admin? Admins can manage members and settings.')) {
+        return;
+    }
+    
+    try {
+        // Check if current user is owner
+        const currentMemberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const currentMemberDoc = await getDoc(currentMemberRef);
+        
+        if (!currentMemberDoc.exists() || currentMemberDoc.data().role !== 'owner') {
+            alert('Only the owner can promote members to admin');
+            return;
+        }
+        
+        // Promote member
+        await updateDoc(doc(db, 'communities', communityId, 'members', memberId), {
+            role: 'admin'
+        });
+        
+        // Reload members list
+        await openCommunityMembersModal(communityId);
+        
+        showToast('Member promoted to admin');
+    } catch (error) {
+        console.error('Error promoting member:', error);
+        alert('Failed to promote member');
+    }
+}
+
+// Utility function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Utility function to show toast
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Close mobile drawer helper (if exists)
+function closeMobileDrawer() {
+    if (window.closeMobileDrawer) {
+        window.closeMobileDrawer();
+    } else {
+        const drawerOverlay = document.getElementById('chatDrawerOverlay');
+        const drawer = document.getElementById('chatMobileDrawer');
+        
+        if (drawerOverlay && drawer) {
+            drawerOverlay.classList.add('hide');
+            drawer.classList.add('hide');
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+// Export functions for use in chat-init.js
+window.communityModule = {
+    openCommunityJoinModal,
+    openCommunityDiscoveryModal,
+    openCommunitySettingsModal,
+    openCommunityMembersModal,
+    loadUserCommunities,
+    get userCommunities() { return userCommunities; }
+};

@@ -104,19 +104,35 @@ service cloud.firestore {
       
       // Only authenticated users can create messages
       // Note: timestamp can be serverTimestamp() sentinel, so we don't validate it strictly
+      // Support both channel (global) and communityId (community) messages
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.username is string
         && request.resource.data.text is string
         && request.resource.data.channel is string
         && request.resource.data.avatarCount is int
-        && request.resource.data.deleted == false;
+        && request.resource.data.deleted == false
+        && (
+          // Global channel message (no communityId)
+          (!('communityId' in request.resource.data))
+          ||
+          // Community message - user must be a member
+          ('communityId' in request.resource.data 
+            && request.resource.data.communityId is string
+            && exists(/databases/$(database)/documents/communities/$(request.resource.data.communityId)/members/$(request.auth.uid)))
+        );
       
       // Users can update their own messages (for editing, reactions)
       // Admins can update any message (for moderation)
+      // Community admins/moderators can update messages in their communities
       allow update: if isSignedIn() && (
         (resource.data.userId == request.auth.uid) ||
-        isAdminOrMod(request.auth.uid)
+        isAdminOrMod(request.auth.uid) ||
+        // Community admin/moderator can update messages in their community
+        ('communityId' in resource.data 
+          && resource.data.communityId is string
+          && exists(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid))
+          && get(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'moderator'])
       );
       
       // Users can delete their own messages (soft delete)
@@ -344,6 +360,89 @@ service cloud.firestore {
       
       // No deletion (use soft delete via reviewed flag)
       allow delete: if false;
+    }
+
+    // Communities collection
+    match /communities/{communityId} {
+      // Anyone can read public communities
+      // Users can read private communities they are members of
+      allow get: if true;
+      allow list: if true; // Queries will filter by isPublic or membership
+      
+      // Only authenticated users can create communities
+      allow create: if isSignedIn()
+        && request.resource.data.creatorId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.isPublic is bool
+        && request.resource.data.inviteCode is string
+        && request.resource.data.memberCount == 1
+        && request.resource.data.createdAt is timestamp;
+      
+      // Only community owner/admins can update community settings
+      allow update: if isSignedIn() && (
+        resource.data.creatorId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+          && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
+      );
+      
+      // Only owner can delete community
+      allow delete: if isSignedIn() && resource.data.creatorId == request.auth.uid;
+      
+      // Community members subcollection
+      match /members/{memberId} {
+        // Users can read members of communities they belong to
+        allow get: if isSignedIn() && (
+          exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+        );
+        allow list: if isSignedIn() && (
+          exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+        );
+        
+        // Users can add themselves when joining
+        // Owner/admins can add other users
+        allow create: if isSignedIn() && (
+          (memberId == request.auth.uid && request.resource.data.userId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+            && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
+        );
+        
+        // Owner/admins can update member roles
+        // Users can update their own member document (for lastSeen, etc.)
+        allow update: if isSignedIn() && (
+          (memberId == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+            && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
+        );
+        
+        // Users can remove themselves
+        // Owner/admins can remove other members
+        allow delete: if isSignedIn() && (
+          memberId == request.auth.uid ||
+          (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+            && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'])
+        );
+      }
+    }
+    
+    // Community invites collection (optional, for tracking)
+    match /communityInvites/{inviteId} {
+      // Anyone authenticated can read invites (to validate codes)
+      allow get: if isSignedIn();
+      allow list: if false; // No list queries needed
+      
+      // Community owner/admins can create invites
+      allow create: if isSignedIn()
+        && request.resource.data.communityId is string
+        && request.resource.data.code is string
+        && request.resource.data.createdBy == request.auth.uid
+        && exists(/databases/$(database)/documents/communities/$(request.resource.data.communityId)/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'];
+      
+      // Owner/admins can update/delete invites
+      allow update, delete: if isSignedIn()
+        && resource.data.communityId is string
+        && exists(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin'];
     }
 
     // Default deny

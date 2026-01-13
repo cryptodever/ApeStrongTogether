@@ -94,7 +94,9 @@ const AVAILABLE_CHANNELS = [
 
 // Get channel from localStorage or default to 'general'
 let currentChannel = localStorage.getItem('selectedChannel') || 'general';
+let currentCommunityId = localStorage.getItem('selectedCommunity') || null; // Track if we're in a community chat
 let messageContextMenuMessageId = null;
+let userCommunities = []; // Communities user is a member of
 
 // DOM Elements
 let chatMessagesEl, chatInputEl, sendBtn, chatLoadingEl, chatEmptyEl;
@@ -352,30 +354,66 @@ function initializeChat() {
     setupMobileSwipe();
 }
 
+// Update channel switcher (called by community module)
+async function updateChannelSwitcher() {
+    // Load user communities if community module is available
+    if (window.communityModule && window.communityModule.loadUserCommunities) {
+        await window.communityModule.loadUserCommunities();
+        if (window.communityModule.userCommunities) {
+            userCommunities = window.communityModule.userCommunities || [];
+        }
+    }
+    setupChannelSwitcher();
+    setupMobileChannelList();
+}
+
+// Export for use by community-init.js
+window.updateChannelSwitcher = updateChannelSwitcher;
+
 // Setup channel switcher UI
-function setupChannelSwitcher() {
+async function setupChannelSwitcher() {
     const channelButtonsEl = document.getElementById('channelButtons');
     const channelButtonsMobileEl = document.getElementById('channelButtonsMobile');
+    
+    // Load user communities if available
+    if (window.communityModule && window.communityModule.userCommunities) {
+        userCommunities = window.communityModule.userCommunities || [];
+    }
     
     // Desktop channel buttons
     if (channelButtonsEl) {
         channelButtonsEl.innerHTML = '';
         AVAILABLE_CHANNELS.forEach(channel => {
+            const isActive = !currentCommunityId && channel.id === currentChannel;
             const button = document.createElement('button');
-            button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
+            button.className = `channel-button ${isActive ? 'active' : ''}`;
             button.setAttribute('data-channel', channel.id);
             button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
             button.addEventListener('click', () => switchChannel(channel.id));
             channelButtonsEl.appendChild(button);
         });
+        
+        // Add user communities if any
+        if (userCommunities && userCommunities.length > 0) {
+            userCommunities.forEach(community => {
+                const isActive = currentCommunityId === community.id;
+                const button = document.createElement('button');
+                button.className = `channel-button community-button ${isActive ? 'active' : ''}`;
+                button.setAttribute('data-community', community.id);
+                button.innerHTML = `<span class="channel-emoji">🦍</span> <span class="channel-name">${escapeHtml(community.name)}</span> <span class="member-count">(${community.memberCount || 0})</span>`;
+                button.addEventListener('click', () => switchToCommunity(community.id));
+                channelButtonsEl.appendChild(button);
+            });
+        }
     }
     
     // Mobile channel buttons
     if (channelButtonsMobileEl) {
         channelButtonsMobileEl.innerHTML = '';
         AVAILABLE_CHANNELS.forEach(channel => {
+            const isActive = !currentCommunityId && channel.id === currentChannel;
             const button = document.createElement('button');
-            button.className = `channel-button ${channel.id === currentChannel ? 'active' : ''}`;
+            button.className = `channel-button ${isActive ? 'active' : ''}`;
             button.setAttribute('data-channel', channel.id);
             button.innerHTML = `<span class="channel-emoji">${channel.emoji}</span> <span class="channel-name">${channel.name}</span>`;
             button.addEventListener('click', () => switchChannel(channel.id));
@@ -389,11 +427,18 @@ function setupMobileChannelList() {
     const mobileChannelsEl = document.getElementById('chatMobileChannels');
     if (!mobileChannelsEl) return;
     
+    // Load user communities if available
+    if (window.communityModule && window.communityModule.userCommunities) {
+        userCommunities = window.communityModule.userCommunities || [];
+    }
+    
     mobileChannelsEl.innerHTML = '';
     
+    // Add public channels
     AVAILABLE_CHANNELS.forEach(channel => {
+        const isActive = !currentCommunityId && channel.id === currentChannel;
         const item = document.createElement('div');
-        item.className = `chat-mobile-channel-item ${channel.id === currentChannel ? 'active' : ''}`;
+        item.className = `chat-mobile-channel-item ${isActive ? 'active' : ''}`;
         item.setAttribute('data-channel', channel.id);
         item.innerHTML = `
             <span class="channel-emoji chat-mobile-drawer-emoji">${channel.emoji}</span>
@@ -405,6 +450,26 @@ function setupMobileChannelList() {
         });
         mobileChannelsEl.appendChild(item);
     });
+    
+    // Add user communities if any
+    if (userCommunities && userCommunities.length > 0) {
+        userCommunities.forEach(community => {
+            const isActive = currentCommunityId === community.id;
+            const item = document.createElement('div');
+            item.className = `chat-mobile-channel-item community-item ${isActive ? 'active' : ''}`;
+            item.setAttribute('data-community', community.id);
+            item.innerHTML = `
+                <span class="channel-emoji chat-mobile-drawer-emoji">🦍</span>
+                <span class="channel-name chat-mobile-drawer-name">${escapeHtml(community.name)}</span>
+                <span class="channel-member-count">${community.memberCount || 0}</span>
+            `;
+            item.addEventListener('click', () => {
+                switchToCommunity(community.id);
+                closeMobileDrawer();
+            });
+            mobileChannelsEl.appendChild(item);
+        });
+    }
 }
 
 // Setup mobile drawer
@@ -554,9 +619,33 @@ function updateRaidTimer() {
 }
 
 // Update channel info display
-function updateChannelInfo() {
+async function updateChannelInfo() {
     if (!currentChannelNameEl || !currentChannelDescEl) return;
     
+    // Check if we're in a community
+    if (currentCommunityId) {
+        try {
+            const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
+            if (communityDoc.exists()) {
+                const communityData = communityDoc.data();
+                currentChannelNameEl.textContent = communityData.name || 'Community';
+                currentChannelDescEl.textContent = communityData.description || 'Community chat';
+                
+                // Update mobile
+                const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
+                const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
+                if (mobileChannelNameEl) mobileChannelNameEl.textContent = communityData.name || 'Community';
+                if (mobileChannelDescEl) mobileChannelDescEl.textContent = communityData.description || 'Community chat';
+                
+                updateMobileChannelName();
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading community info:', error);
+        }
+    }
+    
+    // Global channel
     const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
     if (!channel) return;
     
@@ -616,9 +705,113 @@ function setupMobileSwipe() {
     }
 }
 
+// Switch to a community chat
+async function switchToCommunity(communityId) {
+    if (!currentUser) {
+        alert('You must be logged in to access communities');
+        return;
+    }
+    
+    // Verify membership
+    const isMember = await verifyCommunityMembership(communityId);
+    if (!isMember) {
+        alert('You must be a member to access this community');
+        // Optionally open join modal
+        if (window.communityModule?.openCommunityJoinModal) {
+            window.communityModule.openCommunityJoinModal();
+        }
+        return;
+    }
+    
+    try {
+        // Update state
+        currentCommunityId = communityId;
+        currentChannel = 'community'; // Special channel type for communities
+        localStorage.setItem('selectedCommunity', communityId);
+        localStorage.setItem('selectedChannel', 'community');
+        
+        // Remove old listeners
+        if (messagesListener) {
+            messagesListener();
+            messagesListener = null;
+        }
+        if (typingListener) {
+            typingListener();
+            typingListener = null;
+        }
+        if (presenceListener) {
+            presenceListener();
+            presenceListener = null;
+        }
+        
+        // Clear typing indicator
+        clearTypingIndicator();
+        
+        // Clear current messages and tracked message IDs
+        if (chatMessagesEl) {
+            chatMessagesEl.innerHTML = '';
+        }
+        loadedMessageIds.clear();
+        isInitialSnapshot = true;
+        oldestMessageDoc = null;
+        hasMoreMessages = true;
+        isLoadingOlderMessages = false;
+        
+        // Remove scroll listener
+        if (chatMessagesEl) {
+            chatMessagesEl.removeEventListener('scroll', handleScroll);
+        }
+        
+        // Show loading
+        if (chatLoadingEl) {
+            chatLoadingEl.classList.remove('hide');
+        }
+        if (chatEmptyEl) {
+            chatEmptyEl.classList.add('hide');
+        }
+        
+        // Update UI
+        setupChannelSwitcher();
+        setupMobileChannelList();
+        updateChannelInfo();
+        updateMobileChannelName();
+        
+        // Reload messages for community
+        loadMessages();
+        
+        // Setup real-time listeners
+        setupRealtimeListeners();
+        setupTypingIndicator();
+        setupPresence();
+        
+        // Update presence
+        updatePresence(true);
+        
+        // Close mobile drawer if open
+        const drawerOverlay = document.getElementById('chatDrawerOverlay');
+        const drawer = document.getElementById('chatMobileDrawer');
+        if (drawerOverlay && drawer && !drawerOverlay.classList.contains('hide')) {
+            closeMobileDrawer();
+        }
+    } catch (error) {
+        console.error('Error switching to community:', error);
+        alert('Failed to switch to community');
+    }
+}
+
+// Export for use by community-init.js
+window.switchToCommunity = switchToCommunity;
+
 // Switch to a different channel
 function switchChannel(channelId) {
-    if (channelId === currentChannel) return;
+    // If it's a community ID (starts with 'community-'), handle separately
+    if (channelId && channelId.startsWith('community-')) {
+        const communityId = channelId.replace('community-', '');
+        switchToCommunity(communityId);
+        return;
+    }
+    
+    if (channelId === currentChannel && !currentCommunityId) return;
     
     // Validate channel exists
     const channel = AVAILABLE_CHANNELS.find(c => c.id === channelId);
@@ -627,9 +820,11 @@ function switchChannel(channelId) {
         return;
     }
     
-    // Update current channel
+    // Update current channel (clear community)
     currentChannel = channelId;
+    currentCommunityId = null;
     localStorage.setItem('selectedChannel', channelId);
+    localStorage.removeItem('selectedCommunity');
     
     // Update UI
     setupChannelSwitcher();
@@ -817,13 +1012,28 @@ function loadMessages() {
     }, 15000); // 15 second timeout
 
     const messagesRef = collection(db, 'messages');
-    const q = query(
-        messagesRef,
-        where('channel', '==', currentChannel),
-        where('deleted', '==', false),
-        orderBy('timestamp', 'desc'),
-        limit(MESSAGES_PER_PAGE)
-    );
+    
+    // Build query based on whether we're in a community or global channel
+    let q;
+    if (currentCommunityId) {
+        // Community messages
+        q = query(
+            messagesRef,
+            where('communityId', '==', currentCommunityId),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            limit(MESSAGES_PER_PAGE)
+        );
+    } else {
+        // Global channel messages
+        q = query(
+            messagesRef,
+            where('channel', '==', currentChannel),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            limit(MESSAGES_PER_PAGE)
+        );
+    }
 
     getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
@@ -878,14 +1088,28 @@ async function loadOlderMessages() {
     
     try {
         const messagesRef = collection(db, 'messages');
-        const q = query(
-            messagesRef,
-            where('channel', '==', currentChannel),
-            where('deleted', '==', false),
-            orderBy('timestamp', 'desc'),
-            startAfter(oldestMessageDoc),
-            limit(MESSAGES_PER_PAGE)
-        );
+        
+        // Build query based on community or channel
+        let q;
+        if (currentCommunityId) {
+            q = query(
+                messagesRef,
+                where('communityId', '==', currentCommunityId),
+                where('deleted', '==', false),
+                orderBy('timestamp', 'desc'),
+                startAfter(oldestMessageDoc),
+                limit(MESSAGES_PER_PAGE)
+            );
+        } else {
+            q = query(
+                messagesRef,
+                where('channel', '==', currentChannel),
+                where('deleted', '==', false),
+                orderBy('timestamp', 'desc'),
+                startAfter(oldestMessageDoc),
+                limit(MESSAGES_PER_PAGE)
+            );
+        }
 
         const snapshot = await getDocs(q);
 
@@ -966,13 +1190,26 @@ function setupRealtimeListeners() {
     if (!currentUser) return;
 
     const messagesRef = collection(db, 'messages');
-    const q = query(
-        messagesRef,
-        where('channel', '==', currentChannel),
-        where('deleted', '==', false),
-        orderBy('timestamp', 'desc'),
-        limit(MESSAGES_PER_PAGE)
-    );
+    
+    // Build query based on community or channel
+    let q;
+    if (currentCommunityId) {
+        q = query(
+            messagesRef,
+            where('communityId', '==', currentCommunityId),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            limit(MESSAGES_PER_PAGE)
+        );
+    } else {
+        q = query(
+            messagesRef,
+            where('channel', '==', currentChannel),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            limit(MESSAGES_PER_PAGE)
+        );
+    }
 
     messagesListener = onSnapshot(q, (snapshot) => {
         // Handle initial snapshot - ignore it since loadMessages() already loaded these
@@ -1010,7 +1247,12 @@ function setupRealtimeListeners() {
         const typingUsers = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
-            if (data.channel === currentChannel && data.userId !== currentUser.uid) {
+            // Check if typing matches current channel/community
+            const matchesChannel = currentCommunityId 
+                ? data.channel === `community_${currentCommunityId}`
+                : data.channel === currentChannel;
+            
+            if (matchesChannel && data.userId !== currentUser.uid) {
                 // Check if typing is recent (within 3 seconds)
                 const now = Date.now();
                 const typingTime = data.timestamp?.toMillis() || 0;
@@ -1504,19 +1746,36 @@ async function handleSendMessage() {
     }
 
     try {
+        // Check if we're in a community and verify membership
+        if (currentCommunityId) {
+            const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
+            const memberDoc = await getDoc(memberRef);
+            if (!memberDoc.exists()) {
+                alert('You are not a member of this community');
+                return;
+            }
+        }
+        
         const messagesRef = collection(db, 'messages');
-        await addDoc(messagesRef, {
+        const messageData = {
             text: text,
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
             avatarCount: userProfile.avatarCount || 0,
             bannerImage: userProfile.bannerImage || '',
             timestamp: serverTimestamp(),
-            channel: currentChannel,
+            channel: currentChannel || 'general', // Keep channel for backward compatibility
             deleted: false,
             reactions: {},
             xAccountVerified: userProfile.xAccountVerified || false
-        });
+        };
+        
+        // Add communityId if in a community
+        if (currentCommunityId) {
+            messageData.communityId = currentCommunityId;
+        }
+        
+        await addDoc(messagesRef, messageData);
 
         // Clear input
         chatInputEl.value = '';
@@ -1655,10 +1914,11 @@ async function updateTypingIndicator() {
 
     try {
         const typingRef = doc(db, 'typing', currentUser.uid);
+        const channelValue = currentCommunityId ? `community_${currentCommunityId}` : currentChannel;
         await setDoc(typingRef, {
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
-            channel: currentChannel,
+            channel: channelValue,
             timestamp: serverTimestamp()
         }, { merge: true });
     } catch (error) {
@@ -1720,7 +1980,7 @@ async function updatePresence(online) {
             xAccountVerified: userProfile?.xAccountVerified || false,
             online: online,
             lastSeen: serverTimestamp(),
-            channel: currentChannel
+            channel: currentCommunityId ? `community_${currentCommunityId}` : currentChannel
         }, { merge: true });
     } catch (error) {
         console.error('Error updating presence:', error);
@@ -2018,6 +2278,19 @@ function reportMessage(messageId) {
 }
 
 // Utility functions
+// Verify community membership
+async function verifyCommunityMembership(communityId) {
+    if (!currentUser || !communityId) return false;
+    try {
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        return memberDoc.exists();
+    } catch (error) {
+        console.error('Error verifying membership:', error);
+        return false;
+    }
+}
+
 function formatTime(date) {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
