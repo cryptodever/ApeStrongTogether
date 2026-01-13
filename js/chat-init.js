@@ -368,6 +368,7 @@ async function updateChannelSwitcher() {
     }
     setupChannelSwitcher();
     setupMobileChannelList();
+    setupCommunitySelector();
 }
 
 // Export for use by community-init.js
@@ -424,6 +425,298 @@ async function setupChannelSwitcher() {
         });
     }
 }
+
+// Setup Discord-style community selector
+function setupCommunitySelector() {
+    const selectorContainer = document.querySelector('.community-selector-container');
+    if (!selectorContainer) return;
+    
+    // Clear existing icons
+    selectorContainer.innerHTML = '';
+    
+    // Load user communities if available
+    if (window.communityModule && window.communityModule.userCommunities) {
+        userCommunities = window.communityModule.userCommunities || [];
+    }
+    
+    // Add default community icon
+    const defaultIcon = renderCommunityIcon({
+        id: DEFAULT_COMMUNITY_ID,
+        name: 'Apes Together Strong',
+        isDefault: true
+    }, true);
+    selectorContainer.appendChild(defaultIcon);
+    
+    // Add user communities
+    if (userCommunities && userCommunities.length > 0) {
+        userCommunities.forEach(community => {
+            if (community.id !== DEFAULT_COMMUNITY_ID) {
+                const icon = renderCommunityIcon(community, false);
+                selectorContainer.appendChild(icon);
+            }
+        });
+    }
+    
+    // Add create community button
+    const createBtn = document.createElement('button');
+    createBtn.className = 'community-icon community-icon-create';
+    createBtn.title = 'Create Community';
+    createBtn.innerHTML = '<span>+</span>';
+    createBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.communityModule && window.communityModule.openCommunityModal) {
+            window.communityModule.openCommunityModal();
+        } else if (createCommunityBtn) {
+            createCommunityBtn.click();
+        }
+    });
+    selectorContainer.appendChild(createBtn);
+    
+    // Update active indicator
+    updateActiveCommunityIndicator();
+}
+
+// Render a community icon
+function renderCommunityIcon(community, isDefault) {
+    const icon = document.createElement('div');
+    icon.className = `community-icon ${isDefault ? 'community-icon-default' : ''}`;
+    icon.setAttribute('data-community', community.id);
+    icon.title = community.name || 'Community';
+    
+    // Create background
+    const bg = document.createElement('div');
+    bg.className = 'community-icon-bg';
+    
+    // Use banner if available
+    if (community.bannerUrl) {
+        bg.style.backgroundImage = `url(${community.bannerUrl})`;
+    } else if (isDefault) {
+        // Default community uses gradient
+        bg.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+    } else {
+        // Generate gradient based on name
+        const colors = generateColorFromName(community.name || 'Community');
+        bg.style.background = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
+    }
+    
+    // Create text (first letter or emoji)
+    const text = document.createElement('span');
+    text.className = 'community-icon-text';
+    if (isDefault) {
+        text.textContent = '🦍';
+    } else {
+        const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
+        text.textContent = firstLetter;
+    }
+    
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'community-tooltip';
+    tooltip.textContent = community.name || 'Community';
+    
+    // Create active indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'community-active-indicator';
+    
+    // Assemble icon
+    icon.appendChild(bg);
+    icon.appendChild(text);
+    icon.appendChild(tooltip);
+    icon.appendChild(indicator);
+    
+    // Add click handler
+    icon.addEventListener('click', () => {
+        if (isDefault || community.id === DEFAULT_COMMUNITY_ID) {
+            // Switch to default community
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
+            currentChannel = null;
+            localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
+            localStorage.removeItem('selectedChannel');
+            updateActiveCommunityIndicator();
+            loadMessages();
+        } else {
+            switchToCommunity(community.id);
+        }
+    });
+    
+    return icon;
+}
+
+// Generate color gradient from name
+function generateColorFromName(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const hue = hash % 360;
+    const color1 = `hsl(${hue}, 70%, 50%)`;
+    const color2 = `hsl(${(hue + 30) % 360}, 70%, 40%)`;
+    
+    return [color1, color2];
+}
+
+// Update active community indicator
+function updateActiveCommunityIndicator() {
+    const icons = document.querySelectorAll('.community-icon[data-community]');
+    icons.forEach(icon => {
+        const communityId = icon.getAttribute('data-community');
+        if (communityId === currentCommunityId) {
+            icon.classList.add('active');
+        } else {
+            icon.classList.remove('active');
+        }
+    });
+}
+
+// Export function to update community selector
+window.updateCommunitySelector = setupCommunitySelector;
+
+// Setup Discord-style community selector
+function setupCommunitySelector() {
+    const selectorContainer = document.querySelector('.community-selector-container');
+    if (!selectorContainer) return;
+    
+    // Clear existing icons
+    selectorContainer.innerHTML = '';
+    
+    // Load user communities if available
+    if (window.communityModule && window.communityModule.userCommunities) {
+        userCommunities = window.communityModule.userCommunities || [];
+    }
+    
+    // Add default community icon
+    const defaultIcon = renderCommunityIcon({
+        id: DEFAULT_COMMUNITY_ID,
+        name: 'Apes Together Strong',
+        isDefault: true
+    }, true);
+    selectorContainer.appendChild(defaultIcon);
+    
+    // Add user communities
+    if (userCommunities && userCommunities.length > 0) {
+        userCommunities.forEach(community => {
+            if (community.id !== DEFAULT_COMMUNITY_ID) {
+                const icon = renderCommunityIcon(community, false);
+                selectorContainer.appendChild(icon);
+            }
+        });
+    }
+    
+    // Add create community button
+    const createBtn = document.createElement('button');
+    createBtn.className = 'community-icon community-icon-create';
+    createBtn.title = 'Create Community';
+    createBtn.innerHTML = '<span>+</span>';
+    createBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.communityModule && window.communityModule.openCommunityModal) {
+            window.communityModule.openCommunityModal();
+        } else if (createCommunityBtn) {
+            createCommunityBtn.click();
+        }
+    });
+    selectorContainer.appendChild(createBtn);
+    
+    // Update active indicator
+    updateActiveCommunityIndicator();
+}
+
+// Render a community icon
+function renderCommunityIcon(community, isDefault) {
+    const icon = document.createElement('div');
+    icon.className = `community-icon ${isDefault ? 'community-icon-default' : ''}`;
+    icon.setAttribute('data-community', community.id);
+    icon.title = community.name || 'Community';
+    
+    // Create background
+    const bg = document.createElement('div');
+    bg.className = 'community-icon-bg';
+    
+    // Use banner if available
+    if (community.bannerUrl) {
+        bg.style.backgroundImage = `url(${community.bannerUrl})`;
+    } else if (isDefault) {
+        // Default community uses gradient
+        bg.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+    } else {
+        // Generate gradient based on name
+        const colors = generateColorFromName(community.name || 'Community');
+        bg.style.background = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
+    }
+    
+    // Create text (first letter or emoji)
+    const text = document.createElement('span');
+    text.className = 'community-icon-text';
+    if (isDefault) {
+        text.textContent = '🦍';
+    } else {
+        const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
+        text.textContent = firstLetter;
+    }
+    
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'community-tooltip';
+    tooltip.textContent = community.name || 'Community';
+    
+    // Create active indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'community-active-indicator';
+    
+    // Assemble icon
+    icon.appendChild(bg);
+    icon.appendChild(text);
+    icon.appendChild(tooltip);
+    icon.appendChild(indicator);
+    
+    // Add click handler
+    icon.addEventListener('click', () => {
+        if (isDefault || community.id === DEFAULT_COMMUNITY_ID) {
+            // Switch to default community
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
+            currentChannel = null;
+            localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
+            localStorage.removeItem('selectedChannel');
+            updateActiveCommunityIndicator();
+            loadMessages();
+        } else {
+            switchToCommunity(community.id);
+        }
+    });
+    
+    return icon;
+}
+
+// Generate color gradient from name
+function generateColorFromName(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const hue = hash % 360;
+    const color1 = `hsl(${hue}, 70%, 50%)`;
+    const color2 = `hsl(${(hue + 30) % 360}, 70%, 40%)`;
+    
+    return [color1, color2];
+}
+
+// Update active community indicator
+function updateActiveCommunityIndicator() {
+    const icons = document.querySelectorAll('.community-icon[data-community]');
+    icons.forEach(icon => {
+        const communityId = icon.getAttribute('data-community');
+        if (communityId === currentCommunityId) {
+            icon.classList.add('active');
+        } else {
+            icon.classList.remove('active');
+        }
+    });
+}
+
+// Export function to update community selector
+window.updateCommunitySelector = setupCommunitySelector;
 
 // Setup mobile channel list in drawer
 function setupMobileChannelList() {
@@ -764,6 +1057,7 @@ async function switchToCommunity(communityId) {
         setupChannelSwitcher();
         setupMobileChannelList();
         updateChannelInfo();
+        updateActiveCommunityIndicator();
         updateMobileChannelName();
         
         // Reload messages for community

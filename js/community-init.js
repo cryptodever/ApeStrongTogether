@@ -270,6 +270,13 @@ function openCommunityModal() {
     if (communityNameInput) communityNameInput.focus();
 }
 
+// Export functions for use by chat-init.js
+if (!window.communityModule) {
+    window.communityModule = {};
+}
+window.communityModule.openCommunityModal = openCommunityModal;
+window.communityModule.loadUserCommunities = loadUserCommunities;
+
 // Handle banner upload
 function handleBannerUpload(e) {
     const file = e.target.files[0];
@@ -535,9 +542,20 @@ async function loadUserCommunities() {
         
         userCommunities = communities;
         
+        // Export to window for chat-init.js access
+        if (!window.communityModule) {
+            window.communityModule = {};
+        }
+        window.communityModule.userCommunities = userCommunities;
+        
         // Update channel switcher if it exists
         if (window.updateChannelSwitcher) {
             window.updateChannelSwitcher();
+        }
+        
+        // Update community selector if it exists
+        if (window.updateCommunitySelector) {
+            window.updateCommunitySelector();
         }
     } catch (error) {
         console.error('Error loading user communities:', error);
