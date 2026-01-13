@@ -171,16 +171,6 @@
       ]
     },
     {
-      "collectionGroup": "gameLeaderboard",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "score",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "messages",
       "queryScope": "COLLECTION",
       "fields": [
@@ -277,6 +267,24 @@
         {
           "fieldPath": "timestamp",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "messages",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "channelId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
         }
       ]
     }
