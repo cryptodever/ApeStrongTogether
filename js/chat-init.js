@@ -102,7 +102,7 @@ let chatTypingEl, typingTextEl, charCountEl, rateLimitInfoEl;
 let chatUserListEl, onlineCountEl;
 let messageContextMenuEl, reactionPickerEl, emojiPickerEl;
 let userProfilePopupEl, userProfilePopupOverlayEl, userProfilePopupCloseEl;
-let apePriceEl, apeChangeEl, onlineCounterEl, raidTimerEl;
+// Utility bar elements removed
 let currentChannelNameEl, currentChannelDescEl;
 
 // Initialize auth gate for chat page
@@ -304,11 +304,7 @@ async function initializeChat() {
     userProfilePopupOverlayEl = document.getElementById('userProfilePopupOverlay');
     userProfilePopupCloseEl = document.getElementById('userProfilePopupClose');
     
-    // Utility bar elements
-    apePriceEl = document.getElementById('apePrice');
-    apeChangeEl = document.getElementById('apeChange');
-    onlineCounterEl = document.getElementById('onlineCounter');
-    raidTimerEl = document.getElementById('raidTimer');
+    // Channel info elements
     currentChannelNameEl = document.getElementById('currentChannelName');
     currentChannelDescEl = document.getElementById('currentChannelDesc');
 
@@ -337,7 +333,7 @@ async function initializeChat() {
     setupEventListeners();
     
     // Initialize utility bar
-    initializeUtilityBar();
+    // Utility bar removed
     
     // Update channel info
     updateChannelInfo();
@@ -572,58 +568,7 @@ function updateMobileOnlineCount() {
     mobileOnlineCountEl.textContent = count;
 }
 
-// Initialize utility bar
-function initializeUtilityBar() {
-    // Update online counter (will be updated by presence system)
-    if (onlineCounterEl && onlineCountEl) {
-        const count = parseInt(onlineCountEl.textContent) || 0;
-        onlineCounterEl.textContent = count;
-    }
-    
-    // Initialize APE price (mock for now - can be replaced with real API)
-    updateApePrice();
-    setInterval(updateApePrice, 30000); // Update every 30 seconds
-    
-    // Initialize raid timer
-    updateRaidTimer();
-    setInterval(updateRaidTimer, 1000); // Update every second
-}
-
-// Update APE price (mock implementation)
-function updateApePrice() {
-    if (!apePriceEl || !apeChangeEl) return;
-    
-    // Mock price - replace with real API call
-    const mockPrice = 0.00123 + (Math.random() - 0.5) * 0.0001;
-    const mockChange = (Math.random() - 0.5) * 0.1;
-    
-    apePriceEl.textContent = `$${mockPrice.toFixed(5)}`;
-    apeChangeEl.textContent = `${mockChange >= 0 ? '+' : ''}${mockChange.toFixed(2)}%`;
-    apeChangeEl.className = `utility-change ${mockChange >= 0 ? 'positive' : 'negative'}`;
-}
-
-// Update raid timer
-function updateRaidTimer() {
-    if (!raidTimerEl) return;
-    
-    // Mock raid timer - replace with real logic
-    const lastRaid = localStorage.getItem('lastRaidTime');
-    if (!lastRaid) {
-        raidTimerEl.textContent = '--:--';
-        return;
-    }
-    
-    const now = Date.now();
-    const elapsed = Math.floor((now - parseInt(lastRaid)) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    
-    if (minutes > 60) {
-        raidTimerEl.textContent = `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
-    } else {
-        raidTimerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-}
+// Utility bar functions removed
 
 // Update channel info display
 async function updateChannelInfo() {
@@ -1416,7 +1361,7 @@ async function setupRealtimeListeners() {
         updateOnlineUsersList(onlineUsers);
         const count = onlineUsers.length;
         if (onlineCountEl) onlineCountEl.textContent = count;
-        if (onlineCounterEl) onlineCounterEl.textContent = count;
+        // Utility bar removed
         updateMobileOnlineCount();
         
         // Update last seen times every minute for real-time updates
