@@ -90,8 +90,8 @@ const DEFAULT_COMMUNITY_ID = 'default';
 // Available channels (loaded from default community)
 let AVAILABLE_CHANNELS = [];
 
-// Get channel from localStorage or default to 'general' (will be updated when channels load)
-let currentChannel = localStorage.getItem('selectedChannel') || 'general';
+// Get channel from localStorage (channels are disabled, so this won't be used)
+let currentChannel = null;
 let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID; // Default to default community
 let messageContextMenuMessageId = null;
 let userCommunities = []; // Communities user is a member of
@@ -809,12 +809,7 @@ async function switchChannel(channelId) {
     
     if (channelId === currentChannel && currentCommunityId === DEFAULT_COMMUNITY_ID) return;
     
-    // Validate channel exists
-    const channel = AVAILABLE_CHANNELS.find(c => c.id === channelId);
-    if (!channel) {
-        console.error('Invalid channel:', channelId);
-        return;
-    }
+    // Channels disabled - skip validation
     
     // Update current channel (within default community)
     currentChannel = channelId;
@@ -1024,11 +1019,10 @@ async function loadMessages() {
         await autoJoinDefaultCommunity(currentUser.uid);
     }
     
-    // Query messages from community messages subcollection
+    // Query messages from community messages subcollection (no channel filter - channels disabled)
     const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
     const q = query(
         messagesRef,
-        where('channelId', '==', currentChannel),
         where('deleted', '==', false),
         orderBy('timestamp', 'desc'),
         limit(MESSAGES_PER_PAGE)
@@ -1090,11 +1084,10 @@ async function loadOlderMessages() {
     isLoadingOlderMessages = true;
     
     try {
-        // Query messages from community messages subcollection
+        // Query messages from community messages subcollection (no channel filter - channels disabled)
         const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
         const q = query(
             messagesRef,
-            where('channelId', '==', currentChannel),
             where('deleted', '==', false),
             orderBy('timestamp', 'desc'),
             startAfter(oldestMessageDoc),
@@ -1191,11 +1184,10 @@ async function setupRealtimeListeners() {
         console.warn('Could not ensure default community, continuing anyway:', error);
     }
 
-    // Query messages from community messages subcollection
+    // Query messages from community messages subcollection (no channel filter - channels disabled)
     const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
     const q = query(
         messagesRef,
-        where('channelId', '==', currentChannel),
         where('deleted', '==', false),
         orderBy('timestamp', 'desc'),
         limit(MESSAGES_PER_PAGE)
@@ -1757,7 +1749,7 @@ async function handleSendMessage() {
             avatarCount: userProfile.avatarCount || 0,
             bannerImage: userProfile.bannerImage || '',
             timestamp: serverTimestamp(),
-            channelId: currentChannel || 'general', // Use channelId instead of channel
+            // channelId removed - channels disabled
             deleted: false,
             reactions: {},
             xAccountVerified: userProfile.xAccountVerified || false
@@ -2392,48 +2384,12 @@ async function ensureDefaultCommunity() {
 
 // Load channels from default community
 async function loadDefaultCommunityChannels() {
-    try {
-        const channelsRef = collection(db, 'communities', DEFAULT_COMMUNITY_ID, 'channels');
-        const q = query(channelsRef, orderBy('order', 'asc'));
-        const snapshot = await getDocs(q);
-        
-        if (!snapshot.empty) {
-            const channels = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                channels.push({
-                    id: doc.id,
-                    name: data.name || doc.id.toUpperCase(),
-                    emoji: getChannelEmoji(doc.id),
-                    order: data.order || 0
-                });
-            });
-            
-            // Sort by order
-            channels.sort((a, b) => a.order - b.order);
-            AVAILABLE_CHANNELS = channels;
-            
-            // Update channel switcher with loaded channels
-            setupChannelSwitcher();
-            setupMobileChannelList();
-            
-            // If current channel is not in loaded channels, switch to first channel
-            if (AVAILABLE_CHANNELS.length > 0) {
-                const channelExists = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
-                if (!channelExists) {
-                    currentChannel = AVAILABLE_CHANNELS[0].id;
-                    localStorage.setItem('selectedChannel', currentChannel);
-                    // Reload messages for the new channel
-                    if (currentUser) {
-                        loadMessages();
-                    }
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error loading default community channels:', error);
-        // If loading fails, channels will remain empty
-    }
+    // Channels disabled - only showing default community without individual channels
+    AVAILABLE_CHANNELS = [];
+    
+    // Update channel switcher (will only show communities, not channels)
+    setupChannelSwitcher();
+    setupMobileChannelList();
 }
 
 // Get emoji for channel ID
