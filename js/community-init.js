@@ -749,7 +749,7 @@ async function openCommunitySettingsModal(communityId) {
         communitySettingsModal.setAttribute('data-community-id', communityId);
         
         communitySettingsModal.classList.remove('hide');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('no-scroll');
     } catch (error) {
         console.error('Error opening community settings:', error);
         alert('Failed to load community settings');
@@ -968,7 +968,7 @@ async function openCommunityMembersModal(communityId) {
         
         communityMembersModal.setAttribute('data-community-id', communityId);
         communityMembersModal.classList.remove('hide');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('no-scroll');
     } catch (error) {
         console.error('Error opening community members:', error);
         alert('Failed to load members');
@@ -1114,7 +1114,7 @@ function closeMobileDrawer() {
         if (drawerOverlay && drawer) {
             drawerOverlay.classList.add('hide');
             drawer.classList.add('hide');
-            document.body.style.overflow = '';
+            document.body.classList.remove('no-scroll');
         }
     }
 }

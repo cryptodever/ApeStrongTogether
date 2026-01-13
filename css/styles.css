@@ -8403,13 +8403,14 @@ body.chat-body > * {
         padding: 12px 16px;
         min-height: 44px;
         max-height: 120px;
-        height: var(--chat-input-height, auto);
         border-radius: 12px;
         flex: 1;
+        resize: none;
+        overflow-y: auto;
     }
     
     .chat-input.auto-height {
-        height: var(--chat-input-height, auto);
+        height: auto;
         overflow-y: auto;
     }
 
@@ -9415,8 +9416,8 @@ body.chat-body > * {
 /* Context Menu */
 .message-context-menu {
     position: fixed;
-    left: var(--context-menu-left, 0);
-    top: var(--context-menu-top, 0);
+    left: var(--context-menu-x, 0);
+    top: var(--context-menu-y, 0);
     display: block;
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -9457,6 +9458,10 @@ body.chat-body > * {
 /* Emoji Picker (for chat input) */
 .emoji-picker {
     position: fixed;
+    left: var(--emoji-picker-x, auto);
+    top: var(--emoji-picker-y, auto);
+    right: var(--emoji-picker-right, auto);
+    bottom: var(--emoji-picker-bottom, auto);
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
@@ -9761,6 +9766,8 @@ body.chat-body > * {
 /* Reaction Picker (for message reactions) */
 .reaction-picker {
     position: fixed;
+    left: var(--reaction-picker-x, 0);
+    top: var(--reaction-picker-y, 0);
     background: rgba(30, 30, 30, 0.98);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;

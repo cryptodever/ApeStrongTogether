@@ -1037,11 +1037,10 @@ function setupEventListeners() {
         }
     });
 
-    // Auto-resize textarea using CSS variable
+    // Auto-resize textarea (CSP-compliant - just let it grow naturally)
     chatInputEl.addEventListener('input', () => {
-        const newHeight = Math.min(chatInputEl.scrollHeight, 150);
-        document.documentElement.style.setProperty('--chat-input-height', newHeight + 'px');
         chatInputEl.classList.add('auto-height');
+        // Let CSS handle the height naturally with max-height constraint
     });
 }
 
@@ -1828,7 +1827,6 @@ async function handleSendMessage() {
 
         // Clear input
         chatInputEl.value = '';
-        document.documentElement.style.setProperty('--chat-input-height', 'auto');
         chatInputEl.classList.remove('auto-height');
         charCountEl.textContent = `0/${MAX_MESSAGE_LENGTH}`;
         lastMessageTime = now;
@@ -2246,9 +2244,9 @@ function showMessageContextMenu(event, messageId, messageData, canEdit, canDelet
     }
 
     messageContextMenuEl.classList.remove('hide');
-    // Use CSS variables for positioning to avoid CSP violation
-    document.documentElement.style.setProperty('--context-menu-left', event.pageX + 'px');
-    document.documentElement.style.setProperty('--context-menu-top', event.pageY + 'px');
+    // Set CSS custom properties on the element itself (CSP allows this)
+    messageContextMenuEl.style.setProperty('--context-menu-x', event.pageX + 'px');
+    messageContextMenuEl.style.setProperty('--context-menu-y', event.pageY + 'px');
 }
 
 // Setup reaction picker
@@ -2331,10 +2329,10 @@ function showEmojiPicker(button) {
     top = Math.max(padding, Math.min(top, viewportHeight - pickerHeight - padding));
     
     // Apply the calculated position using fixed positioning
-    emojiPickerEl.style.setProperty('left', left + 'px');
-    emojiPickerEl.style.setProperty('top', top + 'px');
-    emojiPickerEl.style.setProperty('right', 'auto');
-    emojiPickerEl.style.setProperty('bottom', 'auto');
+    emojiPickerEl.style.setProperty('--emoji-picker-x', left + 'px');
+    emojiPickerEl.style.setProperty('--emoji-picker-y', top + 'px');
+    emojiPickerEl.style.setProperty('--emoji-picker-right', 'auto');
+    emojiPickerEl.style.setProperty('--emoji-picker-bottom', 'auto');
 }
 
 // Report a message
@@ -3338,7 +3336,7 @@ async function showFollowersList(userId) {
     
     modal.classList.remove('hide');
     modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
+        document.body.classList.add('no-scroll');
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
     if (searchInput) searchInput.value = '';
     
@@ -3494,7 +3492,7 @@ async function showFollowingList(userId) {
     
     modal.classList.remove('hide');
     modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
+        document.body.classList.add('no-scroll');
     listEl.innerHTML = '<div class="follow-list-loading">Loading...</div>';
     if (searchInput) searchInput.value = '';
     
