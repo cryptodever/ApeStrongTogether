@@ -84,8 +84,11 @@ let loadedMessageIds = new Set(); // Track which messages have been loaded
 let oldestMessageDoc = null; // Track oldest message document for pagination
 let isLoadingOlderMessages = false; // Flag to prevent multiple simultaneous loads
 let hasMoreMessages = true; // Flag to track if there are more messages to load
-// Available channels
-const AVAILABLE_CHANNELS = [
+// Default community ID
+const DEFAULT_COMMUNITY_ID = 'default';
+
+// Available channels (will be loaded from default community)
+let AVAILABLE_CHANNELS = [
     { id: 'general', name: 'GENERAL', emoji: '💬' },
     { id: 'raid', name: 'RAID', emoji: '⚔️' },
     { id: 'trading', name: 'TRADING', emoji: '📈' },
@@ -94,7 +97,7 @@ const AVAILABLE_CHANNELS = [
 
 // Get channel from localStorage or default to 'general'
 let currentChannel = localStorage.getItem('selectedChannel') || 'general';
-let currentCommunityId = localStorage.getItem('selectedCommunity') || null; // Track if we're in a community chat
+let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID; // Default to default community
 let messageContextMenuMessageId = null;
 let userCommunities = []; // Communities user is a member of
 
@@ -281,7 +284,7 @@ async function loadUserProfile() {
 }
 
 // Initialize chat functionality
-function initializeChat() {
+async function initializeChat() {
     if (!currentUser || !userProfile) {
         console.error('Cannot initialize chat: user not loaded');
         return;
@@ -317,6 +320,15 @@ function initializeChat() {
     if (!chatMessagesEl || !chatInputEl || !sendBtn) {
         console.error('Chat DOM elements not found');
         return;
+    }
+
+    // Ensure default community exists and load channels
+    await ensureDefaultCommunity();
+    
+    // Set default community if not set
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+        localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
     }
 
     // Setup channel switcher
@@ -803,7 +815,7 @@ async function switchToCommunity(communityId) {
 window.switchToCommunity = switchToCommunity;
 
 // Switch to a different channel
-function switchChannel(channelId) {
+async function switchChannel(channelId) {
     // If it's a community ID (starts with 'community-'), handle separately
     if (channelId && channelId.startsWith('community-')) {
         const communityId = channelId.replace('community-', '');
@@ -811,7 +823,13 @@ function switchChannel(channelId) {
         return;
     }
     
-    if (channelId === currentChannel && !currentCommunityId) return;
+    // Ensure default community
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+        await ensureDefaultCommunity();
+    }
+    
+    if (channelId === currentChannel && currentCommunityId === DEFAULT_COMMUNITY_ID) return;
     
     // Validate channel exists
     const channel = AVAILABLE_CHANNELS.find(c => c.id === channelId);
@@ -820,11 +838,11 @@ function switchChannel(channelId) {
         return;
     }
     
-    // Update current channel (clear community)
+    // Update current channel (within default community)
     currentChannel = channelId;
-    currentCommunityId = null;
+    currentCommunityId = DEFAULT_COMMUNITY_ID;
     localStorage.setItem('selectedChannel', channelId);
-    localStorage.removeItem('selectedCommunity');
+    localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
     
     // Update UI
     setupChannelSwitcher();
@@ -989,8 +1007,17 @@ function setupEventListeners() {
 }
 
 // Load messages from Firestore
-function loadMessages() {
+async function loadMessages() {
     if (!currentUser) return;
+
+    // Ensure default community exists and user is a member
+    await ensureDefaultCommunity();
+    
+    // Use default community if not set
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+        localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
+    }
 
     // Reset pagination state
     oldestMessageDoc = null;
@@ -1011,29 +1038,23 @@ function loadMessages() {
         }
     }, 15000); // 15 second timeout
 
-    const messagesRef = collection(db, 'messages');
-    
-    // Build query based on whether we're in a community or global channel
-    let q;
-    if (currentCommunityId) {
-        // Community messages
-        q = query(
-            messagesRef,
-            where('communityId', '==', currentCommunityId),
-            where('deleted', '==', false),
-            orderBy('timestamp', 'desc'),
-            limit(MESSAGES_PER_PAGE)
-        );
-    } else {
-        // Global channel messages
-        q = query(
-            messagesRef,
-            where('channel', '==', currentChannel),
-            where('deleted', '==', false),
-            orderBy('timestamp', 'desc'),
-            limit(MESSAGES_PER_PAGE)
-        );
+    // Verify membership
+    const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
+    const memberDoc = await getDoc(memberRef);
+    if (!memberDoc.exists()) {
+        // Auto-join user
+        await autoJoinDefaultCommunity(currentUser.uid);
     }
+    
+    // Query messages from community messages subcollection
+    const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
+    const q = query(
+        messagesRef,
+        where('channelId', '==', currentChannel),
+        where('deleted', '==', false),
+        orderBy('timestamp', 'desc'),
+        limit(MESSAGES_PER_PAGE)
+    );
 
     getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
@@ -1084,32 +1105,23 @@ async function loadOlderMessages() {
         return;
     }
 
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+    }
+
     isLoadingOlderMessages = true;
     
     try {
-        const messagesRef = collection(db, 'messages');
-        
-        // Build query based on community or channel
-        let q;
-        if (currentCommunityId) {
-            q = query(
-                messagesRef,
-                where('communityId', '==', currentCommunityId),
-                where('deleted', '==', false),
-                orderBy('timestamp', 'desc'),
-                startAfter(oldestMessageDoc),
-                limit(MESSAGES_PER_PAGE)
-            );
-        } else {
-            q = query(
-                messagesRef,
-                where('channel', '==', currentChannel),
-                where('deleted', '==', false),
-                orderBy('timestamp', 'desc'),
-                startAfter(oldestMessageDoc),
-                limit(MESSAGES_PER_PAGE)
-            );
-        }
+        // Query messages from community messages subcollection
+        const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
+        const q = query(
+            messagesRef,
+            where('channelId', '==', currentChannel),
+            where('deleted', '==', false),
+            orderBy('timestamp', 'desc'),
+            startAfter(oldestMessageDoc),
+            limit(MESSAGES_PER_PAGE)
+        );
 
         const snapshot = await getDocs(q);
 
@@ -1186,30 +1198,24 @@ function handleScroll() {
 }
 
 // Setup real-time message listener
-function setupRealtimeListeners() {
+async function setupRealtimeListeners() {
     if (!currentUser) return;
 
-    const messagesRef = collection(db, 'messages');
-    
-    // Build query based on community or channel
-    let q;
-    if (currentCommunityId) {
-        q = query(
-            messagesRef,
-            where('communityId', '==', currentCommunityId),
-            where('deleted', '==', false),
-            orderBy('timestamp', 'desc'),
-            limit(MESSAGES_PER_PAGE)
-        );
-    } else {
-        q = query(
-            messagesRef,
-            where('channel', '==', currentChannel),
-            where('deleted', '==', false),
-            orderBy('timestamp', 'desc'),
-            limit(MESSAGES_PER_PAGE)
-        );
+    // Ensure default community
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+        await ensureDefaultCommunity();
     }
+
+    // Query messages from community messages subcollection
+    const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
+    const q = query(
+        messagesRef,
+        where('channelId', '==', currentChannel),
+        where('deleted', '==', false),
+        orderBy('timestamp', 'desc'),
+        limit(MESSAGES_PER_PAGE)
+    );
 
     messagesListener = onSnapshot(q, (snapshot) => {
         // Handle initial snapshot - ignore it since loadMessages() already loaded these
@@ -1746,17 +1752,20 @@ async function handleSendMessage() {
     }
 
     try {
-        // Check if we're in a community and verify membership
-        if (currentCommunityId) {
-            const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
-            const memberDoc = await getDoc(memberRef);
-            if (!memberDoc.exists()) {
-                alert('You are not a member of this community');
-                return;
-            }
+        // Verify membership in default community
+        if (!currentCommunityId) {
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
         }
         
-        const messagesRef = collection(db, 'messages');
+        const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        if (!memberDoc.exists()) {
+            // Auto-join user to default community
+            await autoJoinDefaultCommunity(currentUser.uid);
+        }
+        
+        // Store message in community messages subcollection
+        const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
         const messageData = {
             text: text,
             userId: currentUser.uid,
@@ -1764,16 +1773,11 @@ async function handleSendMessage() {
             avatarCount: userProfile.avatarCount || 0,
             bannerImage: userProfile.bannerImage || '',
             timestamp: serverTimestamp(),
-            channel: currentChannel || 'general', // Keep channel for backward compatibility
+            channelId: currentChannel || 'general', // Use channelId instead of channel
             deleted: false,
             reactions: {},
             xAccountVerified: userProfile.xAccountVerified || false
         };
-        
-        // Add communityId if in a community
-        if (currentCommunityId) {
-            messageData.communityId = currentCommunityId;
-        }
         
         await addDoc(messagesRef, messageData);
 
@@ -1817,7 +1821,10 @@ async function editMessage(messageId, currentText) {
     }
 
     try {
-        const messageRef = doc(db, 'messages', messageId);
+        if (!currentCommunityId) {
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
+        }
+        const messageRef = doc(db, 'communities', currentCommunityId, 'messages', messageId);
         await updateDoc(messageRef, {
             text: newText.trim(),
             editedAt: serverTimestamp()
@@ -1833,7 +1840,10 @@ async function deleteMessage(messageId) {
     if (!confirm('Are you sure you want to delete this message?')) return;
 
     try {
-        const messageRef = doc(db, 'messages', messageId);
+        if (!currentCommunityId) {
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
+        }
+        const messageRef = doc(db, 'communities', currentCommunityId, 'messages', messageId);
         await updateDoc(messageRef, {
             deleted: true
         });
@@ -1854,7 +1864,10 @@ async function toggleReaction(messageId, emoji) {
     if (!currentUser) return;
 
     try {
-        const messageRef = doc(db, 'messages', messageId);
+        if (!currentCommunityId) {
+            currentCommunityId = DEFAULT_COMMUNITY_ID;
+        }
+        const messageRef = doc(db, 'communities', currentCommunityId, 'messages', messageId);
         const messageDoc = await getDoc(messageRef);
         
         if (!messageDoc.exists()) return;
@@ -1912,13 +1925,21 @@ function setupTypingIndicator() {
 async function updateTypingIndicator() {
     if (!currentUser || !userProfile) return;
 
+    if (!currentCommunityId) {
+        currentCommunityId = DEFAULT_COMMUNITY_ID;
+    }
+
     try {
         const typingRef = doc(db, 'typing', currentUser.uid);
-        const channelValue = currentCommunityId ? `community_${currentCommunityId}` : currentChannel;
+        // Format: communityId_channelId for typing indicator
+        const typingChannel = currentCommunityId === DEFAULT_COMMUNITY_ID 
+            ? currentChannel 
+            : `${currentCommunityId}_${currentChannel}`;
+        
         await setDoc(typingRef, {
             userId: currentUser.uid,
             username: userProfile.username || 'Anonymous',
-            channel: channelValue,
+            channel: typingChannel,
             timestamp: serverTimestamp()
         }, { merge: true });
     } catch (error) {
@@ -2891,10 +2912,12 @@ async function handleClearCommand(channelName) {
         }
         
         // Get all messages for this channel
-        const messagesRef = collection(db, 'messages');
+        // Use default community for clearing
+        const communityId = DEFAULT_COMMUNITY_ID;
+        const messagesRef = collection(db, 'communities', communityId, 'messages');
         const messagesQuery = query(
             messagesRef,
-            where('channel', '==', channelName),
+            where('channelId', '==', channelName),
             where('deleted', '==', false)
         );
         
@@ -2908,7 +2931,7 @@ async function handleClearCommand(channelName) {
         // Soft delete all messages (set deleted flag to true)
         const deletePromises = [];
         messagesSnapshot.forEach((messageDoc) => {
-            const messageRef = doc(db, 'messages', messageDoc.id);
+            const messageRef = doc(db, 'communities', communityId, 'messages', messageDoc.id);
             deletePromises.push(updateDoc(messageRef, {
                 deleted: true
             }));

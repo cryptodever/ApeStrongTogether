@@ -9,6 +9,21 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "/chat/**",
+        "destination": "/community/**"
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/chat",
+        "destination": "/community",
+        "type": 301
+      }
+    ]
   }
 }
 

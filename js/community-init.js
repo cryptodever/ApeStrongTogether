@@ -321,6 +321,40 @@ async function loadUserCommunities() {
     if (!currentUser) return;
     
     try {
+        const DEFAULT_COMMUNITY_ID = 'default';
+        
+        // Always include default community first
+        const defaultCommunityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
+        const defaultCommunityDoc = await getDoc(defaultCommunityRef);
+        
+        const communities = [];
+        
+        // Add default community if it exists
+        if (defaultCommunityDoc.exists()) {
+            const defaultData = defaultCommunityDoc.data();
+            // Check if user is a member
+            const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', currentUser.uid);
+            const memberDoc = await getDoc(memberRef);
+            
+            if (memberDoc.exists() || defaultData.isDefault) {
+                // Auto-join if not already a member
+                if (!memberDoc.exists()) {
+                    await setDoc(memberRef, {
+                        userId: currentUser.uid,
+                        role: 'member',
+                        joinedAt: serverTimestamp()
+                    });
+                }
+                
+                communities.push({ 
+                    id: DEFAULT_COMMUNITY_ID, 
+                    ...defaultData,
+                    isDefault: true
+                });
+            }
+        }
+        
+        // Get communities created by user
         const communitiesRef = collection(db, 'communities');
         const q = query(
             communitiesRef,
@@ -328,15 +362,38 @@ async function loadUserCommunities() {
         );
         const snapshot = await getDocs(q);
         
-        const createdCommunities = [];
         snapshot.forEach(doc => {
-            createdCommunities.push({ id: doc.id, ...doc.data() });
+            // Don't add default community twice
+            if (doc.id !== DEFAULT_COMMUNITY_ID) {
+                communities.push({ id: doc.id, ...doc.data() });
+            }
         });
         
-        // Also get communities where user is a member
-        // Note: This requires a different approach since we can't query subcollections directly
-        // We'll load all public communities and filter by membership in the channel switcher
-        userCommunities = createdCommunities;
+        // Get communities where user is a member (by checking members subcollection)
+        // Note: This is limited - we check known communities
+        // For better performance, consider maintaining a userCommunities array in user profile
+        const allCommunitiesQuery = query(
+            communitiesRef,
+            where('isPublic', '==', true),
+            limit(50)
+        );
+        const allCommunitiesSnapshot = await getDocs(allCommunitiesQuery);
+        
+        for (const commDoc of allCommunitiesSnapshot.docs) {
+            if (commDoc.id === DEFAULT_COMMUNITY_ID) continue; // Already added
+            
+            const memberRef = doc(db, 'communities', commDoc.id, 'members', currentUser.uid);
+            const memberDoc = await getDoc(memberRef);
+            
+            if (memberDoc.exists()) {
+                // Check if already in list
+                if (!communities.find(c => c.id === commDoc.id)) {
+                    communities.push({ id: commDoc.id, ...commDoc.data() });
+                }
+            }
+        }
+        
+        userCommunities = communities;
         
         // Update channel switcher if it exists
         if (window.updateChannelSwitcher) {
