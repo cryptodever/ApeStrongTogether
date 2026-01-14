@@ -431,10 +431,12 @@ service cloud.firestore {
       
       // For list queries, allow authenticated users to list communities they can access
       // Each document in the result is checked individually
+      // Allow listing if community is public, default, user is the creator, or user is a member
       allow list: if isSignedIn() && (
-        resource.data.isPublic == true
-        || resource.data.isDefault == true
-        || exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+        (resource.data.isPublic == true)
+        || (resource.data.isDefault == true)
+        || (resource.data.creatorId == request.auth.uid)
+        || (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)))
       );      
       // Only authenticated users can create communities
       allow create: if isSignedIn()

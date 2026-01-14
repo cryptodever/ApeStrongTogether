@@ -126,9 +126,6 @@ function isOwner() {
 
 // Initialize chat when auth state changes
 onAuthStateChanged(auth, async (user) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:128',message:'Auth state changed',data:{hasUser:!!user,userId:user?.uid||null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     if (user) {
         currentUser = user;
         await loadUserProfile();
@@ -162,17 +159,10 @@ function showMaintenanceMessage() {
     }
 }
 
-// Show chat interface (owner only)
+// Show chat interface
 function showChatInterface() {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:169',message:'showChatInterface called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     const maintenanceEl = document.getElementById('chatMaintenanceMessage');
     const chatContainer = document.querySelector('.chat-container');
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:173',message:'DOM elements found',data:{hasMaintenanceEl:!!maintenanceEl,hasChatContainer:!!chatContainer,chatContainerClasses:chatContainer?.className||null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     
     if (maintenanceEl) {
         maintenanceEl.classList.add('hide');
@@ -180,9 +170,6 @@ function showChatInterface() {
     
     if (chatContainer) {
         chatContainer.classList.remove('hide');
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:178',message:'After removing hide class',data:{chatContainerClasses:chatContainer.className,chatContainerDisplay:getComputedStyle(chatContainer).display,chatContainerHeight:chatContainer.offsetHeight,chatContainerWidth:chatContainer.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
     }
     
     if (document.querySelector('.chat-utility-bar')) {
@@ -287,14 +274,8 @@ async function loadUserProfile() {
 
 // Initialize chat functionality
 async function initializeChat() {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:282',message:'initializeChat called',data:{hasCurrentUser:!!currentUser,hasUserProfile:!!userProfile},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     if (!currentUser || !userProfile) {
         console.error('Cannot initialize chat: user not loaded');
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:285',message:'initializeChat early return - user not loaded',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         return;
     }
 
@@ -321,32 +302,15 @@ async function initializeChat() {
     currentChannelNameEl = document.getElementById('currentChannelName');
     currentChannelDescEl = document.getElementById('currentChannelDesc');
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:310',message:'DOM elements query result',data:{hasChatMessages:!!chatMessagesEl,hasChatInput:!!chatInputEl,hasSendBtn:!!sendBtn,hasChatLayout:!!document.querySelector('.chat-layout'),chatLayoutDisplay:document.querySelector('.chat-layout')?.offsetWidth||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-
     if (!chatMessagesEl || !chatInputEl || !sendBtn) {
         console.error('Chat DOM elements not found');
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:313',message:'ERROR: Critical DOM elements missing',data:{chatMessagesEl:!!chatMessagesEl,chatInputEl:!!chatInputEl,sendBtn:!!sendBtn},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         return;
     }
-
-    // #region agent log
-    const chatLayout = document.querySelector('.chat-layout');
-    const chatContainer = document.querySelector('.chat-container');
-    const chatMainPanel = document.querySelector('.chat-main-panel');
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:353',message:'Before ensureDefaultCommunity - layout check',data:{hasChatLayout:!!chatLayout,hasChatContainer:!!chatContainer,hasChatMainPanel:!!chatMainPanel,containerClasses:chatContainer?.className||null,layoutDisplay:chatLayout?getComputedStyle(chatLayout).display:null,layoutGridCols:chatLayout?getComputedStyle(chatLayout).gridTemplateColumns:null,containerHeight:chatContainer?.offsetHeight||0,containerWidth:chatContainer?.offsetWidth||0,mainPanelHeight:chatMainPanel?.offsetHeight||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     // Ensure default community exists and load channels
     try {
         await ensureDefaultCommunity();
     } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:357',message:'ERROR in ensureDefaultCommunity',data:{errorMessage:error.message,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         console.error('Error ensuring default community:', error);
     }
     
@@ -389,17 +353,6 @@ async function initializeChat() {
     
     // Setup mobile swipe gestures
     setupMobileSwipe();
-    
-    // #region agent log
-    setTimeout(() => {
-        const chatLayout = document.querySelector('.chat-layout');
-        const chatContainer = document.querySelector('.chat-container');
-        const chatMainPanel = document.querySelector('.chat-main-panel');
-        const chatSidebarRight = document.querySelector('.chat-sidebar-right');
-        const channelListSidebar = document.querySelector('.channel-list-sidebar');
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:394',message:'After initialization complete - final layout state',data:{hasChatLayout:!!chatLayout,hasChatContainer:!!chatContainer,hasChatMainPanel:!!chatMainPanel,hasChatSidebarRight:!!chatSidebarRight,hasChannelListSidebar:!!channelListSidebar,containerClasses:chatContainer?.className||null,containerHasHide:chatContainer?.classList.contains('hide')||false,containerDisplay:chatContainer?getComputedStyle(chatContainer).display:null,containerHeight:chatContainer?.offsetHeight||0,containerWidth:chatContainer?.offsetWidth||0,layoutDisplay:chatLayout?getComputedStyle(chatLayout).display:null,layoutGridCols:chatLayout?getComputedStyle(chatLayout).gridTemplateColumns:null,mainPanelDisplay:chatMainPanel?getComputedStyle(chatMainPanel).display:null,mainPanelHeight:chatMainPanel?.offsetHeight||0,mainPanelWidth:chatMainPanel?.offsetWidth||0,sidebarRightDisplay:chatSidebarRight?getComputedStyle(chatSidebarRight).display:null,sidebarRightWidth:chatSidebarRight?.offsetWidth||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    }, 500);
-    // #endregion
 }
 
 // Update channel switcher (called by community module)
