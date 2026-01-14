@@ -31,44 +31,31 @@ service cloud.firestore {
             : (newUp ? 1 : (newDown ? -1 : 0)));
     }
     function isValidVoteUpdate() {
-      // Check that only vote-related fields are being updated (updatedAt is optional)
+      // Check basic requirements: signed in, maps are valid, only vote fields updated
       let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      let hasOnlyVoteKeys = affectedKeys.hasOnly(['upvotes','downvotes','voteScore','updatedAt'])
-        || affectedKeys.hasOnly(['upvotes','downvotes','voteScore']);
-      
-      // Check that upvotes and downvotes are maps
-      let hasValidMaps = request.resource.data.upvotes is map
-        && request.resource.data.downvotes is map
-        && resource.data.upvotes is map
-        && resource.data.downvotes is map;
-      
-      // Verify that the user's vote actually changed (to prevent empty updates)
-      let userUpvoteBefore = voteValue(resource.data.upvotes, request.auth.uid);
-      let userDownvoteBefore = voteValue(resource.data.downvotes, request.auth.uid);
-      let userUpvoteAfter = voteValue(request.resource.data.upvotes, request.auth.uid);
-      let userDownvoteAfter = voteValue(request.resource.data.downvotes, request.auth.uid);
-      let voteChanged = userUpvoteBefore != userUpvoteAfter || userDownvoteBefore != userDownvoteAfter;
-      
-      // Check that user can't have both upvote and downvote after update
-      let noDoubleVote = !(userUpvoteAfter && userDownvoteAfter);
-      
-      // Check that voteScore is an integer and the change matches the vote change
-      let voteScoreValid = request.resource.data.voteScore is int;
-      let expectedChange = voteDelta(
-        userUpvoteBefore,
-        userDownvoteBefore,
-        userUpvoteAfter,
-        userDownvoteAfter
-      );
-      let voteScoreMatches = request.resource.data.voteScore == voteScoreValue(resource.data) + expectedChange;
       
       return isSignedIn()
-        && hasOnlyVoteKeys
-        && hasValidMaps
-        && voteChanged
-        && noDoubleVote
-        && voteScoreValid
-        && voteScoreMatches;
+        // Only vote-related fields updated
+        && (affectedKeys.hasOnly(['upvotes','downvotes','voteScore','updatedAt'])
+          || affectedKeys.hasOnly(['upvotes','downvotes','voteScore']))
+        // Maps are valid
+        && request.resource.data.upvotes is map
+        && request.resource.data.downvotes is map
+        && resource.data.upvotes is map
+        && resource.data.downvotes is map
+        // User's vote changed
+        && (voteValue(resource.data.upvotes, request.auth.uid) != voteValue(request.resource.data.upvotes, request.auth.uid)
+          || voteValue(resource.data.downvotes, request.auth.uid) != voteValue(request.resource.data.downvotes, request.auth.uid))
+        // No double voting
+        && !(voteValue(request.resource.data.upvotes, request.auth.uid) && voteValue(request.resource.data.downvotes, request.auth.uid))
+        // VoteScore is valid integer and matches expected change
+        && request.resource.data.voteScore is int
+        && request.resource.data.voteScore == voteScoreValue(resource.data) + voteDelta(
+          voteValue(resource.data.upvotes, request.auth.uid),
+          voteValue(resource.data.downvotes, request.auth.uid),
+          voteValue(request.resource.data.upvotes, request.auth.uid),
+          voteValue(request.resource.data.downvotes, request.auth.uid)
+        );
     }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";

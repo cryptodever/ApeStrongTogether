@@ -8046,22 +8046,12 @@ body.chat-body > * {
     display: none;
 }
 
-/* Mobile styles for chat page - Telegram-style */
-@media (max-width: 1024px) {
-    .chat-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr;
+/* Tablet styles for chat page - Keep sidebars but adjust widths */
+@media (max-width: 1200px) and (min-width: 769px) {
+    .chat-container > .chat-layout {
+        grid-template-columns: 72px 260px minmax(0, 1fr) 280px;
     }
-
-    .chat-sidebar-left,
-    .chat-sidebar-right {
-        display: none;
-    }
-
-    .chat-main-panel {
-        grid-column: 1;
-        grid-row: 1;
-    }
+}
 
     .chat-utility-bar::before {
         display: none;
@@ -8344,11 +8334,12 @@ body.chat-body > * {
     }
 
     .chat-layout {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 1fr !important;
         gap: 0;
         height: 100%;
         min-height: 100%;
-        display: flex;
-        flex-direction: column;
     }
 
     /* Hide sidebars on mobile */
@@ -8358,6 +8349,8 @@ body.chat-body > * {
     }
 
     .chat-main-panel {
+        grid-column: 1 !important;
+        grid-row: 1;
         border-radius: 0;
         height: 100%;
         min-height: 100%;
@@ -8365,9 +8358,13 @@ body.chat-body > * {
         flex-direction: column;
         width: 100%;
         max-width: 100%;
-        box-shadow: none;
-        background: transparent;
-        border: none;
+        background: rgba(12, 18, 32, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 8px 32px rgba(0, 0, 0, 0.3);
         padding-top: 56px; /* Account for fixed mobile header */
     }
 
