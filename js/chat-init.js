@@ -464,8 +464,8 @@ function setupCommunitySelector() {
         e.stopPropagation();
         if (window.communityModule && window.communityModule.openCommunityModal) {
             window.communityModule.openCommunityModal();
-        } else if (createCommunityBtn) {
-            createCommunityBtn.click();
+        } else {
+            console.warn('Community module not available');
         }
     });
     selectorContainer.appendChild(createBtn);
