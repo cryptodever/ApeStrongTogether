@@ -8051,8 +8051,7 @@ body.chat-body > * {
     .chat-container > .chat-layout {
         grid-template-columns: 72px 260px minmax(0, 1fr) 280px;
     }
-}
-
+    
     .chat-utility-bar::before {
         display: none;
     }
