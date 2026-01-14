@@ -33,6 +33,12 @@ service cloud.firestore {
     function isValidVoteUpdate() {
       // Check basic requirements: signed in, maps are valid, only vote fields updated
       let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      let prevUp = voteValue(resource.data.upvotes, request.auth.uid);
+      let prevDown = voteValue(resource.data.downvotes, request.auth.uid);
+      let newUp = voteValue(request.resource.data.upvotes, request.auth.uid);
+      let newDown = voteValue(request.resource.data.downvotes, request.auth.uid);
+      let expectedDelta = voteDelta(prevUp, prevDown, newUp, newDown);
+      let actualDelta = voteScoreValue(request.resource.data) - voteScoreValue(resource.data);
       
       return isSignedIn()
         // Only vote-related fields updated
@@ -43,19 +49,13 @@ service cloud.firestore {
         && request.resource.data.downvotes is map
         && resource.data.upvotes is map
         && resource.data.downvotes is map
-        // User's vote changed
-        && (voteValue(resource.data.upvotes, request.auth.uid) != voteValue(request.resource.data.upvotes, request.auth.uid)
-          || voteValue(resource.data.downvotes, request.auth.uid) != voteValue(request.resource.data.downvotes, request.auth.uid))
+        // User's vote actually changed
+        && (prevUp != newUp || prevDown != newDown)
         // No double voting
-        && !(voteValue(request.resource.data.upvotes, request.auth.uid) && voteValue(request.resource.data.downvotes, request.auth.uid))
+        && !(newUp && newDown)
         // VoteScore is valid integer and matches expected change
         && request.resource.data.voteScore is int
-        && request.resource.data.voteScore == voteScoreValue(resource.data) + voteDelta(
-          voteValue(resource.data.upvotes, request.auth.uid),
-          voteValue(resource.data.downvotes, request.auth.uid),
-          voteValue(request.resource.data.upvotes, request.auth.uid),
-          voteValue(request.resource.data.downvotes, request.auth.uid)
-        );
+        && actualDelta == expectedDelta;
     }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
