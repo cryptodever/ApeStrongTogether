@@ -621,15 +621,16 @@ exports.makeUserAdmin = functions.region('us-central1').https.onCall(async (data
     const logPrefix = `[makeUserAdmin:${callerUid}]`;
 
     try {
-        // Check if caller is admin (optional check - can be bypassed for first admin setup)
+        // Check if caller is admin
         const callerDoc = await db.collection('users').doc(callerUid).get();
         const callerData = callerDoc.exists ? callerDoc.data() : {};
         const isCallerAdmin = callerData.role === 'admin';
 
-        // Log warning if caller is not admin (but allow for first admin setup)
+        // Only admins can grant admin role
         if (!isCallerAdmin) {
-            console.warn(`${logPrefix} WARNING: Caller is not an admin. Allowing for first admin setup.`);
+            throw new functions.https.HttpsError('permission-denied', 'Only admins can grant admin role');
         }
+
 
         console.log(`${logPrefix} Making user "${username}" an admin`);
 

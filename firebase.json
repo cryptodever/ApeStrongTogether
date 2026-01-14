@@ -11,6 +11,14 @@
     "rules": "storage.rules"
   },
   "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "scripts/**"
+    ],
     "rewrites": [
       {
         "source": "/chat/**",

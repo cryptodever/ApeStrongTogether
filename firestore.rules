@@ -5,8 +5,48 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
     function isValidUsername(u) { return u.matches('^[a-z0-9_]{3,20}$'); }
+    function karmaValue(data) {
+      return (data.karma is int) ? data.karma : 0;
+    }
+    function isValidKarmaDelta(delta) {
+      return delta in [-2, -1, 1, 2];
+    }
+    function isValidKarmaUpdate() {
+      return isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['karma'])
+        && request.resource.data.karma is int
+        && isValidKarmaDelta(karmaValue(request.resource.data) - karmaValue(resource.data));
+    }
 
-    // Public rules version doc
+    function voteValue(voteMap, uid) {
+      return voteMap[uid] == true;
+    }
+    function voteScoreValue(data) {
+      return (data.voteScore is int) ? data.voteScore : 0;
+    }
+    function voteDelta(prevUp, prevDown, newUp, newDown) {
+      return prevUp
+        ? (newUp ? 0 : (newDown ? -2 : -1))
+        : (prevDown ? (newDown ? 0 : (newUp ? 2 : 1))
+            : (newUp ? 1 : (newDown ? -1 : 0)));
+    }
+    function isValidVoteUpdate() {
+      return isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes','downvotes','voteScore','updatedAt'])
+        && request.resource.data.upvotes is map
+        && request.resource.data.downvotes is map
+        && request.resource.data.upvotes.diff(resource.data.upvotes).affectedKeys().hasOnly([request.auth.uid])
+        && request.resource.data.downvotes.diff(resource.data.downvotes).affectedKeys().hasOnly([request.auth.uid])
+        && !(voteValue(resource.data.upvotes, request.auth.uid) && voteValue(resource.data.downvotes, request.auth.uid))
+        && !(voteValue(request.resource.data.upvotes, request.auth.uid) && voteValue(request.resource.data.downvotes, request.auth.uid))
+        && request.resource.data.voteScore is int
+        && request.resource.data.voteScore == voteScoreValue(resource.data) + voteDelta(
+             voteValue(resource.data.upvotes, request.auth.uid),
+             voteValue(resource.data.downvotes, request.auth.uid),
+             voteValue(request.resource.data.upvotes, request.auth.uid),
+             voteValue(request.resource.data.downvotes, request.auth.uid)
+           );
+    }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
       allow write: if false;
@@ -70,8 +110,7 @@ service cloud.firestore {
           && (!('karma' in request.resource.data.diff(resource.data).affectedKeys())))
         ||
         // Any authenticated user updating karma (when voting on posts)
-        (isSignedIn()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['karma']))
+        (isValidKarmaUpdate())
         ||
         // Admin/moderator updating role or mutedUntil (for moderation)
         // updateDoc only sends changed fields in request.resource.data
@@ -126,13 +165,19 @@ service cloud.firestore {
       // Admins can update any message (for moderation)
       // Community admins/moderators can update messages in their communities
       allow update: if isSignedIn() && (
-        (resource.data.userId == request.auth.uid) ||
-        isAdminOrMod(request.auth.uid) ||
+        (resource.data.userId == request.auth.uid
+          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
+        ||
+        isAdminOrMod(request.auth.uid)
+        ||
         // Community admin/moderator can update messages in their community
         ('communityId' in resource.data 
           && resource.data.communityId is string
           && exists(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid))
-          && get(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'moderator'])
+          && get(/databases/$(database)/documents/communities/$(resource.data.communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'moderator']
+          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
       );
       
       // Users can delete their own messages (soft delete)
@@ -273,13 +318,15 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         // Post author updating their own post
         (resource.data.userId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'images', 'videos', 'deleted', 'editedAt', 'updatedAt'])
           && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
           && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
         ||
         // Any authenticated user updating votes (for upvoting/downvoting)
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes', 'voteScore', 'updatedAt'])
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt'])
-          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes', 'voteScore', 'commentsCount', 'updatedAt']))
+        (isValidVoteUpdate())
+        ||
+        // Any authenticated user updating commentsCount
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt']))
       );
       
       allow delete: if false; // Use soft delete (update deleted flag) instead
@@ -297,11 +344,12 @@ service cloud.firestore {
           && request.resource.data.content is string
           && request.resource.data.deleted == false;
         
-        // Comment authors can update their own comments (for deleting)
-        allow update: if isSignedIn()
-          && resource.data.userId == request.auth.uid
-          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
-          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username);
+      // Comment authors can update their own comments (for deleting)
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'deleted', 'editedAt', 'updatedAt'])
+        && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+        && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username);
         
         allow delete: if false; // Use soft delete (update deleted flag) instead
       }
@@ -367,10 +415,12 @@ service cloud.firestore {
       // Anyone can read public communities
       // Users can read private communities they are members of
       // Default community is always readable
-      allow get: if true || 
-        (isSignedIn() && resource.data.isDefault == true);
-      allow list: if true; // Queries will filter by isPublic or membership
-      
+      allow get: if resource.data.isPublic == true
+        || resource.data.isDefault == true
+        || (isSignedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)));
+      allow list: if resource.data.isPublic == true
+        || resource.data.isDefault == true
+        || (isSignedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)));      
       // Only authenticated users can create communities
       allow create: if isSignedIn()
         && request.resource.data.creatorId == request.auth.uid
@@ -488,11 +538,16 @@ service cloud.firestore {
         // Message author can update their own messages (with 5-minute edit limit)
         // Community admins/moderators can update messages
         allow update: if isSignedIn() && (
-          (resource.data.userId == request.auth.uid &&
-           resource.data.timestamp.seconds > (request.time.seconds - 300)) ||
-          (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
-            && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'moderator'])
-        );
+        (resource.data.userId == request.auth.uid &&
+         resource.data.timestamp.seconds > (request.time.seconds - 300) &&
+         (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId) &&
+         (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
+        ||
+        (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+          && get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'moderator']
+          && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
+          && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
+      );
         
         // Message author can delete (soft delete via update)
         // Community admins/moderators can delete
