@@ -133,25 +133,9 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         await loadUserProfile();
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:133',message:'After loadUserProfile',data:{hasUserProfile:!!userProfile,username:userProfile?.username||null,isOwnerResult:isOwner()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
-        // Check if user is owner
-        if (isOwner()) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:136',message:'Owner check passed - showing chat',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
-            // Owner can see chat
-            showChatInterface();
-            initializeChat();
-        } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:140',message:'Owner check failed - showing maintenance',data:{username:userProfile?.username||null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
-            // Non-owners see maintenance message
-            showMaintenanceMessage();
-        }
+        // Show chat interface for all authenticated users
+        showChatInterface();
+        initializeChat();
     } else {
         currentUser = null;
         userProfile = null;
