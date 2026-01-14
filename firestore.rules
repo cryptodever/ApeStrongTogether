@@ -31,21 +31,44 @@ service cloud.firestore {
             : (newUp ? 1 : (newDown ? -1 : 0)));
     }
     function isValidVoteUpdate() {
-      return isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes','downvotes','voteScore','updatedAt'])
-        && request.resource.data.upvotes is map
+      // Check that only vote-related fields are being updated (updatedAt is optional)
+      let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      let hasOnlyVoteKeys = affectedKeys.hasOnly(['upvotes','downvotes','voteScore','updatedAt'])
+        || affectedKeys.hasOnly(['upvotes','downvotes','voteScore']);
+      
+      // Check that upvotes and downvotes are maps
+      let hasValidMaps = request.resource.data.upvotes is map
         && request.resource.data.downvotes is map
-        && request.resource.data.upvotes.diff(resource.data.upvotes).affectedKeys().hasOnly([request.auth.uid])
-        && request.resource.data.downvotes.diff(resource.data.downvotes).affectedKeys().hasOnly([request.auth.uid])
-        && !(voteValue(resource.data.upvotes, request.auth.uid) && voteValue(resource.data.downvotes, request.auth.uid))
-        && !(voteValue(request.resource.data.upvotes, request.auth.uid) && voteValue(request.resource.data.downvotes, request.auth.uid))
-        && request.resource.data.voteScore is int
-        && request.resource.data.voteScore == voteScoreValue(resource.data) + voteDelta(
-             voteValue(resource.data.upvotes, request.auth.uid),
-             voteValue(resource.data.downvotes, request.auth.uid),
-             voteValue(request.resource.data.upvotes, request.auth.uid),
-             voteValue(request.resource.data.downvotes, request.auth.uid)
-           );
+        && resource.data.upvotes is map
+        && resource.data.downvotes is map;
+      
+      // Verify that the user's vote actually changed (to prevent empty updates)
+      let userUpvoteBefore = voteValue(resource.data.upvotes, request.auth.uid);
+      let userDownvoteBefore = voteValue(resource.data.downvotes, request.auth.uid);
+      let userUpvoteAfter = voteValue(request.resource.data.upvotes, request.auth.uid);
+      let userDownvoteAfter = voteValue(request.resource.data.downvotes, request.auth.uid);
+      let voteChanged = userUpvoteBefore != userUpvoteAfter || userDownvoteBefore != userDownvoteAfter;
+      
+      // Check that user can't have both upvote and downvote after update
+      let noDoubleVote = !(userUpvoteAfter && userDownvoteAfter);
+      
+      // Check that voteScore is an integer and the change matches the vote change
+      let voteScoreValid = request.resource.data.voteScore is int;
+      let expectedChange = voteDelta(
+        userUpvoteBefore,
+        userDownvoteBefore,
+        userUpvoteAfter,
+        userDownvoteAfter
+      );
+      let voteScoreMatches = request.resource.data.voteScore == voteScoreValue(resource.data) + expectedChange;
+      
+      return isSignedIn()
+        && hasOnlyVoteKeys
+        && hasValidMaps
+        && voteChanged
+        && noDoubleVote
+        && voteScoreValid
+        && voteScoreMatches;
     }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
@@ -418,9 +441,14 @@ service cloud.firestore {
       allow get: if resource.data.isPublic == true
         || resource.data.isDefault == true
         || (isSignedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)));
-      allow list: if resource.data.isPublic == true
+      
+      // For list queries, allow authenticated users to list communities they can access
+      // Each document in the result is checked individually
+      allow list: if isSignedIn() && (
+        resource.data.isPublic == true
         || resource.data.isDefault == true
-        || (isSignedIn() && exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)));      
+        || exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid))
+      );      
       // Only authenticated users can create communities
       allow create: if isSignedIn()
         && request.resource.data.creatorId == request.auth.uid
