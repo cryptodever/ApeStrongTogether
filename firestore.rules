@@ -19,7 +19,8 @@ service cloud.firestore {
     }
 
     function voteValue(voteMap, uid) {
-      return voteMap[uid] == true;
+      // Handle case where voteMap doesn't exist (returns false, meaning no vote)
+      return (voteMap is map) && voteMap[uid] == true;
     }
     function voteScoreValue(data) {
       return (data.voteScore is int) ? data.voteScore : 0;
@@ -33,8 +34,14 @@ service cloud.firestore {
     function isValidVoteUpdate() {
       // Check basic requirements: signed in, maps are valid, only vote fields updated
       let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      let prevUp = voteValue(resource.data.upvotes, request.auth.uid);
-      let prevDown = voteValue(resource.data.downvotes, request.auth.uid);
+      
+      // Safely get vote values, handling missing maps
+      let prevUp = ('upvotes' in resource.data && resource.data.upvotes is map) 
+                   ? voteValue(resource.data.upvotes, request.auth.uid) 
+                   : false;
+      let prevDown = ('downvotes' in resource.data && resource.data.downvotes is map)
+                     ? voteValue(resource.data.downvotes, request.auth.uid)
+                     : false;
       let newUp = voteValue(request.resource.data.upvotes, request.auth.uid);
       let newDown = voteValue(request.resource.data.downvotes, request.auth.uid);
       let expectedDelta = voteDelta(prevUp, prevDown, newUp, newDown);
@@ -58,7 +65,7 @@ service cloud.firestore {
       // serverTimestamp() sentinel is handled by Firestore, rules see it as a timestamp field
       
       return isSignedIn()
-        // Required vote fields must be updated (all three: upvotes, downvotes, voteScore)
+        // Required vote fields must be updated (upvotes and voteScore)
         && hasRequiredFields
         // No forbidden fields can be updated (allows upvotes, downvotes, voteScore, and updatedAt)
         && noForbiddenFields

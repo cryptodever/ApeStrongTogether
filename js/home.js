@@ -1461,13 +1461,27 @@ async function handleActivityVote(postId, voteType) {
         
         // #region agent log
         const updateData = {upvotes: newUpvotes, downvotes: newDownvotes, voteScore: newVoteScore};
-        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3)))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
+        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3))),upvotesKeysCount:Object.keys(newUpvotes).length,downvotesKeysCount:Object.keys(newDownvotes).length,newVoteScore,currentVoteScore,expectedDelta:voteChange},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
         console.log('[DEBUG]', JSON.stringify(logEntry5));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry5)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
         
         // Update post - always include all three fields
-        await updateDoc(postRef, updateData);
+        try {
+            await updateDoc(postRef, updateData);
+            // #region agent log
+            const logEntry6 = {location:'home.js:1456',message:'updateDoc succeeded',data:{postId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SUCCESS'};
+            console.log('[DEBUG]', JSON.stringify(logEntry6));
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry6)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
+            // #endregion
+        } catch (updateError) {
+            // #region agent log
+            const logEntry7 = {location:'home.js:1461',message:'updateDoc failed',data:{errorCode:updateError.code,errorMessage:updateError.message,postId,updateDataKeys:Object.keys(updateData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'UPDATE_ERROR'};
+            console.log('[DEBUG]', JSON.stringify(logEntry7));
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry7)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
+            // #endregion
+            throw updateError;
+        }
         
         // #region agent log
         const logEntry6 = {location:'home.js:1444',message:'updateDoc succeeded',data:{postId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
