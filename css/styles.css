@@ -18149,7 +18149,7 @@ body.chat-body {
         max-width: calc(1920px - 320px - 2rem) !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         display: flex !important;
@@ -18164,7 +18164,7 @@ body.chat-body {
         width: 100% !important;
         max-width: min(1920px, 100%) !important;
         box-sizing: border-box !important;
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -18174,7 +18174,7 @@ body.chat-body {
     body.chat-body .chat-main-panel {
         max-width: 100% !important;
         width: 100% !important;
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
     }
@@ -18236,47 +18236,27 @@ body.chat-body html {
     overflow-x: hidden !important;
 }
 
-/* Ensure main panel doesn't get cut off by sidebar - strict clipping */
+/* Ensure main panel doesn't get cut off by sidebar */
 @media (min-width: 769px) {
     body.chat-body .chat-main-panel {
         max-width: 100% !important;
         width: 100% !important;
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
     }
     
-    /* Force container to respect right boundary with strict clipping */
+    /* Force container to respect right boundary */
     body.chat-body .chat-container {
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
-        clip-path: inset(0 320px 0 0) !important;
     }
     
     /* Ensure grid doesn't overflow */
     body.chat-body .chat-layout {
-        overflow-x: clip !important;
+        overflow-x: hidden !important;
         overflow: hidden !important;
         max-width: 100% !important;
-    }
-}
-
-/* Responsive clip-path adjustments */
-@media (min-width: 769px) and (max-width: 1400px) {
-    body.chat-body .chat-container {
-        clip-path: inset(0 300px 0 0) !important;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1300px) {
-    body.chat-body .chat-container {
-        clip-path: inset(0 290px 0 0) !important;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1200px) {
-    body.chat-body .chat-container {
-        clip-path: inset(0 280px 0 0) !important;
     }
 }
 
