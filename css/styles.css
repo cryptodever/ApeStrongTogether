@@ -18144,13 +18144,13 @@ body.chat-body {
 /* Center the chat layout with max-width for clean appearance */
 @media (min-width: 769px) {
     body.chat-body .chat-container {
-        left: 0 !important;
+        left: 2rem !important;
         right: 320px !important;
-        width: auto !important;
-        max-width: none !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        overflow-x: hidden !important;
+        width: calc(100% - 320px - 2rem) !important;
+        max-width: calc(1920px - 320px - 2rem) !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
     }
@@ -18161,12 +18161,17 @@ body.chat-body {
         margin-right: auto !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
+        overflow: hidden !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
     
     body.chat-body .chat-main-panel {
         max-width: 100% !important;
-        overflow-x: hidden !important;
+        width: 100% !important;
+        overflow-x: clip !important;
+        overflow: hidden !important;
         box-sizing: border-box !important;
     }
 }
@@ -18174,18 +18179,24 @@ body.chat-body {
 @media (min-width: 769px) and (max-width: 1400px) {
     body.chat-body .chat-container {
         right: 300px !important;
+        width: calc(100% - 300px - 2rem) !important;
+        max-width: calc(1920px - 300px - 2rem) !important;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1300px) {
     body.chat-body .chat-container {
         right: 290px !important;
+        width: calc(100% - 290px - 2rem) !important;
+        max-width: calc(1920px - 290px - 2rem) !important;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1200px) {
     body.chat-body .chat-container {
         right: 280px !important;
+        width: calc(100% - 280px - 2rem) !important;
+        max-width: calc(1920px - 280px - 2rem) !important;
     }
 }
 
@@ -18198,7 +18209,7 @@ body.chat-body .chat-sidebar-right {
     width: 320px !important;
     min-width: 320px !important;
     max-width: 320px !important;
-    z-index: 999 !important;
+    z-index: 100 !important;
     border-right: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
