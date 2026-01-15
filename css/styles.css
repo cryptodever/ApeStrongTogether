@@ -7572,6 +7572,7 @@ body.chat-body > * {
     box-sizing: border-box;
 }
 
+
 /* ============================================
    MOBILE HEADER (<=768px)
    ============================================ */
@@ -18128,16 +18129,7 @@ body:has(.modal-overlay.show) {
 }
 
 /* ============================================
-   EDGE-TO-EDGE LAYOUT OVERRIDE
-   Fixed positioning for members sidebar to ensure it's always at far right edge
-   ============================================ */
-/* ============================================
-   EDGE-TO-EDGE LAYOUT OVERRIDE
-   Fixed positioning for members sidebar to ensure it's always at far right edge
-   ============================================ */
-/* ============================================
-   EDGE-TO-EDGE LAYOUT OVERRIDE
-   Fixed positioning for members sidebar to ensure it's always at far right edge
+   DESKTOP LAYOUT - CLEAN CENTERED DESIGN
    ============================================ */
 body.chat-body {
     overflow-x: hidden !important;
@@ -18146,51 +18138,68 @@ body.chat-body {
     position: relative !important;
 }
 
+/* Center the chat layout with max-width for clean appearance */
+@media (min-width: 769px) {
+    body.chat-body .chat-container {
+        left: 2rem !important;
+        right: calc(320px + 2rem) !important;
+        max-width: 1920px !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1400px) {
+    body.chat-body .chat-container {
+        right: calc(300px + 2rem) !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1300px) {
+    body.chat-body .chat-container {
+        right: calc(290px + 2rem) !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    body.chat-body .chat-container {
+        right: calc(280px + 2rem) !important;
+    }
+}
+
+/* Members sidebar - fixed to viewport right edge */
 body.chat-body .chat-sidebar-right {
-    /* Fixed positioning ensures sidebar is always at far right edge of viewport */
     position: fixed !important;
-    inset: 80px 0 0 auto !important;
+    top: 80px !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 320px !important;
     min-width: 320px !important;
     max-width: 320px !important;
     z-index: 999 !important;
     border-right: none !important;
     border-radius: 0 !important;
-    margin-right: 0 !important;
-    padding-right: 0 !important;
-    transform: translateX(0) !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
-    margin-left: auto !important;
-    outline: none !important;
     grid-column: unset !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    /* Force to viewport edge - override any parent constraints */
-    left: auto !important;
-    right: 0 !important;
 }
 
-/* Ensure parent containers don't constrain the fixed sidebar */
-body.chat-body .chat-page,
-body.chat-body .chat-container,
-body.chat-body .chat-layout {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
+/* Adjust main panel to account for fixed sidebar width - ensure it doesn't get cut off */
+body.chat-body .chat-main-panel {
+    margin-right: 320px !important;
+    max-width: calc(100% - 320px) !important;
     overflow-x: hidden !important;
 }
 
-/* Adjust main panel to account for fixed sidebar width */
-body.chat-body .chat-main-panel {
-    margin-right: 320px !important;
-}
-
-/* Responsive sidebar width adjustments */
+/* Responsive adjustments */
 @media (max-width: 1400px) {
     body.chat-body .chat-sidebar-right {
         width: 300px !important;
     }
     body.chat-body .chat-main-panel {
         margin-right: 300px !important;
+        max-width: calc(100% - 300px) !important;
     }
 }
 
@@ -18200,6 +18209,7 @@ body.chat-body .chat-main-panel {
     }
     body.chat-body .chat-main-panel {
         margin-right: 290px !important;
+        max-width: calc(100% - 290px) !important;
     }
 }
 
@@ -18209,6 +18219,14 @@ body.chat-body .chat-main-panel {
     }
     body.chat-body .chat-main-panel {
         margin-right: 280px !important;
+        max-width: calc(100% - 280px) !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    body.chat-body .chat-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 }
 
