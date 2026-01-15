@@ -51,8 +51,12 @@ service cloud.firestore {
       let prevDown = ('downvotes' in resource.data && resource.data.downvotes is map)
                      ? voteValue(resource.data.downvotes, request.auth.uid)
                      : false;
-      let newUp = voteValue(request.resource.data.upvotes, request.auth.uid);
-      let newDown = voteValue(request.resource.data.downvotes, request.auth.uid);
+      let newUp = ('upvotes' in request.resource.data && request.resource.data.upvotes is map)
+                  ? voteValue(request.resource.data.upvotes, request.auth.uid)
+                  : false;
+      let newDown = ('downvotes' in request.resource.data && request.resource.data.downvotes is map)
+                    ? voteValue(request.resource.data.downvotes, request.auth.uid)
+                    : false;
       let expectedDelta = voteDelta(prevUp, prevDown, newUp, newDown);
       let actualDelta = voteScoreValue(request.resource.data) - voteScoreValue(resource.data);
       
