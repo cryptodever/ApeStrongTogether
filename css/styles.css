@@ -18193,4 +18193,53 @@ body.chat-body .chat-sidebar-right {
     margin-right: 0 !important;
     padding-right: 0 !important;
     border-right: none !important;
+    position: fixed !important;
+    right: 0 !important;
+    top: 80px !important;
+    bottom: 0 !important;
+    width: 320px !important;
+    z-index: 999 !important;
+}
+
+/* Adjust main panel to account for fixed sidebar */
+body.chat-body .chat-main-panel {
+    margin-right: 320px !important;
+}
+
+/* On smaller screens, adjust sidebar width */
+@media (max-width: 1400px) {
+    body.chat-body .chat-sidebar-right {
+        width: 300px !important;
+    }
+    body.chat-body .chat-main-panel {
+        margin-right: 300px !important;
+    }
+}
+
+@media (max-width: 1300px) {
+    body.chat-body .chat-sidebar-right {
+        width: 290px !important;
+    }
+    body.chat-body .chat-main-panel {
+        margin-right: 290px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    body.chat-body .chat-sidebar-right {
+        width: 280px !important;
+    }
+    body.chat-body .chat-main-panel {
+        margin-right: 280px !important;
+    }
+}
+
+/* Hide sidebar on mobile */
+@media (max-width: 768px) {
+    body.chat-body .chat-sidebar-right {
+        display: none !important;
+    }
+    body.chat-body .chat-main-panel {
+        margin-right: 0 !important;
+    }
 }
