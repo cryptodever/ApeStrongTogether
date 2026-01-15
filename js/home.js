@@ -1454,24 +1454,20 @@ async function handleActivityVote(postId, voteType) {
         const newVoteScore = currentVoteScore + voteChange;
         
         // #region agent log
-        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
+        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:JSON.stringify(downvotes)===JSON.stringify(newDownvotes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
         console.log('[DEBUG]', JSON.stringify(logEntry4));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
         
         // #region agent log
         const updateData = {upvotes: newUpvotes, downvotes: newDownvotes, voteScore: newVoteScore};
-        const logEntry5 = {location:'home.js:1439',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3)))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
+        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3)))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
         console.log('[DEBUG]', JSON.stringify(logEntry5));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry5)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
         
-        // Update post (updatedAt removed to avoid Firestore rules issues with serverTimestamp)
-        await updateDoc(postRef, {
-            upvotes: newUpvotes,
-            downvotes: newDownvotes,
-            voteScore: newVoteScore
-        });
+        // Update post - always include all three fields
+        await updateDoc(postRef, updateData);
         
         // #region agent log
         const logEntry6 = {location:'home.js:1444',message:'updateDoc succeeded',data:{postId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
