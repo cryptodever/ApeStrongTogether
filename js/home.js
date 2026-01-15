@@ -1399,7 +1399,7 @@ async function handleActivityVote(postId, voteType) {
         const currentVoteScore = postData.voteScore || 0;
         
         // #region agent log
-        const logEntry2 = {location:'home.js:1390',message:'Post data loaded',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,hasUpvotesMap:upvotes instanceof Object,hasDownvotesMap:downvotes instanceof Object},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
+        const logEntry2 = {location:'home.js:1390',message:'Post data loaded',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,hasUpvotesMap:upvotes instanceof Object,hasDownvotesMap:downvotes instanceof Object,postDataKeys:Object.keys(postData),hasVoteScoreInPost:'voteScore' in postData,voteScoreType:typeof postData.voteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
         console.log('[DEBUG]', JSON.stringify(logEntry2));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry2)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion

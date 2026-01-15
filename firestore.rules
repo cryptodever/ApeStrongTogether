@@ -78,9 +78,13 @@ service cloud.firestore {
         && (prevUp != newUp || prevDown != newDown)
         // No double voting
         && !(newUp && newDown)
-        // VoteScore is valid integer and matches expected change
+        // VoteScore is valid integer
         && request.resource.data.voteScore is int
-        && actualDelta == expectedDelta;
+        // Delta check - ensure the change matches expected
+        // If original voteScore doesn't exist, new voteScore should equal expectedDelta
+        // Otherwise, the delta should match
+        && (('voteScore' in resource.data && actualDelta == expectedDelta)
+            || (!('voteScore' in resource.data) && request.resource.data.voteScore == expectedDelta));
     }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
