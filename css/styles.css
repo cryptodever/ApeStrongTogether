@@ -10993,6 +10993,7 @@ body.leaderboard-body > * {
     gap: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+    align-items: start;
 }
 
 .leaderboard-column {
@@ -11002,6 +11003,9 @@ body.leaderboard-body > * {
     padding: 1.5rem;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .leaderboard-column-header {
@@ -11029,6 +11033,8 @@ body.leaderboard-body > * {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    flex: 1;
+    min-height: 0;
 }
 
 .leaderboard-item {
