@@ -3,45 +3,6 @@
  * Handles real-time chat functionality with Firestore
  */
 
-// #region agent log - Debug instrumentation for sidebar positioning
-function debugSidebarLayout() {
-    const sidebar = document.getElementById('chatSidebarRight');
-    const container = document.querySelector('.chat-container');
-    const layout = document.querySelector('.chat-layout');
-    const chatPage = document.querySelector('.chat-page');
-    const body = document.body;
-    
-    if (!sidebar || !container || !layout) {
-        console.log('[DEBUG] Elements not found', {sidebar:!!sidebar,container:!!container,layout:!!layout});
-        return;
-    }
-    
-    const sidebarRect = sidebar.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const layoutRect = layout.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const distanceFromRight = viewportWidth - sidebarRect.right;
-    
-    const sidebarStyles = window.getComputedStyle(sidebar);
-    const containerStyles = window.getComputedStyle(container);
-    const layoutStyles = window.getComputedStyle(layout);
-    
-    console.log('[DEBUG] Sidebar positioning:', {
-        sidebarRight: sidebarRect.right,
-        viewportWidth,
-        distanceFromRight,
-        containerWidth: containerStyles.width,
-        containerMaxWidth: containerStyles.maxWidth,
-        containerMarginLeft: containerStyles.marginLeft,
-        containerMarginRight: containerStyles.marginRight,
-        layoutWidth: layoutStyles.width,
-        layoutGap: layoutStyles.gap,
-        sidebarWidth: sidebarStyles.width,
-        sidebarGridColumn: sidebarStyles.gridColumn
-    });
-}
-// #endregion
-
 import { auth, db, app } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
@@ -172,12 +133,6 @@ onAuthStateChanged(auth, async (user) => {
         // Show chat interface for all authenticated users
         showChatInterface();
         initializeChat();
-        
-        // #region agent log - Debug sidebar layout after initialization
-        setTimeout(() => {
-            debugSidebarLayout();
-        }, 500);
-        // #endregion
     } else {
         currentUser = null;
         userProfile = null;
@@ -185,24 +140,6 @@ onAuthStateChanged(auth, async (user) => {
         showMaintenanceMessage();
     }
 });
-
-// #region agent log - Debug sidebar layout on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => debugSidebarLayout(), 1000);
-    });
-} else {
-    setTimeout(() => debugSidebarLayout(), 1000);
-}
-
-window.addEventListener('load', () => {
-    setTimeout(() => debugSidebarLayout(), 1500);
-});
-
-window.addEventListener('resize', () => {
-    setTimeout(() => debugSidebarLayout(), 100);
-});
-// #endregion
 
 // Show maintenance message
 function showMaintenanceMessage() {
