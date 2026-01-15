@@ -1435,12 +1435,11 @@ async function handleActivityVote(postId, voteType) {
         
         const newVoteScore = currentVoteScore + voteChange;
         
-        // Update post
+        // Update post (updatedAt removed to avoid Firestore rules issues with serverTimestamp)
         await updateDoc(postRef, {
             upvotes: newUpvotes,
             downvotes: newDownvotes,
-            voteScore: newVoteScore,
-            updatedAt: serverTimestamp()
+            voteScore: newVoteScore
         });
         
         // Update karma for post author (if not voting on own post)

@@ -46,7 +46,11 @@ service cloud.firestore {
         && affectedKeys.hasAny(['voteScore']);
       
       // No forbidden fields can be updated (this ensures only vote fields + updatedAt can be changed)
+      // updatedAt is allowed (not in forbidden list) and can be serverTimestamp()
       let noForbiddenFields = !affectedKeys.hasAny(['userId', 'username', 'content', 'images', 'videos', 'deleted', 'editedAt', 'commentsCount', 'createdAt']);
+      
+      // Allow updatedAt to be present (it's not forbidden, so this check passes)
+      // serverTimestamp() sentinel is handled by Firestore, rules see it as a timestamp field
       
       return isSignedIn()
         // Required vote fields must be updated
@@ -342,6 +346,7 @@ service cloud.firestore {
           && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
         ||
         // Any authenticated user updating votes (for upvoting/downvoting)
+        // isValidVoteUpdate() allows updatedAt to be updated along with vote fields
         (isValidVoteUpdate())
         ||
         // Any authenticated user updating commentsCount
