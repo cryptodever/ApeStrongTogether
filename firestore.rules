@@ -64,29 +64,25 @@ service cloud.firestore {
       // Allow updatedAt to be present (it's not forbidden, so this check passes)
       // serverTimestamp() sentinel is handled by Firestore, rules see it as a timestamp field
       
-      // Temporarily remove delta check to isolate the issue
-      // Basic validation checks
-      let basicValidation = isSignedIn()
-        && hasRequiredFields
-        && noForbiddenFields;
+      // All checks combined - delta check re-enabled
+      // Ensure both old and new voteScore are integers
+      let oldVoteScoreIsInt = !('voteScore' in resource.data) || resource.data.voteScore is int;
+      let deltaCheck = ('voteScore' in resource.data) 
+        ? (actualDelta == expectedDelta)
+        : (request.resource.data.voteScore == expectedDelta);
       
-      // Map validation
-      let mapValidation = request.resource.data.upvotes is map
+      return isSignedIn()
+        && hasRequiredFields
+        && noForbiddenFields
+        && request.resource.data.upvotes is map
         && request.resource.data.downvotes is map
         && (!('upvotes' in resource.data) || resource.data.upvotes is map)
-        && (!('downvotes' in resource.data) || resource.data.downvotes is map);
-      
-      // Vote logic validation
-      let voteValidation = (prevUp != newUp || prevDown != newDown)
+        && (!('downvotes' in resource.data) || resource.data.downvotes is map)
+        && (prevUp != newUp || prevDown != newDown)
         && !(newUp && newDown)
-        && request.resource.data.voteScore is int;
-      
-      // Delta validation - temporarily simplified
-      let deltaValidation = true; // Temporarily disabled to test
-      // Original: (('voteScore' in resource.data && actualDelta == expectedDelta)
-      //           || (!('voteScore' in resource.data) && request.resource.data.voteScore == expectedDelta));
-      
-      return basicValidation && mapValidation && voteValidation && deltaValidation;
+        && request.resource.data.voteScore is int
+        && oldVoteScoreIsInt
+        && deltaCheck;
     }    // Public rules version doc
     match /meta/{docId} {
       allow read: if docId == "rules";
