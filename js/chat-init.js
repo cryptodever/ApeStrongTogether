@@ -12,26 +12,33 @@ function debugSidebarLayout() {
     const body = document.body;
     
     if (!sidebar || !container || !layout) {
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:8',message:'Elements not found',data:{sidebar:!!sidebar,container:!!container,layout:!!layout},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        console.log('[DEBUG] Elements not found', {sidebar:!!sidebar,container:!!container,layout:!!layout});
         return;
     }
     
     const sidebarRect = sidebar.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const layoutRect = layout.getBoundingClientRect();
-    const bodyRect = body.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
+    const distanceFromRight = viewportWidth - sidebarRect.right;
     
     const sidebarStyles = window.getComputedStyle(sidebar);
     const containerStyles = window.getComputedStyle(container);
     const layoutStyles = window.getComputedStyle(layout);
-    const chatPageStyles = window.getComputedStyle(chatPage);
-    const bodyStyles = window.getComputedStyle(body);
     
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:30',message:'Sidebar positioning debug',data:{sidebarRect:{left:sidebarRect.left,right:sidebarRect.right,width:sidebarRect.width},containerRect:{left:containerRect.left,right:containerRect.right,width:containerRect.width},layoutRect:{left:layoutRect.left,right:layoutRect.right,width:layoutRect.width},viewportWidth,bodyRect:{left:bodyRect.left,right:bodyRect.right,width:bodyRect.width},sidebarStyles:{width:sidebarStyles.width,marginLeft:sidebarStyles.marginLeft,marginRight:sidebarStyles.marginRight,paddingLeft:sidebarStyles.paddingLeft,paddingRight:sidebarStyles.paddingRight,gridColumn:sidebarStyles.gridColumn},containerStyles:{width:containerStyles.width,maxWidth:containerStyles.maxWidth,marginLeft:containerStyles.marginLeft,marginRight:containerStyles.marginRight,paddingLeft:containerStyles.paddingLeft,paddingRight:containerStyles.paddingRight},layoutStyles:{width:layoutStyles.width,gridTemplateColumns:layoutStyles.gridTemplateColumns,gap:layoutStyles.gap},chatPageStyles:{width:chatPageStyles.width,paddingLeft:chatPageStyles.paddingLeft,paddingRight:chatPageStyles.paddingRight},bodyStyles:{width:bodyStyles.width,paddingLeft:bodyStyles.paddingLeft,paddingRight:bodyStyles.paddingRight}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    
-    const distanceFromRight = viewportWidth - sidebarRect.right;
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:45',message:'Distance from right edge',data:{distanceFromRight,expectedDistance:0,isAtEdge:distanceFromRight<5},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    console.log('[DEBUG] Sidebar positioning:', {
+        sidebarRight: sidebarRect.right,
+        viewportWidth,
+        distanceFromRight,
+        containerWidth: containerStyles.width,
+        containerMaxWidth: containerStyles.maxWidth,
+        containerMarginLeft: containerStyles.marginLeft,
+        containerMarginRight: containerStyles.marginRight,
+        layoutWidth: layoutStyles.width,
+        layoutGap: layoutStyles.gap,
+        sidebarWidth: sidebarStyles.width,
+        sidebarGridColumn: sidebarStyles.gridColumn
+    });
 }
 // #endregion
 

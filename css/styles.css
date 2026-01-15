@@ -12,12 +12,16 @@
 html {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    width: 100%;
+    max-width: 100%;
 }
 
 body {
     overflow-x: hidden;
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
 }
 
 body.no-scroll {
@@ -7361,8 +7365,12 @@ body.chat-body {
     line-height: 1.6;
     min-height: 100vh;
     padding: 0;
+    margin: 0;
     position: relative;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Gradient overlay - matches other pages */
@@ -7544,6 +7552,9 @@ body.chat-body > * {
     width: 100%;
     max-width: 100%;
     margin: 0;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
 }
 
 /* ============================================
@@ -7659,6 +7670,8 @@ body.chat-body > * {
     overflow: hidden;
     min-height: 0;
     box-sizing: border-box;
+    left: 0;
+    right: 0;
 }
 
 .chat-container:not(.hide) {
@@ -7676,6 +7689,9 @@ body.chat-body > * {
     position: relative;
     width: 100%;
     max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 /* Community selector sits in the first grid column */
