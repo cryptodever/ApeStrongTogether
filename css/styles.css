@@ -7557,6 +7557,20 @@ body.chat-body > * {
     box-sizing: border-box;
 }
 
+.chat-page > .chat-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 80px;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 /* ============================================
    MOBILE HEADER (<=768px)
    ============================================ */
@@ -7660,7 +7674,7 @@ body.chat-body > * {
 
 .chat-container {
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     margin: 0;
     padding: 0;
     position: relative;
@@ -7692,6 +7706,7 @@ body.chat-body > * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    grid-template-areas: none;
 }
 
 /* Community selector sits in the first grid column */
@@ -7725,12 +7740,14 @@ body.chat-body > * {
     grid-column: 4;
     width: 320px;
     min-width: 300px;
+    max-width: 320px;
     background: rgba(12, 18, 32, 0.85);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-left: none;
-    border-radius: 0 24px 24px 0;
+    border-right: none;
+    border-radius: 0;
     display: flex !important;
     flex-direction: column;
     overflow: hidden;
@@ -7740,7 +7757,11 @@ body.chat-body > * {
     height: 100%;
     margin: 0;
     padding: 0;
+    justify-self: end;
+    margin-right: 0;
+    position: relative;
 }
+
 
 .chat-main-panel {
     grid-column: 3 !important;
