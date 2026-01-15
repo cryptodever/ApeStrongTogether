@@ -1451,10 +1451,10 @@ async function handleActivityVote(postId, voteType) {
             }
         }
         
-        const newVoteScore = currentVoteScore + voteChange;
+        const newVoteScore = Math.round(currentVoteScore + voteChange); // Ensure it's an integer
         
         // #region agent log
-        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:JSON.stringify(downvotes)===JSON.stringify(newDownvotes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
+        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:JSON.stringify(downvotes)===JSON.stringify(newDownvotes),newVoteScoreType:typeof newVoteScore,isInteger:Number.isInteger(newVoteScore)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
         console.log('[DEBUG]', JSON.stringify(logEntry4));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
