@@ -14,14 +14,18 @@ html {
     -webkit-text-size-adjust: 100%;
     width: 100%;
     max-width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
 }
 
 body {
     overflow-x: hidden;
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     width: 100%;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 body.no-scroll {
@@ -18131,19 +18135,48 @@ body:has(.modal-overlay.show) {
    EDGE-TO-EDGE LAYOUT OVERRIDE
    Fixed positioning for members sidebar to ensure it's always at far right edge
    ============================================ */
+/* ============================================
+   EDGE-TO-EDGE LAYOUT OVERRIDE
+   Fixed positioning for members sidebar to ensure it's always at far right edge
+   ============================================ */
 body.chat-body {
     overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
 }
 
 body.chat-body .chat-sidebar-right {
     /* Fixed positioning ensures sidebar is always at far right edge of viewport */
     position: fixed !important;
-    right: 0 !important;
-    top: 80px !important;
-    bottom: 0 !important;
+    inset: 80px 0 0 auto !important;
     width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
     z-index: 999 !important;
     border-right: none !important;
+    border-radius: 0 !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    transform: translateX(0) !important;
+    box-sizing: border-box !important;
+    margin-left: auto !important;
+    outline: none !important;
+    grid-column: unset !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    /* Force to viewport edge - override any parent constraints */
+    left: auto !important;
+    right: 0 !important;
+}
+
+/* Ensure parent containers don't constrain the fixed sidebar */
+body.chat-body .chat-page,
+body.chat-body .chat-container,
+body.chat-body .chat-layout {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: hidden !important;
 }
 
 /* Adjust main panel to account for fixed sidebar width */
