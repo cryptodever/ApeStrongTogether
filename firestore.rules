@@ -25,14 +25,13 @@ service cloud.firestore {
     function voteScoreValue(data) {
       // Handle both int and float (Firestore numbers can be either)
       // Convert to int for consistent comparison
-      if (!('voteScore' in data)) return 0;
-      if (data.voteScore is int) return data.voteScore;
-      if (data.voteScore is float) {
-        // Convert float to int (Firestore rules don't have int() function, so we compare directly)
-        // For vote scores, floats should be whole numbers, so we can compare as-is
-        return data.voteScore;
-      }
-      return 0;
+      return !('voteScore' in data) 
+        ? 0
+        : (data.voteScore is int) 
+          ? data.voteScore
+          : (data.voteScore is float)
+            ? data.voteScore
+            : 0;
     }
     function voteDelta(prevUp, prevDown, newUp, newDown) {
       return prevUp
@@ -60,27 +59,12 @@ service cloud.firestore {
       let expectedDelta = voteDelta(prevUp, prevDown, newUp, newDown);
       let actualDelta = voteScoreValue(request.resource.data) - voteScoreValue(resource.data);
       
-      // Check that required vote fields are affected
+      // Check that required vote fields are affected and no forbidden fields
       // upvotes and voteScore must always be in affectedKeys
-      // downvotes might not be in affectedKeys if it was {} and remains {} (Firestore doesn't detect identical map changes)
-      let hasUpvotes = affectedKeys.hasAny(['upvotes']);
-      let hasVoteScore = affectedKeys.hasAny(['voteScore']);
-      let hasDownvotes = affectedKeys.hasAny(['downvotes']);
-      // Only require upvotes and voteScore - downvotes is optional if unchanged
-      let hasRequiredFields = hasUpvotes && hasVoteScore;
-      
-      // No forbidden fields can be updated (this ensures only vote fields + updatedAt can be changed)
-      // updatedAt is allowed (not in forbidden list) and can be serverTimestamp()
+      let hasRequiredFields = affectedKeys.hasAny(['upvotes']) && affectedKeys.hasAny(['voteScore']);
       let noForbiddenFields = !affectedKeys.hasAny(['userId', 'username', 'content', 'images', 'videos', 'deleted', 'editedAt', 'commentsCount', 'createdAt']);
       
-      // Allow voteScore to be int or float
-      let oldVoteScoreValid = !('voteScore' in resource.data) 
-        || resource.data.voteScore is int 
-        || resource.data.voteScore is float;
-      let newVoteScoreValid = request.resource.data.voteScore is int 
-        || request.resource.data.voteScore is float;
-      
-      // Delta check
+      // Delta check - combine with vote score validation
       let deltaCheck = ('voteScore' in resource.data) 
         ? (actualDelta == expectedDelta)
         : (request.resource.data.voteScore == expectedDelta);
@@ -94,8 +78,8 @@ service cloud.firestore {
         && (!('downvotes' in resource.data) || resource.data.downvotes is map)
         && (prevUp != newUp || prevDown != newDown)
         && !(newUp && newDown)
-        && newVoteScoreValid
-        && oldVoteScoreValid
+        && (request.resource.data.voteScore is int || request.resource.data.voteScore is float)
+        && (!('voteScore' in resource.data) || resource.data.voteScore is int || resource.data.voteScore is float)
         && deltaCheck;
     }    // Public rules version doc
     match /meta/{docId} {
