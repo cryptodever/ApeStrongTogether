@@ -18141,27 +18141,34 @@ body.chat-body {
 /* Center the chat layout with max-width for clean appearance */
 @media (min-width: 769px) {
     body.chat-body .chat-container {
-        left: 2rem !important;
-        right: calc(320px + 2rem) !important;
+        left: 0 !important;
+        right: 320px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    
+    body.chat-body .chat-layout {
         max-width: 1920px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1400px) {
     body.chat-body .chat-container {
-        right: calc(300px + 2rem) !important;
+        right: 300px !important;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1300px) {
     body.chat-body .chat-container {
-        right: calc(290px + 2rem) !important;
+        right: 290px !important;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1200px) {
     body.chat-body .chat-container {
-        right: calc(280px + 2rem) !important;
+        right: 280px !important;
     }
 }
 
@@ -18185,21 +18192,21 @@ body.chat-body .chat-sidebar-right {
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Adjust main panel to account for fixed sidebar width - ensure it doesn't get cut off */
-body.chat-body .chat-main-panel {
-    margin-right: 320px !important;
-    max-width: calc(100% - 320px) !important;
-    overflow-x: hidden !important;
+/* Ensure main panel doesn't get cut off by sidebar */
+@media (min-width: 769px) {
+    body.chat-body .chat-main-panel {
+        margin-right: 0 !important;
+        padding-right: 0 !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
 }
 
-/* Responsive adjustments */
+/* Responsive sidebar width adjustments */
 @media (max-width: 1400px) {
     body.chat-body .chat-sidebar-right {
         width: 300px !important;
-    }
-    body.chat-body .chat-main-panel {
-        margin-right: 300px !important;
-        max-width: calc(100% - 300px) !important;
     }
 }
 
@@ -18207,19 +18214,11 @@ body.chat-body .chat-main-panel {
     body.chat-body .chat-sidebar-right {
         width: 290px !important;
     }
-    body.chat-body .chat-main-panel {
-        margin-right: 290px !important;
-        max-width: calc(100% - 290px) !important;
-    }
 }
 
 @media (max-width: 1200px) {
     body.chat-body .chat-sidebar-right {
         width: 280px !important;
-    }
-    body.chat-body .chat-main-panel {
-        margin-right: 280px !important;
-        max-width: calc(100% - 280px) !important;
     }
 }
 
