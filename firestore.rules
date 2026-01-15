@@ -23,7 +23,16 @@ service cloud.firestore {
       return (voteMap is map) && voteMap[uid] == true;
     }
     function voteScoreValue(data) {
-      return (data.voteScore is int) ? data.voteScore : 0;
+      // Handle both int and float (Firestore numbers can be either)
+      // Convert to int for consistent comparison
+      if (!('voteScore' in data)) return 0;
+      if (data.voteScore is int) return data.voteScore;
+      if (data.voteScore is float) {
+        // Convert float to int (Firestore rules don't have int() function, so we compare directly)
+        // For vote scores, floats should be whole numbers, so we can compare as-is
+        return data.voteScore;
+      }
+      return 0;
     }
     function voteDelta(prevUp, prevDown, newUp, newDown) {
       return prevUp
@@ -65,8 +74,12 @@ service cloud.firestore {
       // serverTimestamp() sentinel is handled by Firestore, rules see it as a timestamp field
       
       // All checks combined - delta check re-enabled
-      // Ensure both old and new voteScore are integers
-      let oldVoteScoreIsInt = !('voteScore' in resource.data) || resource.data.voteScore is int;
+      // Allow voteScore to be int or float (both are valid number types)
+      let oldVoteScoreValid = !('voteScore' in resource.data) 
+        || resource.data.voteScore is int 
+        || resource.data.voteScore is float;
+      let newVoteScoreValid = request.resource.data.voteScore is int 
+        || request.resource.data.voteScore is float;
       let deltaCheck = ('voteScore' in resource.data) 
         ? (actualDelta == expectedDelta)
         : (request.resource.data.voteScore == expectedDelta);
@@ -80,8 +93,8 @@ service cloud.firestore {
         && (!('downvotes' in resource.data) || resource.data.downvotes is map)
         && (prevUp != newUp || prevDown != newDown)
         && !(newUp && newDown)
-        && request.resource.data.voteScore is int
-        && oldVoteScoreIsInt
+        && newVoteScoreValid
+        && oldVoteScoreValid
         && deltaCheck;
     }    // Public rules version doc
     match /meta/{docId} {
