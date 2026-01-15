@@ -18220,28 +18220,47 @@ body.chat-body .chat-sidebar-right {
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Ensure main panel doesn't get cut off by sidebar */
+/* Ensure main panel doesn't get cut off by sidebar - strict clipping */
 @media (min-width: 769px) {
     body.chat-body .chat-main-panel {
-        margin-right: 0 !important;
-        padding-right: 0 !important;
         max-width: 100% !important;
         width: 100% !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
     }
     
-    /* Force container to respect right boundary */
+    /* Force container to respect right boundary with strict clipping */
     body.chat-body .chat-container {
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
+        clip-path: inset(0 320px 0 0) !important;
     }
     
     /* Ensure grid doesn't overflow */
     body.chat-body .chat-layout {
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Responsive clip-path adjustments */
+@media (min-width: 769px) and (max-width: 1400px) {
+    body.chat-body .chat-container {
+        clip-path: inset(0 300px 0 0) !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1300px) {
+    body.chat-body .chat-container {
+        clip-path: inset(0 290px 0 0) !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    body.chat-body .chat-container {
+        clip-path: inset(0 280px 0 0) !important;
     }
 }
 
