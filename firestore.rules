@@ -42,14 +42,13 @@ service cloud.firestore {
       
       // Check that required vote fields are affected
       // upvotes and voteScore must always be in affectedKeys
-      // downvotes might not be in affectedKeys if it was {} and remains {} (Firestore doesn't detect empty map changes)
-      // So we allow the update if upvotes and voteScore are present, and downvotes is either present OR the original was empty/missing
+      // downvotes might not be in affectedKeys if it was {} and remains {} (Firestore doesn't detect identical map changes)
+      // If downvotes is not in affectedKeys, it means it didn't change, which is acceptable
+      // We always send downvotes in the update, but Firestore may not include it in affectedKeys if unchanged
       let hasUpvotes = affectedKeys.hasAny(['upvotes']);
       let hasVoteScore = affectedKeys.hasAny(['voteScore']);
-      let hasDownvotes = affectedKeys.hasAny(['downvotes']);
-      let originalDownvotesEmpty = !('downvotes' in resource.data) || 
-                                   (resource.data.downvotes is map && resource.data.downvotes.size() == 0);
-      let hasRequiredFields = hasUpvotes && hasVoteScore && (hasDownvotes || originalDownvotesEmpty);
+      // Only require upvotes and voteScore - downvotes is optional if unchanged
+      let hasRequiredFields = hasUpvotes && hasVoteScore;
       
       // No forbidden fields can be updated (this ensures only vote fields + updatedAt can be changed)
       // updatedAt is allowed (not in forbidden list) and can be serverTimestamp()
