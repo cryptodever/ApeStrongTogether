@@ -41,14 +41,19 @@ service cloud.firestore {
       let actualDelta = voteScoreValue(request.resource.data) - voteScoreValue(resource.data);
       
       // Check that required vote fields are affected and no forbidden fields
+      // Allow updatedAt to be updated along with vote fields
       let hasRequiredFields = affectedKeys.hasAny(['upvotes'])
         && affectedKeys.hasAny(['downvotes'])
         && affectedKeys.hasAny(['voteScore']);
+      // Allow updatedAt along with vote fields, but forbid other fields
+      let allowedFields = affectedKeys.hasOnly(['upvotes', 'downvotes', 'voteScore', 'updatedAt']);
       let noForbiddenFields = !affectedKeys.hasAny(['userId', 'username', 'content', 'images', 'videos', 'deleted', 'editedAt', 'commentsCount', 'createdAt']);
       
       return isSignedIn()
         // Required vote fields must be updated
         && hasRequiredFields
+        // Only allowed fields can be updated (vote fields + updatedAt)
+        && allowedFields
         // No forbidden fields can be updated
         && noForbiddenFields
         // Maps are valid
