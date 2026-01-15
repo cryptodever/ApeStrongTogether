@@ -7705,10 +7705,9 @@ body.chat-body > * {
     position: relative;
     width: 100%;
     max-width: 100%;
-    margin: 0;
+    margin: 0 auto;
     box-sizing: border-box !important;
     padding: 0;
-    box-sizing: border-box;
 }
 
 /* Community selector sits in the first grid column */
@@ -18153,6 +18152,9 @@ body.chat-body {
         overflow-x: clip !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: stretch !important;
     }
     
     body.chat-body .chat-layout {
@@ -18160,11 +18162,13 @@ body.chat-body {
         margin-left: auto !important;
         margin-right: auto !important;
         width: 100% !important;
+        max-width: min(1920px, 100%) !important;
         box-sizing: border-box !important;
         overflow-x: clip !important;
         overflow: hidden !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        display: grid !important;
     }
     
     body.chat-body .chat-main-panel {
@@ -18206,18 +18210,30 @@ body.chat-body .chat-sidebar-right {
     top: 80px !important;
     right: 0 !important;
     bottom: 0 !important;
+    left: auto !important;
     width: 320px !important;
     min-width: 320px !important;
     max-width: 320px !important;
-    z-index: 100 !important;
+    z-index: 1000 !important;
     border-right: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    margin-right: 0 !important;
     padding: 0 !important;
+    padding-right: 0 !important;
     box-sizing: border-box !important;
     grid-column: unset !important;
+    transform: translateX(0) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Ensure no parent constraints affect the sidebar */
+body.chat-body,
+body.chat-body html {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    overflow-x: hidden !important;
 }
 
 /* Ensure main panel doesn't get cut off by sidebar - strict clipping */
