@@ -143,34 +143,40 @@ async function loadTopByFollowers() {
                 const followersSnapshot = await getDocs(followersRef);
                 const followersCount = followersSnapshot.size;
                 
-                if (followersCount > 0) {
-                    userFollowersCounts.push({
-                        userId: userId,
-                        userData: userDoc.data(),
-                        followersCount: followersCount
-                    });
-                }
+                // Include all users, even with 0 followers (will be sorted)
+                userFollowersCounts.push({
+                    userId: userId,
+                    userData: userDoc.data(),
+                    followersCount: followersCount
+                });
             } catch (error) {
-                // Silently skip users with permission errors
-                console.warn(`Error counting followers for ${userId}:`, error);
+                // Log error but continue with other users
+                console.error(`Error counting followers for ${userId}:`, error);
+                // Include user with 0 followers if there's a permission error
+                userFollowersCounts.push({
+                    userId: userId,
+                    userData: userDoc.data(),
+                    followersCount: 0
+                });
             }
         }
 
         // Sort by followers count (descending)
         userFollowersCounts.sort((a, b) => b.followersCount - a.followersCount);
         
-        // Take top 20
+        // Take top 20 (or all if less than 20)
         const top20 = userFollowersCounts.slice(0, 20);
 
         leaderboardEl.innerHTML = '';
         
         if (top20.length === 0) {
-            leaderboardEl.innerHTML = '<div class="leaderboard-empty">No users with followers yet</div>';
+            leaderboardEl.innerHTML = '<div class="leaderboard-empty">No users found</div>';
             return;
         }
 
         let rank = 1;
         top20.forEach((item) => {
+            // Only show users with at least 0 followers (show all users, sorted by followers)
             const userItem = createLeaderboardItem(rank, item.userData, item.userId, 'followers', item.followersCount);
             leaderboardEl.appendChild(userItem);
             rank++;

@@ -7573,6 +7573,31 @@ body.chat-body > * {
     overflow-x: hidden;
 }
 
+/* Desktop: Constrain container to leave space for fixed sidebar */
+@media (min-width: 769px) {
+    .chat-page > .chat-container {
+        right: 320px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1400px) {
+    .chat-page > .chat-container {
+        right: 300px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1300px) {
+    .chat-page > .chat-container {
+        right: 290px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .chat-page > .chat-container {
+        right: 280px;
+    }
+}
+
 
 /* ============================================
    MOBILE HEADER (<=768px)
@@ -7701,13 +7726,21 @@ body.chat-body > * {
     height: 100% !important;
     min-height: 0;
     overflow: hidden;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     position: relative;
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
     box-sizing: border-box !important;
     padding: 0;
+}
+
+/* Desktop: Ensure grid doesn't extend beyond container */
+@media (min-width: 769px) {
+    .chat-container > .chat-layout {
+        overflow-x: clip !important;
+        max-width: 100% !important;
+    }
 }
 
 /* Community selector sits in the first grid column */
@@ -18151,7 +18184,7 @@ body.chat-body {
     body.chat-body .chat-container {
         left: 2rem !important;
         right: 320px !important;
-        width: calc(100% - 320px - 2rem) !important;
+        width: auto !important;
         max-width: calc(1920px - 320px - 2rem) !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -18247,20 +18280,28 @@ body.chat-body html {
     body.chat-body .chat-main-panel {
         max-width: 100% !important;
         width: 100% !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
     }
     
-    /* Force container to respect right boundary */
+    /* Force container to respect right boundary with strict clipping */
     body.chat-body .chat-container {
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         overflow: hidden !important;
     }
     
-    /* Ensure grid doesn't overflow */
+    /* Ensure grid doesn't overflow - strict clipping */
     body.chat-body .chat-layout {
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
+        overflow: hidden !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure chat main content doesn't extend */
+    body.chat-body .chat-main {
+        overflow-x: clip !important;
         overflow: hidden !important;
         max-width: 100% !important;
     }
