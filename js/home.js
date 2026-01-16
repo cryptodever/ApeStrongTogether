@@ -1463,18 +1463,16 @@ async function handleActivityVote(postId, voteType) {
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
         
-        // Build update data - always include upvotes and voteScore (required by security rules)
-        // Only include downvotes if it changed (to avoid sending unchanged data)
+        // Build update data - always include all three fields (required by security rules)
+        // Security rules need both upvotes and downvotes to properly validate the vote state
         const updateData = {
             upvotes: newUpvotes,
+            downvotes: newDownvotes,
             voteScore: newVoteScore
         };
-        if (downvotesChanged) {
-            updateData.downvotes = newDownvotes;
-        }
         
         // #region agent log
-        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:updateData.downvotes?JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3))):'not included',upvotesKeysCount:Object.keys(newUpvotes).length,downvotesKeysCount:Object.keys(newDownvotes).length,newVoteScore,currentVoteScore,expectedDelta:voteChange,downvotesChanged,downvotesIncluded:!!updateData.downvotes},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
+        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3))),upvotesKeysCount:Object.keys(newUpvotes).length,downvotesKeysCount:Object.keys(newDownvotes).length,newVoteScore,currentVoteScore,expectedDelta:voteChange,downvotesChanged,upvotesChanged},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
         console.log('[DEBUG]', JSON.stringify(logEntry5));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry5)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
