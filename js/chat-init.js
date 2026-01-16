@@ -496,6 +496,11 @@ async function initializeChat() {
     // Setup presence
     setupPresence();
     
+    // Load community members if we're on a community page (not default)
+    if (currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID) {
+        loadCommunityMembers(currentCommunityId);
+    }
+    
     // Setup typing indicator
     setupTypingIndicator();
     
@@ -999,6 +1004,10 @@ async function switchToCommunity(communityId) {
         return;
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:switchToCommunity',message:'Switching to community - entry',data:{communityId,currentCommunityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     // Verify membership
     const isMember = await verifyCommunityMembership(communityId);
     if (!isMember) {
@@ -1016,6 +1025,10 @@ async function switchToCommunity(communityId) {
         currentChannel = 'community'; // Special channel type for communities
         localStorage.setItem('selectedCommunity', communityId);
         localStorage.setItem('selectedChannel', 'community');
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:switchToCommunity',message:'State updated before loading members',data:{currentCommunityId,currentChannel},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
         // Remove old listeners
         if (messagesListener) {
@@ -1066,6 +1079,10 @@ async function switchToCommunity(communityId) {
         
         // Reload messages for community
         loadMessages();
+        
+        // Load community members (all members, not just online) - do this BEFORE setupPresence
+        // so presence listener doesn't override with online users only
+        loadCommunityMembers(communityId);
         
         // Setup real-time listeners
         setupRealtimeListeners();
@@ -1648,17 +1665,25 @@ async function setupRealtimeListeners() {
         });
 
         currentOnlineUsers = onlineUsers; // Store for periodic updates
-        updateOnlineUsersList(onlineUsers);
-        const count = onlineUsers.length;
-        if (onlineCountEl) onlineCountEl.textContent = count;
-        // Utility bar removed
-        updateMobileOnlineCount();
         
-        // Update last seen times every minute for real-time updates
-        if (!lastSeenUpdateInterval) {
-            lastSeenUpdateInterval = setInterval(() => {
-                updateOnlineUsersList(currentOnlineUsers);
-            }, 60000); // Update every minute
+        // Only update online users list if we're NOT viewing a community page
+        // For community pages, we show all members (not just online users)
+        if (!currentCommunityId || currentCommunityId === DEFAULT_COMMUNITY_ID) {
+            updateOnlineUsersList(onlineUsers);
+            const count = onlineUsers.length;
+            if (onlineCountEl) onlineCountEl.textContent = count;
+            // Utility bar removed
+            updateMobileOnlineCount();
+            
+            // Update last seen times every minute for real-time updates
+            if (!lastSeenUpdateInterval) {
+                lastSeenUpdateInterval = setInterval(() => {
+                    updateOnlineUsersList(currentOnlineUsers);
+                }, 60000); // Update every minute
+            }
+        } else {
+            // On community page, reload members to update online status
+            loadCommunityMembers(currentCommunityId);
         }
     });
 }
@@ -2325,6 +2350,165 @@ function formatRelativeTime(timestamp) {
         console.error('Error formatting relative time:', error);
         return 'Unknown';
     }
+}
+
+// Load community members (all members, not just online)
+async function loadCommunityMembers(communityId) {
+    if (!communityId || !currentUser) return;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Loading community members - entry',data:{communityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    
+    try {
+        // Load all members from community members subcollection
+        const membersRef = collection(db, 'communities', communityId, 'members');
+        const membersQuery = query(membersRef, orderBy('joinedAt', 'asc'));
+        const membersSnapshot = await getDocs(membersQuery);
+        
+        const memberIds = [];
+        const memberRoles = {};
+        membersSnapshot.forEach(doc => {
+            memberIds.push(doc.id);
+            memberRoles[doc.id] = doc.data().role || 'member';
+        });
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Members loaded from subcollection',data:{memberCount:memberIds.length,memberIds:memberIds.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
+        // Load user profiles and presence for each member
+        const membersWithProfiles = await Promise.all(memberIds.map(async (userId) => {
+            try {
+                // Load user profile
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                const userData = userDoc.exists() ? userDoc.data() : null;
+                
+                // Load presence data
+                const presenceDoc = await getDoc(doc(db, 'presence', userId));
+                const presenceData = presenceDoc.exists() ? presenceDoc.data() : null;
+                
+                const now = Date.now();
+                let lastSeenMillis = 0;
+                if (presenceData?.lastSeen) {
+                    if (presenceData.lastSeen.toMillis) {
+                        lastSeenMillis = presenceData.lastSeen.toMillis();
+                    } else if (presenceData.lastSeen.toDate) {
+                        lastSeenMillis = presenceData.lastSeen.toDate().getTime();
+                    } else if (typeof presenceData.lastSeen === 'number') {
+                        lastSeenMillis = presenceData.lastSeen;
+                    }
+                }
+                const timeSinceLastSeen = now - lastSeenMillis;
+                const isOnline = presenceData?.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
+                
+                return {
+                    userId: userId,
+                    username: userData?.username || 'Anonymous',
+                    bannerImage: userData?.bannerImage || '/pfp_apes/bg1.png',
+                    xAccountVerified: userData?.xAccountVerified || false,
+                    role: memberRoles[userId] || 'member',
+                    isOnline: isOnline,
+                    lastSeen: presenceData?.lastSeen || null,
+                    timeSinceLastSeen: timeSinceLastSeen
+                };
+            } catch (error) {
+                console.error(`Error loading profile for user ${userId}:`, error);
+                return null;
+            }
+        }));
+        
+        // Filter out nulls and sort: online first, then by role (owner, admin, member), then by last seen
+        const validMembers = membersWithProfiles.filter(m => m !== null);
+        validMembers.sort((a, b) => {
+            // Online users first
+            if (a.isOnline !== b.isOnline) {
+                return a.isOnline ? -1 : 1;
+            }
+            // Then by role
+            const roleOrder = { owner: 0, admin: 1, moderator: 2, member: 3 };
+            const aRole = roleOrder[a.role] || 99;
+            const bRole = roleOrder[b.role] || 99;
+            if (aRole !== bRole) {
+                return aRole - bRole;
+            }
+            // Then by last seen (most recent first)
+            return b.timeSinceLastSeen - a.timeSinceLastSeen;
+        });
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Members processed and sorted',data:{totalMembers:validMembers.length,onlineCount:validMembers.filter(m=>m.isOnline).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
+        // Update members list
+        updateCommunityMembersList(validMembers);
+        
+        // Update member count
+        if (onlineCountEl) {
+            onlineCountEl.textContent = validMembers.length;
+        }
+        updateMobileOnlineCount();
+        
+    } catch (error) {
+        console.error('Error loading community members:', error);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Error loading members',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+    }
+}
+
+// Update community members list (all members, not just online)
+function updateCommunityMembersList(members) {
+    if (!chatUserListEl) return;
+
+    const userListHTML = members.length === 0
+        ? '<div class="chat-user-item">No members</div>'
+        : members.map(user => {
+            const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
+            const defaultImage = '/pfp_apes/bg1.png';
+            const lastSeen = user.lastSeen ? formatRelativeTime(user.lastSeen) : 'Unknown';
+            const isOnline = user.isOnline === true;
+            
+            return `
+                <div class="chat-user-item">
+                    <div class="chat-user-avatar">
+                        <img src="${bannerImage}" alt="${user.username}" data-fallback="${defaultImage}">
+                        ${isOnline ? '<span class="online-indicator" title="Online"></span>' : ''}
+                    </div>
+                    <div class="chat-user-info">
+                        <div class="chat-user-name-row">
+                            <span class="chat-username">${escapeHtml(user.username || 'Anonymous')}</span>
+                            ${user.role === 'owner' ? '<span class="owner-badge-small" title="Owner">OWNER</span>' : ''}
+                            ${user.xAccountVerified ? '<span class="verified-badge-small" title="Verified X account">✓</span>' : ''}
+                        </div>
+                        <div class="chat-user-last-seen">
+                            ${isOnline ? '<span class="online-text">Online</span>' : `<span class="last-seen-text">Last active: ${lastSeen}</span>`}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    
+    // Update desktop user list
+    chatUserListEl.innerHTML = userListHTML;
+    
+    // Update mobile user list
+    const mobileUserListEl = document.getElementById('chatMobileUserList');
+    if (mobileUserListEl) {
+        mobileUserListEl.innerHTML = userListHTML;
+    }
+    
+    // Add image error handling for user lists (CSP-compliant)
+    [chatUserListEl, mobileUserListEl].filter(Boolean).forEach(listEl => {
+        listEl.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                const fallback = this.dataset.fallback || '/pfp_apes/bg1.png';
+                if (this.src !== fallback) {
+                    this.src = fallback;
+                }
+            });
+        });
+    });
 }
 
 // Update online users list
