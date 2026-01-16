@@ -1368,12 +1368,6 @@ function calculateLevelProgress(points) {
 
 // Handle vote (upvote/downvote) for activity posts
 async function handleActivityVote(postId, voteType) {
-    // #region agent log
-    const logEntry1 = {location:'home.js:1370',message:'handleActivityVote entry',data:{postId,voteType,userId:currentUser?.uid,hasCurrentUser:!!currentUser},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
-    console.log('[DEBUG]', JSON.stringify(logEntry1));
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry1)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-    // #endregion
-        
     if (!currentUser) {
         alert('Please log in to vote');
         return;
@@ -1398,27 +1392,9 @@ async function handleActivityVote(postId, voteType) {
         const downvotes = postData.downvotes || {};
         const currentVoteScore = postData.voteScore || 0;
         
-        // #region agent log
-        const logEntryPreCalc = {location:'home.js:1395',message:'Before vote calculation - post state',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,upvotesIsMap:upvotes instanceof Object,downvotesIsMap:downvotes instanceof Object,hasUpvote:upvotes[currentUser.uid]===true,hasDownvote:downvotes[currentUser.uid]===true,postDataKeys:Object.keys(postData),voteScoreInPost:'voteScore' in postData,voteScoreType:typeof postData.voteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'PRE_CALC'};
-        console.log('[DEBUG]', JSON.stringify(logEntryPreCalc));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntryPreCalc)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
-        
-        // #region agent log
-        const logEntry2 = {location:'home.js:1390',message:'Post data loaded',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,hasUpvotesMap:upvotes instanceof Object,hasDownvotesMap:downvotes instanceof Object,postDataKeys:Object.keys(postData),hasVoteScoreInPost:'voteScore' in postData,voteScoreType:typeof postData.voteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
-        console.log('[DEBUG]', JSON.stringify(logEntry2));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry2)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
-        
         // Check current vote state
         const hasUpvote = upvotes[currentUser.uid] === true;
         const hasDownvote = downvotes[currentUser.uid] === true;
-        
-        // #region agent log
-        const logEntry3 = {location:'home.js:1397',message:'Current vote state',data:{hasUpvote,hasDownvote,userId:currentUser.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'};
-        console.log('[DEBUG]', JSON.stringify(logEntry3));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry3)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
         
         // Calculate vote change
         let voteChange = 0;
@@ -1459,31 +1435,6 @@ async function handleActivityVote(postId, voteType) {
         
         const newVoteScore = Math.round(currentVoteScore + voteChange); // Ensure it's an integer
         
-        // Check if downvotes actually changed
-        const downvotesChanged = JSON.stringify(downvotes) !== JSON.stringify(newDownvotes);
-        const upvotesChanged = JSON.stringify(upvotes) !== JSON.stringify(newUpvotes);
-        
-        // Calculate expected delta using same logic as Firestore rules
-        // voteDelta(prevUp, prevDown, newUp, newDown)
-        const prevUp = hasUpvote;
-        const prevDown = hasDownvote;
-        const newUp = newUpvotes[currentUser.uid] === true;
-        const newDown = newDownvotes[currentUser.uid] === true;
-        let calculatedExpectedDelta = 0;
-        if (prevUp) {
-            calculatedExpectedDelta = newUp ? 0 : (newDown ? -2 : -1);
-        } else if (prevDown) {
-            calculatedExpectedDelta = newDown ? 0 : (newUp ? 2 : 1);
-        } else {
-            calculatedExpectedDelta = newUp ? 1 : (newDown ? -1 : 0);
-        }
-        
-        // #region agent log
-        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:!downvotesChanged,upvotesChanged,downvotesChanged,newVoteScoreType:typeof newVoteScore,isInteger:Number.isInteger(newVoteScore),prevUp,prevDown,newUp,newDown,calculatedExpectedDelta,voteChangeMatches:calculatedExpectedDelta===voteChange},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
-        console.log('[DEBUG]', JSON.stringify(logEntry4));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
-        
         // Build update data - always include all three fields (required by security rules)
         // Security rules need both upvotes and downvotes to properly validate the vote state
         const updateData = {
@@ -1492,34 +1443,8 @@ async function handleActivityVote(postId, voteType) {
             voteScore: newVoteScore
         };
         
-        // #region agent log
-        const logEntry5 = {location:'home.js:1449',message:'updateDoc data being sent',data:{updateKeys:Object.keys(updateData),hasUpvotes:!!updateData.upvotes,hasDownvotes:!!updateData.downvotes,hasVoteScore:typeof updateData.voteScore==='number',upvotesIsMap:updateData.upvotes instanceof Object,downvotesIsMap:updateData.downvotes instanceof Object,upvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newUpvotes).slice(0,3))),downvotesSample:JSON.stringify(Object.fromEntries(Object.entries(newDownvotes).slice(0,3))),upvotesKeysCount:Object.keys(newUpvotes).length,downvotesKeysCount:Object.keys(newDownvotes).length,newVoteScore,currentVoteScore,expectedDelta:voteChange,downvotesChanged,upvotesChanged,hasUpvoteInNew:newUpvotes[currentUser.uid]===true,hasDownvoteInNew:newDownvotes[currentUser.uid]===true,hasUpvoteInOld:upvotes[currentUser.uid]===true,hasDownvoteInOld:downvotes[currentUser.uid]===true,voteScoreType:typeof newVoteScore,isInteger:Number.isInteger(newVoteScore),actualDelta:newVoteScore-currentVoteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
-        console.log('[DEBUG]', JSON.stringify(logEntry5));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry5)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
-        
-        // Update post - only include changed fields
-        try {
-            await updateDoc(postRef, updateData);
-            // #region agent log
-            const logEntry6 = {location:'home.js:1456',message:'updateDoc succeeded',data:{postId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SUCCESS'};
-            console.log('[DEBUG]', JSON.stringify(logEntry6));
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry6)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-            // #endregion
-        } catch (updateError) {
-            // #region agent log
-            const logEntry7 = {location:'home.js:1461',message:'updateDoc failed',data:{errorCode:updateError.code,errorMessage:updateError.message,postId,updateDataKeys:Object.keys(updateData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'UPDATE_ERROR'};
-            console.log('[DEBUG]', JSON.stringify(logEntry7));
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry7)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-            // #endregion
-            throw updateError;
-        }
-        
-        // #region agent log
-        const logEntry6 = {location:'home.js:1444',message:'updateDoc succeeded',data:{postId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'};
-        console.log('[DEBUG]', JSON.stringify(logEntry6));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry6)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
+        // Update post
+        await updateDoc(postRef, updateData);
         
         // Update karma for post author (if not voting on own post)
         if (postData.userId !== currentUser.uid) {
@@ -1567,11 +1492,6 @@ async function handleActivityVote(postId, voteType) {
         }
         
     } catch (error) {
-        // #region agent log
-        const logEntry7 = {location:'home.js:1490',message:'Vote error caught',data:{errorCode:error.code,errorMessage:error.message,errorStack:error.stack?.substring(0,500),postId,voteType,userId:currentUser?.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'ALL'};
-        console.log('[DEBUG]', JSON.stringify(logEntry7));
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry7)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
-        // #endregion
         console.error('Error voting:', error);
         alert('Failed to vote. Please try again.');
     }
