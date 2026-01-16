@@ -11027,6 +11027,12 @@ body.leaderboard-body > * {
     max-width: 1200px;
     margin: 0 auto;
     align-items: start;
+    width: 100%;
+}
+
+.leaderboard-grid > .leaderboard-column {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .leaderboard-column {
@@ -11070,6 +11076,8 @@ body.leaderboard-body > * {
     gap: 0.75rem;
     flex: 1;
     min-height: 0;
+    width: 100%;
+    min-width: 0;
 }
 
 .leaderboard-item {
@@ -11083,7 +11091,9 @@ body.leaderboard-body > * {
     transition: all 0.2s ease;
     width: 100%;
     min-width: 0;
+    max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .leaderboard-item:hover {
@@ -11104,12 +11114,18 @@ body.leaderboard-body > * {
     font-weight: 700;
     color: rgba(255, 255, 255, 0.9);
     min-width: 40px;
+    max-width: 40px;
+    width: 40px;
+    flex-shrink: 0;
     text-align: center;
 }
 
 .leaderboard-avatar {
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    flex-shrink: 0;
     border-radius: 8px;
     object-fit: cover;
     border: 2px solid rgba(255, 255, 255, 0.2);
@@ -11199,6 +11215,12 @@ body.leaderboard-body > * {
     .leaderboard-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        width: 100%;
+    }
+    
+    .leaderboard-grid > .leaderboard-column {
+        width: 100%;
+        max-width: 100%;
     }
 
     .leaderboard-column {
@@ -11217,11 +11239,17 @@ body.leaderboard-body > * {
     .leaderboard-avatar {
         width: 40px;
         height: 40px;
+        min-width: 40px;
+        max-width: 40px;
+        flex-shrink: 0;
     }
 
     .leaderboard-rank {
         font-size: 1rem;
         min-width: 32px;
+        max-width: 32px;
+        width: 32px;
+        flex-shrink: 0;
     }
 
     .leaderboard-username {
@@ -11261,6 +11289,9 @@ body.leaderboard-body > * {
 
     .leaderboard-item {
         padding: 0.5rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     }
 
