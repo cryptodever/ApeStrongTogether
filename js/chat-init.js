@@ -1298,6 +1298,10 @@ function setupEventListeners() {
 async function loadMessages() {
     if (!currentUser) return;
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Loading messages - entry',data:{currentCommunityId,currentChannel,chatMessagesElExists:!!chatMessagesEl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+
     // Ensure default community exists and user is a member
     await ensureDefaultCommunity();
     
@@ -1343,9 +1347,17 @@ async function loadMessages() {
         limit(MESSAGES_PER_PAGE)
     );
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Executing messages query',data:{currentCommunityId,messagesPath:`communities/${currentCommunityId}/messages`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+
     getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
         chatLoadingEl.classList.add('hide');
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages query result',data:{messageCount:snapshot.docs.length,isEmpty:snapshot.empty,chatMessagesElExists:!!chatMessagesEl,chatEmptyElExists:!!chatEmptyEl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         
         if (snapshot.empty) {
             chatEmptyEl.classList.remove('hide');
@@ -1370,11 +1382,18 @@ async function loadMessages() {
             displayMessage(doc.id, doc.data());
         });
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages displayed',data:{messagesProcessed:messages.length,chatMessagesElChildren:chatMessagesEl?.children?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+
         scrollToBottom();
         setupScrollListener();
     }).catch((error) => {
         clearTimeout(loadingTimeout);
         console.error('Error loading messages:', error);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Error loading messages',data:{error:error.message,errorCode:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         chatLoadingEl.classList.add('hide');
         chatEmptyEl.classList.remove('hide');
         chatEmptyEl.innerHTML = `
@@ -1690,7 +1709,12 @@ async function setupRealtimeListeners() {
 
 // Display a message in the chat
 function displayMessage(messageId, messageData, prepend = false) {
-    if (!chatMessagesEl) return;
+    if (!chatMessagesEl) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:displayMessage',message:'chatMessagesEl is null',data:{messageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        return;
+    }
 
     const messageEl = document.createElement('div');
     messageEl.className = 'chat-message';
