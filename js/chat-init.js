@@ -1425,7 +1425,11 @@ async function loadMessages() {
         });
 
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages displayed',data:{messagesProcessed:messages.length,chatMessagesElChildren:chatMessagesEl?.children?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        const chatMainPanel = document.querySelector('.chat-main-panel');
+        const chatMain = document.querySelector('.chat-main');
+        const chatMainStyles = chatMain ? window.getComputedStyle(chatMain) : null;
+        const chatMessagesStyles = chatMessagesEl ? window.getComputedStyle(chatMessagesEl) : null;
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages displayed',data:{messagesProcessed:messages.length,chatMessagesElChildren:chatMessagesEl?.children?.length || 0,chatMainExists:!!chatMain,chatMainPanelExists:!!chatMainPanel,chatMainDisplay:chatMainStyles?.display,chatMainHeight:chatMainStyles?.height,chatMessagesDisplay:chatMessagesStyles?.display,chatMessagesHeight:chatMessagesStyles?.height,chatMessagesVisibility:chatMessagesStyles?.visibility,chatMessagesOpacity:chatMessagesStyles?.opacity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
         // #endregion
 
         scrollToBottom();
