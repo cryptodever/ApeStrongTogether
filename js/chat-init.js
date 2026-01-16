@@ -1047,9 +1047,30 @@ async function switchToCommunity(communityId) {
         // Clear typing indicator
         clearTypingIndicator();
         
-        // Clear current messages and tracked message IDs
+        // Clear current messages but keep loading/empty elements
+        // (Don't use innerHTML = '' as it removes those elements from DOM)
         if (chatMessagesEl) {
-            chatMessagesEl.innerHTML = '';
+            // Remove only message elements, keep loading/empty divs
+            const messageElements = chatMessagesEl.querySelectorAll('.chat-message');
+            messageElements.forEach(el => el.remove());
+            
+            // Ensure loading and empty elements exist and are in correct state
+            if (!chatLoadingEl || !chatMessagesEl.contains(chatLoadingEl)) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'chat-loading';
+                loadingDiv.id = 'chatLoading';
+                loadingDiv.innerHTML = '<div class="loading-spinner"></div><p>Loading messages...</p>';
+                chatMessagesEl.appendChild(loadingDiv);
+                chatLoadingEl = loadingDiv;
+            }
+            if (!chatEmptyEl || !chatMessagesEl.contains(chatEmptyEl)) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'chat-empty hide';
+                emptyDiv.id = 'chatEmpty';
+                emptyDiv.innerHTML = '<div class="chat-empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p>';
+                chatMessagesEl.appendChild(emptyDiv);
+                chatEmptyEl = emptyDiv;
+            }
         }
         loadedMessageIds.clear();
         isInitialSnapshot = true;
@@ -1137,9 +1158,30 @@ async function switchChannel(channelId) {
     setupMobileChannelList();
     updateChannelInfo();
     
-    // Clear current messages and tracked message IDs
+    // Clear current messages but keep loading/empty elements
+    // (Don't use innerHTML = '' as it removes those elements from DOM)
     if (chatMessagesEl) {
-        chatMessagesEl.innerHTML = '';
+        // Remove only message elements, keep loading/empty divs
+        const messageElements = chatMessagesEl.querySelectorAll('.chat-message');
+        messageElements.forEach(el => el.remove());
+        
+        // Ensure loading and empty elements exist and are in correct state
+        if (!chatLoadingEl || !chatMessagesEl.contains(chatLoadingEl)) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chat-loading';
+            loadingDiv.id = 'chatLoading';
+            loadingDiv.innerHTML = '<div class="loading-spinner"></div><p>Loading messages...</p>';
+            chatMessagesEl.appendChild(loadingDiv);
+            chatLoadingEl = loadingDiv;
+        }
+        if (!chatEmptyEl || !chatMessagesEl.contains(chatEmptyEl)) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'chat-empty hide';
+            emptyDiv.id = 'chatEmpty';
+            emptyDiv.innerHTML = '<div class="chat-empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p>';
+            chatMessagesEl.appendChild(emptyDiv);
+            chatEmptyEl = emptyDiv;
+        }
     }
     loadedMessageIds.clear();
     isInitialSnapshot = true;
