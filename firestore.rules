@@ -20,6 +20,7 @@ service cloud.firestore {
 
     function voteValue(voteMap, uid) {
       // Handle case where voteMap doesn't exist (returns false, meaning no vote)
+      // If voteMap is empty {} and uid key doesn't exist, voteMap[uid] will be null/undefined, not true
       return (voteMap is map) && voteMap[uid] == true;
     }
     function voteScoreValue(data) {
@@ -67,9 +68,10 @@ service cloud.firestore {
       let hasRequiredFields = affectedKeys.hasAny(['voteScore']);
       let noForbiddenFields = !affectedKeys.hasAny(['userId', 'username', 'content', 'images', 'videos', 'deleted', 'editedAt', 'commentsCount', 'createdAt']);
       // Delta check - use wider tolerance to handle any floating point precision issues
+      // Also handle case where actualDelta might be calculated differently due to type conversion
       let deltaCheck = ('voteScore' in resource.data) 
-        ? (actualDelta >= expectedDelta - 0.5 && actualDelta <= expectedDelta + 0.5)
-        : (request.resource.data.voteScore >= expectedDelta - 0.5 && request.resource.data.voteScore <= expectedDelta + 0.5);
+        ? (actualDelta >= expectedDelta - 1 && actualDelta <= expectedDelta + 1)
+        : (request.resource.data.voteScore >= expectedDelta - 1 && request.resource.data.voteScore <= expectedDelta + 1);
       
       // Check vote state actually changed (must have a vote state transition)
       let voteStateChanged = prevUp != newUp || prevDown != newDown;

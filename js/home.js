@@ -1463,8 +1463,23 @@ async function handleActivityVote(postId, voteType) {
         const downvotesChanged = JSON.stringify(downvotes) !== JSON.stringify(newDownvotes);
         const upvotesChanged = JSON.stringify(upvotes) !== JSON.stringify(newUpvotes);
         
+        // Calculate expected delta using same logic as Firestore rules
+        // voteDelta(prevUp, prevDown, newUp, newDown)
+        const prevUp = hasUpvote;
+        const prevDown = hasDownvote;
+        const newUp = newUpvotes[currentUser.uid] === true;
+        const newDown = newDownvotes[currentUser.uid] === true;
+        let calculatedExpectedDelta = 0;
+        if (prevUp) {
+            calculatedExpectedDelta = newUp ? 0 : (newDown ? -2 : -1);
+        } else if (prevDown) {
+            calculatedExpectedDelta = newDown ? 0 : (newUp ? 2 : 1);
+        } else {
+            calculatedExpectedDelta = newUp ? 1 : (newDown ? -1 : 0);
+        }
+        
         // #region agent log
-        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:!downvotesChanged,upvotesChanged,downvotesChanged,newVoteScoreType:typeof newVoteScore,isInteger:Number.isInteger(newVoteScore)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
+        const logEntry4 = {location:'home.js:1436',message:'Before updateDoc - vote calculation',data:{currentVoteScore,voteChange,newVoteScore,newUpvotesKeys:Object.keys(newUpvotes).length,newDownvotesKeys:Object.keys(newDownvotes).length,newUpvotesType:typeof newUpvotes,newDownvotesType:typeof newDownvotes,newHasUpvote:newUpvotes[currentUser.uid]===true,newHasDownvote:newDownvotes[currentUser.uid]===true,originalDownvotesKeys:Object.keys(downvotes).length,downvotesSame:!downvotesChanged,upvotesChanged,downvotesChanged,newVoteScoreType:typeof newVoteScore,isInteger:Number.isInteger(newVoteScore),prevUp,prevDown,newUp,newDown,calculatedExpectedDelta,voteChangeMatches:calculatedExpectedDelta===voteChange},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'};
         console.log('[DEBUG]', JSON.stringify(logEntry4));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
