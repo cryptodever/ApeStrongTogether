@@ -175,6 +175,146 @@ function showChatInterface() {
     if (document.querySelector('.chat-utility-bar')) {
         document.querySelector('.chat-utility-bar').classList.remove('hide');
     }
+    
+    // #region agent log
+    // Log layout information after interface is shown
+    setTimeout(() => {
+        const layoutEl = document.querySelector('.chat-layout');
+        const sidebarRightEl = document.getElementById('chatSidebarRight');
+        const mainPanelEl = document.querySelector('.chat-main-panel');
+        const containerEl = document.querySelector('.chat-container');
+        
+        if (layoutEl) {
+            const layoutStyles = window.getComputedStyle(layoutEl);
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Layout grid styles',
+                    data: {
+                        display: layoutStyles.display,
+                        gridTemplateColumns: layoutStyles.gridTemplateColumns,
+                        width: layoutStyles.width,
+                        maxWidth: layoutStyles.maxWidth,
+                        viewportWidth: window.innerWidth
+                    },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'B'
+                })
+            }).catch(() => {});
+        }
+        
+        if (sidebarRightEl) {
+            const sidebarStyles = window.getComputedStyle(sidebarRightEl);
+            const rect = sidebarRightEl.getBoundingClientRect();
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Sidebar right computed styles',
+                    data: {
+                        display: sidebarStyles.display,
+                        gridColumn: sidebarStyles.gridColumn,
+                        position: sidebarStyles.position,
+                        width: sidebarStyles.width,
+                        left: sidebarStyles.left,
+                        right: sidebarStyles.right,
+                        boundingLeft: rect.left,
+                        boundingRight: rect.right,
+                        boundingWidth: rect.width,
+                        exists: true
+                    },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'A'
+                })
+            }).catch(() => {});
+        } else {
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Sidebar right element not found',
+                    data: { exists: false },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'D'
+                })
+            }).catch(() => {});
+        }
+        
+        if (mainPanelEl) {
+            const mainStyles = window.getComputedStyle(mainPanelEl);
+            const rect = mainPanelEl.getBoundingClientRect();
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Main panel computed styles',
+                    data: {
+                        gridColumn: mainStyles.gridColumn,
+                        width: mainStyles.width,
+                        maxWidth: mainStyles.maxWidth,
+                        boundingLeft: rect.left,
+                        boundingRight: rect.right,
+                        boundingWidth: rect.width
+                    },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'B'
+                })
+            }).catch(() => {});
+        }
+        
+        if (containerEl) {
+            const containerStyles = window.getComputedStyle(containerEl);
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Container styles',
+                    data: {
+                        width: containerStyles.width,
+                        maxWidth: containerStyles.maxWidth,
+                        overflowX: containerStyles.overflowX
+                    },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'B'
+                })
+            }).catch(() => {});
+        }
+        
+        // Check for conflicting CSS classes
+        if (sidebarRightEl) {
+            const classes = sidebarRightEl.className.split(' ');
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'chat-init.js:showChatInterface',
+                    message: 'Sidebar classes',
+                    data: { classes: classes },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'A'
+                })
+            }).catch(() => {});
+        }
+    }, 500);
+    // #endregion
 }
 
 // Load user profile data
