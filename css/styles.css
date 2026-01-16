@@ -11039,6 +11039,8 @@ body.leaderboard-body > * {
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
+    min-width: 0;
 }
 
 .leaderboard-column-header {
@@ -11079,6 +11081,9 @@ body.leaderboard-body > * {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     transition: all 0.2s ease;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .leaderboard-item:hover {
@@ -11113,6 +11118,8 @@ body.leaderboard-body > * {
 .leaderboard-info {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .leaderboard-username {
@@ -11133,6 +11140,8 @@ body.leaderboard-body > * {
 .leaderboard-value-container {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    min-width: fit-content;
 }
 
 .leaderboard-value {
@@ -11144,6 +11153,7 @@ body.leaderboard-body > * {
     background: rgba(255, 215, 0, 0.1);
     border-radius: 8px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .leaderboard-loading,
