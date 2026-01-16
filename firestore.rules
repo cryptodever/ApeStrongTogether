@@ -20,8 +20,9 @@ service cloud.firestore {
 
     function voteValue(voteMap, uid) {
       // Handle case where voteMap doesn't exist (returns false, meaning no vote)
-      // If voteMap is empty {} and uid key doesn't exist, voteMap[uid] will be null/undefined, not true
-      return (voteMap is map) && voteMap[uid] == true;
+      // Use get() to safely access map keys - returns false if key doesn't exist
+      // This prevents errors when accessing non-existent keys in empty maps
+      return (voteMap is map) && voteMap.get(uid, false) == true;
     }
     function voteScoreValue(data) {
       // Handle both int and float (Firestore numbers can be either)
