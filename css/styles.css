@@ -11157,7 +11157,10 @@ body.leaderboard-body > * {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    min-width: fit-content;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    justify-content: flex-end;
 }
 
 .leaderboard-value {
@@ -11170,6 +11173,11 @@ body.leaderboard-body > * {
     border-radius: 8px;
     white-space: nowrap;
     flex-shrink: 0;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .leaderboard-loading,
@@ -11260,6 +11268,12 @@ body.leaderboard-body > * {
         font-size: 0.75rem;
     }
 
+    .leaderboard-value-container {
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+    }
+    
     .leaderboard-value {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
