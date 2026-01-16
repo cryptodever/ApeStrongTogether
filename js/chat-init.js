@@ -266,22 +266,44 @@ function showChatInterface() {
         
         if (containerEl) {
             const containerStyles = window.getComputedStyle(containerEl);
+            const containerRect = containerEl.getBoundingClientRect();
+            const containerInfo = {
+                width: containerStyles.width,
+                maxWidth: containerStyles.maxWidth,
+                overflowX: containerStyles.overflowX,
+                paddingLeft: containerStyles.paddingLeft,
+                paddingRight: containerStyles.paddingRight,
+                marginLeft: containerStyles.marginLeft,
+                marginRight: containerStyles.marginRight,
+                boundingLeft: containerRect.left,
+                boundingRight: containerRect.right,
+                boundingWidth: containerRect.width,
+                position: containerStyles.position,
+                left: containerStyles.left,
+                right: containerStyles.right
+            };
+            console.log('[DEBUG] Container styles:', containerInfo);
             fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Container styles',
-                    data: {
-                        width: containerStyles.width,
-                        maxWidth: containerStyles.maxWidth,
-                        overflowX: containerStyles.overflowX
-                    },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'B'
-                })
+                body: JSON.stringify({ ...logData, message: 'Container styles', data: containerInfo, hypothesisId: 'B' })
+            }).catch(() => {});
+        }
+        
+        if (layoutEl) {
+            const layoutRect = layoutEl.getBoundingClientRect();
+            const layoutPositionInfo = {
+                boundingLeft: layoutRect.left,
+                boundingRight: layoutRect.right,
+                boundingWidth: layoutRect.width,
+                viewportWidth: window.innerWidth,
+                spaceOnRight: window.innerWidth - layoutRect.right
+            };
+            console.log('[DEBUG] Layout position info:', layoutPositionInfo);
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...logData, message: 'Layout position info', data: layoutPositionInfo, hypothesisId: 'A' })
             }).catch(() => {});
         }
         
