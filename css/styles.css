@@ -7757,9 +7757,11 @@ body.chat-body > * {
 /* Right sidebar - members only */
 .chat-sidebar-right {
     grid-column: 4 !important;
-    width: 320px;
-    min-width: 320px;
-    max-width: 320px;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
     background: rgba(12, 18, 32, 0.85);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -7767,8 +7769,6 @@ body.chat-body > * {
     border-left: none;
     border-right: none;
     border-radius: 0;
-    display: flex !important;
-    flex-direction: column;
     overflow: hidden;
     box-shadow: 
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -7789,6 +7789,7 @@ body.chat-body > * {
     min-height: 0;
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
     background: linear-gradient(180deg, rgba(12, 18, 32, 0.9) 0%, rgba(12, 18, 32, 0.85) 100%);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -18281,6 +18282,8 @@ body.chat-body {
 /* Members sidebar - fixed to viewport right edge */
 body.chat-body .chat-sidebar-right {
     grid-column: 4 !important;
+    display: flex !important;
+    flex-direction: column !important;
     position: relative !important;
     width: 320px !important;
     min-width: 320px !important;
@@ -18291,6 +18294,8 @@ body.chat-body .chat-sidebar-right {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
