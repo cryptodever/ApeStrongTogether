@@ -7578,8 +7578,13 @@ body.chat-body > * {
     .chat-page > .chat-container {
         right: 0;
         left: 0;
-        width: 100%;
-        max-width: 100%;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: auto !important;
+    }
+    
+    .chat-page {
+        overflow-x: auto !important;
     }
 }
 
@@ -7694,7 +7699,8 @@ body.chat-body > * {
     height: calc(100vh - 80px);
     max-height: calc(100vh - 80px);
     display: block !important;
-    overflow: hidden;
+    overflow-x: auto !important;
+    overflow-y: hidden;
     min-height: 0;
     box-sizing: border-box;
 }
@@ -7710,8 +7716,8 @@ body.chat-body > * {
     background: transparent;
     height: 100% !important;
     min-height: 0;
-    overflow: hidden;
-    overflow-x: clip !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
     position: relative;
     width: 100%;
     max-width: 100%;
@@ -7723,8 +7729,16 @@ body.chat-body > * {
 /* Desktop: Ensure grid doesn't extend beyond container */
 @media (min-width: 769px) {
     .chat-container > .chat-layout {
-        overflow-x: clip !important;
+        overflow-x: visible !important;
+        overflow: visible !important;
         max-width: 100% !important;
+    }
+    
+    /* Ensure right sidebar is visible on desktop */
+    .chat-sidebar-right {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 }
 
@@ -8496,7 +8510,7 @@ body.chat-body > * {
         grid-row: 1 !important;
         border-radius: 0;
         height: 100%;
-        min-height: 100%;
+        min-height: calc(100vh - 60px);
         display: flex !important;
         flex-direction: column;
         width: 100%;
@@ -8509,6 +8523,7 @@ body.chat-body > * {
             inset 0 1px 0 rgba(255, 255, 255, 0.05),
             0 8px 32px rgba(0, 0, 0, 0.3);
         padding-top: 56px; /* Account for fixed mobile header */
+        overflow: hidden;
     }
 
     /* Mobile Sticky Channel Bar - Hidden since we have menu drawer */
@@ -18325,12 +18340,13 @@ body.chat-body html {
         overflow: hidden !important;
     }
     
-    /* Ensure grid doesn't overflow - strict clipping */
+    /* Ensure grid layout is correct */
     body.chat-body .chat-layout {
-        overflow-x: clip !important;
-        overflow: hidden !important;
+        overflow-x: visible !important;
+        overflow: visible !important;
         max-width: 100% !important;
         width: 100% !important;
+        grid-template-columns: 80px 300px minmax(0, 1fr) 320px !important;
     }
     
     /* Ensure chat main content doesn't extend */
