@@ -7573,28 +7573,13 @@ body.chat-body > * {
     overflow-x: hidden;
 }
 
-/* Desktop: Constrain container to leave space for fixed sidebar */
+/* Desktop: Container spans full width - grid handles column layout */
 @media (min-width: 769px) {
     .chat-page > .chat-container {
-        right: 320px;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1400px) {
-    .chat-page > .chat-container {
-        right: 300px;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1300px) {
-    .chat-page > .chat-container {
-        right: 290px;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1200px) {
-    .chat-page > .chat-container {
-        right: 280px;
+        right: 0;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
     }
 }
 
