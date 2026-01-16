@@ -1463,7 +1463,8 @@ async function handleActivityVote(postId, voteType) {
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry4)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
         // #endregion
         
-        // Build update data - only include downvotes if it changed
+        // Build update data - always include upvotes and voteScore (required by security rules)
+        // Only include downvotes if it changed (to avoid sending unchanged data)
         const updateData = {
             upvotes: newUpvotes,
             voteScore: newVoteScore
