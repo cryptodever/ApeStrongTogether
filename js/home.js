@@ -1399,6 +1399,12 @@ async function handleActivityVote(postId, voteType) {
         const currentVoteScore = postData.voteScore || 0;
         
         // #region agent log
+        const logEntryPreCalc = {location:'home.js:1395',message:'Before vote calculation - post state',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,upvotesIsMap:upvotes instanceof Object,downvotesIsMap:downvotes instanceof Object,hasUpvote:upvotes[currentUser.uid]===true,hasDownvote:downvotes[currentUser.uid]===true,postDataKeys:Object.keys(postData),voteScoreInPost:'voteScore' in postData,voteScoreType:typeof postData.voteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'PRE_CALC'};
+        console.log('[DEBUG]', JSON.stringify(logEntryPreCalc));
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntryPreCalc)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));
+        // #endregion
+        
+        // #region agent log
         const logEntry2 = {location:'home.js:1390',message:'Post data loaded',data:{currentVoteScore,upvotesType:typeof upvotes,downvotesType:typeof downvotes,upvotesKeys:Object.keys(upvotes).length,downvotesKeys:Object.keys(downvotes).length,hasUpvotesMap:upvotes instanceof Object,hasDownvotesMap:downvotes instanceof Object,postDataKeys:Object.keys(postData),hasVoteScoreInPost:'voteScore' in postData,voteScoreType:typeof postData.voteScore},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
         console.log('[DEBUG]', JSON.stringify(logEntry2));
         fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(logEntry2)}).catch(e=>console.warn('[DEBUG] Log fetch failed:',e));

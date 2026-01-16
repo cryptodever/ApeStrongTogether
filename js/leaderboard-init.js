@@ -210,12 +210,14 @@ function createLeaderboardItem(rank, userData, userId, type, followersCount = nu
     else if (rank === 2) rankDisplay = '🥈';
     else if (rank === 3) rankDisplay = '🥉';
     
+    // Always include subtext div to ensure consistent structure between level and followers items
+    const subtextContent = type === 'level' ? `${points} XP` : '';
     item.innerHTML = `
         <div class="leaderboard-rank">${rankDisplay}</div>
         <img src="${bannerImage}" alt="${username}" class="leaderboard-avatar" />
         <div class="leaderboard-info">
             <div class="leaderboard-username">${escapeHtml(username)}</div>
-            ${type === 'level' ? `<div class="leaderboard-subtext">${points} XP</div>` : ''}
+            <div class="leaderboard-subtext">${subtextContent}</div>
         </div>
         <div class="leaderboard-value-container">
             ${valueDisplay}

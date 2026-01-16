@@ -71,6 +71,9 @@ service cloud.firestore {
         ? (actualDelta >= expectedDelta - 0.5 && actualDelta <= expectedDelta + 0.5)
         : (request.resource.data.voteScore >= expectedDelta - 0.5 && request.resource.data.voteScore <= expectedDelta + 0.5);
       
+      // Check vote state actually changed (must have a vote state transition)
+      let voteStateChanged = prevUp != newUp || prevDown != newDown;
+      
       // Simplified return - check all conditions
       return isSignedIn()
         && hasRequiredFields
@@ -81,7 +84,7 @@ service cloud.firestore {
         && request.resource.data.downvotes is map
         && (!('upvotes' in resource.data) || resource.data.upvotes is map)
         && (!('downvotes' in resource.data) || resource.data.downvotes is map)
-        && (prevUp != newUp || prevDown != newDown)
+        && voteStateChanged
         && !(newUp && newDown)
         && (request.resource.data.voteScore is int || request.resource.data.voteScore is float)
         && (!('voteScore' in resource.data) || resource.data.voteScore is int || resource.data.voteScore is float)

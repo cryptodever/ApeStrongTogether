@@ -11022,7 +11022,7 @@ body.leaderboard-body > * {
 
 .leaderboard-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 2rem;
     max-width: 1200px;
     margin: 0 auto;
@@ -11033,6 +11033,7 @@ body.leaderboard-body > * {
 .leaderboard-grid > .leaderboard-column {
     min-width: 0;
     max-width: 100%;
+    width: 100%;
 }
 
 .leaderboard-column {
@@ -11047,6 +11048,8 @@ body.leaderboard-body > * {
     height: 100%;
     width: 100%;
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .leaderboard-column-header {
@@ -11094,6 +11097,7 @@ body.leaderboard-body > * {
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    position: relative;
 }
 
 .leaderboard-item:hover {
@@ -11132,10 +11136,11 @@ body.leaderboard-body > * {
 }
 
 .leaderboard-info {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
+    width: 0;
 }
 
 .leaderboard-username {
@@ -11151,6 +11156,8 @@ body.leaderboard-body > * {
 .leaderboard-subtext {
     font-size: 0.875rem;
     color: rgba(255, 255, 255, 0.6);
+    min-height: 1.25rem;
+    line-height: 1.25rem;
 }
 
 .leaderboard-value-container {
@@ -11175,9 +11182,11 @@ body.leaderboard-body > * {
     flex-shrink: 0;
     text-align: center;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: inline-block;
 }
 
 .leaderboard-loading,
