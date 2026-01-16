@@ -7720,7 +7720,7 @@ body.chat-body > * {
 
 .chat-container > .chat-layout {
     display: grid !important;
-    grid-template-columns: 80px 300px minmax(400px, 1fr) !important;
+    grid-template-columns: 80px 300px minmax(400px, 1fr) 320px !important;
     gap: 0;
     background: transparent;
     height: 100% !important;
@@ -7873,7 +7873,7 @@ body.chat-body > * {
     }
     
     .chat-container > .chat-layout {
-        grid-template-columns: 80px 280px minmax(350px, 1fr) !important;
+        grid-template-columns: 80px 280px minmax(350px, 1fr) 300px !important;
         gap: 0;
     }
     
@@ -7893,7 +7893,7 @@ body.chat-body > * {
 
 @media (max-width: 1300px) {
     .chat-container > .chat-layout {
-        grid-template-columns: 80px 270px minmax(320px, 1fr) !important;
+        grid-template-columns: 80px 270px minmax(320px, 1fr) 290px !important;
         gap: 0;
     }
     
@@ -7909,7 +7909,7 @@ body.chat-body > * {
     }
     
     .chat-container > .chat-layout {
-        grid-template-columns: 72px 260px minmax(300px, 1fr) !important;
+        grid-template-columns: 72px 260px minmax(300px, 1fr) 280px !important;
         gap: 0;
     }
     
@@ -18309,24 +18309,17 @@ body.chat-body {
 
 /* Members sidebar - fixed to viewport right edge */
 body.chat-body .chat-sidebar-right {
-    position: fixed !important;
-    top: 80px !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    left: auto !important;
+    grid-column: 4 !important;
+    position: relative !important;
     width: 320px !important;
     min-width: 320px !important;
     max-width: 320px !important;
-    z-index: 1000 !important;
+    z-index: 1 !important;
     border-right: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
-    margin-right: 0 !important;
     padding: 0 !important;
-    padding-right: 0 !important;
     box-sizing: border-box !important;
-    grid-column: unset !important;
-    transform: translateX(0) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
@@ -18375,18 +18368,33 @@ body.chat-body html {
 @media (max-width: 1400px) {
     body.chat-body .chat-sidebar-right {
         width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+    }
+    .chat-container > .chat-layout {
+        grid-template-columns: 80px 280px minmax(350px, 1fr) 300px !important;
     }
 }
 
 @media (max-width: 1300px) {
     body.chat-body .chat-sidebar-right {
         width: 290px !important;
+        min-width: 290px !important;
+        max-width: 290px !important;
+    }
+    .chat-container > .chat-layout {
+        grid-template-columns: 80px 270px minmax(320px, 1fr) 290px !important;
     }
 }
 
 @media (max-width: 1200px) {
     body.chat-body .chat-sidebar-right {
         width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+    }
+    .chat-container > .chat-layout {
+        grid-template-columns: 72px 260px minmax(300px, 1fr) 280px !important;
     }
 }
 
