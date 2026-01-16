@@ -361,15 +361,9 @@ service cloud.firestore {
           && (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId)
           && (!('username' in request.resource.data) || request.resource.data.username == resource.data.username))
         ||
-        // TEMPORARY: Simplified vote update - allow any authenticated user to update vote fields
-        // TODO: Replace with isValidVoteUpdate() after testing
-        (isSignedIn() 
-          && request.resource.data.diff(resource.data).affectedKeys().hasAny(['voteScore'])
-          && 'upvotes' in request.resource.data 
-          && request.resource.data.upvotes is map
-          && 'downvotes' in request.resource.data 
-          && request.resource.data.downvotes is map
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['userId', 'username', 'content', 'images', 'videos', 'deleted', 'editedAt', 'commentsCount', 'createdAt']))
+        // Any authenticated user updating votes (for upvoting/downvoting)
+        // isValidVoteUpdate() validates vote state changes and prevents manipulation
+        (isValidVoteUpdate())
         ||
         // Any authenticated user updating commentsCount
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentsCount', 'updatedAt']))
