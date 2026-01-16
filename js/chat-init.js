@@ -184,69 +184,58 @@ function showChatInterface() {
         const mainPanelEl = document.querySelector('.chat-main-panel');
         const containerEl = document.querySelector('.chat-container');
         
+        const logData = {
+            location: 'chat-init.js:showChatInterface',
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1'
+        };
+        
         if (layoutEl) {
             const layoutStyles = window.getComputedStyle(layoutEl);
+            const layoutInfo = {
+                display: layoutStyles.display,
+                gridTemplateColumns: layoutStyles.gridTemplateColumns,
+                width: layoutStyles.width,
+                maxWidth: layoutStyles.maxWidth,
+                viewportWidth: window.innerWidth
+            };
+            console.log('[DEBUG] Layout grid styles:', layoutInfo);
             fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Layout grid styles',
-                    data: {
-                        display: layoutStyles.display,
-                        gridTemplateColumns: layoutStyles.gridTemplateColumns,
-                        width: layoutStyles.width,
-                        maxWidth: layoutStyles.maxWidth,
-                        viewportWidth: window.innerWidth
-                    },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'B'
-                })
+                body: JSON.stringify({ ...logData, message: 'Layout grid styles', data: layoutInfo, hypothesisId: 'B' })
             }).catch(() => {});
         }
         
         if (sidebarRightEl) {
             const sidebarStyles = window.getComputedStyle(sidebarRightEl);
             const rect = sidebarRightEl.getBoundingClientRect();
+            const sidebarInfo = {
+                display: sidebarStyles.display,
+                gridColumn: sidebarStyles.gridColumn,
+                position: sidebarStyles.position,
+                width: sidebarStyles.width,
+                left: sidebarStyles.left,
+                right: sidebarStyles.right,
+                boundingLeft: rect.left,
+                boundingRight: rect.right,
+                boundingWidth: rect.width,
+                classes: sidebarRightEl.className,
+                exists: true
+            };
+            console.log('[DEBUG] Sidebar right computed styles:', sidebarInfo);
             fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Sidebar right computed styles',
-                    data: {
-                        display: sidebarStyles.display,
-                        gridColumn: sidebarStyles.gridColumn,
-                        position: sidebarStyles.position,
-                        width: sidebarStyles.width,
-                        left: sidebarStyles.left,
-                        right: sidebarStyles.right,
-                        boundingLeft: rect.left,
-                        boundingRight: rect.right,
-                        boundingWidth: rect.width,
-                        exists: true
-                    },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'A'
-                })
+                body: JSON.stringify({ ...logData, message: 'Sidebar right computed styles', data: sidebarInfo, hypothesisId: 'A' })
             }).catch(() => {});
         } else {
+            console.log('[DEBUG] Sidebar right element not found');
             fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Sidebar right element not found',
-                    data: { exists: false },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'D'
-                })
+                body: JSON.stringify({ ...logData, message: 'Sidebar right element not found', data: { exists: false }, hypothesisId: 'D' })
             }).catch(() => {});
         }
         

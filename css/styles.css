@@ -8794,7 +8794,7 @@ body.chat-body > * {
 }
 
 .chat-sidebar-right {
-    grid-column: 4;
+    grid-column: 4 !important;
 }
 
 .chat-sidebar-header {
@@ -18278,6 +18278,8 @@ body.chat-body {
         padding-left: 0 !important;
         padding-right: 0 !important;
         display: grid !important;
+        grid-template-columns: 80px 300px minmax(0, 1fr) 320px !important;
+        gap: 0 !important;
     }
     
     body.chat-body .chat-main-panel {
@@ -18289,29 +18291,7 @@ body.chat-body {
     }
 }
 
-@media (min-width: 769px) and (max-width: 1400px) {
-    body.chat-body .chat-container {
-        right: 300px !important;
-        width: calc(100% - 300px - 2rem) !important;
-        max-width: calc(1920px - 300px - 2rem) !important;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1300px) {
-    body.chat-body .chat-container {
-        right: 290px !important;
-        width: calc(100% - 290px - 2rem) !important;
-        max-width: calc(1920px - 290px - 2rem) !important;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1200px) {
-    body.chat-body .chat-container {
-        right: 280px !important;
-        width: calc(100% - 280px - 2rem) !important;
-        max-width: calc(1920px - 280px - 2rem) !important;
-    }
-}
+/* Removed manual positioning - grid handles layout automatically */
 
 /* Members sidebar - fixed to viewport right edge */
 body.chat-body .chat-sidebar-right {
@@ -18378,6 +18358,7 @@ body.chat-body html {
         min-width: 300px !important;
         max-width: 300px !important;
     }
+    body.chat-body .chat-layout,
     .chat-container > .chat-layout {
         grid-template-columns: 80px 280px minmax(0, 1fr) 300px !important;
     }
@@ -18389,6 +18370,7 @@ body.chat-body html {
         min-width: 290px !important;
         max-width: 290px !important;
     }
+    body.chat-body .chat-layout,
     .chat-container > .chat-layout {
         grid-template-columns: 80px 270px minmax(0, 1fr) 290px !important;
     }
@@ -18400,6 +18382,7 @@ body.chat-body html {
         min-width: 280px !important;
         max-width: 280px !important;
     }
+    body.chat-body .chat-layout,
     .chat-container > .chat-layout {
         grid-template-columns: 72px 260px minmax(0, 1fr) 280px !important;
     }
