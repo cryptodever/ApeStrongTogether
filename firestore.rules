@@ -73,7 +73,7 @@ service cloud.firestore {
         && hasRequiredFields
         && noForbiddenFields
         && request.resource.data.upvotes is map
-        && request.resource.data.downvotes is map
+        && (!('downvotes' in request.resource.data) || request.resource.data.downvotes is map)
         && (!('upvotes' in resource.data) || resource.data.upvotes is map)
         && (!('downvotes' in resource.data) || resource.data.downvotes is map)
         && (prevUp != newUp || prevDown != newDown)
