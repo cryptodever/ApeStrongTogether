@@ -17873,11 +17873,16 @@ body:has(.modal-overlay.show) {
 
 /* Banner Upload */
 .banner-upload-group {
-    margin-bottom: 0;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
 }
 
 .banner-upload-container {
     position: relative;
+    overflow: hidden;
+    z-index: 1;
+    isolation: isolate;
 }
 
 .banner-preview {
@@ -17893,6 +17898,7 @@ body:has(.modal-overlay.show) {
     display: flex;
     align-items: center;
     justify-content: center;
+    isolation: isolate;
 }
 
 .banner-preview:hover {
@@ -17934,11 +17940,29 @@ body:has(.modal-overlay.show) {
 
 .banner-input {
     position: absolute;
-    opacity: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    opacity: 0;
     cursor: pointer;
     z-index: 2;
+    pointer-events: auto;
+}
+
+/* Ensure banner input is constrained to banner-preview area only and doesn't block form fields */
+.banner-upload-container .banner-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
 }
 
 .banner-remove-btn {
@@ -17988,6 +18012,8 @@ body:has(.modal-overlay.show) {
 .form-textarea-enhanced {
     width: 100%;
     padding: 1rem 1.25rem;
+    position: relative;
+    z-index: 10;
     background: rgba(255, 255, 255, 0.05);
     border: 1.5px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
@@ -18091,16 +18117,56 @@ body:has(.modal-overlay.show) {
     margin: 0;
     cursor: pointer;
     accent-color: #4ade80;
+    flex-shrink: 0;
 }
 
-.privacy-option input[type="radio"]:checked + .privacy-option-label {
+.privacy-option-icon {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.privacy-option:has(input[type="radio"][value="true"]) .privacy-option-icon {
+    color: #4ade80;
+}
+
+.privacy-option:has(input[type="radio"][value="false"]) .privacy-option-icon {
+    color: #f87171;
+}
+
+.privacy-option:has(input[type="radio"]:checked) .privacy-option-icon {
+    background: rgba(74, 222, 128, 0.2);
+}
+
+.privacy-option:has(input[type="radio"][value="false"]:checked) .privacy-option-icon {
+    background: rgba(248, 113, 113, 0.2);
+}
+
+.privacy-option input[type="radio"]:checked + .privacy-option-icon + .privacy-option-label {
     color: #4ade80;
     font-weight: 600;
+}
+
+.privacy-option input[type="radio"][value="false"]:checked + .privacy-option-icon + .privacy-option-label {
+    color: #f87171;
 }
 
 .privacy-option:has(input[type="radio"]:checked) {
     background: rgba(74, 222, 128, 0.1);
     border-color: #4ade80;
+}
+
+.privacy-option:has(input[type="radio"][value="false"]:checked) {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: #f87171;
 }
 
 .privacy-option-label {

@@ -327,9 +327,28 @@ function handleBannerUpload(e) {
         return;
     }
     
-    // Validate file size (max 1MB)
-    if (file.size > 1024 * 1024) {
-        alert('Image size must be less than 1MB');
+    // Validate file size (max 1MB = 1,048,576 bytes)
+    const maxSizeBytes = 1024 * 1024; // 1MB
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    const maxSizeKB = (maxSizeBytes / 1024).toFixed(2);
+    
+    console.log('Banner upload validation:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeKB: fileSizeKB + ' KB',
+        fileSizeMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+        maxSizeBytes: maxSizeBytes,
+        maxSizeKB: maxSizeKB + ' KB',
+        isValid: file.size <= maxSizeBytes
+    });
+    
+    if (file.size > maxSizeBytes) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`Image size (${fileSizeMB} MB) must be less than 1MB (${maxSizeKB} KB). Please choose a smaller image.`);
+        // Reset the input so user can try again
+        if (communityBannerInput) {
+            communityBannerInput.value = '';
+        }
         return;
     }
     
