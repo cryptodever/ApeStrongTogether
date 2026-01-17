@@ -2179,30 +2179,69 @@ async function handleSendMessage() {
         
         // Store message in community messages subcollection
         const messagesRef = collection(db, 'communities', currentCommunityId, 'messages');
+        
+        // Ensure username is a non-empty string (required by security rules)
+        const username = (userProfile?.username && typeof userProfile.username === 'string' && userProfile.username.trim()) 
+            ? userProfile.username.trim() 
+            : 'Anonymous';
+        
+        // Ensure text is a non-empty string (required by security rules)
+        const messageText = (typeof text === 'string' && text.trim()) ? text.trim() : '';
+        if (!messageText) {
+            alert('Message cannot be empty');
+            return;
+        }
+        
         const messageData = {
-            text: text,
+            text: messageText,
             userId: currentUser.uid,
-            username: userProfile.username || 'Anonymous',
-            avatarCount: userProfile.avatarCount || 0,
-            bannerImage: userProfile.bannerImage || '',
+            username: username,
+            avatarCount: userProfile?.avatarCount || 0,
+            bannerImage: userProfile?.bannerImage || '',
             timestamp: serverTimestamp(),
             // channelId removed - channels disabled
             deleted: false,
             reactions: {},
-            xAccountVerified: userProfile.xAccountVerified || false
+            xAccountVerified: userProfile?.xAccountVerified || false
         };
         
         // Attempt to send message
         try {
+            // Log message data for debugging (without sensitive info)
+            console.log('Attempting to send message:', {
+                communityId: currentCommunityId,
+                userId: currentUser.uid,
+                username: username,
+                textLength: messageText.length,
+                hasTimestamp: !!messageData.timestamp,
+                deleted: messageData.deleted
+            });
+            
             await addDoc(messagesRef, messageData);
         } catch (writeError) {
             if (writeError.code === 'permission-denied') {
                 // Re-verify membership one more time
                 const finalMemberCheck = await getDoc(memberRef);
+                console.error('Permission denied error details:', {
+                    code: writeError.code,
+                    message: writeError.message,
+                    communityId: currentCommunityId,
+                    userId: currentUser.uid,
+                    membershipExists: finalMemberCheck.exists(),
+                    messageData: {
+                        hasUserId: !!messageData.userId,
+                        usernameType: typeof messageData.username,
+                        usernameValue: messageData.username,
+                        textType: typeof messageData.text,
+                        textLength: messageData.text?.length || 0,
+                        deleted: messageData.deleted
+                    }
+                });
+                
                 if (!finalMemberCheck.exists()) {
                     throw new Error('Permission denied: You are not a member of this community. Please refresh the page.');
                 } else {
-                    throw new Error('Permission denied: Firestore security rules may not allow message creation. Check rules.');
+                    throw new Error('Permission denied: Firestore security rules may not allow message creation. Check rules. Ensure username and text are strings, and rules are deployed.');
                 }
             }
             throw writeError;
