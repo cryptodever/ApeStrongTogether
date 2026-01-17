@@ -2192,29 +2192,49 @@ async function handleSendMessage() {
             return;
         }
         
+        // Build message data matching security rules exactly
         const messageData = {
-            text: messageText,
-            userId: currentUser.uid,
-            username: username,
+            text: String(messageText), // Explicitly ensure string
+            userId: String(currentUser.uid), // Explicitly ensure string
+            username: String(username), // Explicitly ensure string
+            deleted: false, // Must be boolean false (not string 'false')
+            // Optional fields (not checked in rules)
             avatarCount: userProfile?.avatarCount || 0,
             bannerImage: userProfile?.bannerImage || '',
             timestamp: serverTimestamp(),
-            // channelId removed - channels disabled
-            deleted: false,
             reactions: {},
             xAccountVerified: userProfile?.xAccountVerified || false
         };
+        
+        // Validate data types before sending (debug)
+        console.log('Message data validation:', {
+            textIsString: typeof messageData.text === 'string',
+            textLength: messageData.text.length,
+            userIdIsString: typeof messageData.userId === 'string',
+            usernameIsString: typeof messageData.username === 'string',
+            deletedIsBoolean: typeof messageData.deleted === 'boolean',
+            deletedValue: messageData.deleted,
+            userId: messageData.userId,
+            username: messageData.username,
+            textPreview: messageData.text.substring(0, 50)
+        });
         
         // Attempt to send message
         try {
             // Log message data for debugging (without sensitive info)
             console.log('Attempting to send message:', {
                 communityId: currentCommunityId,
-                userId: currentUser.uid,
+                currentUserId: currentUser.uid,
+                messageUserId: messageData.userId,
+                userIdsMatch: messageData.userId === currentUser.uid,
                 username: username,
+                usernameType: typeof messageData.username,
                 textLength: messageText.length,
+                textType: typeof messageData.text,
                 hasTimestamp: !!messageData.timestamp,
-                deleted: messageData.deleted
+                deleted: messageData.deleted,
+                deletedType: typeof messageData.deleted,
+                fullMessageData: messageData
             });
             
             await addDoc(messagesRef, messageData);
