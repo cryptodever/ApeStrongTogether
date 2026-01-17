@@ -38,6 +38,7 @@ let communityJoinModal, communityJoinModalOverlay, communityJoinModalClose;
 let communityDiscoveryModal, communityDiscoveryModalOverlay, communityDiscoveryModalClose;
 let communitySettingsModal, communitySettingsModalOverlay, communitySettingsModalClose;
 let communityMembersModal, communityMembersModalOverlay, communityMembersModalClose;
+let communityChoiceModal, communityChoiceModalOverlay, communityChoiceModalClose;
 let communitySettingsBtn;
 
 // PFP state
@@ -107,6 +108,10 @@ function initializeCommunityUI() {
     communityDiscoveryModalOverlay = document.getElementById('communityDiscoveryModalOverlay');
     communityDiscoveryModalClose = document.getElementById('communityDiscoveryModalClose');
     
+    communityChoiceModal = document.getElementById('communityChoiceModal');
+    communityChoiceModalOverlay = document.getElementById('communityChoiceModalOverlay');
+    communityChoiceModalClose = document.getElementById('communityChoiceModalClose');
+    
     communitySettingsModal = document.getElementById('communitySettingsModal');
     communitySettingsModalOverlay = document.getElementById('communitySettingsModalOverlay');
     communitySettingsModalClose = document.getElementById('communitySettingsModalClose');
@@ -119,14 +124,14 @@ function initializeCommunityUI() {
     
     // Setup event listeners
     if (createCommunityBtn) {
-        createCommunityBtn.addEventListener('click', () => openCommunityModal());
+        createCommunityBtn.addEventListener('click', () => openCommunityChoiceModal());
     }
     if (createCommunityBtnMobile) {
-        createCommunityBtnMobile.addEventListener('click', () => openCommunityModal());
+        createCommunityBtnMobile.addEventListener('click', () => openCommunityChoiceModal());
     }
     if (createCommunityBtnDrawer) {
         createCommunityBtnDrawer.addEventListener('click', () => {
-            openCommunityModal();
+            openCommunityChoiceModal();
             closeMobileDrawer();
         });
     }
@@ -150,6 +155,34 @@ function initializeCommunityUI() {
     }
     if (communityDiscoveryModalOverlay) {
         communityDiscoveryModalOverlay.addEventListener('click', () => closeCommunityDiscoveryModal());
+    }
+    
+    if (communityChoiceModalClose) {
+        communityChoiceModalClose.addEventListener('click', () => closeCommunityChoiceModal());
+    }
+    if (communityChoiceModalOverlay) {
+        communityChoiceModalOverlay.addEventListener('click', () => closeCommunityChoiceModal());
+    }
+    
+    // Choice modal buttons
+    const choiceCreateBtn = document.getElementById('choiceCreateBtn');
+    const choiceExploreBtn = document.getElementById('choiceExploreBtn');
+    const choiceCancelBtn = document.getElementById('communityChoiceCancelBtn');
+    
+    if (choiceCreateBtn) {
+        choiceCreateBtn.addEventListener('click', () => {
+            closeCommunityChoiceModal();
+            setTimeout(() => openCommunityModal(), 100);
+        });
+    }
+    if (choiceExploreBtn) {
+        choiceExploreBtn.addEventListener('click', () => {
+            closeCommunityChoiceModal();
+            setTimeout(() => openCommunityDiscoveryModal(), 100);
+        });
+    }
+    if (choiceCancelBtn) {
+        choiceCancelBtn.addEventListener('click', () => closeCommunityChoiceModal());
     }
     
     if (communitySettingsModalClose) {
@@ -372,6 +405,20 @@ async function generateUniqueInviteCode() {
     // If we still can't verify after 5 attempts, just return a code anyway
     // The collision probability is so low it's acceptable
     return newCode || generateInviteCode();
+}
+
+// Open community choice modal (Create or Explore)
+function openCommunityChoiceModal() {
+    if (!communityChoiceModal) return;
+    communityChoiceModal.classList.remove('hide');
+    document.body.classList.add('no-scroll');
+}
+
+// Close community choice modal
+function closeCommunityChoiceModal() {
+    if (!communityChoiceModal) return;
+    communityChoiceModal.classList.add('hide');
+    document.body.classList.remove('no-scroll');
 }
 
 // Open community creation modal

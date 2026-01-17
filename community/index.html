@@ -224,6 +224,40 @@
             </aside>
         </div>
 
+        <!-- Community Choice Modal (Create or Explore) -->
+        <div class="community-modal hide" id="communityChoiceModal">
+            <div class="community-modal-overlay" id="communityChoiceModalOverlay"></div>
+            <div class="community-modal-content community-choice-modal">
+                <div class="community-modal-header">
+                    <div class="modal-header-icon">🦍</div>
+                    <h2>Communities</h2>
+                    <p class="modal-header-subtitle">Create your own or explore existing communities</p>
+                    <button class="community-modal-close" id="communityChoiceModalClose" aria-label="Close">×</button>
+                </div>
+                <div class="community-modal-body">
+                    <div class="community-choice-options">
+                        <button class="community-choice-btn" id="choiceCreateBtn">
+                            <div class="choice-btn-icon">✨</div>
+                            <div class="choice-btn-content">
+                                <h3>Create Community</h3>
+                                <p>Build your own space where Apes come together</p>
+                            </div>
+                        </button>
+                        <button class="community-choice-btn" id="choiceExploreBtn">
+                            <div class="choice-btn-icon">🔍</div>
+                            <div class="choice-btn-content">
+                                <h3>Explore Communities</h3>
+                                <p>Discover and join existing communities</p>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="communityChoiceCancelBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Community Creation Modal -->
         <div class="community-modal hide" id="communityModal">
             <div class="community-modal-overlay" id="communityModalOverlay"></div>
