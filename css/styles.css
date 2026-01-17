@@ -8279,9 +8279,10 @@ body.chat-body > * {
         padding-right: 0 !important;
         margin: 0 !important;
         min-height: 100vh;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
 
     /* Hide desktop utility bar on mobile */
@@ -8591,8 +8592,8 @@ body.chat-body > * {
         margin-top: 60px !important;
         height: calc(100vh - 60px) !important;
         min-height: calc(100vh - 60px) !important;
-        max-width: 100vw !important;
-        width: 100vw !important;
+        max-width: 100% !important;
+        width: 100% !important;
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
@@ -8627,8 +8628,8 @@ body.chat-body > * {
         min-height: calc(100vh - 60px);
         display: flex !important;
         flex-direction: column;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background: rgba(12, 18, 32, 0.85);
@@ -8662,8 +8663,9 @@ body.chat-body > * {
         gap: 12px;
         min-height: 0;
         width: 100% !important;
-        max-width: 100vw !important;
+        max-width: 100% !important;
         margin: 0 !important;
+        overflow-x: hidden !important;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         box-sizing: border-box !important;
@@ -8727,8 +8729,8 @@ body.chat-body > * {
         bottom: 0;
         left: 0 !important;
         right: 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         padding: 12px 12px;
         margin: 0 !important;
         box-sizing: border-box !important;
@@ -8740,6 +8742,7 @@ body.chat-body > * {
         border-radius: 0;
         box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3);
         z-index: 1001; /* Above mobile header */
+        overflow-x: hidden !important;
     }
 
     .chat-input-wrapper {
