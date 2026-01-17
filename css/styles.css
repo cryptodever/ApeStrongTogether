@@ -7720,9 +7720,9 @@ body.chat-body > * {
     overflow: visible !important;
     overflow-x: visible !important;
     position: relative;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     padding: 0;
 }
@@ -18272,14 +18272,13 @@ body.chat-body {
     }
     
     body.chat-body .chat-layout {
-        max-width: 1920px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
         width: 100% !important;
-        max-width: min(1920px, 100%) !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         box-sizing: border-box !important;
-        overflow-x: hidden !important;
-        overflow: hidden !important;
+        overflow-x: visible !important;
+        overflow-y: hidden !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
         display: grid !important;
@@ -18347,12 +18346,15 @@ body.chat-body html {
         overflow-x: visible !important;
     }
     
-    /* Ensure grid layout is correct */
-    body.chat-body .chat-layout {
+    /* Ensure grid layout extends to full width */
+    body.chat-body .chat-layout,
+    .chat-container > .chat-layout {
         overflow-x: visible !important;
-        overflow: visible !important;
+        overflow-y: hidden !important;
         max-width: 100% !important;
         width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         grid-template-columns: 80px 300px minmax(0, 1fr) 320px !important;
     }
     
