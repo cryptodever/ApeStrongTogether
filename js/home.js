@@ -207,12 +207,26 @@ async function loadActivityFeed(feedType = 'trending') {
         displayedActivityCount = 0;
         isLoadingMoreActivities = false;
         
-        // Sort activities by timestamp (newest first)
-        activities.sort((a, b) => {
-            const timeA = a.sortTime || (a.timestamp?.toMillis?.() || a.timestamp?.seconds * 1000 || 0);
-            const timeB = b.sortTime || (b.timestamp?.toMillis?.() || b.timestamp?.seconds * 1000 || 0);
-            return timeB - timeA;
-        });
+        // Sort activities based on feed type
+        if (feedType === 'trending') {
+            // For trending, sort by hotScore (already sorted in loadTrendingFeed, but ensure it stays sorted)
+            activities.sort((a, b) => {
+                // Primary sort: hotScore (higher is better)
+                const scoreDiff = (b.hotScore || 0) - (a.hotScore || 0);
+                if (scoreDiff !== 0) return scoreDiff;
+                // Secondary sort: timestamp (newer is better if scores are equal)
+                const timeA = a.sortTime || (a.timestamp?.toMillis?.() || a.timestamp?.seconds * 1000 || 0);
+                const timeB = b.sortTime || (b.timestamp?.toMillis?.() || b.timestamp?.seconds * 1000 || 0);
+                return timeB - timeA;
+            });
+        } else {
+            // For following, sort by timestamp (newest first)
+            activities.sort((a, b) => {
+                const timeA = a.sortTime || (a.timestamp?.toMillis?.() || a.timestamp?.seconds * 1000 || 0);
+                const timeB = b.sortTime || (b.timestamp?.toMillis?.() || b.timestamp?.seconds * 1000 || 0);
+                return timeB - timeA;
+            });
+        }
         
         // Store all activities for pagination
         allActivities = activities;
