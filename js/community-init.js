@@ -334,7 +334,7 @@ async function isInviteCodeUnique(code) {
     } catch (error) {
         // If we don't have permission to check uniqueness, assume it's unique
         // The probability of collision with 8 alphanumeric chars is ~1 in 2.8 trillion
-        console.warn('Could not verify invite code uniqueness (permissions issue):', error.message);
+        // Silently return true - this is expected behavior when users don't have read access to all communities
         return true; // Assume unique if we can't check
     }
 }
