@@ -579,6 +579,7 @@ service cloud.firestore {
         // Members can create messages
         // For default community, allow if user is authenticated (will auto-join)
         // channelId is optional (channels feature disabled)
+        // timestamp is handled by serverTimestamp() on server side, so not validated in rules
         // avatarCount, bannerImage, reactions, xAccountVerified are optional fields
         allow create: if isSignedIn() && (
           (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) ||
@@ -586,8 +587,7 @@ service cloud.firestore {
           request.resource.data.userId == request.auth.uid &&
           request.resource.data.username is string &&
           request.resource.data.text is string &&
-          request.resource.data.deleted == false &&
-          (!('timestamp' in request.resource.data) || request.resource.data.timestamp is timestamp)
+          request.resource.data.deleted == false
         );
         
         // Message author can update their own messages (with 5-minute edit limit)
