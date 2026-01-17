@@ -18137,20 +18137,24 @@ body:has(.modal-overlay.show) {
 
 /* PFP Upload */
 .pfp-upload-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     position: relative;
     z-index: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .pfp-upload-container {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     z-index: 1;
     isolation: isolate;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
+    width: 100%;
 }
 
 .pfp-preview {
@@ -18213,28 +18217,40 @@ body:has(.modal-overlay.show) {
 .pfp-input {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
     opacity: 0;
     cursor: pointer;
     z-index: 2;
     pointer-events: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 /* Ensure pfp input is constrained to pfp-preview area only */
 .pfp-upload-container .pfp-input {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    max-width: 100px;
+    max-height: 100px;
     margin: 0;
     padding: 0;
     border: none;
     outline: none;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 .pfp-remove-btn {
