@@ -18269,7 +18269,9 @@ body:has(.modal-overlay.show) {
 }
 
 .pfp-placeholder {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: absolute;
     top: 0;
     left: 0;
@@ -18281,23 +18283,15 @@ body:has(.modal-overlay.show) {
     pointer-events: none;
 }
 
-.pfp-placeholder svg {
-    color: rgba(255, 255, 255, 0.4);
-    width: 40px;
-    height: 40px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    margin: 0;
-    padding: 0;
+.pfp-placeholder-emoji {
+    font-size: 48px;
+    line-height: 1;
     display: block;
-    flex-shrink: 0;
-    transition: color 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
-.pfp-preview:hover .pfp-placeholder svg {
-    color: rgba(255, 255, 255, 0.6);
+.pfp-preview:hover .pfp-placeholder-emoji {
+    transform: scale(1.1);
 }
 
 .pfp-preview img {
