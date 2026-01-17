@@ -18145,8 +18145,10 @@ body:has(.modal-overlay.show) {
     position: relative;
     width: 100px;
     height: 100px;
+    min-width: 100px;
+    min-height: 100px;
     border-radius: 50%;
-    overflow: hidden;
+    overflow: visible;
     border: 2px dashed rgba(74, 222, 128, 0.3);
     background: rgba(0, 0, 0, 0.3);
     cursor: pointer;
@@ -18219,7 +18221,7 @@ body:has(.modal-overlay.show) {
     overflow: hidden;
 }
 
-/* Ensure pfp input is constrained to pfp-preview area only */
+/* Ensure pfp input is constrained to pfp-preview area only - position it over the preview */
 .pfp-upload-container .pfp-input {
     position: absolute;
     top: 0;
@@ -18235,6 +18237,12 @@ body:has(.modal-overlay.show) {
     outline: none;
     border-radius: 50%;
     overflow: hidden;
+    z-index: 10;
+}
+
+/* Make the preview clickable by positioning the input over it */
+.pfp-upload-container {
+    min-height: 100px;
 }
 
 .pfp-remove-btn {
@@ -18405,7 +18413,10 @@ body:has(.modal-overlay.show) {
     justify-content: center;
     width: 28px;
     height: 28px;
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 6px;
+    border: 2px solid transparent;
     transition: all 0.3s ease;
     flex-shrink: 0;
     order: 1;
@@ -18427,10 +18438,6 @@ body:has(.modal-overlay.show) {
 .privacy-option:has(input[type="radio"][value="false"]:checked) .privacy-option-icon {
     background: rgba(248, 113, 113, 0.2);
     border: 2px solid #f87171;
-}
-
-.privacy-option:not(:has(input[type="radio"]:checked)) .privacy-option-icon {
-    border: 2px solid transparent;
 }
 
 .privacy-option input[type="radio"]:checked + .privacy-option-icon + .privacy-option-label {

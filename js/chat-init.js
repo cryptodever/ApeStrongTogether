@@ -1086,8 +1086,8 @@ async function switchToCommunity(communityId) {
         return;
     }
     
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:switchToCommunity',message:'Switching to community - entry',data:{communityId,currentCommunityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
     // #endregion
     
     // Verify membership
@@ -1108,8 +1108,8 @@ async function switchToCommunity(communityId) {
         localStorage.setItem('selectedCommunity', communityId);
         localStorage.setItem('selectedChannel', 'community');
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:switchToCommunity',message:'State updated before loading members',data:{currentCommunityId,currentChannel},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         
         // Remove old listeners
@@ -1428,8 +1428,8 @@ function setupEventListeners() {
 async function loadMessages() {
     if (!currentUser) return;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Loading messages - entry',data:{currentCommunityId,currentChannel,chatMessagesElExists:!!chatMessagesEl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
     // #endregion
 
     // Ensure default community exists and user is a member
@@ -1477,16 +1477,16 @@ async function loadMessages() {
         limit(MESSAGES_PER_PAGE)
     );
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Executing messages query',data:{currentCommunityId,messagesPath:`communities/${currentCommunityId}/messages`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
     // #endregion
 
     getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
         chatLoadingEl.classList.add('hide');
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages query result',data:{messageCount:snapshot.docs.length,isEmpty:snapshot.empty,chatMessagesElExists:!!chatMessagesEl,chatEmptyElExists:!!chatEmptyEl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         
         if (snapshot.empty) {
@@ -1840,8 +1840,8 @@ async function setupRealtimeListeners() {
 // Display a message in the chat
 function displayMessage(messageId, messageData, prepend = false) {
     if (!chatMessagesEl) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:displayMessage',message:'chatMessagesEl is null',data:{messageId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         return;
     }
@@ -2630,8 +2630,8 @@ function formatRelativeTime(timestamp) {
 async function loadCommunityMembers(communityId) {
     if (!communityId || !currentUser) return;
     
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Loading community members - entry',data:{communityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
     // #endregion
     
     try {
@@ -2647,8 +2647,8 @@ async function loadCommunityMembers(communityId) {
             memberRoles[doc.id] = doc.data().role || 'member';
         });
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Members loaded from subcollection',data:{memberCount:memberIds.length,memberIds:memberIds.slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         
         // Load user profiles and presence for each member
@@ -2710,8 +2710,8 @@ async function loadCommunityMembers(communityId) {
             return b.timeSinceLastSeen - a.timeSinceLastSeen;
         });
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Members processed and sorted',data:{totalMembers:validMembers.length,onlineCount:validMembers.filter(m=>m.isOnline).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         
         // Update members list
@@ -2725,22 +2725,22 @@ async function loadCommunityMembers(communityId) {
         
     } catch (error) {
         console.error('Error loading community members:', error);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadCommunityMembers',message:'Error loading members',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
     }
 }
 
 // Update community members list (all members, not just online)
 function updateCommunityMembersList(members) {
-    // #region agent log
-    const sidebarEl = document.getElementById('chatSidebarRight');
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:updateCommunityMembersList',message:'Updating members list',data:{chatUserListElExists:!!chatUserListEl,sidebarElExists:!!sidebarEl,sidebarParent:sidebarEl?.parentElement?.className,sidebarDisplay:sidebarEl?window.getComputedStyle(sidebarEl).display:'N/A',sidebarGridColumn:sidebarEl?window.getComputedStyle(sidebarEl).gridColumn:'N/A',membersCount:members.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
+    // const sidebarEl = document.getElementById('chatSidebarRight');
     // #endregion
     
     if (!chatUserListEl) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:updateCommunityMembersList',message:'chatUserListEl is null',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         return;
     }
