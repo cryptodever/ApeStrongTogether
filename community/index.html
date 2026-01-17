@@ -232,33 +232,33 @@
                 </div>
                 <div class="community-modal-body">
                     <form id="communityCreateForm">
-                        <!-- Banner Upload Section -->
-                        <div class="form-group banner-upload-group">
-                            <label for="communityBanner">Community Banner (Optional)</label>
-                            <div class="banner-upload-container">
-                                <div class="banner-preview" id="bannerPreview">
-                                    <div class="banner-placeholder">
+                        <!-- Profile Picture Upload Section -->
+                        <div class="form-group pfp-upload-group">
+                            <label for="communityPfp">Community Profile Picture (Optional)</label>
+                            <div class="pfp-upload-container">
+                                <div class="pfp-preview" id="pfpPreview">
+                                    <div class="pfp-placeholder">
                                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                            <polyline points="21 15 16 10 5 21"></polyline>
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <circle cx="12" cy="8" r="3"></circle>
+                                            <path d="M12 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                         </svg>
-                                        <span>Click to upload banner</span>
-                                        <small>Recommended: 1200x300px</small>
+                                        <span>Click to upload PFP</span>
+                                        <small>Max size: 100x100px</small>
                                     </div>
-                                    <img id="bannerPreviewImage" class="hide" alt="Banner preview">
-                                    <button type="button" class="banner-remove-btn hide" id="bannerRemoveBtn" aria-label="Remove banner">×</button>
+                                    <img id="pfpPreviewImage" class="hide" alt="PFP preview">
+                                    <button type="button" class="pfp-remove-btn hide" id="pfpRemoveBtn" aria-label="Remove PFP">×</button>
                                 </div>
                                 <input 
                                     type="file" 
-                                    id="communityBanner" 
-                                    name="banner" 
+                                    id="communityPfp" 
+                                    name="pfp" 
                                     accept="image/*"
-                                    class="banner-input"
+                                    class="pfp-input"
                                 >
-                                <div class="banner-upload-info">
-                                    <p>Add a custom banner to make your community stand out</p>
-                                    <p class="banner-help-text">Max size: 1MB • JPG, PNG, or GIF</p>
+                                <div class="pfp-upload-info">
+                                    <p>Add a profile picture that will replace the emoji in the community selector</p>
+                                    <p class="pfp-help-text">Max size: 1MB • 100x100px recommended • JPG, PNG, or GIF</p>
                                 </div>
                             </div>
                         </div>

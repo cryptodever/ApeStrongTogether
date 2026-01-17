@@ -661,26 +661,40 @@ function renderCommunityIcon(community, isDefault) {
     const bg = document.createElement('div');
     bg.className = 'community-icon-bg';
     
-    // Use banner if available
-    if (community.bannerUrl) {
-        bg.style.backgroundImage = `url(${community.bannerUrl})`;
-    } else if (isDefault) {
-        // Default community uses gradient
-        bg.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+    // Use PFP image if available, otherwise use gradient/emoji
+    let text = null;
+    if (community.pfpUrl) {
+        // Display PFP image
+        const pfpImg = document.createElement('img');
+        pfpImg.src = community.pfpUrl;
+        pfpImg.alt = community.name || 'Community';
+        pfpImg.className = 'community-icon-pfp';
+        pfpImg.style.width = '100%';
+        pfpImg.style.height = '100%';
+        pfpImg.style.objectFit = 'cover';
+        pfpImg.style.borderRadius = 'inherit';
+        bg.appendChild(pfpImg);
     } else {
-        // Generate gradient based on name
-        const colors = generateColorFromName(community.name || 'Community');
-        bg.style.background = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
-    }
-    
-    // Create text (first letter or emoji)
-    const text = document.createElement('span');
-    text.className = 'community-icon-text';
-    if (isDefault) {
-        text.textContent = '🦍';
-    } else {
-        const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
-        text.textContent = firstLetter;
+        // No PFP - use gradient background
+        if (isDefault) {
+            // Default community uses gradient
+            bg.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+        } else {
+            // Generate gradient based on name
+            const colors = generateColorFromName(community.name || 'Community');
+            bg.style.background = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
+        }
+        
+        // Create text (first letter or emoji) - only show if no PFP
+        text = document.createElement('span');
+        text.className = 'community-icon-text';
+        if (isDefault) {
+            text.textContent = '🦍';
+        } else {
+            const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
+            text.textContent = firstLetter;
+        }
+        bg.appendChild(text);
     }
     
     // Create tooltip
@@ -694,7 +708,9 @@ function renderCommunityIcon(community, isDefault) {
     
     // Assemble icon
     icon.appendChild(bg);
-    icon.appendChild(text);
+    if (text) {
+        // Text is already inside bg, so we don't need to append it again
+    }
     icon.appendChild(tooltip);
     icon.appendChild(indicator);
     

@@ -32,16 +32,16 @@ let userCommunities = []; // Communities the user is a member of
 let createCommunityBtn, createCommunityBtnMobile, createCommunityBtnDrawer;
 let communityModal, communityModalOverlay, communityModalClose;
 let communityCreateForm, communityNameInput, communityDescriptionInput, communityIsPublicInput;
-let communityBannerInput, bannerPreview, bannerPreviewImage, bannerRemoveBtn, bannerPlaceholder;
+let communityPfpInput, pfpPreview, pfpPreviewImage, pfpRemoveBtn, pfpPlaceholder;
 let nameCharCount, descriptionCharCount;
 let communityJoinModal, communityJoinModalOverlay, communityJoinModalClose;
 let communityDiscoveryModal, communityDiscoveryModalOverlay, communityDiscoveryModalClose;
 let communitySettingsModal, communitySettingsModalOverlay, communitySettingsModalClose;
 let communityMembersModal, communityMembersModalOverlay, communityMembersModalClose;
 
-// Banner state
-let bannerFile = null;
-let bannerDataUrl = null;
+// PFP state
+let pfpFile = null;
+let pfpDataUrl = null;
 
 // Initialize when auth state changes
 onAuthStateChanged(auth, async (user) => {
@@ -87,11 +87,11 @@ function initializeCommunityUI() {
     communityDescriptionInput = document.getElementById('communityDescription');
     // Note: isPublic is now handled via radio buttons, not a single checkbox
     communityIsPublicInput = document.querySelector('input[name="isPublic"][value="true"]');
-    communityBannerInput = document.getElementById('communityBanner');
-    bannerPreview = document.getElementById('bannerPreview');
-    bannerPreviewImage = document.getElementById('bannerPreviewImage');
-    bannerRemoveBtn = document.getElementById('bannerRemoveBtn');
-    bannerPlaceholder = bannerPreview?.querySelector('.banner-placeholder');
+    communityPfpInput = document.getElementById('communityPfp');
+    pfpPreview = document.getElementById('pfpPreview');
+    pfpPreviewImage = document.getElementById('pfpPreviewImage');
+    pfpRemoveBtn = document.getElementById('pfpRemoveBtn');
+    pfpPlaceholder = pfpPreview?.querySelector('.pfp-placeholder');
     nameCharCount = document.getElementById('nameCharCount');
     descriptionCharCount = document.getElementById('descriptionCharCount');
     
@@ -164,28 +164,28 @@ function initializeCommunityUI() {
         communityCreateForm.addEventListener('submit', handleCreateCommunity);
     }
     
-    // Banner upload handlers
-    if (communityBannerInput) {
-        communityBannerInput.addEventListener('change', handleBannerUpload);
+    // PFP upload handlers
+    if (communityPfpInput) {
+        communityPfpInput.addEventListener('change', handlePfpUpload);
     }
-    if (bannerRemoveBtn) {
-        bannerRemoveBtn.addEventListener('click', (e) => {
+    if (pfpRemoveBtn) {
+        pfpRemoveBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            handleBannerRemove();
+            handlePfpRemove();
         });
     }
-    if (bannerPreview) {
-        bannerPreview.addEventListener('click', (e) => {
-            // Only trigger file picker if clicking directly on banner preview, not on child elements that might handle their own clicks
+    if (pfpPreview) {
+        pfpPreview.addEventListener('click', (e) => {
+            // Only trigger file picker if clicking directly on pfp preview, not on child elements that might handle their own clicks
             const target = e.target;
             // Don't trigger if clicking on the remove button
-            if (target.closest('.banner-remove-btn')) {
+            if (target.closest('.pfp-remove-btn')) {
                 return;
             }
-            if (communityBannerInput && !bannerFile) {
+            if (communityPfpInput && !pfpFile) {
                 e.preventDefault();
                 e.stopPropagation();
-                communityBannerInput.click();
+                communityPfpInput.click();
             }
         });
     }
@@ -316,8 +316,8 @@ if (!window.communityModule) {
 window.communityModule.openCommunityModal = openCommunityModal;
 window.communityModule.loadUserCommunities = loadUserCommunities;
 
-// Handle banner upload
-function handleBannerUpload(e) {
+// Handle PFP upload
+function handlePfpUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -332,7 +332,7 @@ function handleBannerUpload(e) {
     const fileSizeKB = (file.size / 1024).toFixed(2);
     const maxSizeKB = (maxSizeBytes / 1024).toFixed(2);
     
-    console.log('Banner upload validation:', {
+    console.log('PFP upload validation:', {
         fileName: file.name,
         fileSize: file.size,
         fileSizeKB: fileSizeKB + ' KB',
@@ -346,48 +346,63 @@ function handleBannerUpload(e) {
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
         alert(`Image size (${fileSizeMB} MB) must be less than 1MB (${maxSizeKB} KB). Please choose a smaller image.`);
         // Reset the input so user can try again
-        if (communityBannerInput) {
-            communityBannerInput.value = '';
+        if (communityPfpInput) {
+            communityPfpInput.value = '';
         }
         return;
     }
     
-    bannerFile = file;
-    
-    // Create preview
+    // Validate image dimensions (max 100x100px)
+    const img = new Image();
     const reader = new FileReader();
+    
     reader.onload = (event) => {
-        bannerDataUrl = event.target.result;
-        if (bannerPreviewImage) {
-            bannerPreviewImage.src = bannerDataUrl;
-            bannerPreviewImage.classList.remove('hide');
-        }
-        if (bannerPlaceholder) {
-            bannerPlaceholder.classList.add('hide');
-        }
-        if (bannerRemoveBtn) {
-            bannerRemoveBtn.classList.remove('hide');
-        }
+        img.onload = () => {
+            if (img.width > 100 || img.height > 100) {
+                alert(`Image dimensions (${img.width}x${img.height}px) must be 100x100px or smaller. Please resize your image.`);
+                if (communityPfpInput) {
+                    communityPfpInput.value = '';
+                }
+                return;
+            }
+            
+            // Valid image
+            pfpFile = file;
+            pfpDataUrl = event.target.result;
+            
+            if (pfpPreviewImage) {
+                pfpPreviewImage.src = pfpDataUrl;
+                pfpPreviewImage.classList.remove('hide');
+            }
+            if (pfpPlaceholder) {
+                pfpPlaceholder.classList.add('hide');
+            }
+            if (pfpRemoveBtn) {
+                pfpRemoveBtn.classList.remove('hide');
+            }
+        };
+        img.src = event.target.result;
     };
+    
     reader.readAsDataURL(file);
 }
 
-// Handle banner removal
-function handleBannerRemove() {
-    bannerFile = null;
-    bannerDataUrl = null;
-    if (communityBannerInput) {
-        communityBannerInput.value = '';
+// Handle PFP removal
+function handlePfpRemove() {
+    pfpFile = null;
+    pfpDataUrl = null;
+    if (communityPfpInput) {
+        communityPfpInput.value = '';
     }
-    if (bannerPreviewImage) {
-        bannerPreviewImage.src = '';
-        bannerPreviewImage.classList.add('hide');
+    if (pfpPreviewImage) {
+        pfpPreviewImage.src = '';
+        pfpPreviewImage.classList.add('hide');
     }
-    if (bannerPlaceholder) {
-        bannerPlaceholder.classList.remove('hide');
+    if (pfpPlaceholder) {
+        pfpPlaceholder.classList.remove('hide');
     }
-    if (bannerRemoveBtn) {
-        bannerRemoveBtn.classList.add('hide');
+    if (pfpRemoveBtn) {
+        pfpRemoveBtn.classList.add('hide');
     }
 }
 
@@ -398,8 +413,8 @@ function closeCommunityModal() {
     document.body.classList.remove('no-scroll');
     if (communityCreateForm) {
         communityCreateForm.reset();
-        // Reset banner
-        handleBannerRemove();
+        // Reset PFP
+        handlePfpRemove();
         // Reset character counters
         if (nameCharCount) nameCharCount.textContent = '0';
         if (descriptionCharCount) descriptionCharCount.textContent = '0';
@@ -450,7 +465,7 @@ async function handleCreateCommunity(e) {
             isPublic: isPublic,
             inviteCode: inviteCode,
             memberCount: 1,
-            bannerUrl: bannerDataUrl || null, // Store banner as data URL (or upload to Storage later)
+            pfpUrl: pfpDataUrl || null, // Store PFP as data URL (or upload to Storage later)
             settings: {
                 allowInvites: true,
                 approvalRequired: false
