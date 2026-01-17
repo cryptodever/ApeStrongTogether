@@ -649,8 +649,7 @@ function setupCommunitySelector() {
                 if (window.communityModule && window.communityModule.openCommunityModal) {
                     window.communityModule.openCommunityModal();
                 } else {
-                    console.warn('Community module not available - please refresh the page');
-                    // Try to open modal directly if it exists
+                    // Try to open modal directly if it exists (fallback if module not loaded yet)
                     const communityModal = document.getElementById('communityModal');
                     if (communityModal) {
                         communityModal.classList.remove('hide');
