@@ -17972,11 +17972,13 @@ body:has(.modal-overlay.show) {
 .community-modal-body .pfp-upload-group label {
     justify-content: center;
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.75rem;
-    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    width: 100%;
 }
 
 .community-modal-body .form-actions {
@@ -18179,6 +18181,7 @@ body:has(.modal-overlay.show) {
     width: 100%;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .pfp-upload-container {
@@ -18191,6 +18194,7 @@ body:has(.modal-overlay.show) {
     align-items: center;
     gap: 0.75rem;
     width: 100%;
+    margin-top: 0.5rem;
 }
 
 .pfp-preview {
@@ -18200,7 +18204,7 @@ body:has(.modal-overlay.show) {
     min-width: 100px;
     min-height: 100px;
     border-radius: 50%;
-    overflow: visible;
+    overflow: hidden;
     border: 2px dashed rgba(74, 222, 128, 0.3);
     background: rgba(0, 0, 0, 0.3);
     cursor: pointer;
@@ -18222,27 +18226,36 @@ body:has(.modal-overlay.show) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.25rem;
     color: rgba(255, 255, 255, 0.5);
     text-align: center;
     padding: 0.5rem;
+    width: 100%;
+    height: 100%;
 }
 
 .pfp-placeholder svg {
     color: rgba(74, 222, 128, 0.6);
     width: 32px;
     height: 32px;
+    flex-shrink: 0;
+    margin-bottom: 0.25rem;
 }
 
 .pfp-placeholder span {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.3;
+    white-space: nowrap;
 }
 
 .pfp-placeholder small {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.2;
+    margin-top: 0.125rem;
 }
 
 .pfp-preview img {
@@ -18263,7 +18276,7 @@ body:has(.modal-overlay.show) {
     max-height: 100px;
     opacity: 0;
     cursor: pointer;
-    z-index: 2;
+    z-index: 10;
     pointer-events: auto;
     margin: 0;
     padding: 0;
@@ -18271,6 +18284,7 @@ body:has(.modal-overlay.show) {
     outline: none;
     border-radius: 50%;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Ensure pfp input is constrained to pfp-preview area only - position it over the preview */
@@ -18290,11 +18304,13 @@ body:has(.modal-overlay.show) {
     border-radius: 50%;
     overflow: hidden;
     z-index: 10;
+    box-sizing: border-box;
 }
 
 /* Make the preview clickable by positioning the input over it */
 .pfp-upload-container {
     min-height: 100px;
+    position: relative;
 }
 
 .pfp-remove-btn {
@@ -18326,17 +18342,27 @@ body:has(.modal-overlay.show) {
 
 .pfp-upload-info {
     text-align: center;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 400px;
 }
 
 .pfp-upload-info p {
     margin: 0.25rem 0;
     font-size: 13px;
     color: rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+}
+
+.pfp-upload-info p:first-child {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
 }
 
 .pfp-help-text {
     color: rgba(255, 255, 255, 0.4) !important;
     font-size: 12px !important;
+    line-height: 1.4;
 }
 
 /* Enhanced Form Inputs */
