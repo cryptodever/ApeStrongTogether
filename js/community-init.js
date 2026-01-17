@@ -251,6 +251,12 @@ function initializeCommunityUI() {
         communitySettingsForm.addEventListener('submit', handleUpdateCommunitySettings);
     }
     
+    // Delete community button
+    const deleteCommunityBtn = document.getElementById('deleteCommunityBtn');
+    if (deleteCommunityBtn) {
+        deleteCommunityBtn.addEventListener('click', handleDeleteCommunity);
+    }
+    
     // Settings PFP upload handlers
     const settingsPfpInput = document.getElementById('settingsCommunityPfp');
     const settingsPfpPreview = document.getElementById('settingsPfpPreview');
@@ -1159,6 +1165,16 @@ async function openCommunitySettingsModal(communityId) {
             return;
         }
         
+        // Show delete button only for owners
+        const deleteCommunityBtn = document.getElementById('deleteCommunityBtn');
+        if (deleteCommunityBtn) {
+            if (memberData.role === 'owner') {
+                deleteCommunityBtn.classList.remove('hide');
+            } else {
+                deleteCommunityBtn.classList.add('hide');
+            }
+        }
+        
         // Populate form
         const nameInput = document.getElementById('settingsCommunityName');
         const descInput = document.getElementById('settingsCommunityDescription');
@@ -1317,6 +1333,101 @@ async function handleUpdateCommunitySettings(e) {
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Save Changes';
+        }
+    }
+}
+
+// Handle delete community
+async function handleDeleteCommunity() {
+    if (!currentUser) return;
+    
+    const communityId = communitySettingsModal.getAttribute('data-community-id');
+    if (!communityId) return;
+    
+    // Prevent deleting default community
+    if (communityId === 'default') {
+        alert('Cannot delete the default community');
+        return;
+    }
+    
+    // Confirm deletion
+    const communityName = document.getElementById('settingsCommunityName')?.value || 'this community';
+    const confirmMessage = `Are you sure you want to delete "${communityName}"?\n\nThis action cannot be undone. All messages, members, and settings will be permanently deleted.\n\nType "DELETE" to confirm:`;
+    const confirmation = prompt(confirmMessage);
+    
+    if (confirmation !== 'DELETE') {
+        return;
+    }
+    
+    const deleteBtn = document.getElementById('deleteCommunityBtn');
+    if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = 'Deleting...';
+    }
+    
+    try {
+        // Verify user is owner before deleting
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists() || memberDoc.data().role !== 'owner') {
+            alert('Only the owner can delete the community');
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Community';
+            }
+            return;
+        }
+        
+        // Delete all members
+        const membersRef = collection(db, 'communities', communityId, 'members');
+        const membersSnapshot = await getDocs(membersRef);
+        const membersBatch = writeBatch(db);
+        membersSnapshot.docs.forEach((doc) => {
+            membersBatch.delete(doc.ref);
+        });
+        await membersBatch.commit();
+        
+        // Delete all messages
+        const messagesRef = collection(db, 'communities', communityId, 'messages');
+        const messagesSnapshot = await getDocs(messagesRef);
+        const messagesBatch = writeBatch(db);
+        messagesSnapshot.docs.forEach((doc) => {
+            messagesBatch.delete(doc.ref);
+        });
+        await messagesBatch.commit();
+        
+        // Delete the community document itself
+        const communityRef = doc(db, 'communities', communityId);
+        await deleteDoc(communityRef);
+        
+        // Close settings modal
+        closeCommunitySettingsModal();
+        
+        // Switch to default community
+        if (window.switchToCommunity) {
+            await window.switchToCommunity('default');
+        }
+        
+        // Reload user communities
+        await loadUserCommunities();
+        
+        // Update UI
+        if (window.updateChannelSwitcher) {
+            window.updateChannelSwitcher();
+        }
+        if (window.updateCommunitySelector) {
+            window.updateCommunitySelector();
+        }
+        
+        showToast('Community deleted successfully');
+    } catch (error) {
+        console.error('Error deleting community:', error);
+        alert('Failed to delete community. Please try again.');
+    } finally {
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = 'Delete Community';
         }
     }
 }
