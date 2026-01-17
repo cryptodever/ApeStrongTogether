@@ -85,7 +85,17 @@
         if (event.target && (event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT' || event.target.tagName === 'IMG')) {
             const src = event.target.src || event.target.href;
             if (src) {
-                console.error('❌ Asset failed to load:', src);
+                // Filter out page routes and non-asset URLs
+                // Page routes typically don't have file extensions or end with /
+                const url = new URL(src, window.location.origin);
+                const pathname = url.pathname.toLowerCase();
+                const hasFileExtension = /\.[a-z0-9]+$/i.test(pathname) && !pathname.endsWith('/');
+                
+                // Only report if it looks like an actual asset (has extension or specific asset paths)
+                if (hasFileExtension || pathname.includes('/assets/') || pathname.includes('/static/') || pathname.includes('/js/') || pathname.includes('/css/') || pathname.includes('/img/') || pathname.includes('/images/')) {
+                    console.error('❌ Asset failed to load:', src);
+                }
+                // Otherwise, it's likely a page route error (404 for HTML page), which is normal and can be ignored
             }
         } else if (event.message && event.filename) {
             // JavaScript error (could be missing module)

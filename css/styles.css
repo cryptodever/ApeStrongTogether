@@ -18277,6 +18277,7 @@ body:has(.modal-overlay.show) {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+    position: relative;
 }
 
 .pfp-placeholder svg {
@@ -18284,7 +18285,13 @@ body:has(.modal-overlay.show) {
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-    margin: 0;
+    margin: 0 auto;
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0;
 }
 
 .pfp-preview img {

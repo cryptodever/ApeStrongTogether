@@ -1368,10 +1368,23 @@ function setupEventListeners() {
     // View offline members button
     const viewOfflineBtn = document.getElementById('viewOfflineBtn');
     if (viewOfflineBtn) {
-        viewOfflineBtn.addEventListener('click', (e) => {
+        // Remove any existing listeners to prevent duplicates
+        const newBtn = viewOfflineBtn.cloneNode(true);
+        viewOfflineBtn.parentNode.replaceChild(newBtn, viewOfflineBtn);
+        
+        newBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             toggleOfflineMembers();
+        });
+    } else {
+        // If button doesn't exist yet, use event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'viewOfflineBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleOfflineMembers();
+            }
         });
     }
     
@@ -2773,6 +2786,11 @@ async function loadCommunityMembers(communityId) {
 
 // Toggle offline members visibility
 function toggleOfflineMembers() {
+    if (!allCommunityMembers || allCommunityMembers.length === 0) {
+        console.warn('No community members loaded yet');
+        return;
+    }
+    
     showOfflineMembers = !showOfflineMembers;
     
     // Filter members based on toggle state
