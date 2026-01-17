@@ -95,6 +95,8 @@ let currentChannel = null;
 let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID; // Default to default community
 let messageContextMenuMessageId = null;
 let userCommunities = []; // Communities user is a member of
+let showOfflineMembers = false; // Toggle for showing offline members
+let allCommunityMembers = []; // Store all community members (online and offline)
 
 // DOM Elements
 let chatMessagesEl, chatInputEl, sendBtn, chatLoadingEl, chatEmptyEl;
@@ -1186,6 +1188,9 @@ async function switchToCommunity(communityId) {
         // Reload messages for community
         loadMessages();
         
+        // Reset offline members toggle when switching communities
+        showOfflineMembers = false;
+        
         // Load community members (all members, not just online) - do this BEFORE setupPresence
         // so presence listener doesn't override with online users only
         loadCommunityMembers(communityId);
@@ -1357,6 +1362,16 @@ function setupEventListeners() {
                     emojiPickerEl.classList.add('hide');
                 }
             }
+        });
+    }
+    
+    // View offline members button
+    const viewOfflineBtn = document.getElementById('viewOfflineBtn');
+    if (viewOfflineBtn) {
+        viewOfflineBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleOfflineMembers();
         });
     }
     
@@ -1832,6 +1847,7 @@ async function setupRealtimeListeners() {
             }
         } else {
             // On community page, reload members to update online status
+            // Preserve showOfflineMembers state when reloading
             loadCommunityMembers(currentCommunityId);
         }
     });
@@ -2714,13 +2730,37 @@ async function loadCommunityMembers(communityId) {
         // Debug logging disabled to prevent connection refused errors
         // #endregion
         
-        // Update members list
-        updateCommunityMembersList(validMembers);
+        // Store all members
+        allCommunityMembers = validMembers;
         
-        // Update member count
+        // Filter members based on showOfflineMembers toggle
+        const membersToShow = showOfflineMembers 
+            ? validMembers 
+            : validMembers.filter(m => m.isOnline === true);
+        
+        // Update members list
+        updateCommunityMembersList(membersToShow);
+        
+        // Update member count (show total or online only based on toggle)
         if (onlineCountEl) {
-            onlineCountEl.textContent = validMembers.length;
+            const onlineCount = validMembers.filter(m => m.isOnline === true).length;
+            onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${validMembers.length}` : onlineCount;
         }
+        
+        // Update button state
+        const viewOfflineBtn = document.getElementById('viewOfflineBtn');
+        if (viewOfflineBtn) {
+            if (showOfflineMembers) {
+                viewOfflineBtn.textContent = '👁️‍🗨️';
+                viewOfflineBtn.title = 'Hide offline members';
+                viewOfflineBtn.classList.add('active');
+            } else {
+                viewOfflineBtn.textContent = '👁️';
+                viewOfflineBtn.title = 'Show offline members';
+                viewOfflineBtn.classList.remove('active');
+            }
+        }
+        
         updateMobileOnlineCount();
         
     } catch (error) {
@@ -2729,6 +2769,41 @@ async function loadCommunityMembers(communityId) {
         // Debug logging disabled to prevent connection refused errors
         // #endregion
     }
+}
+
+// Toggle offline members visibility
+function toggleOfflineMembers() {
+    showOfflineMembers = !showOfflineMembers;
+    
+    // Filter members based on toggle state
+    const membersToShow = showOfflineMembers 
+        ? allCommunityMembers 
+        : allCommunityMembers.filter(m => m.isOnline === true);
+    
+    // Update members list
+    updateCommunityMembersList(membersToShow);
+    
+    // Update member count
+    if (onlineCountEl) {
+        const onlineCount = allCommunityMembers.filter(m => m.isOnline === true).length;
+        onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${allCommunityMembers.length}` : onlineCount;
+    }
+    
+    // Update button appearance
+    const viewOfflineBtn = document.getElementById('viewOfflineBtn');
+    if (viewOfflineBtn) {
+        if (showOfflineMembers) {
+            viewOfflineBtn.textContent = '👁️‍🗨️';
+            viewOfflineBtn.title = 'Hide offline members';
+            viewOfflineBtn.classList.add('active');
+        } else {
+            viewOfflineBtn.textContent = '👁️';
+            viewOfflineBtn.title = 'Show offline members';
+            viewOfflineBtn.classList.remove('active');
+        }
+    }
+    
+    updateMobileOnlineCount();
 }
 
 // Update community members list (all members, not just online)

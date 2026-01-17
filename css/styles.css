@@ -7962,7 +7962,7 @@ body.chat-body > * {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1400px) and (min-width: 1201px) {
     .chat-container {
         padding: 0;
     }
@@ -8000,7 +8000,7 @@ body.chat-body > * {
     }
 }
 
-@media (max-width: 1300px) {
+@media (max-width: 1300px) and (min-width: 1201px) {
     .chat-container > .chat-layout {
         grid-template-columns: 80px 270px minmax(0, 1fr) !important;
         gap: 0;
@@ -9112,6 +9112,41 @@ body.chat-body > * {
     border: 1px solid rgba(74, 222, 128, 0.3);
     box-shadow: 0 2px 6px rgba(74, 222, 128, 0.15);
     transition: all 0.2s ease;
+}
+
+.view-offline-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.view-offline-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.05);
+}
+
+.view-offline-btn:active {
+    transform: scale(0.95);
+}
+
+.view-offline-btn.active {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #4ade80;
 }
 
 .online-count:hover {
@@ -18197,9 +18232,11 @@ body:has(.modal-overlay.show) {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
     width: 100%;
-    margin-top: 0;
+    margin: 0 auto;
+    padding: 0;
 }
 
 .pfp-preview {
@@ -18209,7 +18246,7 @@ body:has(.modal-overlay.show) {
     min-width: 110px;
     min-height: 110px;
     border-radius: 50%;
-    overflow: hidden;
+    overflow: visible;
     border: 2px dashed rgba(74, 222, 128, 0.3);
     background: rgba(0, 0, 0, 0.3);
     cursor: pointer;
@@ -18219,6 +18256,7 @@ body:has(.modal-overlay.show) {
     justify-content: center;
     isolation: isolate;
     flex-shrink: 0;
+    margin: 0;
 }
 
 .pfp-preview:hover {
@@ -19112,7 +19150,8 @@ body.chat-body {
 }
 
 /* Responsive sidebar width adjustments - sidebar is now fixed outside grid */
-@media (max-width: 1400px) {
+/* Only apply to desktop layouts (above 1200px) */
+@media (max-width: 1400px) and (min-width: 1201px) {
     body.chat-body .chat-sidebar-right,
     .chat-container + .chat-sidebar-right,
     .chat-page > .chat-container ~ .chat-sidebar-right {
@@ -19120,27 +19159,15 @@ body.chat-body {
         min-width: 300px !important;
         max-width: 300px !important;
     }
-    body.chat-body .chat-container,
-    .chat-page > .chat-container {
-        right: 300px !important;
-        width: calc(100vw - 300px) !important;
-        max-width: calc(100vw - 300px) !important;
-    }
 }
 
-@media (max-width: 1300px) {
+@media (max-width: 1300px) and (min-width: 1201px) {
     body.chat-body .chat-sidebar-right,
     .chat-container + .chat-sidebar-right,
     .chat-page > .chat-container ~ .chat-sidebar-right {
         width: 290px !important;
         min-width: 290px !important;
         max-width: 290px !important;
-    }
-    body.chat-body .chat-container,
-    .chat-page > .chat-container {
-        right: 290px !important;
-        width: calc(100vw - 290px) !important;
-        max-width: calc(100vw - 290px) !important;
     }
 }
 

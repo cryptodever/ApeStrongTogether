@@ -213,7 +213,10 @@
             <aside class="chat-sidebar chat-sidebar-right" id="chatSidebarRight">
                 <div class="chat-sidebar-header">
                     <h3>Members</h3>
-                    <span class="online-count" id="onlineCount">0</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="online-count" id="onlineCount">0</span>
+                        <button class="view-offline-btn" id="viewOfflineBtn" title="Show offline members">👁️</button>
+                    </div>
                 </div>
                 <div class="chat-user-list" id="chatUserList">
                     <div class="chat-user-item loading">Loading users...</div>
