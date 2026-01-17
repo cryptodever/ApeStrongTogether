@@ -7909,6 +7909,59 @@ body.chat-body > * {
     transition: background 0.3s ease;
 }
 
+/* Community Settings Button - Applies to all screen sizes */
+.community-settings-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    position: relative;
+    overflow: visible;
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.community-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        0 2px 4px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.community-settings-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.community-settings-btn.hide {
+    display: none;
+}
+
+.community-settings-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
 @media (max-width: 1400px) {
     .chat-container {
         padding: 0;
@@ -7940,58 +7993,6 @@ body.chat-body > * {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-    }
-    
-    .community-settings-btn {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 18px;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        flex-shrink: 0;
-        position: relative;
-        overflow: visible;
-        backdrop-filter: blur(12px) saturate(180%);
-        -webkit-backdrop-filter: blur(12px) saturate(180%);
-        box-shadow: 
-            0 1px 3px rgba(0, 0, 0, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    
-    .community-settings-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.25);
-        color: rgba(255, 255, 255, 0.95);
-        transform: translateY(-1px);
-        box-shadow: 
-            0 4px 8px rgba(0, 0, 0, 0.25),
-            0 2px 4px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-    
-    .community-settings-btn:active {
-        transform: translateY(0);
-        box-shadow: 
-            0 1px 2px rgba(0, 0, 0, 0.2),
-            inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    
-    .community-settings-btn.hide {
-        display: none;
-    }
-    
-    .community-settings-btn:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.4);
-        outline-offset: 2px;
-        border-color: rgba(255, 255, 255, 0.3);
     }
     
     .chat-header-compact {
