@@ -595,8 +595,10 @@ function setupCommunitySelector() {
     const selectorContainer = document.querySelector('.community-selector-container');
     if (!selectorContainer) return;
     
-    // Clear existing icons
-    selectorContainer.innerHTML = '';
+    // Clear existing icons and remove all event listeners
+    while (selectorContainer.firstChild) {
+        selectorContainer.removeChild(selectorContainer.firstChild);
+    }
     
     // Load user communities if available
     if (window.communityModule && window.communityModule.userCommunities) {
@@ -609,14 +611,18 @@ function setupCommunitySelector() {
         name: 'Apes Together Strong',
         isDefault: true
     }, true);
-    selectorContainer.appendChild(defaultIcon);
+    if (defaultIcon) {
+        selectorContainer.appendChild(defaultIcon);
+    }
     
     // Add user communities
     if (userCommunities && userCommunities.length > 0) {
         userCommunities.forEach(community => {
             if (community.id !== DEFAULT_COMMUNITY_ID) {
                 const icon = renderCommunityIcon(community, false);
-                selectorContainer.appendChild(icon);
+                if (icon) {
+                    selectorContainer.appendChild(icon);
+                }
             }
         });
     }
@@ -674,10 +680,6 @@ function renderCommunityIcon(community, isDefault) {
         pfpImg.src = community.pfpUrl;
         pfpImg.alt = community.name || 'Community';
         pfpImg.className = 'community-icon-pfp';
-        pfpImg.style.width = '100%';
-        pfpImg.style.height = '100%';
-        pfpImg.style.objectFit = 'cover';
-        pfpImg.style.borderRadius = 'inherit';
         bg.appendChild(pfpImg);
     } else {
         // No PFP - use gradient background
@@ -717,9 +719,7 @@ function renderCommunityIcon(community, isDefault) {
     
     // Assemble icon
     icon.appendChild(bg);
-    if (text) {
-        // Text is already inside bg, so we don't need to append it again
-    }
+    // Note: text is already inside bg if it exists, so we don't append it again
     icon.appendChild(tooltip);
     icon.appendChild(indicator);
     

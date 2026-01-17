@@ -284,6 +284,10 @@ function initializeCommunityUI() {
     // Settings button click handler
     if (communitySettingsBtn) {
         communitySettingsBtn.addEventListener('click', async () => {
+            // Get current community ID from localStorage (set by chat-init.js)
+            const DEFAULT_COMMUNITY_ID = 'default';
+            const currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID;
+            
             if (currentCommunityId && window.communityModule?.openCommunitySettingsModal) {
                 await window.communityModule.openCommunitySettingsModal(currentCommunityId);
             }
@@ -635,6 +639,18 @@ async function handleCreateCommunity(e) {
     }
 }
 
+// Helper function to get actual member count from subcollection
+async function getActualMemberCount(communityId) {
+    try {
+        const membersRef = collection(db, 'communities', communityId, 'members');
+        const membersSnapshot = await getDocs(membersRef);
+        return membersSnapshot.size;
+    } catch (error) {
+        console.warn(`Could not get member count for community ${communityId}:`, error);
+        return null;
+    }
+}
+
 // Load user's communities
 async function loadUserCommunities() {
     if (!currentUser) return;
@@ -678,18 +694,35 @@ async function loadUserCommunities() {
                         }
                     }
                     
+                    // Get actual member count
+                    const actualCount = await getActualMemberCount(DEFAULT_COMMUNITY_ID);
+                    const memberCount = actualCount !== null ? actualCount : (defaultData.memberCount || 0);
+                    
                     communities.push({ 
                         id: DEFAULT_COMMUNITY_ID, 
                         ...defaultData,
+                        memberCount: memberCount,
                         isDefault: true
                     });
+                    
+                    // Update stored count if different (async, don't wait)
+                    if (actualCount !== null && actualCount !== defaultData.memberCount) {
+                        updateDoc(defaultCommunityRef, { memberCount: actualCount }).catch(err => {
+                            console.warn('Could not update member count for default community:', err);
+                        });
+                    }
                 }
             } catch (memberError) {
                 // If we can't check/add membership, still add the community if it's the default
                 if (defaultData.isDefault) {
+                    // Get actual member count
+                    const actualCount = await getActualMemberCount(DEFAULT_COMMUNITY_ID);
+                    const memberCount = actualCount !== null ? actualCount : (defaultData.memberCount || 0);
+                    
                     communities.push({ 
                         id: DEFAULT_COMMUNITY_ID, 
                         ...defaultData,
+                        memberCount: memberCount,
                         isDefault: true
                     });
                 }
@@ -704,12 +737,27 @@ async function loadUserCommunities() {
         );
         const snapshot = await getDocs(q);
         
-        snapshot.forEach(doc => {
-            // Don't add default community twice
-            if (doc.id !== DEFAULT_COMMUNITY_ID) {
-                communities.push({ id: doc.id, ...doc.data() });
+        // Load member counts for user's communities
+        const communityPromises = snapshot.docs.map(async (docSnapshot) => {
+            if (docSnapshot.id === DEFAULT_COMMUNITY_ID) return null; // Already added
+            
+            const communityData = docSnapshot.data();
+            // Get actual member count
+            const actualCount = await getActualMemberCount(docSnapshot.id);
+            const memberCount = actualCount !== null ? actualCount : (communityData.memberCount || 0);
+            
+            // Update stored count if different (async, don't wait)
+            if (actualCount !== null && actualCount !== communityData.memberCount) {
+                updateDoc(doc(db, 'communities', docSnapshot.id), { memberCount: actualCount }).catch(err => {
+                    console.warn(`Could not update member count for community ${docSnapshot.id}:`, err);
+                });
             }
+            
+            return { id: docSnapshot.id, ...communityData, memberCount: memberCount };
         });
+        
+        const userCreatedCommunities = (await Promise.all(communityPromises)).filter(c => c !== null);
+        communities.push(...userCreatedCommunities);
         
         // Get communities where user is a member (by checking members subcollection)
         // Note: This is limited - we check known communities
@@ -722,24 +770,41 @@ async function loadUserCommunities() {
             );
             const allCommunitiesSnapshot = await getDocs(allCommunitiesQuery);
             
-            for (const commDoc of allCommunitiesSnapshot.docs) {
-                if (commDoc.id === DEFAULT_COMMUNITY_ID) continue; // Already added
+            const memberCommunityPromises = allCommunitiesSnapshot.docs.map(async (commDoc) => {
+                if (commDoc.id === DEFAULT_COMMUNITY_ID) return null; // Already added
+                
+                // Check if already in list
+                if (communities.find(c => c.id === commDoc.id)) return null;
                 
                 try {
                     const memberRef = doc(db, 'communities', commDoc.id, 'members', currentUser.uid);
                     const memberDoc = await getDoc(memberRef);
                     
                     if (memberDoc.exists()) {
-                        // Check if already in list
-                        if (!communities.find(c => c.id === commDoc.id)) {
-                            communities.push({ id: commDoc.id, ...commDoc.data() });
+                        const communityData = commDoc.data();
+                        // Get actual member count
+                        const actualCount = await getActualMemberCount(commDoc.id);
+                        const memberCount = actualCount !== null ? actualCount : (communityData.memberCount || 0);
+                        
+                        // Update stored count if different (async, don't wait)
+                        if (actualCount !== null && actualCount !== communityData.memberCount) {
+                            updateDoc(doc(db, 'communities', commDoc.id), { memberCount: actualCount }).catch(err => {
+                                console.warn(`Could not update member count for community ${commDoc.id}:`, err);
+                            });
                         }
+                        
+                        return { id: commDoc.id, ...communityData, memberCount: memberCount };
                     }
                 } catch (memberError) {
                     // Skip if we can't check membership (permission issue)
                     console.warn(`Could not check membership for community ${commDoc.id}:`, memberError);
                 }
-            }
+                
+                return null;
+            });
+            
+            const memberCommunities = (await Promise.all(memberCommunityPromises)).filter(c => c !== null);
+            communities.push(...memberCommunities);
         } catch (queryError) {
             // If query fails, just continue with what we have
             console.warn('Could not query public communities:', queryError);

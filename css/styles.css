@@ -7943,35 +7943,71 @@ body.chat-body > * {
     }
     
     .community-settings-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 18px;
-        width: 36px;
-        height: 36px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+        border: 1.5px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 16px;
+        width: 38px;
+        height: 38px;
         padding: 0;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .community-settings-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        border-radius: inherit;
     }
     
     .community-settings-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(74, 222, 128, 0.3);
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.1) 100%);
+        border-color: rgba(74, 222, 128, 0.4);
         color: #4ade80;
-        transform: scale(1.1);
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 
+            0 4px 12px rgba(74, 222, 128, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    
+    .community-settings-btn:hover::before {
+        opacity: 1;
     }
     
     .community-settings-btn:active {
-        transform: scale(0.95);
+        transform: translateY(0) scale(0.98);
+        box-shadow: 
+            0 2px 6px rgba(74, 222, 128, 0.15),
+            inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .community-settings-btn.hide {
         display: none;
+    }
+    
+    .community-settings-btn:focus-visible {
+        outline: 2px solid rgba(74, 222, 128, 0.5);
+        outline-offset: 2px;
     }
     
     .chat-header-compact {
@@ -17924,6 +17960,16 @@ body:has(.modal-overlay.show) {
     gap: 0.5rem;
 }
 
+.community-modal-body .pfp-upload-group label {
+    justify-content: center;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.02em;
+}
+
 .community-modal-body .form-actions {
     margin-top: 0.5rem;
     padding-top: 1rem;
@@ -18544,6 +18590,7 @@ body:has(.modal-overlay.show) {
 }
 
 .community-icon-bg {
+    position: relative;
     width: 100%;
     height: 100%;
     background-size: cover;
@@ -18551,6 +18598,9 @@ body:has(.modal-overlay.show) {
     background-repeat: no-repeat;
     border-radius: 14px;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .community-icon:hover .community-icon-bg {
@@ -18563,7 +18613,7 @@ body:has(.modal-overlay.show) {
 }
 
 .community-icon-text {
-    position: absolute;
+    position: relative;
     font-size: 22px;
     font-weight: 700;
     color: #ffffff;
@@ -18572,6 +18622,20 @@ body:has(.modal-overlay.show) {
     user-select: none;
     pointer-events: none;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+    display: block;
+}
+
+.community-icon-pfp {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    z-index: 1;
+    display: block;
 }
 
 .community-icon-default {
