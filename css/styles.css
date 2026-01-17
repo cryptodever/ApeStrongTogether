@@ -7550,12 +7550,12 @@ body.chat-body > * {
     height: 100vh;
     max-height: 100vh;
     padding-top: 80px;
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     overflow: hidden;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
     box-sizing: border-box;
 }
 
@@ -7565,12 +7565,12 @@ body.chat-body > * {
     right: 0;
     top: 80px;
     bottom: 0;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow-x: visible !important;
 }
 
 /* Desktop: Container spans full width - grid handles column layout */
@@ -18259,28 +18259,56 @@ body.chat-body {
 
 /* Chat layout - full width, grid handles column layout */
 @media (min-width: 769px) {
-    body.chat-body .chat-container {
+    /* Ensure body and html take full width */
+    body.chat-body,
+    body.chat-body html {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: visible !important;
+    }
+    
+    /* Ensure chat-page takes full width */
+    body.chat-body .chat-page {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: visible !important;
+    }
+    
+    /* Container must span full viewport width */
+    body.chat-body .chat-container,
+    .chat-page > .chat-container {
         left: 0 !important;
         right: 0 !important;
         width: 100vw !important;
         max-width: 100vw !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        overflow-x: visible !important;
-        overflow-y: hidden !important;
-        box-sizing: border-box !important;
-    }
-    
-    body.chat-body .chat-layout {
-        width: 100% !important;
-        max-width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        overflow-x: visible !important;
+        overflow-y: hidden !important;
+        box-sizing: border-box !important;
+        position: absolute !important;
+    }
+    
+    /* Grid layout fills container and extends to right edge */
+    body.chat-body .chat-layout,
+    .chat-container > .chat-layout {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         box-sizing: border-box !important;
         overflow-x: visible !important;
         overflow-y: hidden !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
         display: grid !important;
         grid-template-columns: 80px 300px minmax(0, 1fr) 320px !important;
         gap: 0 !important;
@@ -18298,32 +18326,42 @@ body.chat-body {
 /* Removed manual positioning - grid handles layout automatically */
 
 /* Members sidebar - fixed to viewport right edge */
-body.chat-body .chat-sidebar-right {
-    grid-column: 4 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative !important;
-    width: 320px !important;
-    min-width: 320px !important;
-    max-width: 320px !important;
-    z-index: 1 !important;
-    border-right: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
-                0 8px 32px rgba(0, 0, 0, 0.3) !important;
+@media (min-width: 769px) {
+    body.chat-body .chat-sidebar-right,
+    .chat-sidebar-right {
+        grid-column: 4 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
+        width: 320px !important;
+        min-width: 320px !important;
+        max-width: 320px !important;
+        z-index: 1 !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        margin-left: auto !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                    0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    }
 }
 
 /* Ensure no parent constraints affect the sidebar */
-body.chat-body,
-body.chat-body html {
-    padding-right: 0 !important;
-    margin-right: 0 !important;
-    overflow-x: hidden !important;
+@media (min-width: 769px) {
+    body.chat-body,
+    body.chat-body html {
+        padding-right: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+        overflow-x: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 /* Ensure main panel doesn't get cut off by sidebar */
@@ -18337,12 +18375,17 @@ body.chat-body html {
         box-sizing: border-box !important;
     }
     
-    /* Force container to span full width */
-    body.chat-body .chat-container {
+    /* Force container to span full width - redundant but ensures override */
+    body.chat-body .chat-container,
+    .chat-page > .chat-container {
         right: 0 !important;
         left: 0 !important;
         width: 100vw !important;
         max-width: 100vw !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         overflow-x: visible !important;
     }
     
@@ -18353,8 +18396,11 @@ body.chat-body html {
         overflow-y: hidden !important;
         max-width: 100% !important;
         width: 100% !important;
+        min-width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         grid-template-columns: 80px 300px minmax(0, 1fr) 320px !important;
     }
     
