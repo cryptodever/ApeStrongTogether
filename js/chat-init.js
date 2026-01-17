@@ -176,8 +176,10 @@ function showChatInterface() {
         document.querySelector('.chat-utility-bar').classList.remove('hide');
     }
     
-    // #region agent log
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
     // Log layout information after interface is shown
+    /*
     setTimeout(() => {
         const layoutEl = document.querySelector('.chat-layout');
         const sidebarRightEl = document.getElementById('chatSidebarRight');
@@ -325,6 +327,7 @@ function showChatInterface() {
             }).catch(() => {});
         }
     }, 500);
+    */
     // #endregion
 }
 
@@ -443,9 +446,10 @@ async function initializeChat() {
     chatUserListEl = document.getElementById('chatUserList');
     onlineCountEl = document.getElementById('onlineCount');
     
-    // #region agent log
-    const sidebarRightCheck = document.getElementById('chatSidebarRight');
-    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:initializeChat',message:'DOM elements check',data:{chatUserListElExists:!!chatUserListEl,onlineCountElExists:!!onlineCountEl,sidebarRightExists:!!sidebarRightCheck,sidebarParent:sidebarRightCheck?.parentElement?.className,chatUserListParent:chatUserListEl?.parentElement?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #region agent log (disabled - debug endpoint not available)
+    // Debug logging disabled to prevent connection refused errors
+    // const sidebarRightCheck = document.getElementById('chatSidebarRight');
+    // fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:initializeChat',message:'DOM elements check',data:{chatUserListElExists:!!chatUserListEl,onlineCountElExists:!!onlineCountEl,sidebarRightExists:!!sidebarRightCheck,sidebarParent:sidebarRightCheck?.parentElement?.className,chatUserListParent:chatUserListEl?.parentElement?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
     // #endregion
     messageContextMenuEl = document.getElementById('messageContextMenu');
     reactionPickerEl = document.getElementById('reactionPicker');
@@ -1508,12 +1512,8 @@ async function loadMessages() {
             displayMessage(doc.id, doc.data());
         });
 
-        // #region agent log
-        const chatMainPanel = document.querySelector('.chat-main-panel');
-        const chatMain = document.querySelector('.chat-main');
-        const chatMainStyles = chatMain ? window.getComputedStyle(chatMain) : null;
-        const chatMessagesStyles = chatMessagesEl ? window.getComputedStyle(chatMessagesEl) : null;
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Messages displayed',data:{messagesProcessed:messages.length,chatMessagesElChildren:chatMessagesEl?.children?.length || 0,chatMainExists:!!chatMain,chatMainPanelExists:!!chatMainPanel,chatMainDisplay:chatMainStyles?.display,chatMainHeight:chatMainStyles?.height,chatMessagesDisplay:chatMessagesStyles?.display,chatMessagesHeight:chatMessagesStyles?.height,chatMessagesVisibility:chatMessagesStyles?.visibility,chatMessagesOpacity:chatMessagesStyles?.opacity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
 
         scrollToBottom();
@@ -1521,8 +1521,8 @@ async function loadMessages() {
     }).catch((error) => {
         clearTimeout(loadingTimeout);
         console.error('Error loading messages:', error);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:loadMessages',message:'Error loading messages',data:{error:error.message,errorCode:error.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #region agent log (disabled - debug endpoint not available)
+        // Debug logging disabled to prevent connection refused errors
         // #endregion
         chatLoadingEl.classList.add('hide');
         chatEmptyEl.classList.remove('hide');
