@@ -501,6 +501,11 @@ async function initializeChat() {
     // Setup presence
     setupPresence();
     
+    // Check if user is owner and show/hide settings button
+    if (currentCommunityId) {
+        updateCommunitySettingsButton(currentCommunityId);
+    }
+    
     // Load community members if we're on a community page (not default)
     if (currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID) {
         loadCommunityMembers(currentCommunityId);
@@ -690,7 +695,11 @@ function renderCommunityIcon(community, isDefault) {
         text.className = 'community-icon-text';
         if (isDefault) {
             text.textContent = '🦍';
+        } else if (community.emoji) {
+            // Use emoji field if available
+            text.textContent = community.emoji;
         } else {
+            // Fallback to first letter
             const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
             text.textContent = firstLetter;
         }
@@ -715,7 +724,7 @@ function renderCommunityIcon(community, isDefault) {
     icon.appendChild(indicator);
     
     // Add click handler
-    icon.addEventListener('click', () => {
+    icon.addEventListener('click', async () => {
         if (isDefault || community.id === DEFAULT_COMMUNITY_ID) {
             // Switch to default community
             currentCommunityId = DEFAULT_COMMUNITY_ID;
@@ -723,6 +732,8 @@ function renderCommunityIcon(community, isDefault) {
             localStorage.setItem('selectedCommunity', DEFAULT_COMMUNITY_ID);
             localStorage.removeItem('selectedChannel');
             updateActiveCommunityIndicator();
+            // Hide settings button for default community
+            await updateCommunitySettingsButton(DEFAULT_COMMUNITY_ID);
             loadMessages();
         } else {
             switchToCommunity(community.id);
@@ -759,8 +770,40 @@ function updateActiveCommunityIndicator() {
     });
 }
 
+// Update community settings button visibility based on owner status
+async function updateCommunitySettingsButton(communityId) {
+    const settingsBtn = document.getElementById('communitySettingsBtn');
+    if (!settingsBtn || !currentUser || !communityId) {
+        if (settingsBtn) settingsBtn.classList.add('hide');
+        return;
+    }
+    
+    try {
+        // Check if user is owner
+        const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (memberDoc.exists()) {
+            const memberData = memberDoc.data();
+            if (memberData.role === 'owner') {
+                settingsBtn.classList.remove('hide');
+            } else {
+                settingsBtn.classList.add('hide');
+            }
+        } else {
+            settingsBtn.classList.add('hide');
+        }
+    } catch (error) {
+        console.error('Error checking owner status:', error);
+        settingsBtn.classList.add('hide');
+    }
+}
+
 // Export function to update community selector
 window.updateCommunitySelector = setupCommunitySelector;
+
+// Export function to update settings button
+window.updateCommunitySettingsButton = updateCommunitySettingsButton;
 
 // Setup mobile channel list in drawer
 function setupMobileChannelList() {
@@ -1133,6 +1176,9 @@ async function switchToCommunity(communityId) {
         updateActiveCommunityIndicator();
         updateMobileChannelName();
         
+        // Check if user is owner and show/hide settings button
+        await updateCommunitySettingsButton(communityId);
+        
         // Reload messages for community
         loadMessages();
         
@@ -1192,6 +1238,9 @@ async function switchChannel(channelId) {
     setupChannelSwitcher();
     setupMobileChannelList();
     updateChannelInfo();
+    
+    // Hide settings button for default community (only owners of custom communities can access settings)
+    await updateCommunitySettingsButton(DEFAULT_COMMUNITY_ID);
     
     // Clear current messages but keep loading/empty elements
     // (Don't use innerHTML = '' as it removes those elements from DOM)

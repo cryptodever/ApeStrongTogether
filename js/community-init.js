@@ -38,10 +38,14 @@ let communityJoinModal, communityJoinModalOverlay, communityJoinModalClose;
 let communityDiscoveryModal, communityDiscoveryModalOverlay, communityDiscoveryModalClose;
 let communitySettingsModal, communitySettingsModalOverlay, communitySettingsModalClose;
 let communityMembersModal, communityMembersModalOverlay, communityMembersModalClose;
+let communitySettingsBtn;
 
 // PFP state
 let pfpFile = null;
 let pfpDataUrl = null;
+let settingsPfpFile = null;
+let settingsPfpDataUrl = null;
+let settingsPfpRemoved = false; // Track if PFP was removed in settings
 
 // Initialize when auth state changes
 onAuthStateChanged(auth, async (user) => {
@@ -110,6 +114,8 @@ function initializeCommunityUI() {
     communityMembersModal = document.getElementById('communityMembersModal');
     communityMembersModalOverlay = document.getElementById('communityMembersModalOverlay');
     communityMembersModalClose = document.getElementById('communityMembersModalClose');
+    
+    communitySettingsBtn = document.getElementById('communitySettingsBtn');
     
     // Setup event listeners
     if (createCommunityBtn) {
@@ -243,6 +249,45 @@ function initializeCommunityUI() {
     const communitySettingsForm = document.getElementById('communitySettingsForm');
     if (communitySettingsForm) {
         communitySettingsForm.addEventListener('submit', handleUpdateCommunitySettings);
+    }
+    
+    // Settings PFP upload handlers
+    const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+    const settingsPfpPreview = document.getElementById('settingsPfpPreview');
+    const settingsPfpPreviewImage = document.getElementById('settingsPfpPreviewImage');
+    const settingsPfpRemoveBtn = document.getElementById('settingsPfpRemoveBtn');
+    const settingsPfpPlaceholder = settingsPfpPreview?.querySelector('.pfp-placeholder');
+    
+    if (settingsPfpInput) {
+        settingsPfpInput.addEventListener('change', (e) => handleSettingsPfpUpload(e, settingsPfpPreviewImage, settingsPfpPlaceholder, settingsPfpRemoveBtn));
+    }
+    if (settingsPfpRemoveBtn) {
+        settingsPfpRemoveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleSettingsPfpRemove(settingsPfpPreviewImage, settingsPfpPlaceholder, settingsPfpRemoveBtn);
+        });
+    }
+    if (settingsPfpPreview) {
+        settingsPfpPreview.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.closest('.pfp-remove-btn')) {
+                return;
+            }
+            if (settingsPfpInput && !settingsPfpFile) {
+                e.preventDefault();
+                e.stopPropagation();
+                settingsPfpInput.click();
+            }
+        });
+    }
+    
+    // Settings button click handler
+    if (communitySettingsBtn) {
+        communitySettingsBtn.addEventListener('click', async () => {
+            if (currentCommunityId && window.communityModule?.openCommunitySettingsModal) {
+                await window.communityModule.openCommunitySettingsModal(currentCommunityId);
+            }
+        });
     }
     
     const copyInviteLinkBtn = document.getElementById('copyInviteLinkBtn');
@@ -406,6 +451,89 @@ function handlePfpRemove() {
     }
 }
 
+// Handle settings PFP upload
+function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    // Validate file size (max 1MB = 1,048,576 bytes)
+    const maxSizeBytes = 1024 * 1024; // 1MB
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    const maxSizeKB = (maxSizeBytes / 1024).toFixed(2);
+    
+    if (file.size > maxSizeBytes) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`Image size (${fileSizeMB} MB) must be less than 1MB (${maxSizeKB} KB). Please choose a smaller image.`);
+        const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+        if (settingsPfpInput) {
+            settingsPfpInput.value = '';
+        }
+        return;
+    }
+    
+    // Validate image dimensions (max 100x100px)
+    const img = new Image();
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+        img.onload = () => {
+            if (img.width > 100 || img.height > 100) {
+                alert(`Image dimensions (${img.width}x${img.height}px) must be 100x100px or smaller. Please resize your image.`);
+                const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+                if (settingsPfpInput) {
+                    settingsPfpInput.value = '';
+                }
+                return;
+            }
+            
+            // Valid image
+            settingsPfpFile = file;
+            settingsPfpDataUrl = event.target.result;
+            
+            if (previewImage) {
+                previewImage.src = settingsPfpDataUrl;
+                previewImage.classList.remove('hide');
+            }
+            if (placeholder) {
+                placeholder.classList.add('hide');
+            }
+            if (removeBtn) {
+                removeBtn.classList.remove('hide');
+            }
+        };
+        img.src = event.target.result;
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Handle settings PFP removal
+function handleSettingsPfpRemove(previewImage, placeholder, removeBtn) {
+    settingsPfpFile = null;
+    settingsPfpDataUrl = null;
+    settingsPfpRemoved = true; // Mark as removed
+    const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+    if (settingsPfpInput) {
+        settingsPfpInput.value = '';
+    }
+    if (previewImage) {
+        previewImage.src = '';
+        previewImage.classList.add('hide');
+    }
+    if (placeholder) {
+        placeholder.classList.remove('hide');
+    }
+    if (removeBtn) {
+        removeBtn.classList.add('hide');
+    }
+}
+
 // Close community creation modal
 function closeCommunityModal() {
     if (!communityModal) return;
@@ -457,6 +585,7 @@ async function handleCreateCommunity(e) {
         const inviteCode = await generateUniqueInviteCode();
         
         // Create community document
+        // Default to ape emoji if no PFP is uploaded
         const communityData = {
             name: name,
             description: description || '',
@@ -466,6 +595,7 @@ async function handleCreateCommunity(e) {
             inviteCode: inviteCode,
             memberCount: 1,
             pfpUrl: pfpDataUrl || null, // Store PFP as data URL (or upload to Storage later)
+            emoji: pfpDataUrl ? null : '🦍', // Default to ape emoji if no PFP
             settings: {
                 allowInvites: true,
                 approvalRequired: false
@@ -942,6 +1072,9 @@ async function openCommunitySettingsModal(communityId) {
         const descInput = document.getElementById('settingsCommunityDescription');
         const isPublicInput = document.getElementById('settingsCommunityIsPublic');
         const inviteLinkInput = document.getElementById('communityInviteLink');
+        const settingsPfpPreviewImage = document.getElementById('settingsPfpPreviewImage');
+        const settingsPfpPlaceholder = document.getElementById('settingsPfpPreview')?.querySelector('.pfp-placeholder');
+        const settingsPfpRemoveBtn = document.getElementById('settingsPfpRemoveBtn');
         
         if (nameInput) nameInput.value = communityData.name || '';
         if (descInput) descInput.value = communityData.description || '';
@@ -950,6 +1083,36 @@ async function openCommunitySettingsModal(communityId) {
             const inviteUrl = `${window.location.origin}/chat?invite=${communityData.inviteCode}`;
             inviteLinkInput.value = inviteUrl;
         }
+        
+        // Populate PFP preview if exists
+        if (communityData.pfpUrl) {
+            if (settingsPfpPreviewImage) {
+                settingsPfpPreviewImage.src = communityData.pfpUrl;
+                settingsPfpPreviewImage.classList.remove('hide');
+            }
+            if (settingsPfpPlaceholder) {
+                settingsPfpPlaceholder.classList.add('hide');
+            }
+            if (settingsPfpRemoveBtn) {
+                settingsPfpRemoveBtn.classList.remove('hide');
+            }
+        } else {
+            if (settingsPfpPreviewImage) {
+                settingsPfpPreviewImage.src = '';
+                settingsPfpPreviewImage.classList.add('hide');
+            }
+            if (settingsPfpPlaceholder) {
+                settingsPfpPlaceholder.classList.remove('hide');
+            }
+            if (settingsPfpRemoveBtn) {
+                settingsPfpRemoveBtn.classList.add('hide');
+            }
+        }
+        
+        // Reset settings PFP state
+        settingsPfpFile = null;
+        settingsPfpDataUrl = null;
+        settingsPfpRemoved = false; // Reset removal flag
         
         // Store community ID for form submission
         communitySettingsModal.setAttribute('data-community-id', communityId);
@@ -969,6 +1132,23 @@ function closeCommunitySettingsModal() {
     document.body.style.overflow = '';
     const form = document.getElementById('communitySettingsForm');
     if (form) form.reset();
+    
+    // Reset settings PFP state
+    settingsPfpFile = null;
+    settingsPfpDataUrl = null;
+    settingsPfpRemoved = false; // Reset removal flag
+    const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+    const settingsPfpPreviewImage = document.getElementById('settingsPfpPreviewImage');
+    const settingsPfpPlaceholder = document.getElementById('settingsPfpPreview')?.querySelector('.pfp-placeholder');
+    const settingsPfpRemoveBtn = document.getElementById('settingsPfpRemoveBtn');
+    
+    if (settingsPfpInput) settingsPfpInput.value = '';
+    if (settingsPfpPreviewImage) {
+        settingsPfpPreviewImage.src = '';
+        settingsPfpPreviewImage.classList.add('hide');
+    }
+    if (settingsPfpPlaceholder) settingsPfpPlaceholder.classList.remove('hide');
+    if (settingsPfpRemoveBtn) settingsPfpRemoveBtn.classList.add('hide');
 }
 
 // Handle update community settings
@@ -1000,17 +1180,41 @@ async function handleUpdateCommunitySettings(e) {
     }
     
     try {
-        await updateDoc(doc(db, 'communities', communityId), {
+        const updateData = {
             name: name,
             description: description || '',
             isPublic: isPublic
-        });
+        };
+        
+        // Update PFP if changed
+        if (settingsPfpDataUrl) {
+            // New PFP uploaded
+            updateData.pfpUrl = settingsPfpDataUrl;
+            updateData.emoji = null; // Clear emoji if PFP is set
+        } else if (settingsPfpRemoved) {
+            // PFP was removed - set to ape emoji
+            updateData.pfpUrl = null;
+            updateData.emoji = '🦍';
+        }
+        // If neither, keep existing PFP/emoji (no change)
+        
+        await updateDoc(doc(db, 'communities', communityId), updateData);
         
         closeCommunitySettingsModal();
         await loadUserCommunities();
         
         if (window.updateChannelSwitcher) {
             window.updateChannelSwitcher();
+        }
+        
+        // Update community selector to show new PFP
+        if (window.updateCommunitySelector) {
+            window.updateCommunitySelector();
+        }
+        
+        // Update settings button visibility
+        if (window.updateCommunitySettingsButton) {
+            await window.updateCommunitySettingsButton(communityId);
         }
         
         showToast('Community settings updated!');

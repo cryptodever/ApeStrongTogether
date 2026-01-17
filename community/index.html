@@ -94,6 +94,7 @@
                 <aside class="channel-list-sidebar" id="channelListSidebar">
                     <div class="channel-list-header">
                         <h3 id="currentCommunityName">Apes Together Strong</h3>
+                        <button class="community-settings-btn hide" id="communitySettingsBtn" title="Community Settings" aria-label="Community Settings">⚙️</button>
                     </div>
                     <div class="channel-list-content" id="channelListContent">
                         <div class="channel-category">
@@ -419,6 +420,38 @@
                                 <span>Make community public</span>
                             </label>
                         </div>
+                        
+                        <!-- Profile Picture Upload Section -->
+                        <div class="form-group pfp-upload-group">
+                            <label for="settingsCommunityPfp">Community Profile Picture</label>
+                            <div class="pfp-upload-container">
+                                <div class="pfp-preview" id="settingsPfpPreview">
+                                    <div class="pfp-placeholder">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <circle cx="12" cy="8" r="3"></circle>
+                                            <path d="M12 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        </svg>
+                                        <span>Click to upload PFP</span>
+                                        <small>Max size: 100x100px</small>
+                                    </div>
+                                    <img id="settingsPfpPreviewImage" class="hide" alt="PFP preview">
+                                    <button type="button" class="pfp-remove-btn hide" id="settingsPfpRemoveBtn" aria-label="Remove PFP">×</button>
+                                </div>
+                                <input 
+                                    type="file" 
+                                    id="settingsCommunityPfp" 
+                                    name="pfp" 
+                                    accept="image/*"
+                                    class="pfp-input"
+                                >
+                                <div class="pfp-upload-info">
+                                    <p>Update the profile picture shown in the community selector</p>
+                                    <p class="pfp-help-text">Max size: 1MB • 100x100px recommended • JPG, PNG, or GIF</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="community-invite-section">
                             <h3>Invite Link</h3>
                             <div class="invite-link-display">
