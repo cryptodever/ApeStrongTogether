@@ -18010,14 +18010,14 @@ body:has(.modal-overlay.show) {
 }
 
 .community-modal-body .pfp-upload-group label {
-    justify-content: center;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 1rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 1.25rem;
+    letter-spacing: normal;
+    text-transform: none;
     width: 100%;
     display: block;
 }
@@ -18242,28 +18242,30 @@ body:has(.modal-overlay.show) {
 
 .pfp-preview {
     position: relative;
-    width: 110px;
-    height: 110px;
-    min-width: 110px;
-    min-height: 110px;
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    min-height: 120px;
     border-radius: 50%;
     overflow: visible;
-    border: 2px dashed rgba(74, 222, 128, 0.3);
-    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.03);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
     isolation: isolate;
     flex-shrink: 0;
     margin: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .pfp-preview:hover {
-    border-color: rgba(74, 222, 128, 0.5);
-    background: rgba(0, 0, 0, 0.4);
-    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.06);
+    transform: scale(1.02);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .pfp-placeholder {
@@ -18280,9 +18282,9 @@ body:has(.modal-overlay.show) {
 }
 
 .pfp-placeholder svg {
-    color: rgba(74, 222, 128, 0.6);
-    width: 36px;
-    height: 36px;
+    color: rgba(255, 255, 255, 0.4);
+    width: 40px;
+    height: 40px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -18291,6 +18293,11 @@ body:has(.modal-overlay.show) {
     padding: 0;
     display: block;
     flex-shrink: 0;
+    transition: color 0.3s ease;
+}
+
+.pfp-preview:hover .pfp-placeholder svg {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .pfp-preview img {
@@ -18305,10 +18312,10 @@ body:has(.modal-overlay.show) {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 110px;
-    height: 110px;
-    max-width: 110px;
-    max-height: 110px;
+    width: 120px;
+    height: 120px;
+    max-width: 120px;
+    max-height: 120px;
     opacity: 0;
     cursor: pointer;
     z-index: 10;
@@ -18328,10 +18335,10 @@ body:has(.modal-overlay.show) {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 110px;
-    height: 110px;
-    max-width: 110px;
-    max-height: 110px;
+    width: 120px;
+    height: 120px;
+    max-width: 120px;
+    max-height: 120px;
     margin: 0;
     padding: 0;
     border: none;
@@ -18377,28 +18384,31 @@ body:has(.modal-overlay.show) {
 
 .pfp-upload-info {
     text-align: left;
-    margin-top: 0.75rem;
+    margin-top: 1rem;
     width: 100%;
     max-width: 100%;
+    padding: 0;
 }
 
 .pfp-upload-info p {
-    margin: 0.375rem 0;
+    margin: 0.5rem 0;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.6);
     line-height: 1.5;
 }
 
 .pfp-upload-info p:first-child {
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.7);
     font-size: 13px;
     margin-top: 0;
+    margin-bottom: 0.375rem;
 }
 
 .pfp-help-text {
-    color: rgba(255, 255, 255, 0.45) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
     font-size: 12px !important;
-    line-height: 1.4;
+    line-height: 1.5;
+    margin-top: 0.25rem;
 }
 
 /* Enhanced Form Inputs */
