@@ -442,6 +442,11 @@ async function initializeChat() {
     rateLimitInfoEl = document.getElementById('rateLimitInfo');
     chatUserListEl = document.getElementById('chatUserList');
     onlineCountEl = document.getElementById('onlineCount');
+    
+    // #region agent log
+    const sidebarRightCheck = document.getElementById('chatSidebarRight');
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:initializeChat',message:'DOM elements check',data:{chatUserListElExists:!!chatUserListEl,onlineCountElExists:!!onlineCountEl,sidebarRightExists:!!sidebarRightCheck,sidebarParent:sidebarRightCheck?.parentElement?.className,chatUserListParent:chatUserListEl?.parentElement?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
     messageContextMenuEl = document.getElementById('messageContextMenu');
     reactionPickerEl = document.getElementById('reactionPicker');
     emojiPickerEl = document.getElementById('emojiPicker');
@@ -2529,7 +2534,17 @@ async function loadCommunityMembers(communityId) {
 
 // Update community members list (all members, not just online)
 function updateCommunityMembersList(members) {
-    if (!chatUserListEl) return;
+    // #region agent log
+    const sidebarEl = document.getElementById('chatSidebarRight');
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:updateCommunityMembersList',message:'Updating members list',data:{chatUserListElExists:!!chatUserListEl,sidebarElExists:!!sidebarEl,sidebarParent:sidebarEl?.parentElement?.className,sidebarDisplay:sidebarEl?window.getComputedStyle(sidebarEl).display:'N/A',sidebarGridColumn:sidebarEl?window.getComputedStyle(sidebarEl).gridColumn:'N/A',membersCount:members.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
+    
+    if (!chatUserListEl) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:updateCommunityMembersList',message:'chatUserListEl is null',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
+        return;
+    }
 
     const userListHTML = members.length === 0
         ? '<div class="chat-user-item">No members</div>'
