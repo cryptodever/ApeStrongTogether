@@ -7781,7 +7781,7 @@ body.chat-body > * {
         width: 320px !important;
         min-width: 320px !important;
         max-width: 320px !important;
-        height: calc(100vh - 80px) !important;
+        height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         background: rgba(12, 18, 32, 0.85) !important;
@@ -18209,6 +18209,26 @@ body:has(.modal-overlay.show) {
     box-shadow: 
         0 8px 24px rgba(255, 215, 0, 0.3),
         0 0 0 2px rgba(255, 215, 0, 0.4);
+}
+
+.community-icon-create:active {
+    transform: scale(0.95) !important;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 193, 7, 0.25) 100%);
+    outline: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.community-icon-create:focus {
+    outline: none;
+    transform: scale(1.05);
+}
+
+.community-icon-create:focus:not(:hover) {
+    transform: scale(1.05) !important;
+}
+
+.community-icon-create:active:hover {
+    transform: scale(0.95) !important;
 }
 
 .community-icon-create span {
