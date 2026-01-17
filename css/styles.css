@@ -14620,11 +14620,12 @@ body:has(.modal-overlay.show) {
 
 .emoji-picker-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 0.25rem;
-    padding: 0.75rem;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0.375rem;
+    padding: 1rem;
     overflow-y: auto;
-    max-height: 250px;
+    max-height: 220px;
+    min-height: 180px;
 }
 
 .emoji-item {

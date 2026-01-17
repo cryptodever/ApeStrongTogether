@@ -731,6 +731,11 @@ function renderCommunityIcon(community, isDefault) {
     
     // Add click handler
     icon.addEventListener('click', async () => {
+        // If already on this community, do nothing to prevent duplication
+        if (currentCommunityId === community.id) {
+            return;
+        }
+        
         if (isDefault || community.id === DEFAULT_COMMUNITY_ID) {
             // Switch to default community
             currentCommunityId = DEFAULT_COMMUNITY_ID;
@@ -1528,6 +1533,16 @@ async function loadMessages() {
         // Reverse to show oldest first (newest at bottom)
         const messages = snapshot.docs.reverse();
         messages.forEach((doc) => {
+            // Skip if message is already loaded/displayed to prevent duplicates
+            if (loadedMessageIds.has(doc.id)) {
+                return;
+            }
+            // Check if message element already exists in DOM
+            const existingMsg = document.getElementById(`msg-${doc.id}`);
+            if (existingMsg) {
+                loadedMessageIds.add(doc.id);
+                return;
+            }
             loadedMessageIds.add(doc.id);
             displayMessage(doc.id, doc.data());
         });
