@@ -1373,23 +1373,10 @@ function setupEventListeners() {
     // View offline members button
     const viewOfflineBtn = document.getElementById('viewOfflineBtn');
     if (viewOfflineBtn) {
-        // Remove any existing listeners to prevent duplicates
-        const newBtn = viewOfflineBtn.cloneNode(true);
-        viewOfflineBtn.parentNode.replaceChild(newBtn, viewOfflineBtn);
-        
-        newBtn.addEventListener('click', (e) => {
+        viewOfflineBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             toggleOfflineMembers();
-        });
-    } else {
-        // If button doesn't exist yet, use event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target && e.target.id === 'viewOfflineBtn') {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleOfflineMembers();
-            }
         });
     }
     
@@ -2765,9 +2752,20 @@ async function loadCommunityMembers(communityId) {
             onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${validMembers.length}` : onlineCount;
         }
         
-        // Update button state
+        // Update button state and ensure event listener is attached
         const viewOfflineBtn = document.getElementById('viewOfflineBtn');
         if (viewOfflineBtn) {
+            // Ensure event listener is attached (in case button was added/recreated)
+            const hasListener = viewOfflineBtn.getAttribute('data-listener-attached');
+            if (!hasListener) {
+                viewOfflineBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleOfflineMembers();
+                });
+                viewOfflineBtn.setAttribute('data-listener-attached', 'true');
+            }
+            
             if (showOfflineMembers) {
                 viewOfflineBtn.textContent = '👁️‍🗨️';
                 viewOfflineBtn.title = 'Hide offline members';
