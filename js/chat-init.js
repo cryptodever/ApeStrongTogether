@@ -2147,20 +2147,34 @@ async function handleSendMessage() {
         
         const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
         let memberDoc = await getDoc(memberRef);
+        
         if (!memberDoc.exists()) {
             // Auto-join user to community
             try {
+                console.log(`Auto-joining user ${currentUser.uid} to community ${currentCommunityId}`);
                 await autoJoinCommunity(currentCommunityId, currentUser.uid);
+                // Wait a moment for Firestore to update
+                await new Promise(resolve => setTimeout(resolve, 100));
                 // Verify membership was created
                 memberDoc = await getDoc(memberRef);
                 if (!memberDoc.exists()) {
-                    throw new Error('Failed to join community - membership not created');
+                    throw new Error('Failed to join community - membership not created after auto-join');
                 }
+                console.log('Successfully joined community');
             } catch (joinError) {
                 console.error('Error auto-joining community:', joinError);
-                alert('You must be a member of this community to send messages. Please refresh the page.');
+                const errorMsg = joinError.code === 'permission-denied' 
+                    ? 'Permission denied. You may need to be manually added to this community, or check Firestore security rules.'
+                    : `Failed to join community: ${joinError.message}`;
+                alert(`Cannot send message: ${errorMsg}`);
                 return;
             }
+        }
+        
+        // Double-check membership exists before proceeding
+        if (!memberDoc || !memberDoc.exists()) {
+            alert('You must be a member of this community to send messages. Please refresh the page.');
+            return;
         }
         
         // Store message in community messages subcollection
@@ -2178,7 +2192,21 @@ async function handleSendMessage() {
             xAccountVerified: userProfile.xAccountVerified || false
         };
         
-        await addDoc(messagesRef, messageData);
+        // Attempt to send message
+        try {
+            await addDoc(messagesRef, messageData);
+        } catch (writeError) {
+            if (writeError.code === 'permission-denied') {
+                // Re-verify membership one more time
+                const finalMemberCheck = await getDoc(memberRef);
+                if (!finalMemberCheck.exists()) {
+                    throw new Error('Permission denied: You are not a member of this community. Please refresh the page.');
+                } else {
+                    throw new Error('Permission denied: Firestore security rules may not allow message creation. Check rules.');
+                }
+            }
+            throw writeError;
+        }
 
         // Clear input
         chatInputEl.value = '';
@@ -2328,6 +2356,25 @@ async function updateTypingIndicator() {
         currentCommunityId = DEFAULT_COMMUNITY_ID;
     }
 
+    // Verify membership before updating typing (non-blocking - just skip if not member)
+    try {
+        const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists()) {
+            // Try to auto-join silently for typing indicator
+            try {
+                await autoJoinCommunity(currentCommunityId, currentUser.uid);
+            } catch (joinError) {
+                // Silently fail for typing indicator - it's not critical
+                return;
+            }
+        }
+    } catch (memberError) {
+        // Silently fail - typing indicator is not critical
+        return;
+    }
+
     try {
         const typingRef = doc(db, 'typing', currentUser.uid);
         // Format: communityId_channelId for typing indicator
@@ -2342,7 +2389,10 @@ async function updateTypingIndicator() {
             timestamp: serverTimestamp()
         }, { merge: true });
     } catch (error) {
-        console.error('Error updating typing indicator:', error);
+        // Typing indicator errors are non-critical - don't show to user
+        if (error.code !== 'permission-denied') {
+            console.warn('Error updating typing indicator:', error);
+        }
     }
 }
 
