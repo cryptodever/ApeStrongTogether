@@ -175,8 +175,16 @@ function initializeCommunityUI() {
         });
     }
     if (bannerPreview) {
-        bannerPreview.addEventListener('click', () => {
+        bannerPreview.addEventListener('click', (e) => {
+            // Only trigger file picker if clicking directly on banner preview, not on child elements that might handle their own clicks
+            const target = e.target;
+            // Don't trigger if clicking on the remove button
+            if (target.closest('.banner-remove-btn')) {
+                return;
+            }
             if (communityBannerInput && !bannerFile) {
+                e.preventDefault();
+                e.stopPropagation();
                 communityBannerInput.click();
             }
         });
@@ -186,6 +194,27 @@ function initializeCommunityUI() {
     if (communityNameInput && nameCharCount) {
         communityNameInput.addEventListener('input', () => {
             nameCharCount.textContent = communityNameInput.value.length;
+        });
+        
+        // Prevent Enter key from triggering form submission or unwanted actions
+        communityNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Optionally, focus the next field (description) instead
+                if (communityDescriptionInput) {
+                    communityDescriptionInput.focus();
+                }
+            }
+        });
+        
+        // Prevent clicks from bubbling up (in case of any event propagation issues)
+        communityNameInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Prevent focus events from triggering unwanted actions
+        communityNameInput.addEventListener('focus', (e) => {
+            e.stopPropagation();
         });
     }
     if (communityDescriptionInput && descriptionCharCount) {
