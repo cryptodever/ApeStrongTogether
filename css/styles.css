@@ -17983,6 +17983,53 @@ body:has(.modal-overlay.show) {
     justify-content: flex-end;
 }
 
+/* Community Modal Button Styles */
+.community-modal-body .btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.community-modal-body .btn-primary {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    color: #000000;
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+}
+
+.community-modal-body .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+}
+
+.community-modal-body .btn-primary:active {
+    transform: translateY(0);
+}
+
+.community-modal-body .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.community-modal-body .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.community-modal-body .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
 /* Banner Upload */
 .banner-upload-group {
     margin-bottom: 1rem;
@@ -18334,8 +18381,13 @@ body:has(.modal-overlay.show) {
 
 .form-textarea-enhanced {
     resize: vertical;
-    min-height: 100px;
+    min-height: 80px;
     line-height: 1.6;
+}
+
+/* Ensure textarea in settings modal has proper height */
+#settingsCommunityDescription.form-textarea-enhanced {
+    min-height: 80px;
 }
 
 .label-icon {
@@ -18470,6 +18522,89 @@ body:has(.modal-overlay.show) {
 }
 
 /* Old privacy toggle styles removed - now using radio buttons */
+
+/* Community Invite Section */
+.community-invite-section {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(74, 222, 128, 0.05);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+}
+
+.community-invite-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 1rem 0;
+}
+
+.invite-link-display {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+}
+
+.invite-link-display input {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Inter', monospace;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.invite-link-display input:focus {
+    outline: none;
+    border-color: #4ade80;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+}
+
+.invite-link-display .btn {
+    flex-shrink: 0;
+    padding: 0.875rem 1.5rem;
+    min-width: 80px;
+}
+
+.community-invite-section .btn {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    cursor: pointer;
+    accent-color: #4ade80;
+}
+
+.checkbox-label span {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    user-select: none;
+}
 
 /* Enhanced Buttons */
 .btn-create-community {
