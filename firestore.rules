@@ -190,15 +190,14 @@ service cloud.firestore {
       // Only authenticated users can create messages
       // Note: timestamp can be serverTimestamp() sentinel, so we don't validate it strictly
       // Support both channel (global) and communityId (community) messages
+      // channel, avatarCount are optional fields
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.username is string
         && request.resource.data.text is string
-        && request.resource.data.channel is string
-        && request.resource.data.avatarCount is int
         && request.resource.data.deleted == false
         && (
-          // Global channel message (no communityId)
+          // Global channel message (no communityId) - channel is optional now
           (!('communityId' in request.resource.data))
           ||
           // Community message - user must be a member
@@ -579,14 +578,16 @@ service cloud.firestore {
         
         // Members can create messages
         // For default community, allow if user is authenticated (will auto-join)
+        // channelId is optional (channels feature disabled)
+        // avatarCount, bannerImage, reactions, xAccountVerified are optional fields
         allow create: if isSignedIn() && (
           (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) ||
            communityId == 'default') &&
           request.resource.data.userId == request.auth.uid &&
           request.resource.data.username is string &&
           request.resource.data.text is string &&
-          request.resource.data.channelId is string &&
-          request.resource.data.deleted == false
+          request.resource.data.deleted == false &&
+          (!('timestamp' in request.resource.data) || request.resource.data.timestamp is timestamp)
         );
         
         // Message author can update their own messages (with 5-minute edit limit)

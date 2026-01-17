@@ -85,7 +85,8 @@ function initializeCommunityUI() {
     communityCreateForm = document.getElementById('communityCreateForm');
     communityNameInput = document.getElementById('communityName');
     communityDescriptionInput = document.getElementById('communityDescription');
-    communityIsPublicInput = document.getElementById('communityIsPublic');
+    // Note: isPublic is now handled via radio buttons, not a single checkbox
+    communityIsPublicInput = document.querySelector('input[name="isPublic"][value="true"]');
     communityBannerInput = document.getElementById('communityBanner');
     bannerPreview = document.getElementById('bannerPreview');
     bannerPreviewImage = document.getElementById('bannerPreviewImage');
@@ -267,7 +268,16 @@ function openCommunityModal() {
     if (!communityModal) return;
     communityModal.classList.remove('hide');
     document.body.classList.add('no-scroll');
-    if (communityNameInput) communityNameInput.focus();
+    // Reset and focus name input
+    if (communityNameInput) {
+        communityNameInput.value = '';
+        communityNameInput.disabled = false;
+        communityNameInput.readOnly = false;
+        // Use setTimeout to ensure modal is visible before focusing
+        setTimeout(() => {
+            communityNameInput.focus();
+        }, 100);
+    }
 }
 
 // Export functions for use by chat-init.js
@@ -288,9 +298,9 @@ function handleBannerUpload(e) {
         return;
     }
     
-    // Validate file size (stored in Firestore, keep small)
-    if (file.size > 200 * 1024) {
-        alert('Image size must be less than 200KB');
+    // Validate file size (max 1MB)
+    if (file.size > 1024 * 1024) {
+        alert('Image size must be less than 1MB');
         return;
     }
     
@@ -357,9 +367,11 @@ async function handleCreateCommunity(e) {
         return;
     }
     
-    const name = communityNameInput.value.trim();
-    const description = communityDescriptionInput.value.trim();
-    const isPublic = communityIsPublicInput.checked;
+    const name = communityNameInput?.value.trim() || '';
+    const description = communityDescriptionInput?.value.trim() || '';
+    // Handle radio buttons for isPublic
+    const isPublicRadio = document.querySelector('input[name="isPublic"]:checked');
+    const isPublic = isPublicRadio ? isPublicRadio.value === 'true' : true;
     
     if (!name) {
         alert('Please enter a community name');

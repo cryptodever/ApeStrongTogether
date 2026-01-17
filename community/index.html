@@ -258,7 +258,7 @@
                                 >
                                 <div class="banner-upload-info">
                                     <p>Add a custom banner to make your community stand out</p>
-                                    <p class="banner-help-text">Max size: 5MB • JPG, PNG, or GIF</p>
+                                    <p class="banner-help-text">Max size: 1MB • JPG, PNG, or GIF</p>
                                 </div>
                             </div>
                         </div>
@@ -301,18 +301,20 @@
                         </div>
 
                         <div class="form-group privacy-group">
-                            <label class="privacy-toggle-label">
-                                <div class="privacy-toggle-content">
-                                    <div class="privacy-toggle-icon">🌐</div>
-                                    <div class="privacy-toggle-text">
-                                        <span class="privacy-toggle-title">Make community public</span>
-                                        <span class="privacy-toggle-subtitle">Discoverable by others in search</span>
-                                    </div>
-                                </div>
-                                <input type="checkbox" id="communityIsPublic" name="isPublic" checked class="privacy-toggle">
-                                <span class="privacy-toggle-slider"></span>
+                            <label for="communityIsPublic" class="form-label-privacy">
+                                <span class="label-icon">🌐</span>
+                                Community Visibility
                             </label>
-                            <p class="form-help">Private communities require an invite link to join</p>
+                            <div class="privacy-options">
+                                <label class="privacy-option">
+                                    <input type="radio" name="isPublic" value="true" id="communityIsPublic" checked>
+                                    <span class="privacy-option-label">Yes - Public (discoverable)</span>
+                                </label>
+                                <label class="privacy-option">
+                                    <input type="radio" name="isPublic" value="false">
+                                    <span class="privacy-option-label">No - Private (invite only)</span>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-actions">

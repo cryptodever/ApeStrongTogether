@@ -8274,8 +8274,14 @@ body.chat-body > * {
    ============================================ */
 @media (max-width: 768px) {
     .chat-page {
-        padding-top: 0;
+        padding-top: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
         min-height: 100vh;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
     }
 
     /* Hide desktop utility bar on mobile */
@@ -8343,6 +8349,35 @@ body.chat-body > * {
         display: flex;
         align-items: center;
         gap: 8px;
+    }
+
+    .chat-create-community-btn-mobile {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: rgba(74, 222, 128, 0.15);
+        border: 1.5px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        padding: 0;
+    }
+
+    .chat-create-community-btn-mobile:hover {
+        background: rgba(74, 222, 128, 0.25);
+        border-color: #4ade80;
+        transform: scale(1.1);
+    }
+
+    .chat-create-community-btn-mobile:active {
+        transform: scale(0.95);
     }
 
     .chat-mobile-online-count {
@@ -8513,14 +8548,51 @@ body.chat-body > * {
         font-size: 14px;
     }
 
+    .chat-drawer-create-community {
+        width: 100%;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(34, 197, 94, 0.1) 100%);
+        border: 1.5px solid rgba(74, 222, 128, 0.3);
+        border-radius: 12px;
+        color: #4ade80;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .chat-drawer-create-community:hover {
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(34, 197, 94, 0.2) 100%);
+        border-color: #4ade80;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+    }
+
+    .chat-drawer-create-community:active {
+        transform: translateY(0);
+    }
+
+    .chat-drawer-create-community span {
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 1;
+    }
+
     .chat-container {
         padding: 0 !important;
         margin-left: 0 !important;
+        margin-right: 0 !important;
         margin-top: 60px !important;
         height: calc(100vh - 60px) !important;
         min-height: calc(100vh - 60px) !important;
-        max-width: 100% !important;
-        width: 100% !important;
+        max-width: 100vw !important;
+        width: 100vw !important;
         left: 0 !important;
         right: 0 !important;
         box-sizing: border-box !important;
@@ -8555,17 +8627,18 @@ body.chat-body > * {
         min-height: calc(100vh - 60px);
         display: flex !important;
         flex-direction: column;
-        width: 100%;
-        max-width: 100%;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
         background: rgba(12, 18, 32, 0.85);
         backdrop-filter: blur(20px) saturate(180%);
         -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 
-            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-            0 8px 32px rgba(0, 0, 0, 0.3);
+        border: none !important;
+        box-shadow: none !important;
         padding-top: 56px; /* Account for fixed mobile header */
         overflow: hidden;
+        box-sizing: border-box !important;
     }
 
     /* Mobile Sticky Channel Bar - Hidden since we have menu drawer */
@@ -8584,14 +8657,16 @@ body.chat-body > * {
 
     .chat-messages {
         flex: 1;
-        padding: 16px;
+        padding: 16px 12px;
         padding-bottom: 100px; /* Space for fixed input at bottom */
         gap: 12px;
         min-height: 0;
-        width: 100%;
-        max-width: 100%;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        box-sizing: border-box !important;
     }
 
     /* Empty State - Vertically Centered */
@@ -8650,9 +8725,13 @@ body.chat-body > * {
     .chat-input-container {
         position: fixed;
         bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 12px 16px;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        padding: 12px 12px;
+        margin: 0 !important;
+        box-sizing: border-box !important;
         padding-bottom: calc(12px + env(safe-area-inset-bottom));
         background: var(--chat-panel-bg);
         backdrop-filter: blur(20px);
@@ -8721,8 +8800,10 @@ body.chat-body > * {
 /* Extra small mobile devices */
 @media (max-width: 480px) {
     .chat-container {
-        padding: 0.5rem;
-        width: 100%;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
     }
 
     .chat-utility-bar::before {
@@ -17762,11 +17843,37 @@ body:has(.modal-overlay.show) {
 
 .community-modal-body {
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.community-modal-body .form-group {
+    margin-bottom: 0;
+    gap: 0.75rem;
+}
+
+.community-modal-body .form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.community-modal-body .form-actions {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
 }
 
 /* Banner Upload */
 .banner-upload-group {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .banner-upload-container {
@@ -17906,6 +18013,19 @@ body:has(.modal-overlay.show) {
         0 4px 12px rgba(74, 222, 128, 0.15);
 }
 
+.form-input-enhanced:disabled,
+.form-textarea-enhanced:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.form-input-enhanced[readonly],
+.form-textarea-enhanced[readonly] {
+    background: rgba(255, 255, 255, 0.03);
+    cursor: text;
+}
+
 .form-textarea-enhanced {
     resize: vertical;
     min-height: 100px;
@@ -17924,82 +18044,73 @@ body:has(.modal-overlay.show) {
     color: rgba(255, 255, 255, 0.4);
 }
 
-/* Privacy Toggle */
+/* Privacy Options (Radio buttons) */
 .privacy-group {
     background: rgba(74, 222, 128, 0.05);
     border: 1px solid rgba(74, 222, 128, 0.2);
     border-radius: 12px;
     padding: 1.25rem;
-    margin-bottom: 1.5rem;
 }
 
-.privacy-toggle-label {
+.form-label-privacy {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.privacy-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.privacy-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
     cursor: pointer;
-    margin: 0;
+    transition: all 0.3s ease;
 }
 
-.privacy-toggle-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+.privacy-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+.privacy-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #4ade80;
+}
+
+.privacy-option input[type="radio"]:checked + .privacy-option-label {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.privacy-option:has(input[type="radio"]:checked) {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: #4ade80;
+}
+
+.privacy-option-label {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
     flex: 1;
 }
 
-.privacy-toggle-icon {
-    font-size: 24px;
-}
-
-.privacy-toggle-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.privacy-toggle-title {
-    font-weight: 600;
-    color: #ffffff;
-    font-size: 15px;
-}
-
-.privacy-toggle-subtitle {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.privacy-toggle {
-    position: relative;
-    width: 52px;
-    height: 28px;
-    appearance: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin: 0;
-}
-
-.privacy-toggle:checked {
-    background: #4ade80;
-}
-
-.privacy-toggle-slider {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 22px;
-    height: 22px;
-    background: #ffffff;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-.privacy-toggle:checked + .privacy-toggle-slider {
-    transform: translateX(24px);
-}
+/* Old privacy toggle styles removed - now using radio buttons */
 
 /* Enhanced Buttons */
 .btn-create-community {
