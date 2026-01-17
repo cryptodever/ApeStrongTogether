@@ -623,10 +623,24 @@ function setupCommunitySelector() {
     createBtn.innerHTML = '<span>+</span>';
     createBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Try to call the modal, with retry if module not ready yet
         if (window.communityModule && window.communityModule.openCommunityModal) {
             window.communityModule.openCommunityModal();
         } else {
-            console.warn('Community module not available');
+            // Wait a bit and try again (module might still be loading)
+            setTimeout(() => {
+                if (window.communityModule && window.communityModule.openCommunityModal) {
+                    window.communityModule.openCommunityModal();
+                } else {
+                    console.warn('Community module not available - please refresh the page');
+                    // Try to open modal directly if it exists
+                    const communityModal = document.getElementById('communityModal');
+                    if (communityModal) {
+                        communityModal.classList.remove('hide');
+                        document.body.classList.add('no-scroll');
+                    }
+                }
+            }, 100);
         }
     });
     selectorContainer.appendChild(createBtn);
@@ -1381,8 +1395,8 @@ async function loadMessages() {
     const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
     const memberDoc = await getDoc(memberRef);
     if (!memberDoc.exists()) {
-        // Auto-join user
-        await autoJoinDefaultCommunity(currentUser.uid);
+        // Auto-join user to current community
+        await autoJoinCommunity(currentCommunityId, currentUser.uid);
     }
     
     // Query messages from community messages subcollection (no channel filter - channels disabled)
@@ -2132,10 +2146,21 @@ async function handleSendMessage() {
         }
         
         const memberRef = doc(db, 'communities', currentCommunityId, 'members', currentUser.uid);
-        const memberDoc = await getDoc(memberRef);
+        let memberDoc = await getDoc(memberRef);
         if (!memberDoc.exists()) {
-            // Auto-join user to default community
-            await autoJoinDefaultCommunity(currentUser.uid);
+            // Auto-join user to community
+            try {
+                await autoJoinCommunity(currentCommunityId, currentUser.uid);
+                // Verify membership was created
+                memberDoc = await getDoc(memberRef);
+                if (!memberDoc.exists()) {
+                    throw new Error('Failed to join community - membership not created');
+                }
+            } catch (joinError) {
+                console.error('Error auto-joining community:', joinError);
+                alert('You must be a member of this community to send messages. Please refresh the page.');
+                return;
+            }
         }
         
         // Store message in community messages subcollection
@@ -2856,12 +2881,12 @@ async function verifyCommunityMembership(communityId) {
     }
 }
 
-// Auto-join user to default community
-async function autoJoinDefaultCommunity(userId) {
-    if (!userId) return;
+// Auto-join user to a community
+async function autoJoinCommunity(communityId, userId) {
+    if (!userId || !communityId) return;
     
     try {
-        const memberRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID, 'members', userId);
+        const memberRef = doc(db, 'communities', communityId, 'members', userId);
         const memberDoc = await getDoc(memberRef);
         
         if (memberDoc.exists()) {
@@ -2878,7 +2903,7 @@ async function autoJoinDefaultCommunity(userId) {
         
         // Update member count (optional - if it fails, that's okay)
         try {
-            const communityRef = doc(db, 'communities', DEFAULT_COMMUNITY_ID);
+            const communityRef = doc(db, 'communities', communityId);
             const communityDoc = await getDoc(communityRef);
             if (communityDoc.exists()) {
                 const communityData = communityDoc.data();
@@ -2892,10 +2917,16 @@ async function autoJoinDefaultCommunity(userId) {
         }
         
         await batch.commit();
-        console.log('User auto-joined default community');
+        console.log(`User auto-joined community ${communityId}`);
     } catch (error) {
-        console.error('Error auto-joining default community:', error);
+        console.error(`Error auto-joining community ${communityId}:`, error);
+        throw error; // Re-throw so calling code can handle it
     }
+}
+
+// Auto-join user to default community (convenience wrapper)
+async function autoJoinDefaultCommunity(userId) {
+    return autoJoinCommunity(DEFAULT_COMMUNITY_ID, userId);
 }
 
 // Ensure default community exists
@@ -2922,7 +2953,7 @@ async function ensureDefaultCommunity() {
         
         // Ensure user is a member (this might fail if user doesn't have write permissions yet)
         try {
-            await autoJoinDefaultCommunity(currentUser.uid);
+            await autoJoinCommunity(DEFAULT_COMMUNITY_ID, currentUser.uid);
         } catch (joinError) {
             // If auto-join fails, try to check if already a member
             try {
