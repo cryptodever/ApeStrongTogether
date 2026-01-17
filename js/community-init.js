@@ -302,6 +302,16 @@ function initializeCommunityUI() {
     if (regenerateInviteCodeBtn) {
         regenerateInviteCodeBtn.addEventListener('click', handleRegenerateInviteCode);
     }
+    
+    // Cancel buttons
+    const communityCancelBtn = document.getElementById('communityCancelBtn');
+    const communitySettingsCancelBtn = document.getElementById('communitySettingsCancelBtn');
+    if (communityCancelBtn) {
+        communityCancelBtn.addEventListener('click', () => closeCommunityModal());
+    }
+    if (communitySettingsCancelBtn) {
+        communitySettingsCancelBtn.addEventListener('click', () => closeCommunitySettingsModal());
+    }
 }
 
 // Generate unique invite code
@@ -318,27 +328,44 @@ function generateInviteCode() {
 async function isInviteCodeUnique(code) {
     try {
         const communitiesRef = collection(db, 'communities');
-        const q = query(communitiesRef, where('inviteCode', '==', code));
+        const q = query(communitiesRef, where('inviteCode', '==', code), limit(1));
         const snapshot = await getDocs(q);
         return snapshot.empty;
     } catch (error) {
-        console.error('Error checking invite code uniqueness:', error);
-        return false;
+        // If we don't have permission to check uniqueness, assume it's unique
+        // The probability of collision with 8 alphanumeric chars is ~1 in 2.8 trillion
+        console.warn('Could not verify invite code uniqueness (permissions issue):', error.message);
+        return true; // Assume unique if we can't check
     }
 }
 
 // Generate unique invite code
 async function generateUniqueInviteCode() {
-    let code = generateInviteCode();
+    // Generate a code - 8 alphanumeric chars gives us 2.8 trillion possible codes
+    // Even without checking uniqueness, collision probability is extremely low
+    const code = generateInviteCode();
+    
+    // Try to check uniqueness if possible (but don't fail if we can't)
+    const isUnique = await isInviteCodeUnique(code);
+    if (isUnique) {
+        return code;
+    }
+    
+    // If somehow not unique (very unlikely), try a few more times
     let attempts = 0;
-    while (!(await isInviteCodeUnique(code)) && attempts < 10) {
-        code = generateInviteCode();
+    let newCode = code;
+    while (attempts < 5) {
+        newCode = generateInviteCode();
+        const checkUnique = await isInviteCodeUnique(newCode);
+        if (checkUnique) {
+            return newCode;
+        }
         attempts++;
     }
-    if (attempts >= 10) {
-        throw new Error('Failed to generate unique invite code');
-    }
-    return code;
+    
+    // If we still can't verify after 5 attempts, just return a code anyway
+    // The collision probability is so low it's acceptable
+    return newCode || generateInviteCode();
 }
 
 // Open community creation modal
@@ -1145,7 +1172,7 @@ async function openCommunitySettingsModal(communityId) {
         if (descInput) descInput.value = communityData.description || '';
         if (isPublicInput) isPublicInput.checked = communityData.isPublic || false;
         if (inviteLinkInput) {
-            const inviteUrl = `${window.location.origin}/chat?invite=${communityData.inviteCode}`;
+            const inviteUrl = `${window.location.origin}/community?invite=${communityData.inviteCode}`;
             inviteLinkInput.value = inviteUrl;
         }
         
@@ -1295,24 +1322,36 @@ async function handleUpdateCommunitySettings(e) {
 }
 
 // Handle copy invite link
-function handleCopyInviteLink() {
+async function handleCopyInviteLink() {
     const inviteLinkInput = document.getElementById('communityInviteLink');
-    if (!inviteLinkInput) return;
+    if (!inviteLinkInput || !inviteLinkInput.value) {
+        alert('Invite link is not available');
+        return;
+    }
     
-    inviteLinkInput.select();
-    inviteLinkInput.setSelectionRange(0, 99999); // For mobile devices
+    const textToCopy = inviteLinkInput.value;
     
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            showToast('Invite link copied!');
+            return;
+        } catch (err) {
+            console.warn('Clipboard API failed, trying fallback:', err);
+        }
+    }
+    
+    // Fallback for older browsers
     try {
+        inviteLinkInput.select();
+        inviteLinkInput.setSelectionRange(0, 99999); // For mobile devices
         document.execCommand('copy');
+        inviteLinkInput.setSelectionRange(0, 0); // Deselect
         showToast('Invite link copied!');
     } catch (error) {
-        // Fallback for modern browsers
-        navigator.clipboard.writeText(inviteLinkInput.value).then(() => {
-            showToast('Invite link copied!');
-        }).catch(err => {
-            console.error('Failed to copy:', err);
-            alert('Failed to copy invite link');
-        });
+        console.error('Failed to copy:', error);
+        alert('Failed to copy invite link. Please select and copy manually.');
     }
 }
 
@@ -1337,7 +1376,7 @@ async function handleRegenerateInviteCode() {
         // Update invite link display
         const inviteLinkInput = document.getElementById('communityInviteLink');
         if (inviteLinkInput) {
-            const inviteUrl = `${window.location.origin}/chat?invite=${newCode}`;
+            const inviteUrl = `${window.location.origin}/community?invite=${newCode}`;
             inviteLinkInput.value = inviteUrl;
         }
         

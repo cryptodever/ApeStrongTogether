@@ -499,6 +499,12 @@ async function initializeChat() {
     // Load messages
     loadMessages();
     
+    // Load community members if we're on a community page (not default)
+    // Do this BEFORE setupRealtimeListeners to ensure all members (including offline) are loaded
+    if (currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID) {
+        await loadCommunityMembers(currentCommunityId);
+    }
+    
     // Setup real-time listeners
     setupRealtimeListeners();
     
@@ -508,11 +514,6 @@ async function initializeChat() {
     // Check if user is owner and show/hide settings button
     if (currentCommunityId) {
         updateCommunitySettingsButton(currentCommunityId);
-    }
-    
-    // Load community members if we're on a community page (not default)
-    if (currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID) {
-        loadCommunityMembers(currentCommunityId);
     }
     
     // Setup typing indicator
@@ -599,10 +600,9 @@ function setupCommunitySelector() {
     const selectorContainer = document.querySelector('.community-selector-container');
     if (!selectorContainer) return;
     
-    // Clear existing icons and remove all event listeners
-    while (selectorContainer.firstChild) {
-        selectorContainer.removeChild(selectorContainer.firstChild);
-    }
+    // Clear existing icons completely - use innerHTML for reliable clearing
+    // This ensures all child elements and their event listeners are removed
+    selectorContainer.innerHTML = '';
     
     // Load user communities if available
     if (window.communityModule && window.communityModule.userCommunities) {
