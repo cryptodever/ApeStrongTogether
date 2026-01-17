@@ -8599,6 +8599,24 @@ body.chat-body > * {
     .chat-drawer-panel.active {
         display: block;
     }
+    
+    .chat-drawer-users-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .mobile-view-offline-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 18px;
+    }
 
     .chat-mobile-channels {
         display: flex;
@@ -9121,6 +9139,8 @@ body.chat-body > * {
     font-size: 16px;
     width: 28px;
     height: 28px;
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 6px;
     cursor: pointer;
     display: flex;
@@ -9130,6 +9150,11 @@ body.chat-body > * {
     padding: 0;
     flex-shrink: 0;
     line-height: 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    pointer-events: auto;
+    z-index: 10;
 }
 
 .view-offline-btn:hover {
@@ -9836,6 +9861,11 @@ body.chat-body > * {
     justify-content: center;
     width: 36px;
     height: 36px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    pointer-events: auto;
+    z-index: 10;
 }
 
 .chat-emoji-btn:hover,

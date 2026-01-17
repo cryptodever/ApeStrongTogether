@@ -952,10 +952,17 @@ function updateMobileChannelName() {
 // Update mobile header online count
 function updateMobileOnlineCount() {
     const mobileOnlineCountEl = document.getElementById('chatMobileOnlineCount');
-    if (!mobileOnlineCountEl || !onlineCountEl) return;
+    const mobileDrawerCountEl = document.getElementById('chatMobileOnlineCountDrawer');
+    
+    if (!onlineCountEl) return;
     
     const count = parseInt(onlineCountEl.textContent) || 0;
-    mobileOnlineCountEl.textContent = count;
+    if (mobileOnlineCountEl) {
+        mobileOnlineCountEl.textContent = count;
+    }
+    if (mobileDrawerCountEl) {
+        mobileDrawerCountEl.textContent = count;
+    }
 }
 
 // Utility bar functions removed
@@ -1349,19 +1356,39 @@ function setupEventListeners() {
         }
     });
 
-    // Emoji button - show emoji picker
+    // Emoji button - show emoji picker (with mobile touch support)
     const emojiBtn = document.getElementById('emojiBtn');
     if (emojiBtn && emojiPickerEl) {
-        emojiBtn.addEventListener('click', (e) => {
+        let touchHandled = false;
+        
+        const handleEmojiToggle = (e) => {
+            // If touch was already handled, ignore click
+            if (e.type === 'click' && touchHandled) {
+                touchHandled = false;
+                return;
+            }
+            
             e.preventDefault();
             e.stopPropagation();
+            
             // Toggle emoji picker
             if (emojiPickerEl.classList.contains('hide')) {
                 showEmojiPicker(emojiBtn);
             } else {
                 emojiPickerEl.classList.add('hide');
             }
-        });
+        };
+        
+        // Handle touch events on mobile
+        emojiBtn.addEventListener('touchend', (e) => {
+            touchHandled = true;
+            handleEmojiToggle(e);
+            // Reset after a short delay
+            setTimeout(() => { touchHandled = false; }, 300);
+        }, { passive: false });
+        
+        // Handle click events (desktop and fallback for mobile)
+        emojiBtn.addEventListener('click', handleEmojiToggle);
         
         // Close emoji picker when clicking outside
         document.addEventListener('click', (e) => {
@@ -1374,14 +1401,33 @@ function setupEventListeners() {
         });
     }
     
-    // View offline members button
+    // View offline members button (with mobile touch support)
     const viewOfflineBtn = document.getElementById('viewOfflineBtn');
     if (viewOfflineBtn) {
-        viewOfflineBtn.addEventListener('click', (e) => {
+        let touchHandled = false;
+        
+        const handleViewOfflineToggle = (e) => {
+            // If touch was already handled, ignore click
+            if (e.type === 'click' && touchHandled) {
+                touchHandled = false;
+                return;
+            }
+            
             e.preventDefault();
             e.stopPropagation();
             toggleOfflineMembers();
-        });
+        };
+        
+        // Handle touch events on mobile
+        viewOfflineBtn.addEventListener('touchend', (e) => {
+            touchHandled = true;
+            handleViewOfflineToggle(e);
+            // Reset after a short delay
+            setTimeout(() => { touchHandled = false; }, 300);
+        }, { passive: false });
+        
+        // Handle click events (desktop and fallback for mobile)
+        viewOfflineBtn.addEventListener('click', handleViewOfflineToggle);
     }
     
     // Sticker button - insert ape sticker (🦍)
@@ -2766,7 +2812,7 @@ async function loadCommunityMembers(communityId) {
             onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${validMembers.length}` : onlineCount;
         }
         
-        // Update button state and ensure event listener is attached
+        // Update button state and ensure event listener is attached (desktop)
         const viewOfflineBtn = document.getElementById('viewOfflineBtn');
         if (viewOfflineBtn) {
             // Ensure event listener is attached (in case button was added/recreated)
@@ -2788,6 +2834,44 @@ async function loadCommunityMembers(communityId) {
                 viewOfflineBtn.textContent = '👁️';
                 viewOfflineBtn.title = 'Show offline members';
                 viewOfflineBtn.classList.remove('active');
+            }
+        }
+        
+        // Update mobile button state and ensure event listener is attached
+        const viewOfflineBtnMobile = document.getElementById('viewOfflineBtnMobile');
+        if (viewOfflineBtnMobile) {
+            const hasMobileListener = viewOfflineBtnMobile.getAttribute('data-listener-attached');
+            if (!hasMobileListener) {
+                let touchHandled = false;
+                
+                const handleViewOfflineToggle = (e) => {
+                    if (e.type === 'click' && touchHandled) {
+                        touchHandled = false;
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleOfflineMembers();
+                };
+                
+                viewOfflineBtnMobile.addEventListener('touchend', (e) => {
+                    touchHandled = true;
+                    handleViewOfflineToggle(e);
+                    setTimeout(() => { touchHandled = false; }, 300);
+                }, { passive: false });
+                
+                viewOfflineBtnMobile.addEventListener('click', handleViewOfflineToggle);
+                viewOfflineBtnMobile.setAttribute('data-listener-attached', 'true');
+            }
+            
+            if (showOfflineMembers) {
+                viewOfflineBtnMobile.textContent = '👁️‍🗨️';
+                viewOfflineBtnMobile.title = 'Hide offline members';
+                viewOfflineBtnMobile.classList.add('active');
+            } else {
+                viewOfflineBtnMobile.textContent = '👁️';
+                viewOfflineBtnMobile.title = 'Show offline members';
+                viewOfflineBtnMobile.classList.remove('active');
             }
         }
         
@@ -2824,7 +2908,7 @@ function toggleOfflineMembers() {
         onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${allCommunityMembers.length}` : onlineCount;
     }
     
-    // Update button appearance
+    // Update button appearance (desktop)
     const viewOfflineBtn = document.getElementById('viewOfflineBtn');
     if (viewOfflineBtn) {
         if (showOfflineMembers) {
@@ -2835,6 +2919,20 @@ function toggleOfflineMembers() {
             viewOfflineBtn.textContent = '👁️';
             viewOfflineBtn.title = 'Show offline members';
             viewOfflineBtn.classList.remove('active');
+        }
+    }
+    
+    // Update mobile button appearance
+    const viewOfflineBtnMobile = document.getElementById('viewOfflineBtnMobile');
+    if (viewOfflineBtnMobile) {
+        if (showOfflineMembers) {
+            viewOfflineBtnMobile.textContent = '👁️‍🗨️';
+            viewOfflineBtnMobile.title = 'Hide offline members';
+            viewOfflineBtnMobile.classList.add('active');
+        } else {
+            viewOfflineBtnMobile.textContent = '👁️';
+            viewOfflineBtnMobile.title = 'Show offline members';
+            viewOfflineBtnMobile.classList.remove('active');
         }
     }
     
