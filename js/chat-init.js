@@ -1088,6 +1088,11 @@ async function switchToCommunity(communityId) {
         return;
     }
     
+    // If already on this community, do nothing to prevent duplication
+    if (currentCommunityId === communityId) {
+        return;
+    }
+    
     // #region agent log (disabled - debug endpoint not available)
     // Debug logging disabled to prevent connection refused errors
     // #endregion
@@ -2786,8 +2791,8 @@ async function loadCommunityMembers(communityId) {
 
 // Toggle offline members visibility
 function toggleOfflineMembers() {
+    // Silently return if members haven't loaded yet
     if (!allCommunityMembers || allCommunityMembers.length === 0) {
-        console.warn('No community members loaded yet');
         return;
     }
     
