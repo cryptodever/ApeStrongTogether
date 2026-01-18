@@ -3568,7 +3568,6 @@ export class Game {
     setPickupRange(range) {
         this.goldMagnetRange = range;
         this.pickupRange = range;
-        console.log('setPickupRange called with:', range, 'this.pickupRange is now:', this.pickupRange); // Debug log
     }
     
     restart() {

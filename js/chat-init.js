@@ -177,159 +177,6 @@ function showChatInterface() {
         document.querySelector('.chat-utility-bar').classList.remove('hide');
     }
     
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // Log layout information after interface is shown
-    /*
-    setTimeout(() => {
-        const layoutEl = document.querySelector('.chat-layout');
-        const sidebarRightEl = document.getElementById('chatSidebarRight');
-        const mainPanelEl = document.querySelector('.chat-main-panel');
-        const containerEl = document.querySelector('.chat-container');
-        
-        const logData = {
-            location: 'chat-init.js:showChatInterface',
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'run1'
-        };
-        
-        if (layoutEl) {
-            const layoutStyles = window.getComputedStyle(layoutEl);
-            const layoutInfo = {
-                display: layoutStyles.display,
-                gridTemplateColumns: layoutStyles.gridTemplateColumns,
-                width: layoutStyles.width,
-                maxWidth: layoutStyles.maxWidth,
-                viewportWidth: window.innerWidth
-            };
-            console.log('[DEBUG] Layout grid styles:', layoutInfo);
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logData, message: 'Layout grid styles', data: layoutInfo, hypothesisId: 'B' })
-            }).catch(() => {});
-        }
-        
-        if (sidebarRightEl) {
-            const sidebarStyles = window.getComputedStyle(sidebarRightEl);
-            const rect = sidebarRightEl.getBoundingClientRect();
-            const sidebarInfo = {
-                display: sidebarStyles.display,
-                gridColumn: sidebarStyles.gridColumn,
-                position: sidebarStyles.position,
-                width: sidebarStyles.width,
-                left: sidebarStyles.left,
-                right: sidebarStyles.right,
-                boundingLeft: rect.left,
-                boundingRight: rect.right,
-                boundingWidth: rect.width,
-                classes: sidebarRightEl.className,
-                exists: true
-            };
-            console.log('[DEBUG] Sidebar right computed styles:', sidebarInfo);
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logData, message: 'Sidebar right computed styles', data: sidebarInfo, hypothesisId: 'A' })
-            }).catch(() => {});
-        } else {
-            console.log('[DEBUG] Sidebar right element not found');
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logData, message: 'Sidebar right element not found', data: { exists: false }, hypothesisId: 'D' })
-            }).catch(() => {});
-        }
-        
-        if (mainPanelEl) {
-            const mainStyles = window.getComputedStyle(mainPanelEl);
-            const rect = mainPanelEl.getBoundingClientRect();
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Main panel computed styles',
-                    data: {
-                        gridColumn: mainStyles.gridColumn,
-                        width: mainStyles.width,
-                        maxWidth: mainStyles.maxWidth,
-                        boundingLeft: rect.left,
-                        boundingRight: rect.right,
-                        boundingWidth: rect.width
-                    },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'B'
-                })
-            }).catch(() => {});
-        }
-        
-        if (containerEl) {
-            const containerStyles = window.getComputedStyle(containerEl);
-            const containerRect = containerEl.getBoundingClientRect();
-            const containerInfo = {
-                width: containerStyles.width,
-                maxWidth: containerStyles.maxWidth,
-                overflowX: containerStyles.overflowX,
-                paddingLeft: containerStyles.paddingLeft,
-                paddingRight: containerStyles.paddingRight,
-                marginLeft: containerStyles.marginLeft,
-                marginRight: containerStyles.marginRight,
-                boundingLeft: containerRect.left,
-                boundingRight: containerRect.right,
-                boundingWidth: containerRect.width,
-                position: containerStyles.position,
-                left: containerStyles.left,
-                right: containerStyles.right
-            };
-            console.log('[DEBUG] Container styles:', containerInfo);
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logData, message: 'Container styles', data: containerInfo, hypothesisId: 'B' })
-            }).catch(() => {});
-        }
-        
-        if (layoutEl) {
-            const layoutRect = layoutEl.getBoundingClientRect();
-            const layoutPositionInfo = {
-                boundingLeft: layoutRect.left,
-                boundingRight: layoutRect.right,
-                boundingWidth: layoutRect.width,
-                viewportWidth: window.innerWidth,
-                spaceOnRight: window.innerWidth - layoutRect.right
-            };
-            console.log('[DEBUG] Layout position info:', layoutPositionInfo);
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logData, message: 'Layout position info', data: layoutPositionInfo, hypothesisId: 'A' })
-            }).catch(() => {});
-        }
-        
-        // Check for conflicting CSS classes
-        if (sidebarRightEl) {
-            const classes = sidebarRightEl.className.split(' ');
-            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'chat-init.js:showChatInterface',
-                    message: 'Sidebar classes',
-                    data: { classes: classes },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'A'
-                })
-            }).catch(() => {});
-        }
-    }, 500);
-    */
-    // #endregion
 }
 
 // Load user profile data
@@ -2430,7 +2277,6 @@ async function handleSendMessage() {
         if (!memberDoc.exists()) {
             // Auto-join user to community
             try {
-                console.log(`Auto-joining user ${currentUser.uid} to community ${currentCommunityId}`);
                 await autoJoinCommunity(currentCommunityId, currentUser.uid);
                 // Wait a moment for Firestore to update
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -2878,7 +2724,6 @@ async function loadCommunityMembers(communityId) {
             }
         }
         
-        console.log(`Loading ${memberIds.length} members for community ${communityId}`);
         
         if (memberIds.length === 0) {
             allCommunityMembers = [];
@@ -3417,7 +3262,6 @@ async function ensureDefaultCommunity() {
         }
         
         if (!communityDoc.exists()) {
-            console.log('Default community does not exist. Please run create-default-community.js script first.');
             // Could create it here, but better to use the script for owner setup
             return;
         }

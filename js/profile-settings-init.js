@@ -118,7 +118,6 @@ async function loadProfile() {
                 
                 // Update banner unlock states based on user level
                 let userLevel = userData.level || 1;
-                console.log('[loadProfile] Initial level from userData:', userLevel);
                 
                 // Try to get calculated level from quests system
                 try {
@@ -134,7 +133,6 @@ async function loadProfile() {
                 
                 // Update unlock states after a delay to ensure DOM is ready
                 setTimeout(() => {
-                    console.log('[loadProfile] Calling updateBannerUnlockStates with level:', userLevel);
                     updateBannerUnlockStates(userLevel);
                 }, 500);
             }
@@ -962,10 +960,6 @@ function updateBannerUnlockStates(userLevel) {
         const requiredLevel = getBannerBgRequiredLevel(bgIndex);
         const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
         
-        // Debug logging
-        if (bgIndex > 4) {
-            console.log(`[Background ${bgIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
-        }
         
         // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {

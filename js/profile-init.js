@@ -656,10 +656,6 @@ function updateBannerUnlockStates(userLevel) {
         const requiredLevel = getBannerRequiredLevel(bannerIndex);
         const isUnlocked = isBannerUnlocked(bannerIndex, userLevel);
         
-        // Debug logging
-        if (bannerIndex > 4) {
-            console.log(`[Banner ${bannerIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
-        }
         
         // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {
@@ -696,10 +692,6 @@ function updateBannerUnlockStates(userLevel) {
         const requiredLevel = getBannerBgRequiredLevel(bgIndex);
         const isUnlocked = isBannerBgUnlocked(bgIndex, userLevel);
         
-        // Debug logging
-        if (bgIndex > 4) {
-            console.log(`[Background ${bgIndex}] User Level: ${userLevel}, Required: ${requiredLevel}, Unlocked: ${isUnlocked}`);
-        }
         
         // Check if user is already at or above required level - unlock if so
         if (isUnlocked) {

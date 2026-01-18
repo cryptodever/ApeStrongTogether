@@ -497,12 +497,6 @@ function handlePfpUpload(e) {
     const maxSizeBytes = 500 * 1024; // 500KB
     const maxDimension = 200; // 200x200px max
     
-    console.log('PFP upload started:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileSizeKB: (file.size / 1024).toFixed(2) + ' KB',
-        fileType: file.type
-    });
     
     // Load image to check dimensions and auto-resize/compress if needed
     const img = new Image();
@@ -514,10 +508,6 @@ function handlePfpUpload(e) {
             const originalHeight = img.height;
             const needsResize = originalWidth > maxDimension || originalHeight > maxDimension;
             
-            console.log('Image loaded:', {
-                originalDimensions: `${originalWidth}x${originalHeight}`,
-                needsResize: needsResize
-            });
             
             // Create canvas for resizing/compressing
             const canvas = document.createElement('canvas');
@@ -534,7 +524,6 @@ function handlePfpUpload(e) {
                     targetHeight = maxDimension;
                     targetWidth = Math.round(maxDimension * aspectRatio);
                 }
-                console.log('Resizing to:', `${targetWidth}x${targetHeight}`);
             }
             
             canvas.width = targetWidth;
@@ -546,7 +535,6 @@ function handlePfpUpload(e) {
             
             // Convert to blob with compression
             let quality = 0.9; // Start with 90% quality
-            let compressedDataUrl = null;
             let compressedSize = 0;
             
             // Function to compress image
@@ -619,8 +607,7 @@ function handlePfpUpload(e) {
                                 if (file.size > maxSizeBytes) {
                                     message += `Compressed from ${originalSizeKB} KB to ${finalSizeKB} KB.`;
                                 }
-                                // Use a subtle notification instead of alert
-                                console.log(message);
+                                // Image was processed (resized/compressed if needed)
                             }
                         } else {
                             alert('Error creating compressed image. Please try a different image.');
@@ -706,12 +693,6 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
     const maxDimension = 200; // 200x200px max
     const settingsPfpInput = document.getElementById('settingsCommunityPfp');
     
-    console.log('Settings PFP upload started:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileSizeKB: (file.size / 1024).toFixed(2) + ' KB',
-        fileType: file.type
-    });
     
     // Load image to check dimensions and auto-resize/compress if needed
     const img = new Image();
@@ -723,10 +704,6 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
             const originalHeight = img.height;
             const needsResize = originalWidth > maxDimension || originalHeight > maxDimension;
             
-            console.log('Settings image loaded:', {
-                originalDimensions: `${originalWidth}x${originalHeight}`,
-                needsResize: needsResize
-            });
             
             // Create canvas for resizing/compressing
             const canvas = document.createElement('canvas');
@@ -743,7 +720,6 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
                     targetHeight = maxDimension;
                     targetWidth = Math.round(maxDimension * aspectRatio);
                 }
-                console.log('Resizing to:', `${targetWidth}x${targetHeight}`);
             }
             
             canvas.width = targetWidth;
@@ -755,7 +731,6 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
             
             // Convert to blob with compression
             let quality = 0.9; // Start with 90% quality
-            let compressedDataUrl = null;
             let compressedSize = 0;
             
             // Function to compress image
@@ -789,11 +764,6 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
                     
                     if (compressedSize <= maxSizeBytes || currentQuality <= 0.5) {
                         // Success - image is small enough or we've compressed enough
-                        console.log('Settings compression complete:', {
-                            finalSize: (compressedSize / 1024).toFixed(2) + ' KB',
-                            finalDimensions: `${targetWidth}x${targetHeight}`,
-                            quality: currentQuality
-                        });
                         
                         // Create a new File object from the compressed data
                         const compressedBlob = await new Promise((resolve) => {
@@ -828,7 +798,7 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
                                 if (file.size > maxSizeBytes) {
                                     message += `Compressed from ${originalSizeKB} KB to ${finalSizeKB} KB.`;
                                 }
-                                console.log(message);
+                                // Image processed successfully
                             }
                         } else {
                             alert('Error creating compressed image. Please try a different image.');
