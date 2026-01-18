@@ -140,12 +140,19 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         await loadUserProfile();
         
-        // Show chat interface for all authenticated users
-        showChatInterface();
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,loadCommunityMembers:typeof loadCommunityMembers}},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
-        initializeChat();
+        // Check if user is the owner (apelover69)
+        if (isOwner()) {
+            // Show chat interface only for owner
+            showChatInterface();
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,loadCommunityMembers:typeof loadCommunityMembers}},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            initializeChat();
+        } else {
+            // Non-owner users see maintenance message
+            cleanupChat();
+            showMaintenanceMessage();
+        }
     } else {
         currentUser = null;
         userProfile = null;
