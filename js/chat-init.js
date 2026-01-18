@@ -131,6 +131,9 @@ function isOwner() {
 }
 
 // Initialize chat when auth state changes
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:134',message:'Before onAuthStateChanged setup',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,initializeChat:typeof initializeChat},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+// #endregion
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -139,7 +142,7 @@ onAuthStateChanged(auth, async (user) => {
         // Show chat interface for all authenticated users
         showChatInterface();
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages}},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
         // #endregion
         initializeChat();
     } else {
@@ -4545,5 +4548,9 @@ function setupFollowModals() {
     }
     }
 }
+
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END',message:'Module end reached',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 
 // Chat page initialized

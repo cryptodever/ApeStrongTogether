@@ -1,0 +1,2 @@
+{"location":"chat-init.js:6","message":"Module start loading","data":{"timestamp":1768764504418},"timestamp":1768764504418,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"chat-init.js:137","message":"Before initializeChat call","data":{"funcDefined":"function","allFuncs":{"ensureDefaultCommunity":"undefined","setupEventListeners":"undefined","escapeHtml":"undefined","loadMessages":"undefined"}},"timestamp":1768764505112,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
