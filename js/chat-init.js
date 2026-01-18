@@ -1804,10 +1804,11 @@ async function setupRealtimeListeners() {
         limit(100) // Cap at 100 most recently active users
     );
     presenceListener = onSnapshot(presenceQuery, async (snapshot) => {
-        const onlineUsers = [];
-        const now = Date.now();
-        
-        // Add current user first
+        try {
+            const onlineUsers = [];
+            const now = Date.now();
+            
+            // Add current user first
         if (currentUser && userProfile) {
             // Get current user's presence data
             const currentUserPresenceRef = doc(db, 'presence', currentUser.uid);
@@ -1900,6 +1901,25 @@ async function setupRealtimeListeners() {
         } else {
             // On community page (including default), load all members to show online and offline users
             await loadCommunityMembers(currentCommunityId);
+        }
+        } catch (error) {
+            // Handle permission errors gracefully
+            if (error.code === 'permission-denied') {
+                console.warn('Permission denied in presence listener:', error);
+                // Continue with empty list if we don't have permission
+                currentOnlineUsers = [];
+                if (onlineCountEl) onlineCountEl.textContent = '0';
+                updateMobileOnlineCount();
+            } else {
+                console.error('Error in presence listener:', error);
+            }
+        }
+    }, (error) => {
+        // Handle snapshot listener errors (separate from callback errors)
+        if (error.code === 'permission-denied') {
+            console.warn('Permission denied setting up presence listener:', error);
+        } else {
+            console.error('Error setting up presence listener:', error);
         }
     });
 }

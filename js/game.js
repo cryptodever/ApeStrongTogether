@@ -161,7 +161,7 @@ export class Game {
         // Spawning
         this.lastSpawn = 0;
         this.spawnInterval = 1000; // 1 second (faster initial spawn)
-        this.maxEnemies = 100; // Increased to allow scaling
+        this.maxEnemies = this.calculateMaxEnemies(); // Scale with round
         
         // Input
         this.keys = {};
@@ -186,6 +186,15 @@ export class Game {
             default:
                 return { fireRate: 300, speed: 3, bulletSpeed: 8, minFireRate: 50 };
         }
+    }
+    
+    // Calculate max enemies based on round: starts at 50, +10 per round, caps at 200
+    calculateMaxEnemies() {
+        const baseMax = 50; // Starting max enemies for round 1
+        const increasePerRound = 10; // Increase by 10 each round
+        const maxCap = 200; // Maximum cap
+        const calculatedMax = baseMax + (this.round - 1) * increasePerRound;
+        return Math.min(calculatedMax, maxCap);
     }
     
     resize() {
@@ -1094,6 +1103,9 @@ export class Game {
             // Increment round and reset kills for next round
             this.round++;
             this.kills = 0; // Reset kills for the new round
+            
+            // Update max enemies based on new round (scales with round, caps at 200)
+            this.maxEnemies = this.calculateMaxEnemies();
             
             // Show round popup
             this.showRoundPopup(this.round);

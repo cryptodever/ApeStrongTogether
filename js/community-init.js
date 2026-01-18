@@ -891,31 +891,48 @@ async function handleCreateCommunity(e) {
     }
     
     // Check if user already owns a community (max 1 community per user)
+    // Query only communities created by the current user to avoid permission errors
     try {
         const communitiesRef = collection(db, 'communities');
-        const communitiesSnapshot = await getDocs(communitiesRef);
+        const q = query(
+            communitiesRef,
+            where('creatorId', '==', currentUser.uid)
+        );
+        const communitiesSnapshot = await getDocs(q);
         
-        // Check each community to see if user is owner
+        // Check if user has any communities they created (skip default community)
         for (const communityDoc of communitiesSnapshot.docs) {
             const communityId = communityDoc.id;
             // Skip default community
             if (communityId === 'default') continue;
             
-            try {
-                const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
-                const memberDoc = await getDoc(memberRef);
-                
-                if (memberDoc.exists() && memberDoc.data().role === 'owner') {
+            // If we find any community created by this user, they already have one
+            const communityData = communityDoc.data();
+            if (communityData.creatorId === currentUser.uid) {
+                // Double-check they're the owner by checking members subcollection
+                try {
+                    const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+                    const memberDoc = await getDoc(memberRef);
+                    
+                    if (memberDoc.exists() && memberDoc.data().role === 'owner') {
+                        alert('You can only create one community at a time. Please delete your existing community before creating a new one.');
+                        return;
+                    }
+                } catch (memberError) {
+                    // If we can't check membership but user is creator, assume they own it
+                    console.warn(`Could not check membership for community ${communityId}, but user is creator:`, memberError);
                     alert('You can only create one community at a time. Please delete your existing community before creating a new one.');
                     return;
                 }
-            } catch (memberError) {
-                // Skip communities where we can't check membership (permissions issue)
-                console.warn(`Could not check membership for community ${communityId}:`, memberError);
             }
         }
     } catch (error) {
-        console.error('Error checking for existing communities:', error);
+        // Handle permission errors gracefully - user might not be able to query all communities
+        if (error.code === 'permission-denied') {
+            console.warn('Permission denied when checking for existing communities. This is expected if there are private communities. Continuing with creation.');
+        } else {
+            console.error('Error checking for existing communities:', error);
+        }
         // Continue anyway - the check might fail due to permissions, but creation should still work
     }
     
