@@ -3,6 +3,10 @@
  * Handles real-time chat functionality with Firestore
  */
 
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:6',message:'Module start loading',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import { auth, db, app } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js';
 import {
@@ -134,6 +138,9 @@ onAuthStateChanged(auth, async (user) => {
         
         // Show chat interface for all authenticated users
         showChatInterface();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         initializeChat();
     } else {
         currentUser = null;
@@ -306,6 +313,9 @@ async function initializeChat() {
     
     // Ensure default community exists and load channels
     try {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:309',message:'Before ensureDefaultCommunity call',data:{funcDefined:typeof ensureDefaultCommunity,funcValue:ensureDefaultCommunity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         await ensureDefaultCommunity();
     } catch (error) {
         console.error('Error ensuring default community:', error);
@@ -325,6 +335,9 @@ async function initializeChat() {
     setupMobileDrawer();
     
     // Setup event listeners
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:328',message:'Before setupEventListeners call',data:{funcDefined:typeof setupEventListeners,funcValue:setupEventListeners},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     setupEventListeners();
     
     
@@ -408,6 +421,9 @@ async function setupChannelSwitcher() {
                 const button = document.createElement('button');
                 button.className = `channel-button community-button ${isActive ? 'active' : ''}`;
                 button.setAttribute('data-community', community.id);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:411',message:'Before escapeHtml call (line 411)',data:{funcDefined:typeof escapeHtml,funcValue:escapeHtml},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
                 button.innerHTML = `<span class="channel-name">${escapeHtml(community.name)}</span> <span class="member-count">(${community.memberCount || 0})</span>`;
                 button.addEventListener('click', () => switchToCommunity(community.id));
                 channelButtonsEl.appendChild(button);
@@ -716,6 +732,9 @@ function setupMobileChannelList() {
             const item = document.createElement('div');
             item.className = `chat-mobile-channel-item community-item ${isActive ? 'active' : ''}`;
             item.setAttribute('data-community', community.id);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:719',message:'Before escapeHtml call (line 719)',data:{funcDefined:typeof escapeHtml,funcValue:escapeHtml},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             item.innerHTML = `
                 <span class="channel-name chat-mobile-drawer-name">${escapeHtml(community.name)}</span>
                 <span class="channel-member-count">${community.memberCount || 0}</span>
@@ -1333,6 +1352,9 @@ async function switchChannel(channelId) {
 }
 
 // Setup event listeners
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:1336',message:'setupEventListeners definition reached',data:{funcDefined:typeof setupEventListeners},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 function setupEventListeners() {
     // Send message
     sendBtn.addEventListener('click', handleSendMessage);
@@ -3329,6 +3351,9 @@ async function autoJoinDefaultCommunity(userId) {
 }
 
 // Ensure default community exists
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:3332',message:'ensureDefaultCommunity definition reached',data:{funcDefined:typeof ensureDefaultCommunity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 async function ensureDefaultCommunity() {
     if (!currentUser) return;
     
@@ -3425,6 +3450,9 @@ function formatDate(date) {
     });
 }
 
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:3428',message:'escapeHtml definition reached',data:{funcDefined:typeof escapeHtml},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
