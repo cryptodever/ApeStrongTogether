@@ -1750,6 +1750,9 @@ async function handleDeleteCommunity() {
         deleteBtn.textContent = 'Deleting...';
     }
     
+    // Store owner info before deletion (in case we need to restore on failure)
+    let ownerData = null;
+    
     try {
         // Verify user is owner before deleting
         const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
@@ -1780,28 +1783,51 @@ async function handleDeleteCommunity() {
             return;
         }
         
-        // Delete all members
+        // Store owner info before deletion (in case we need to restore on failure)
+        ownerData = memberDoc.data();
+        
+        // Delete all members (handle batch size limits - max 500 operations per batch)
         const membersRef = collection(db, 'communities', communityId, 'members');
         const membersSnapshot = await getDocs(membersRef);
-        const membersBatch = writeBatch(db);
-        membersSnapshot.docs.forEach((doc) => {
-            membersBatch.delete(doc.ref);
-        });
-        await membersBatch.commit();
+        const memberDocs = membersSnapshot.docs;
+        const BATCH_SIZE = 500; // Firestore batch limit
         
-        // Delete all messages
+        // Delete members in batches
+        for (let i = 0; i < memberDocs.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            const batchDocs = memberDocs.slice(i, i + BATCH_SIZE);
+            batchDocs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        }
+        
+        // Delete all messages (handle batch size limits)
         const messagesRef = collection(db, 'communities', communityId, 'messages');
         const messagesSnapshot = await getDocs(messagesRef);
-        const messagesBatch = writeBatch(db);
-        messagesSnapshot.docs.forEach((doc) => {
-            messagesBatch.delete(doc.ref);
-        });
-        await messagesBatch.commit();
+        const messageDocs = messagesSnapshot.docs;
         
-        // Delete the community document itself
+        // Delete messages in batches
+        for (let i = 0; i < messageDocs.length; i += BATCH_SIZE) {
+            const batch = writeBatch(db);
+            const batchDocs = messageDocs.slice(i, i + BATCH_SIZE);
+            batchDocs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        }
+        
+        // Delete the community document itself (this must succeed for deletion to be considered complete)
         const communityRef = doc(db, 'communities', communityId);
         await deleteDoc(communityRef);
         
+        // Verify deletion succeeded by checking if community still exists
+        const verifyDoc = await getDoc(communityRef);
+        if (verifyDoc.exists()) {
+            throw new Error('Community deletion verification failed - community still exists');
+        }
+        
+        // Only update UI after successful deletion
         // Close settings modal
         closeCommunitySettingsModal();
         
@@ -1829,6 +1855,44 @@ async function handleDeleteCommunity() {
         } else {
             console.error('Error deleting community:', error);
             alert('Failed to delete community. Please try again.');
+        }
+        
+        // If deletion failed, try to restore owner membership if community still exists
+        // This handles cases where deletion partially succeeded (e.g., members deleted but community doc still exists)
+        try {
+            const communityId = communitySettingsModal.getAttribute('data-community-id');
+            if (communityId && ownerData) {
+                // Verify community still exists
+                const communityRef = doc(db, 'communities', communityId);
+                const verifyDoc = await getDoc(communityRef);
+                if (verifyDoc.exists()) {
+                    // Community still exists - check if owner membership was deleted
+                    const ownerMemberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+                    const ownerMemberDoc = await getDoc(ownerMemberRef);
+                    
+                    if (!ownerMemberDoc.exists()) {
+                        // Owner membership was deleted but community wasn't - try to restore it
+                        try {
+                            await setDoc(ownerMemberRef, {
+                                userId: currentUser.uid,
+                                role: 'owner',
+                                joinedAt: ownerData.joinedAt || serverTimestamp()
+                            });
+                            console.log('Restored owner membership after failed deletion');
+                        } catch (restoreError) {
+                            console.warn('Could not restore owner membership:', restoreError);
+                        }
+                    }
+                    
+                    // Restore settings button visibility if we're still viewing this community
+                    const currentViewingCommunityId = localStorage.getItem('selectedCommunity') || 'default';
+                    if (currentViewingCommunityId === communityId && window.updateCommunitySettingsButton) {
+                        await window.updateCommunitySettingsButton(communityId);
+                    }
+                }
+            }
+        } catch (restoreError) {
+            console.warn('Could not restore community state after failed deletion:', restoreError);
         }
     } finally {
         if (deleteBtn) {

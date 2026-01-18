@@ -334,9 +334,9 @@ async function initializeChat() {
     // Load messages
     loadMessages();
     
-    // Load community members if we're on a community page (not default)
+    // Load community members for all communities (including default)
     // Do this BEFORE setupRealtimeListeners to ensure all members (including offline) are loaded
-    if (currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID) {
+    if (currentCommunityId) {
         await loadCommunityMembers(currentCommunityId);
     }
     
@@ -1845,9 +1845,9 @@ async function setupRealtimeListeners() {
 
         currentOnlineUsers = onlineUsers; // Store for periodic updates
         
-        // Only update online users list if we're NOT viewing a community page
-        // For community pages, we show all members (not just online users)
-        if (!currentCommunityId || currentCommunityId === DEFAULT_COMMUNITY_ID) {
+        // For community pages (including default), show all members (online and offline)
+        // Only show online users if no community is selected
+        if (!currentCommunityId) {
             updateOnlineUsersList(onlineUsers);
             const count = onlineUsers.length;
             if (onlineCountEl) onlineCountEl.textContent = count;
@@ -1860,10 +1860,8 @@ async function setupRealtimeListeners() {
                 }, 60000); // Update every minute
             }
         } else {
-            // On community page, reload members to update online status
-            if (currentCommunityId) {
-                await loadCommunityMembers(currentCommunityId);
-            }
+            // On community page (including default), load all members to show online and offline users
+            await loadCommunityMembers(currentCommunityId);
         }
     });
 }
