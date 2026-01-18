@@ -641,6 +641,35 @@ async function handleCreateCommunity(e) {
         return;
     }
     
+    // Check if user already owns a community (max 1 community per user)
+    try {
+        const communitiesRef = collection(db, 'communities');
+        const communitiesSnapshot = await getDocs(communitiesRef);
+        
+        // Check each community to see if user is owner
+        for (const communityDoc of communitiesSnapshot.docs) {
+            const communityId = communityDoc.id;
+            // Skip default community
+            if (communityId === 'default') continue;
+            
+            try {
+                const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
+                const memberDoc = await getDoc(memberRef);
+                
+                if (memberDoc.exists() && memberDoc.data().role === 'owner') {
+                    alert('You can only create one community at a time. Please delete your existing community before creating a new one.');
+                    return;
+                }
+            } catch (memberError) {
+                // Skip communities where we can't check membership (permissions issue)
+                console.warn(`Could not check membership for community ${communityId}:`, memberError);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking for existing communities:', error);
+        // Continue anyway - the check might fail due to permissions, but creation should still work
+    }
+    
     const name = communityNameInput?.value.trim() || '';
     const description = communityDescriptionInput?.value.trim() || '';
     // Handle radio buttons for isPublic
