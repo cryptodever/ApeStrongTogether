@@ -640,19 +640,37 @@ function setupCommunitySelector() {
     createBtn.innerHTML = '<span>+</span>';
     createBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Try to call the modal, with retry if module not ready yet
-        if (window.communityModule && window.communityModule.openCommunityModal) {
-            window.communityModule.openCommunityModal();
+        // Try to call the choice modal, with retry if module not ready yet
+        if (window.communityModule && window.communityModule.openCommunityChoiceModal) {
+            window.communityModule.openCommunityChoiceModal();
+        } else if (window.communityModule && window.communityModule.openCommunityModal) {
+            // Fallback: if choice modal doesn't exist, try the choice modal directly
+            const choiceModal = document.getElementById('communityChoiceModal');
+            if (choiceModal) {
+                choiceModal.classList.remove('hide');
+                document.body.classList.add('no-scroll');
+            } else {
+                // Last resort: open creation modal directly
+                window.communityModule.openCommunityModal();
+            }
         } else {
             // Wait a bit and try again (module might still be loading)
             setTimeout(() => {
-                if (window.communityModule && window.communityModule.openCommunityModal) {
-                    window.communityModule.openCommunityModal();
+                if (window.communityModule && window.communityModule.openCommunityChoiceModal) {
+                    window.communityModule.openCommunityChoiceModal();
+                } else if (window.communityModule && window.communityModule.openCommunityModal) {
+                    const choiceModal = document.getElementById('communityChoiceModal');
+                    if (choiceModal) {
+                        choiceModal.classList.remove('hide');
+                        document.body.classList.add('no-scroll');
+                    } else {
+                        window.communityModule.openCommunityModal();
+                    }
                 } else {
-                    // Try to open modal directly if it exists (fallback if module not loaded yet)
-                    const communityModal = document.getElementById('communityModal');
-                    if (communityModal) {
-                        communityModal.classList.remove('hide');
+                    // Try to open choice modal directly if it exists (fallback if module not loaded yet)
+                    const choiceModal = document.getElementById('communityChoiceModal');
+                    if (choiceModal) {
+                        choiceModal.classList.remove('hide');
                         document.body.classList.add('no-scroll');
                     }
                 }
@@ -3107,10 +3125,27 @@ function updateOnlineUsersList(users) {
     // Update desktop user list
     chatUserListEl.innerHTML = userListHTML;
     
-    // Update mobile user list
+    // Update mobile user list - show only profile pictures (pfp), no names
     const mobileUserListEl = document.getElementById('chatMobileUserList');
     if (mobileUserListEl) {
-        mobileUserListEl.innerHTML = userListHTML;
+        const mobileUserListHTML = users.length === 0
+            ? '<div class="chat-user-item">No other users online</div>'
+            : users.map(user => {
+                const bannerImage = user.bannerImage || '/pfp_apes/bg1.png';
+                const defaultImage = '/pfp_apes/bg1.png';
+                const isOnline = user.isOnline !== false;
+                
+                return `
+                    <div class="chat-user-item chat-user-item-mobile-pfp">
+                        <div class="chat-user-avatar mobile-pfp-only">
+                            <img src="${bannerImage}" alt="${escapeHtml(user.username || 'Anonymous')}" data-fallback="${defaultImage}" title="${escapeHtml(user.username || 'Anonymous')}">
+                            ${isOnline ? '<span class="online-indicator" title="Online"></span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        
+        mobileUserListEl.innerHTML = mobileUserListHTML;
     }
     
     // Add image error handling for user lists (CSP-compliant)

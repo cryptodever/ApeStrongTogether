@@ -409,9 +409,46 @@ async function generateUniqueInviteCode() {
 
 // Open community choice modal (Create or Explore)
 function openCommunityChoiceModal() {
-    if (!communityChoiceModal) return;
+    // Ensure modal element exists
+    if (!communityChoiceModal) {
+        communityChoiceModal = document.getElementById('communityChoiceModal');
+    }
+    if (!communityChoiceModal) {
+        console.error('Community choice modal not found');
+        return;
+    }
+    
+    // Ensure overlay exists
+    if (!communityChoiceModalOverlay) {
+        communityChoiceModalOverlay = document.getElementById('communityChoiceModalOverlay');
+    }
+    
+    // Show the modal
     communityChoiceModal.classList.remove('hide');
+    if (communityChoiceModalOverlay) {
+        communityChoiceModalOverlay.classList.remove('hide');
+    }
     document.body.classList.add('no-scroll');
+    
+    // Ensure buttons are visible and have listeners (in case they were removed)
+    const choiceCreateBtn = document.getElementById('choiceCreateBtn');
+    const choiceExploreBtn = document.getElementById('choiceExploreBtn');
+    
+    if (choiceCreateBtn && !choiceCreateBtn.hasAttribute('data-listener-attached')) {
+        choiceCreateBtn.addEventListener('click', () => {
+            closeCommunityChoiceModal();
+            setTimeout(() => openCommunityModal(), 100);
+        });
+        choiceCreateBtn.setAttribute('data-listener-attached', 'true');
+    }
+    
+    if (choiceExploreBtn && !choiceExploreBtn.hasAttribute('data-listener-attached')) {
+        choiceExploreBtn.addEventListener('click', () => {
+            closeCommunityChoiceModal();
+            setTimeout(() => openCommunityDiscoveryModal(), 100);
+        });
+        choiceExploreBtn.setAttribute('data-listener-attached', 'true');
+    }
 }
 
 // Close community choice modal
@@ -443,6 +480,7 @@ if (!window.communityModule) {
     window.communityModule = {};
 }
 window.communityModule.openCommunityModal = openCommunityModal;
+window.communityModule.openCommunityChoiceModal = openCommunityChoiceModal;
 window.communityModule.loadUserCommunities = loadUserCommunities;
 
 // Handle PFP upload
@@ -1054,9 +1092,26 @@ async function handleJoinCommunity() {
 
 // Open community discovery modal
 function openCommunityDiscoveryModal() {
-    if (!communityDiscoveryModal) return;
+    // Ensure modal element exists
+    if (!communityDiscoveryModal) {
+        communityDiscoveryModal = document.getElementById('communityDiscoveryModal');
+    }
+    if (!communityDiscoveryModal) {
+        console.error('Community discovery modal not found');
+        return;
+    }
+    
+    // Ensure overlay exists
+    if (!communityDiscoveryModalOverlay) {
+        communityDiscoveryModalOverlay = document.getElementById('communityDiscoveryModalOverlay');
+    }
+    
+    // Show the modal
     communityDiscoveryModal.classList.remove('hide');
-    document.body.style.overflow = 'hidden';
+    if (communityDiscoveryModalOverlay) {
+        communityDiscoveryModalOverlay.classList.remove('hide');
+    }
+    document.body.classList.add('no-scroll');
     loadPublicCommunities();
 }
 
@@ -1820,11 +1875,16 @@ function closeMobileDrawer() {
 }
 
 // Export functions for use in chat-init.js
-window.communityModule = {
-    openCommunityJoinModal,
-    openCommunityDiscoveryModal,
-    openCommunitySettingsModal,
-    openCommunityMembersModal,
-    loadUserCommunities,
-    get userCommunities() { return userCommunities; }
-};
+if (!window.communityModule) {
+    window.communityModule = {};
+}
+window.communityModule.openCommunityJoinModal = openCommunityJoinModal;
+window.communityModule.openCommunityDiscoveryModal = openCommunityDiscoveryModal;
+window.communityModule.openCommunitySettingsModal = openCommunitySettingsModal;
+window.communityModule.openCommunityMembersModal = openCommunityMembersModal;
+window.communityModule.openCommunityChoiceModal = openCommunityChoiceModal;
+window.communityModule.openCommunityModal = openCommunityModal;
+window.communityModule.loadUserCommunities = loadUserCommunities;
+Object.defineProperty(window.communityModule, 'userCommunities', {
+    get: () => userCommunities
+});

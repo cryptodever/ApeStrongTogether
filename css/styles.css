@@ -8610,6 +8610,51 @@ body.chat-body > * {
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
+    /* Mobile user list - show only profile pictures in a grid */
+    #chatMobileUserList {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+    
+    .chat-user-item-mobile-pfp {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        aspect-ratio: 1;
+    }
+    
+    .chat-user-item-mobile-pfp .chat-user-info {
+        display: none !important;
+    }
+    
+    .chat-user-item-mobile-pfp .mobile-pfp-only {
+        width: 100%;
+        height: 100%;
+        min-width: 48px;
+        min-height: 48px;
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.2s ease;
+    }
+    
+    .chat-user-item-mobile-pfp:hover .mobile-pfp-only {
+        border-color: rgba(74, 222, 128, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
+    }
+    
+    .chat-user-item-mobile-pfp .mobile-pfp-only img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+    
     .mobile-view-offline-btn {
         width: 32px;
         height: 32px;
