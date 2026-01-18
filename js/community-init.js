@@ -483,7 +483,7 @@ window.communityModule.openCommunityModal = openCommunityModal;
 window.communityModule.openCommunityChoiceModal = openCommunityChoiceModal;
 window.communityModule.loadUserCommunities = loadUserCommunities;
 
-// Handle PFP upload
+// Handle PFP upload with auto-resize and compression
 function handlePfpUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -494,61 +494,179 @@ function handlePfpUpload(e) {
         return;
     }
     
-    // Validate file size (max 500KB = 512,000 bytes)
     const maxSizeBytes = 500 * 1024; // 500KB
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    const maxSizeKB = (maxSizeBytes / 1024).toFixed(0);
+    const maxDimension = 200; // 200x200px max
     
-    console.log('PFP upload validation:', {
+    console.log('PFP upload started:', {
         fileName: file.name,
         fileSize: file.size,
-        fileSizeKB: fileSizeKB + ' KB',
-        fileSizeMB: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-        maxSizeBytes: maxSizeBytes,
-        maxSizeKB: maxSizeKB + ' KB',
-        isValid: file.size <= maxSizeBytes
+        fileSizeKB: (file.size / 1024).toFixed(2) + ' KB',
+        fileType: file.type
     });
     
-    if (file.size > maxSizeBytes) {
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`Image size (${fileSizeKB} KB) must be less than ${maxSizeKB} KB. Please choose a smaller image.`);
-        // Reset the input so user can try again
-        if (communityPfpInput) {
-            communityPfpInput.value = '';
-        }
-        return;
-    }
-    
-    // Validate image dimensions (max 200x200px)
+    // Load image to check dimensions and auto-resize/compress if needed
     const img = new Image();
     const reader = new FileReader();
     
     reader.onload = (event) => {
         img.onload = () => {
-            if (img.width > 200 || img.height > 200) {
-                alert(`Image dimensions (${img.width}x${img.height}px) must be 200x200px or smaller. Please resize your image.`);
+            const originalWidth = img.width;
+            const originalHeight = img.height;
+            const needsResize = originalWidth > maxDimension || originalHeight > maxDimension;
+            
+            console.log('Image loaded:', {
+                originalDimensions: `${originalWidth}x${originalHeight}`,
+                needsResize: needsResize
+            });
+            
+            // Create canvas for resizing/compressing
+            const canvas = document.createElement('canvas');
+            let targetWidth = originalWidth;
+            let targetHeight = originalHeight;
+            
+            // Calculate new dimensions maintaining aspect ratio
+            if (needsResize) {
+                const aspectRatio = originalWidth / originalHeight;
+                if (originalWidth > originalHeight) {
+                    targetWidth = maxDimension;
+                    targetHeight = Math.round(maxDimension / aspectRatio);
+                } else {
+                    targetHeight = maxDimension;
+                    targetWidth = Math.round(maxDimension * aspectRatio);
+                }
+                console.log('Resizing to:', `${targetWidth}x${targetHeight}`);
+            }
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw image to canvas (this will resize if needed)
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            
+            // Convert to blob with compression
+            let quality = 0.9; // Start with 90% quality
+            let compressedDataUrl = null;
+            let compressedSize = 0;
+            
+            // Function to compress image
+            const compressImage = (targetQuality) => {
+                return new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            compressedSize = blob.size;
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = () => resolve(null);
+                            reader.readAsDataURL(blob);
+                        } else {
+                            resolve(null);
+                        }
+                    }, file.type || 'image/png', targetQuality);
+                });
+            };
+            
+            // Compress in steps until we get under size limit or quality becomes too low
+            const compressRecursive = async (currentQuality) => {
+                try {
+                    const dataUrl = await compressImage(currentQuality);
+                    if (!dataUrl) {
+                        alert('Error processing image. Please try a different image.');
+                        if (communityPfpInput) {
+                            communityPfpInput.value = '';
+                        }
+                        return;
+                    }
+                    
+                    if (compressedSize <= maxSizeBytes || currentQuality <= 0.5) {
+                        // Success - image is small enough or we've compressed enough
+                        console.log('Compression complete:', {
+                            finalSize: (compressedSize / 1024).toFixed(2) + ' KB',
+                            finalDimensions: `${targetWidth}x${targetHeight}`,
+                            quality: currentQuality
+                        });
+                        
+                        // Create a new File object from the compressed data
+                        const compressedBlob = await new Promise((resolve) => {
+                            canvas.toBlob((blob) => resolve(blob), file.type || 'image/png', currentQuality);
+                        });
+                        
+                        if (compressedBlob) {
+                            // Store the processed image
+                            pfpFile = new File([compressedBlob], file.name, { type: file.type || 'image/png' });
+                            pfpDataUrl = dataUrl;
+                            
+                            // Show preview
+                            if (pfpPreviewImage) {
+                                pfpPreviewImage.src = pfpDataUrl;
+                                pfpPreviewImage.classList.remove('hide');
+                            }
+                            if (pfpPlaceholder) {
+                                pfpPlaceholder.classList.add('hide');
+                            }
+                            if (pfpRemoveBtn) {
+                                pfpRemoveBtn.classList.remove('hide');
+                            }
+                            
+                            // Show notification if image was resized or compressed significantly
+                            if (needsResize || file.size > maxSizeBytes) {
+                                const originalSizeKB = (file.size / 1024).toFixed(2);
+                                const finalSizeKB = (compressedSize / 1024).toFixed(2);
+                                let message = 'Image processed successfully!\n';
+                                if (needsResize) {
+                                    message += `Resized from ${originalWidth}x${originalHeight}px to ${targetWidth}x${targetHeight}px.\n`;
+                                }
+                                if (file.size > maxSizeBytes) {
+                                    message += `Compressed from ${originalSizeKB} KB to ${finalSizeKB} KB.`;
+                                }
+                                // Use a subtle notification instead of alert
+                                console.log(message);
+                            }
+                        } else {
+                            alert('Error creating compressed image. Please try a different image.');
+                            if (communityPfpInput) {
+                                communityPfpInput.value = '';
+                            }
+                        }
+                    } else {
+                        // Need more compression - reduce quality and try again
+                        const newQuality = Math.max(0.5, currentQuality - 0.1);
+                        await compressRecursive(newQuality);
+                    }
+                } catch (error) {
+                    console.error('Error during compression:', error);
+                    alert('Error processing image. Please try a different image.');
+                    if (communityPfpInput) {
+                        communityPfpInput.value = '';
+                    }
+                }
+            };
+            
+            // Start compression process
+            compressRecursive(quality).catch((error) => {
+                console.error('Error in compression process:', error);
+                alert('Error processing image. Please try a different image.');
                 if (communityPfpInput) {
                     communityPfpInput.value = '';
                 }
-                return;
-            }
-            
-            // Valid image
-            pfpFile = file;
-            pfpDataUrl = event.target.result;
-            
-            if (pfpPreviewImage) {
-                pfpPreviewImage.src = pfpDataUrl;
-                pfpPreviewImage.classList.remove('hide');
-            }
-            if (pfpPlaceholder) {
-                pfpPlaceholder.classList.add('hide');
-            }
-            if (pfpRemoveBtn) {
-                pfpRemoveBtn.classList.remove('hide');
+            });
+        };
+        
+        img.onerror = () => {
+            alert('Error loading image. Please try a different image file.');
+            if (communityPfpInput) {
+                communityPfpInput.value = '';
             }
         };
+        
         img.src = event.target.result;
+    };
+    
+    reader.onerror = () => {
+        alert('Error reading file. Please try again.');
+        if (communityPfpInput) {
+            communityPfpInput.value = '';
+        }
     };
     
     reader.readAsDataURL(file);
@@ -573,7 +691,7 @@ function handlePfpRemove() {
     }
 }
 
-// Handle settings PFP upload
+// Handle settings PFP upload with auto-resize and compression (same logic as handlePfpUpload)
 function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
     const file = e.target.files[0];
     if (!file) return;
@@ -584,51 +702,179 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
         return;
     }
     
-    // Validate file size (max 500KB = 512,000 bytes)
     const maxSizeBytes = 500 * 1024; // 500KB
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    const maxSizeKB = (maxSizeBytes / 1024).toFixed(0);
+    const maxDimension = 200; // 200x200px max
+    const settingsPfpInput = document.getElementById('settingsCommunityPfp');
     
-    if (file.size > maxSizeBytes) {
-        alert(`Image size (${fileSizeKB} KB) must be less than ${maxSizeKB} KB. Please choose a smaller image.`);
-        const settingsPfpInput = document.getElementById('settingsCommunityPfp');
-        if (settingsPfpInput) {
-            settingsPfpInput.value = '';
-        }
-        return;
-    }
+    console.log('Settings PFP upload started:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileSizeKB: (file.size / 1024).toFixed(2) + ' KB',
+        fileType: file.type
+    });
     
-    // Validate image dimensions (max 200x200px)
+    // Load image to check dimensions and auto-resize/compress if needed
     const img = new Image();
     const reader = new FileReader();
     
     reader.onload = (event) => {
         img.onload = () => {
-            if (img.width > 200 || img.height > 200) {
-                alert(`Image dimensions (${img.width}x${img.height}px) must be 200x200px or smaller. Please resize your image.`);
-                const settingsPfpInput = document.getElementById('settingsCommunityPfp');
+            const originalWidth = img.width;
+            const originalHeight = img.height;
+            const needsResize = originalWidth > maxDimension || originalHeight > maxDimension;
+            
+            console.log('Settings image loaded:', {
+                originalDimensions: `${originalWidth}x${originalHeight}`,
+                needsResize: needsResize
+            });
+            
+            // Create canvas for resizing/compressing
+            const canvas = document.createElement('canvas');
+            let targetWidth = originalWidth;
+            let targetHeight = originalHeight;
+            
+            // Calculate new dimensions maintaining aspect ratio
+            if (needsResize) {
+                const aspectRatio = originalWidth / originalHeight;
+                if (originalWidth > originalHeight) {
+                    targetWidth = maxDimension;
+                    targetHeight = Math.round(maxDimension / aspectRatio);
+                } else {
+                    targetHeight = maxDimension;
+                    targetWidth = Math.round(maxDimension * aspectRatio);
+                }
+                console.log('Resizing to:', `${targetWidth}x${targetHeight}`);
+            }
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw image to canvas (this will resize if needed)
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            
+            // Convert to blob with compression
+            let quality = 0.9; // Start with 90% quality
+            let compressedDataUrl = null;
+            let compressedSize = 0;
+            
+            // Function to compress image
+            const compressImage = (targetQuality) => {
+                return new Promise((resolve) => {
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            compressedSize = blob.size;
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.onerror = () => resolve(null);
+                            reader.readAsDataURL(blob);
+                        } else {
+                            resolve(null);
+                        }
+                    }, file.type || 'image/png', targetQuality);
+                });
+            };
+            
+            // Compress in steps until we get under size limit or quality becomes too low
+            const compressRecursive = async (currentQuality) => {
+                try {
+                    const dataUrl = await compressImage(currentQuality);
+                    if (!dataUrl) {
+                        alert('Error processing image. Please try a different image.');
+                        if (settingsPfpInput) {
+                            settingsPfpInput.value = '';
+                        }
+                        return;
+                    }
+                    
+                    if (compressedSize <= maxSizeBytes || currentQuality <= 0.5) {
+                        // Success - image is small enough or we've compressed enough
+                        console.log('Settings compression complete:', {
+                            finalSize: (compressedSize / 1024).toFixed(2) + ' KB',
+                            finalDimensions: `${targetWidth}x${targetHeight}`,
+                            quality: currentQuality
+                        });
+                        
+                        // Create a new File object from the compressed data
+                        const compressedBlob = await new Promise((resolve) => {
+                            canvas.toBlob((blob) => resolve(blob), file.type || 'image/png', currentQuality);
+                        });
+                        
+                        if (compressedBlob) {
+                            // Store the processed image
+                            settingsPfpFile = new File([compressedBlob], file.name, { type: file.type || 'image/png' });
+                            settingsPfpDataUrl = dataUrl;
+                            
+                            // Show preview
+                            if (previewImage) {
+                                previewImage.src = settingsPfpDataUrl;
+                                previewImage.classList.remove('hide');
+                            }
+                            if (placeholder) {
+                                placeholder.classList.add('hide');
+                            }
+                            if (removeBtn) {
+                                removeBtn.classList.remove('hide');
+                            }
+                            
+                            // Show notification if image was resized or compressed significantly
+                            if (needsResize || file.size > maxSizeBytes) {
+                                const originalSizeKB = (file.size / 1024).toFixed(2);
+                                const finalSizeKB = (compressedSize / 1024).toFixed(2);
+                                let message = 'Image processed successfully!\n';
+                                if (needsResize) {
+                                    message += `Resized from ${originalWidth}x${originalHeight}px to ${targetWidth}x${targetHeight}px.\n`;
+                                }
+                                if (file.size > maxSizeBytes) {
+                                    message += `Compressed from ${originalSizeKB} KB to ${finalSizeKB} KB.`;
+                                }
+                                console.log(message);
+                            }
+                        } else {
+                            alert('Error creating compressed image. Please try a different image.');
+                            if (settingsPfpInput) {
+                                settingsPfpInput.value = '';
+                            }
+                        }
+                    } else {
+                        // Need more compression - reduce quality and try again
+                        const newQuality = Math.max(0.5, currentQuality - 0.1);
+                        await compressRecursive(newQuality);
+                    }
+                } catch (error) {
+                    console.error('Error during settings compression:', error);
+                    alert('Error processing image. Please try a different image.');
+                    if (settingsPfpInput) {
+                        settingsPfpInput.value = '';
+                    }
+                }
+            };
+            
+            // Start compression process
+            compressRecursive(quality).catch((error) => {
+                console.error('Error in settings compression process:', error);
+                alert('Error processing image. Please try a different image.');
                 if (settingsPfpInput) {
                     settingsPfpInput.value = '';
                 }
-                return;
-            }
-            
-            // Valid image
-            settingsPfpFile = file;
-            settingsPfpDataUrl = event.target.result;
-            
-            if (previewImage) {
-                previewImage.src = settingsPfpDataUrl;
-                previewImage.classList.remove('hide');
-            }
-            if (placeholder) {
-                placeholder.classList.add('hide');
-            }
-            if (removeBtn) {
-                removeBtn.classList.remove('hide');
+            });
+        };
+        
+        img.onerror = () => {
+            alert('Error loading image. Please try a different image file.');
+            if (settingsPfpInput) {
+                settingsPfpInput.value = '';
             }
         };
+        
         img.src = event.target.result;
+    };
+    
+    reader.onerror = () => {
+        alert('Error reading file. Please try again.');
+        if (settingsPfpInput) {
+            settingsPfpInput.value = '';
+        }
     };
     
     reader.readAsDataURL(file);
@@ -958,17 +1204,8 @@ async function loadUserCommunities() {
         
         userCommunities = communities;
         
-        // Export to window for chat-init.js access
-        if (!window.communityModule) {
-            window.communityModule = {};
-        }
-        // Update userCommunities - delete and recreate if it exists as a getter
-        try {
-            delete window.communityModule.userCommunities;
-        } catch (e) {
-            // Ignore if can't delete
-        }
-        window.communityModule.userCommunities = userCommunities;
+        // Note: userCommunities is exported via getter at end of file
+        // No need to manually set it - the getter automatically returns the current value
         
         // Update channel switcher if it exists
         if (window.updateChannelSwitcher) {
