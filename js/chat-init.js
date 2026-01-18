@@ -575,7 +575,7 @@ async function setupChannelSwitcher() {
                 const button = document.createElement('button');
                 button.className = `channel-button community-button ${isActive ? 'active' : ''}`;
                 button.setAttribute('data-community', community.id);
-                button.innerHTML = `<span class="channel-emoji">🦍</span> <span class="channel-name">${escapeHtml(community.name)}</span> <span class="member-count">(${community.memberCount || 0})</span>`;
+                button.innerHTML = `<span class="channel-name">${escapeHtml(community.name)}</span> <span class="member-count">(${community.memberCount || 0})</span>`;
                 button.addEventListener('click', () => switchToCommunity(community.id));
                 channelButtonsEl.appendChild(button);
             });
@@ -697,19 +697,12 @@ function renderCommunityIcon(community, isDefault) {
             bg.style.background = `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`;
         }
         
-        // Create text (first letter or emoji) - only show if no PFP
+        // Create text (first letter) - only show if no PFP, no emoji
         text = document.createElement('span');
         text.className = 'community-icon-text';
-        if (isDefault) {
-            text.textContent = '🦍';
-        } else if (community.emoji) {
-            // Use emoji field if available
-            text.textContent = community.emoji;
-        } else {
-            // Fallback to first letter
-            const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
-            text.textContent = firstLetter;
-        }
+        // Always use first letter, never emoji
+        const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
+        text.textContent = firstLetter;
         bg.appendChild(text);
     }
     
@@ -852,7 +845,6 @@ function setupMobileChannelList() {
             item.className = `chat-mobile-channel-item community-item ${isActive ? 'active' : ''}`;
             item.setAttribute('data-community', community.id);
             item.innerHTML = `
-                <span class="channel-emoji chat-mobile-drawer-emoji">🦍</span>
                 <span class="channel-name chat-mobile-drawer-name">${escapeHtml(community.name)}</span>
                 <span class="channel-member-count">${community.memberCount || 0}</span>
             `;
