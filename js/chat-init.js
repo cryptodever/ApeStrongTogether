@@ -41,6 +41,19 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+async function ensureDefaultCommunity() {
+    // Forward declaration - full implementation later
+    return;
+}
+
+function setupEventListeners() {
+    // Forward declaration - full implementation later
+}
+
+async function loadMessages() {
+    // Forward declaration - full implementation later
+}
+
 // Rate limits per channel (in seconds)
 const RATE_LIMITS = {
     'general': 15,
