@@ -976,7 +976,33 @@ async function updateChannelInfo() {
         currentCommunityId = DEFAULT_COMMUNITY_ID;
     }
     
-    // Load community and channel info
+    // If on a community page (not a channel), show just the community name
+    if (currentChannel === 'community' || !currentChannel) {
+        try {
+            const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
+            if (communityDoc.exists()) {
+                const communityData = communityDoc.data();
+                const communityName = communityData.name || 'Community';
+                const communityDesc = communityData.description || 'Community chat';
+                
+                currentChannelNameEl.textContent = communityName;
+                currentChannelDescEl.textContent = communityDesc;
+                
+                // Update mobile
+                const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
+                const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
+                if (mobileChannelNameEl) mobileChannelNameEl.textContent = communityName;
+                if (mobileChannelDescEl) mobileChannelDescEl.textContent = communityDesc;
+                
+                updateMobileChannelName();
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading community info:', error);
+        }
+    }
+    
+    // Load community and channel info (for channels)
     try {
         const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
         if (communityDoc.exists()) {
