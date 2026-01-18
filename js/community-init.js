@@ -1405,20 +1405,47 @@ async function loadPublicCommunities(searchTerm = '') {
         
         communityList.innerHTML = communitiesWithMembership.map(community => {
             const createdAt = community.createdAt?.toDate ? community.createdAt.toDate() : new Date();
-            const dateStr = createdAt.toLocaleDateString();
+            const dateStr = createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            const memberCount = community.memberCount || 0;
+            const pfpUrl = community.pfpUrl || null;
+            const emoji = community.emoji || null;
+            
+            // Determine community icon (PFP > emoji > default)
+            let communityIcon = '';
+            if (pfpUrl) {
+                communityIcon = `<img src="${escapeHtml(pfpUrl)}" alt="${escapeHtml(community.name)}" class="community-item-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+            }
+            if (!pfpUrl && emoji) {
+                communityIcon = `<div class="community-item-icon-emoji">${escapeHtml(emoji)}</div>`;
+            }
+            if (!pfpUrl && !emoji) {
+                // Default icon - first letter of name
+                const firstLetter = (community.name || 'C').charAt(0).toUpperCase();
+                communityIcon = `<div class="community-item-icon-emoji">${escapeHtml(firstLetter)}</div>`;
+            }
             
             return `
                 <div class="community-item">
-                    <div class="community-item-header">
-                        <h3>${escapeHtml(community.name)}</h3>
-                        <span class="community-member-count">${community.memberCount || 0} members</span>
+                    <div class="community-item-top">
+                        <div class="community-item-icon-wrapper">
+                            ${communityIcon}
+                            ${pfpUrl ? `<div class="community-item-icon-emoji" style="display:none;">${(community.name || 'C').charAt(0).toUpperCase()}</div>` : ''}
+                        </div>
+                        <div class="community-item-content">
+                            <div class="community-item-header">
+                                <h3>${escapeHtml(community.name)}</h3>
+                                <span class="community-member-count">${memberCount} ${memberCount === 1 ? 'member' : 'members'}</span>
+                            </div>
+                            ${community.description ? `<p class="community-item-description">${escapeHtml(community.description)}</p>` : ''}
+                            <div class="community-item-footer">
+                                <span class="community-item-date">Created ${dateStr}</span>
+                            </div>
+                        </div>
                     </div>
-                    ${community.description ? `<p class="community-item-description">${escapeHtml(community.description)}</p>` : ''}
-                    <div class="community-item-footer">
-                        <span class="community-item-date">Created ${dateStr}</span>
+                    <div class="community-item-actions">
                         ${community.isMember 
-                            ? '<button class="btn btn-secondary btn-sm" disabled>Joined</button>'
-                            : `<button class="btn btn-primary btn-sm" data-community-id="${community.id}" data-join-community>Join</button>`
+                            ? '<button class="btn btn-secondary btn-sm" disabled><span>✓</span> Joined</button>'
+                            : `<button class="btn btn-primary btn-sm" data-community-id="${escapeHtml(community.id)}" data-join-community>Join Community</button>`
                         }
                     </div>
                 </div>

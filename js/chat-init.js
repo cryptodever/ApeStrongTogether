@@ -1312,7 +1312,7 @@ async function switchToCommunity(communityId) {
         
         // Load community members (all members, not just online) - do this AFTER setupPresence
         // to ensure presence is set up first
-        loadCommunityMembers(communityId);
+        await loadCommunityMembers(communityId);
         
         // Update presence
         updatePresence(true);
@@ -2044,7 +2044,9 @@ async function setupRealtimeListeners() {
         } else {
             // On community page, reload members to update online status
             // Preserve showOfflineMembers state when reloading
-            loadCommunityMembers(currentCommunityId);
+            if (currentCommunityId) {
+                await loadCommunityMembers(currentCommunityId);
+            }
         }
     });
 }
@@ -2858,30 +2860,79 @@ async function loadCommunityMembers(communityId) {
     
     try {
         // Load all members from community members subcollection
+        // Try with orderBy first, but fallback to simple query if it fails (some members might not have joinedAt)
         const membersRef = collection(db, 'communities', communityId, 'members');
-        const membersQuery = query(membersRef, orderBy('joinedAt', 'asc'));
-        const membersSnapshot = await getDocs(membersQuery);
-        
-        const memberIds = [];
+        let membersSnapshot;
+        let memberIds = [];
         const memberRoles = {};
-        membersSnapshot.forEach(doc => {
-            memberIds.push(doc.id);
-            memberRoles[doc.id] = doc.data().role || 'member';
-        });
+        
+        try {
+            // Try ordered query first
+            const membersQuery = query(membersRef, orderBy('joinedAt', 'asc'));
+            membersSnapshot = await getDocs(membersQuery);
+            membersSnapshot.forEach(doc => {
+                memberIds.push(doc.id);
+                const data = doc.data();
+                memberRoles[doc.id] = data.role || 'member';
+            });
+        } catch (orderError) {
+            // If orderBy fails (missing index or missing joinedAt), try without ordering
+            console.warn('OrderBy query failed for members, trying simple query:', orderError);
+            try {
+                membersSnapshot = await getDocs(membersRef);
+                membersSnapshot.forEach(doc => {
+                    memberIds.push(doc.id);
+                    const data = doc.data();
+                    memberRoles[doc.id] = data.role || 'member';
+                });
+            } catch (simpleError) {
+                console.error('Error loading community members (both queries failed):', simpleError);
+                throw simpleError;
+            }
+        }
+        
+        console.log(`Loading ${memberIds.length} members for community ${communityId}`);
+        
+        if (memberIds.length === 0) {
+            allCommunityMembers = [];
+            updateCommunityMembersList([]);
+            if (onlineCountEl) {
+                onlineCountEl.textContent = '0/0';
+            }
+            updateMobileOnlineCount();
+            return;
+        }
         
         // #region agent log (disabled - debug endpoint not available)
         // Debug logging disabled to prevent connection refused errors
         // #endregion
         
-        // Load user profiles and presence for each member
-        const membersWithProfiles = await Promise.all(memberIds.map(async (userId) => {
+        // Load user profiles and presence for each member with better error handling
+        const membersWithProfiles = await Promise.allSettled(memberIds.map(async (userId, index) => {
+            // Add small delay to prevent overwhelming Firestore with too many concurrent requests
+            if (index > 0 && index % 10 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
             try {
-                // Load user profile
-                const userDoc = await getDoc(doc(db, 'users', userId));
+                // Load user profile with timeout protection
+                const userDocPromise = getDoc(doc(db, 'users', userId));
+                const userDoc = await Promise.race([
+                    userDocPromise,
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout loading user profile')), 5000)
+                    )
+                ]);
                 const userData = userDoc.exists() ? userDoc.data() : null;
                 
-                // Load presence data
-                const presenceDoc = await getDoc(doc(db, 'presence', userId));
+                // Load presence data with timeout protection
+                const presenceDocPromise = getDoc(doc(db, 'presence', userId));
+                const presenceDoc = await Promise.race([
+                    presenceDocPromise,
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout loading presence')), 5000)
+                    )
+                ]);
                 const presenceData = presenceDoc.exists() ? presenceDoc.data() : null;
                 
                 const now = Date.now();
@@ -2910,12 +2961,29 @@ async function loadCommunityMembers(communityId) {
                 };
             } catch (error) {
                 console.error(`Error loading profile for user ${userId}:`, error);
-                return null;
+                // Return a minimal member object so they're not completely lost
+                return {
+                    userId: userId,
+                    username: 'Anonymous',
+                    bannerImage: '/pfp_apes/bg1.png',
+                    xAccountVerified: false,
+                    role: memberRoles[userId] || 'member',
+                    isOnline: false,
+                    lastSeen: null,
+                    timeSinceLastSeen: Infinity,
+                    error: true
+                };
             }
         }));
         
-        // Filter out nulls and sort: online first, then by role (owner, admin, member), then by last seen
-        const validMembers = membersWithProfiles.filter(m => m !== null);
+        // Extract successful results (Promise.allSettled returns {status, value} objects)
+        const validMembers = membersWithProfiles
+            .map(result => result.status === 'fulfilled' ? result.value : null)
+            .filter(m => m !== null);
+        
+        console.log(`Loaded ${validMembers.length} out of ${memberIds.length} members for community ${communityId}`);
+        
+        // Sort: online first, then by role (owner, admin, member), then by last seen
         validMembers.sort((a, b) => {
             // Online users first
             if (a.isOnline !== b.isOnline) {

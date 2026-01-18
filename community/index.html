@@ -395,20 +395,26 @@
             <div class="community-modal-overlay" id="communityDiscoveryModalOverlay"></div>
             <div class="community-modal-content community-discovery-content">
                 <div class="community-modal-header">
+                    <div class="modal-header-icon">🌍</div>
                     <h2>Discover Communities</h2>
+                    <p class="modal-header-subtitle">Join communities and connect with fellow apes</p>
                     <button class="community-modal-close" id="communityDiscoveryModalClose" aria-label="Close">×</button>
                 </div>
                 <div class="community-modal-body">
-                    <div class="form-group">
+                    <div class="community-search-wrapper">
+                        <div class="community-search-icon">🔍</div>
                         <input 
                             type="text" 
                             id="communitySearchInput" 
-                            placeholder="Search communities..."
+                            placeholder="Search communities by name or description..."
                             class="community-search-input"
                         >
                     </div>
                     <div class="community-list" id="communityList">
-                        <div class="community-loading">Loading communities...</div>
+                        <div class="community-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading communities...</p>
+                        </div>
                     </div>
                 </div>
             </div>
