@@ -1003,6 +1003,11 @@ async function getActualMemberCount(communityId) {
         const membersSnapshot = await getDocs(membersRef);
         return membersSnapshot.size;
     } catch (error) {
+        // Silently handle permission errors - user doesn't have access to this community
+        if (error.code === 'permission-denied') {
+            return null;
+        }
+        // Only log non-permission errors
         console.warn(`Could not get member count for community ${communityId}:`, error);
         return null;
     }
@@ -1098,19 +1103,33 @@ async function loadUserCommunities() {
         const communityPromises = snapshot.docs.map(async (docSnapshot) => {
             if (docSnapshot.id === DEFAULT_COMMUNITY_ID) return null; // Already added
             
-            const communityData = docSnapshot.data();
-            // Get actual member count
-            const actualCount = await getActualMemberCount(docSnapshot.id);
-            const memberCount = actualCount !== null ? actualCount : (communityData.memberCount || 0);
-            
-            // Update stored count if different (async, don't wait)
-            if (actualCount !== null && actualCount !== communityData.memberCount) {
-                updateDoc(doc(db, 'communities', docSnapshot.id), { memberCount: actualCount }).catch(err => {
-                    console.warn(`Could not update member count for community ${docSnapshot.id}:`, err);
-                });
+            try {
+                const communityData = docSnapshot.data();
+                // Get actual member count (will return null if no permission)
+                const actualCount = await getActualMemberCount(docSnapshot.id);
+                const memberCount = actualCount !== null ? actualCount : (communityData.memberCount || 0);
+                
+                // Update stored count if different (async, don't wait)
+                // Only update if we have permission (actualCount !== null means we could read it)
+                if (actualCount !== null && actualCount !== communityData.memberCount) {
+                    updateDoc(doc(db, 'communities', docSnapshot.id), { memberCount: actualCount }).catch(err => {
+                        // Silently handle permission errors
+                        if (err.code !== 'permission-denied') {
+                            console.warn(`Could not update member count for community ${docSnapshot.id}:`, err);
+                        }
+                    });
+                }
+                
+                return { id: docSnapshot.id, ...communityData, memberCount: memberCount };
+            } catch (error) {
+                // Skip communities we don't have permission to read
+                if (error.code === 'permission-denied') {
+                    return null;
+                }
+                // For other errors, log and skip
+                console.warn(`Error processing community ${docSnapshot.id}:`, error);
+                return null;
             }
-            
-            return { id: docSnapshot.id, ...communityData, memberCount: memberCount };
         });
         
         const userCreatedCommunities = (await Promise.all(communityPromises)).filter(c => c !== null);
@@ -1139,22 +1158,29 @@ async function loadUserCommunities() {
                     
                     if (memberDoc.exists()) {
                         const communityData = commDoc.data();
-                        // Get actual member count
+                        // Get actual member count (will return null if no permission)
                         const actualCount = await getActualMemberCount(commDoc.id);
                         const memberCount = actualCount !== null ? actualCount : (communityData.memberCount || 0);
                         
                         // Update stored count if different (async, don't wait)
+                        // Only update if we have permission (actualCount !== null means we could read it)
                         if (actualCount !== null && actualCount !== communityData.memberCount) {
                             updateDoc(doc(db, 'communities', commDoc.id), { memberCount: actualCount }).catch(err => {
-                                console.warn(`Could not update member count for community ${commDoc.id}:`, err);
+                                // Silently handle permission errors
+                                if (err.code !== 'permission-denied') {
+                                    console.warn(`Could not update member count for community ${commDoc.id}:`, err);
+                                }
                             });
                         }
                         
                         return { id: commDoc.id, ...communityData, memberCount: memberCount };
                     }
                 } catch (memberError) {
-                    // Skip if we can't check membership (permission issue)
-                    console.warn(`Could not check membership for community ${commDoc.id}:`, memberError);
+                    // Silently skip if we can't check membership due to permission issues
+                    // Only log non-permission errors
+                    if (memberError.code !== 'permission-denied') {
+                        console.warn(`Could not check membership for community ${commDoc.id}:`, memberError);
+                    }
                 }
                 
                 return null;
@@ -1727,7 +1753,23 @@ async function handleDeleteCommunity() {
     try {
         // Verify user is owner before deleting
         const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
-        const memberDoc = await getDoc(memberRef);
+        let memberDoc;
+        try {
+            memberDoc = await getDoc(memberRef);
+        } catch (permissionError) {
+            // Handle permission errors gracefully
+            if (permissionError.code === 'permission-denied') {
+                alert('You do not have permission to delete this community');
+            } else {
+                console.error('Error checking membership for deletion:', permissionError);
+                alert('Failed to verify permissions. Please try again.');
+            }
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Community';
+            }
+            return;
+        }
         
         if (!memberDoc.exists() || memberDoc.data().role !== 'owner') {
             alert('Only the owner can delete the community');
@@ -1781,8 +1823,13 @@ async function handleDeleteCommunity() {
         
         showToast('Community deleted successfully');
     } catch (error) {
-        console.error('Error deleting community:', error);
-        alert('Failed to delete community. Please try again.');
+        // Handle permission errors specifically
+        if (error.code === 'permission-denied') {
+            alert('You do not have permission to delete this community');
+        } else {
+            console.error('Error deleting community:', error);
+            alert('Failed to delete community. Please try again.');
+        }
     } finally {
         if (deleteBtn) {
             deleteBtn.disabled = false;

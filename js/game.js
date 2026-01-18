@@ -224,27 +224,31 @@ export class Game {
             this.images.player[dir] = img;
         });
         
-        // Load shotgun player directional images
+        // Load shotgun player directional images (uses underscores in filename)
         directions.forEach(dir => {
             const img = new Image();
-            img.onload = checkAllLoaded;
+            img.onload = () => {
+                checkAllLoaded();
+            };
             img.onerror = () => {
-                console.warn(`Failed to load shotgun player image: shotgunape-${dir}.png`);
+                console.error(`Failed to load shotgun player image: /game-jpegs/shotgunape_${dir}.png`);
                 checkAllLoaded(); // Still count as loaded to not block game
             };
-            img.src = `/game-jpegs/shotgunape-${dir}.png`;
+            img.src = `/game-jpegs/shotgunape_${dir}.png`;
             this.images.shotgunPlayer[dir] = img;
         });
         
-        // Load sniper player directional images
+        // Load sniper player directional images (uses underscores in filename)
         directions.forEach(dir => {
             const img = new Image();
-            img.onload = checkAllLoaded;
+            img.onload = () => {
+                checkAllLoaded();
+            };
             img.onerror = () => {
-                console.warn(`Failed to load sniper player image: sniperape-${dir}.png`);
+                console.error(`Failed to load sniper player image: /game-jpegs/sniperape_${dir}.png`);
                 checkAllLoaded(); // Still count as loaded to not block game
             };
-            img.src = `/game-jpegs/sniperape-${dir}.png`;
+            img.src = `/game-jpegs/sniperape_${dir}.png`;
             this.images.sniperPlayer[dir] = img;
         });
         
@@ -3215,15 +3219,19 @@ export class Game {
         } else {
             imageSet = this.images.player;
         }
-        const img = imageSet[direction];
+        const img = imageSet && imageSet[direction] ? imageSet[direction] : null;
         
-        if (img && img.complete && img.naturalWidth > 0) {
+        // Fallback to regular player images if character-specific images aren't loaded
+        const fallbackImg = !img || !img.complete || img.naturalWidth === 0 ? this.images.player[direction] : null;
+        const finalImg = img && img.complete && img.naturalWidth > 0 ? img : fallbackImg;
+        
+        if (finalImg && finalImg.complete && finalImg.naturalWidth > 0) {
             const size = this.player.radius * 3.5; // Larger size for better visibility
             // Ensure transparency is preserved
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.translate(this.player.x, this.player.y);
             // Draw image with transparency preserved (PNG alpha channel)
-            this.ctx.drawImage(img, -size / 2, -size / 2, size, size);
+            this.ctx.drawImage(finalImg, -size / 2, -size / 2, size, size);
         } else {
             // Fallback: draw circle if image not ready
             this.ctx.fillStyle = this.player.color;
