@@ -1147,30 +1147,57 @@ async function switchToCommunity(communityId) {
         // Clear typing indicator
         clearTypingIndicator();
         
+        // Ensure chatMessagesEl is still valid before proceeding
+        if (!chatMessagesEl) {
+            chatMessagesEl = document.getElementById('chatMessages');
+        }
+        
+        if (!chatMessagesEl) {
+            console.error('chatMessagesEl not found when switching communities');
+            return;
+        }
+        
         // Clear current messages but keep loading/empty elements
         // (Don't use innerHTML = '' as it removes those elements from DOM)
-        if (chatMessagesEl) {
-            // Remove only message elements, keep loading/empty divs
-            const messageElements = chatMessagesEl.querySelectorAll('.chat-message');
-            messageElements.forEach(el => el.remove());
-            
-            // Ensure loading and empty elements exist and are in correct state
-            if (!chatLoadingEl || !chatMessagesEl.contains(chatLoadingEl)) {
-                const loadingDiv = document.createElement('div');
-                loadingDiv.className = 'chat-loading';
-                loadingDiv.id = 'chatLoading';
-                loadingDiv.innerHTML = '<div class="loading-spinner"></div><p>Loading messages...</p>';
-                chatMessagesEl.appendChild(loadingDiv);
-                chatLoadingEl = loadingDiv;
+        // Remove only message elements, keep loading/empty divs
+        const messageElements = chatMessagesEl.querySelectorAll('.chat-message');
+        messageElements.forEach(el => el.remove());
+        
+        // Ensure loading and empty elements exist and are in correct state
+        // Check if elements exist in DOM first
+        let loadingEl = document.getElementById('chatLoading');
+        let emptyEl = document.getElementById('chatEmpty');
+        
+        if (!loadingEl || !chatMessagesEl.contains(loadingEl)) {
+            // Remove old reference if it exists but isn't in DOM
+            if (loadingEl && !chatMessagesEl.contains(loadingEl)) {
+                loadingEl.remove();
             }
-            if (!chatEmptyEl || !chatMessagesEl.contains(chatEmptyEl)) {
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'chat-empty hide';
-                emptyDiv.id = 'chatEmpty';
-                emptyDiv.innerHTML = '<div class="chat-empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p>';
-                chatMessagesEl.appendChild(emptyDiv);
-                chatEmptyEl = emptyDiv;
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chat-loading';
+            loadingDiv.id = 'chatLoading';
+            loadingDiv.innerHTML = '<div class="loading-spinner"></div><p>Loading messages...</p>';
+            chatMessagesEl.appendChild(loadingDiv);
+            chatLoadingEl = loadingDiv;
+        } else {
+            // Update reference if element exists in DOM
+            chatLoadingEl = loadingEl;
+        }
+        
+        if (!emptyEl || !chatMessagesEl.contains(emptyEl)) {
+            // Remove old reference if it exists but isn't in DOM
+            if (emptyEl && !chatMessagesEl.contains(emptyEl)) {
+                emptyEl.remove();
             }
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'chat-empty hide';
+            emptyDiv.id = 'chatEmpty';
+            emptyDiv.innerHTML = '<div class="chat-empty-icon">💬</div><h3>No messages yet</h3><p>Be the first to say something!</p>';
+            chatMessagesEl.appendChild(emptyDiv);
+            chatEmptyEl = emptyDiv;
+        } else {
+            // Update reference if element exists in DOM
+            chatEmptyEl = emptyEl;
         }
         loadedMessageIds.clear();
         isInitialSnapshot = true;
@@ -1553,19 +1580,34 @@ async function loadMessages() {
 
     getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
-        chatLoadingEl.classList.add('hide');
+        
+        // Ensure loading/empty elements exist before manipulating them
+        if (!chatLoadingEl) {
+            chatLoadingEl = document.getElementById('chatLoading');
+        }
+        if (!chatEmptyEl) {
+            chatEmptyEl = document.getElementById('chatEmpty');
+        }
+        
+        if (chatLoadingEl) {
+            chatLoadingEl.classList.add('hide');
+        }
         
         // #region agent log (disabled - debug endpoint not available)
         // Debug logging disabled to prevent connection refused errors
         // #endregion
         
         if (snapshot.empty) {
-            chatEmptyEl.classList.remove('hide');
+            if (chatEmptyEl) {
+                chatEmptyEl.classList.remove('hide');
+            }
             hasMoreMessages = false;
             return;
         }
 
-        chatEmptyEl.classList.add('hide');
+        if (chatEmptyEl) {
+            chatEmptyEl.classList.add('hide');
+        }
         
         // Check if there might be more messages
         hasMoreMessages = snapshot.docs.length === MESSAGES_PER_PAGE;
@@ -1604,14 +1646,27 @@ async function loadMessages() {
         // #region agent log (disabled - debug endpoint not available)
         // Debug logging disabled to prevent connection refused errors
         // #endregion
-        chatLoadingEl.classList.add('hide');
-        chatEmptyEl.classList.remove('hide');
-        chatEmptyEl.innerHTML = `
-            <div class="chat-empty-icon">⚠️</div>
-            <h3>Unable to load messages</h3>
-            <p>There was an error loading messages. Please check your connection and refresh the page.</p>
-            <p class="chat-error-detail">Error: ${escapeHtml(error.message)}</p>
-        `;
+        
+        // Ensure elements exist before manipulating them
+        if (!chatLoadingEl) {
+            chatLoadingEl = document.getElementById('chatLoading');
+        }
+        if (!chatEmptyEl) {
+            chatEmptyEl = document.getElementById('chatEmpty');
+        }
+        
+        if (chatLoadingEl) {
+            chatLoadingEl.classList.add('hide');
+        }
+        if (chatEmptyEl) {
+            chatEmptyEl.classList.remove('hide');
+            chatEmptyEl.innerHTML = `
+                <div class="chat-empty-icon">⚠️</div>
+                <h3>Unable to load messages</h3>
+                <p>There was an error loading messages. Please check your connection and refresh the page.</p>
+                <p class="chat-error-detail">Error: ${escapeHtml(error.message)}</p>
+            `;
+        }
     });
 }
 
@@ -1971,6 +2026,16 @@ function displayMessage(messageId, messageData, prepend = false) {
         </div>
     `;
 
+    // Ensure chatMessagesEl exists before appending
+    if (!chatMessagesEl) {
+        chatMessagesEl = document.getElementById('chatMessages');
+    }
+    
+    if (!chatMessagesEl) {
+        console.error('chatMessagesEl not found in displayMessage');
+        return;
+    }
+    
     if (prepend) {
         chatMessagesEl.insertBefore(messageEl, chatMessagesEl.firstChild);
     } else {
