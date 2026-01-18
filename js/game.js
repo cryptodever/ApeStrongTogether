@@ -31,6 +31,8 @@ export class Game {
         // Image assets
         this.images = {
             player: {}, // Will hold directional ape images
+            shotgunPlayer: {}, // Will hold directional shotgunape images
+            sniperPlayer: {}, // Will hold directional sniperape images
             normalMob: {}, // Will hold directional normal mob images
             speedMob: {}, // Will hold directional speed mob images
             bigMob: {}, // Will hold directional big mob images
@@ -201,7 +203,7 @@ export class Game {
     loadImages() {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         let loadedCount = 0;
-        const totalImages = directions.length * 4 + 5; // 8 player directions + 8 normal mob directions + 8 speed mob directions + 8 big mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
+        const totalImages = directions.length * 6 + 5; // 8 player directions + 8 shotgun player directions + 8 sniper player directions + 8 normal mob directions + 8 speed mob directions + 8 big mob directions + 1 enemy fallback + 1 bullet + 1 boss + 1 boss bullet + 1 background
         
         const checkAllLoaded = () => {
             loadedCount++;
@@ -220,6 +222,30 @@ export class Game {
             };
             img.src = `/game-jpegs/ape-${dir}.png`;
             this.images.player[dir] = img;
+        });
+        
+        // Load shotgun player directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load shotgun player image: shotgunape-${dir}.png`);
+                checkAllLoaded(); // Still count as loaded to not block game
+            };
+            img.src = `/game-jpegs/shotgunape-${dir}.png`;
+            this.images.shotgunPlayer[dir] = img;
+        });
+        
+        // Load sniper player directional images
+        directions.forEach(dir => {
+            const img = new Image();
+            img.onload = checkAllLoaded;
+            img.onerror = () => {
+                console.warn(`Failed to load sniper player image: sniperape-${dir}.png`);
+                checkAllLoaded(); // Still count as loaded to not block game
+            };
+            img.src = `/game-jpegs/sniperape-${dir}.png`;
+            this.images.sniperPlayer[dir] = img;
         });
         
         // Load normal mob directional images
@@ -3179,7 +3205,17 @@ export class Game {
         }
         
         const direction = this.getPlayerDirection();
-        const img = this.images.player[direction];
+        // Use appropriate sprite set based on character type
+        // characterType 1 = Standard (ape), 2 = Shotgun (shotgunape), 3 = Sniper (sniperape)
+        let imageSet;
+        if (this.characterType === 2) {
+            imageSet = this.images.shotgunPlayer;
+        } else if (this.characterType === 3) {
+            imageSet = this.images.sniperPlayer;
+        } else {
+            imageSet = this.images.player;
+        }
+        const img = imageSet[direction];
         
         if (img && img.complete && img.naturalWidth > 0) {
             const size = this.player.radius * 3.5; // Larger size for better visibility
