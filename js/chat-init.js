@@ -1810,76 +1810,76 @@ async function setupRealtimeListeners() {
             
             // Add current user first
             if (currentUser && userProfile) {
-            // Get current user's presence data
-            const currentUserPresenceRef = doc(db, 'presence', currentUser.uid);
-            const currentUserPresenceDoc = await getDoc(currentUserPresenceRef);
-            const currentUserPresence = currentUserPresenceDoc.exists() ? currentUserPresenceDoc.data() : null;
-            
-            onlineUsers.push({
-                userId: currentUser.uid,
-                username: userProfile.username || currentUser.email?.split('@')[0] || 'You',
-                bannerImage: userProfile.bannerImage || '/pfp_apes/bg1.png',
-                xAccountVerified: userProfile.xAccountVerified || false,
-                online: true,
-                lastSeen: currentUserPresence?.lastSeen || Timestamp.now(),
-                isOnline: true
-            });
+                // Get current user's presence data
+                const currentUserPresenceRef = doc(db, 'presence', currentUser.uid);
+                const currentUserPresenceDoc = await getDoc(currentUserPresenceRef);
+                const currentUserPresence = currentUserPresenceDoc.exists() ? currentUserPresenceDoc.data() : null;
+                
+                onlineUsers.push({
+                    userId: currentUser.uid,
+                    username: userProfile.username || currentUser.email?.split('@')[0] || 'You',
+                    bannerImage: userProfile.bannerImage || '/pfp_apes/bg1.png',
+                    xAccountVerified: userProfile.xAccountVerified || false,
+                    online: true,
+                    lastSeen: currentUserPresence?.lastSeen || Timestamp.now(),
+                    isOnline: true
+                });
             }
             
             snapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.userId === currentUser.uid) return; // Skip current user (already added above)
-            
-            // Check if user is online (only if explicitly marked as online AND recently updated)
-            // Also check if they were recently active (within 2 minutes) to show in list
-            let lastSeenMillis = 0;
-            if (data.lastSeen) {
-                if (data.lastSeen.toMillis) {
-                    lastSeenMillis = data.lastSeen.toMillis();
-                } else if (data.lastSeen.toDate) {
-                    lastSeenMillis = data.lastSeen.toDate().getTime();
-                } else if (typeof data.lastSeen === 'number') {
-                    lastSeenMillis = data.lastSeen;
+                const data = doc.data();
+                if (data.userId === currentUser.uid) return; // Skip current user (already added above)
+                
+                // Check if user is online (only if explicitly marked as online AND recently updated)
+                // Also check if they were recently active (within 2 minutes) to show in list
+                let lastSeenMillis = 0;
+                if (data.lastSeen) {
+                    if (data.lastSeen.toMillis) {
+                        lastSeenMillis = data.lastSeen.toMillis();
+                    } else if (data.lastSeen.toDate) {
+                        lastSeenMillis = data.lastSeen.toDate().getTime();
+                    } else if (typeof data.lastSeen === 'number') {
+                        lastSeenMillis = data.lastSeen;
+                    }
                 }
-            }
-            const timeSinceLastSeen = now - lastSeenMillis;
-            const isRecentlyActive = timeSinceLastSeen < PRESENCE_TIMEOUT * 4; // 2 minutes - show in list if recently active
-            
-            // Only mark as online if:
-            // 1. Explicitly set to true in data.online
-            // 2. AND last seen is within the presence timeout (30 seconds)
-            // This prevents showing users as online if their browser crashed or they closed the tab
-            const isOnline = data.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
-            
-            // Show in list if online OR recently active (but mark online status correctly)
-            if (isOnline || isRecentlyActive) {
-                onlineUsers.push({
-                    ...data,
-                    lastSeen: data.lastSeen,
-                    isOnline: isOnline // Only true if explicitly online AND recently seen
-                });
-            }
+                const timeSinceLastSeen = now - lastSeenMillis;
+                const isRecentlyActive = timeSinceLastSeen < PRESENCE_TIMEOUT * 4; // 2 minutes - show in list if recently active
+                
+                // Only mark as online if:
+                // 1. Explicitly set to true in data.online
+                // 2. AND last seen is within the presence timeout (30 seconds)
+                // This prevents showing users as online if their browser crashed or they closed the tab
+                const isOnline = data.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
+                
+                // Show in list if online OR recently active (but mark online status correctly)
+                if (isOnline || isRecentlyActive) {
+                    onlineUsers.push({
+                        ...data,
+                        lastSeen: data.lastSeen,
+                        isOnline: isOnline // Only true if explicitly online AND recently seen
+                    });
+                }
             });
 
             // Sort by online status (online first) then by last seen (most recent first)
             onlineUsers.sort((a, b) => {
-            if (a.isOnline !== b.isOnline) {
-                return a.isOnline ? -1 : 1;
-            }
-            // Get lastSeen timestamps
-            let aLastSeen = 0;
-            let bLastSeen = 0;
-            if (a.lastSeen) {
-                if (a.lastSeen.toMillis) aLastSeen = a.lastSeen.toMillis();
-                else if (a.lastSeen.toDate) aLastSeen = a.lastSeen.toDate().getTime();
-                else if (typeof a.lastSeen === 'number') aLastSeen = a.lastSeen;
-            }
-            if (b.lastSeen) {
-                if (b.lastSeen.toMillis) bLastSeen = b.lastSeen.toMillis();
-                else if (b.lastSeen.toDate) bLastSeen = b.lastSeen.toDate().getTime();
-                else if (typeof b.lastSeen === 'number') bLastSeen = b.lastSeen;
-            }
-            return bLastSeen - aLastSeen;
+                if (a.isOnline !== b.isOnline) {
+                    return a.isOnline ? -1 : 1;
+                }
+                // Get lastSeen timestamps
+                let aLastSeen = 0;
+                let bLastSeen = 0;
+                if (a.lastSeen) {
+                    if (a.lastSeen.toMillis) aLastSeen = a.lastSeen.toMillis();
+                    else if (a.lastSeen.toDate) aLastSeen = a.lastSeen.toDate().getTime();
+                    else if (typeof a.lastSeen === 'number') aLastSeen = a.lastSeen;
+                }
+                if (b.lastSeen) {
+                    if (b.lastSeen.toMillis) bLastSeen = b.lastSeen.toMillis();
+                    else if (b.lastSeen.toDate) bLastSeen = b.lastSeen.toDate().getTime();
+                    else if (typeof b.lastSeen === 'number') bLastSeen = b.lastSeen;
+                }
+                return bLastSeen - aLastSeen;
             });
 
             currentOnlineUsers = onlineUsers; // Store for periodic updates
@@ -1887,21 +1887,21 @@ async function setupRealtimeListeners() {
             // For community pages (including default), show all members (online and offline)
             // Only show online users if no community is selected
             if (!currentCommunityId) {
-            updateOnlineUsersList(onlineUsers);
-            const count = onlineUsers.length;
-            if (onlineCountEl) onlineCountEl.textContent = count;
-            updateMobileOnlineCount();
-            
-            // Update last seen times every minute for real-time updates
-            if (!lastSeenUpdateInterval) {
-                lastSeenUpdateInterval = setInterval(() => {
-                    updateOnlineUsersList(currentOnlineUsers);
-                }, 60000); // Update every minute
+                updateOnlineUsersList(onlineUsers);
+                const count = onlineUsers.length;
+                if (onlineCountEl) onlineCountEl.textContent = count;
+                updateMobileOnlineCount();
+                
+                // Update last seen times every minute for real-time updates
+                if (!lastSeenUpdateInterval) {
+                    lastSeenUpdateInterval = setInterval(() => {
+                        updateOnlineUsersList(currentOnlineUsers);
+                    }, 60000); // Update every minute
+                }
+            } else {
+                // On community page (including default), load all members to show online and offline users
+                await loadCommunityMembers(currentCommunityId);
             }
-        } else {
-            // On community page (including default), load all members to show online and offline users
-            await loadCommunityMembers(currentCommunityId);
-        }
         } catch (error) {
             // Handle permission errors gracefully
             if (error.code === 'permission-denied') {
