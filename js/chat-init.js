@@ -1130,19 +1130,37 @@ async function switchToCommunity(communityId) {
         // Debug logging disabled to prevent connection refused errors
         // #endregion
         
-        // Remove old listeners
+        // Remove old listeners - ensure they're fully cleaned up
+        // This prevents BloomFilter errors from overlapping queries
         if (messagesListener) {
-            messagesListener();
+            try {
+                messagesListener();
+            } catch (error) {
+                // Listener might already be unsubscribed
+                console.warn('Error cleaning up messages listener:', error);
+            }
             messagesListener = null;
         }
         if (typingListener) {
-            typingListener();
+            try {
+                typingListener();
+            } catch (error) {
+                console.warn('Error cleaning up typing listener:', error);
+            }
             typingListener = null;
         }
         if (presenceListener) {
-            presenceListener();
+            try {
+                presenceListener();
+            } catch (error) {
+                console.warn('Error cleaning up presence listener:', error);
+            }
             presenceListener = null;
         }
+        
+        // Small delay to ensure Firebase has fully processed listener cleanup
+        // This helps prevent BloomFilter errors from rapid query creation
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         // Clear typing indicator
         clearTypingIndicator();
@@ -1199,11 +1217,15 @@ async function switchToCommunity(communityId) {
             // Update reference if element exists in DOM
             chatEmptyEl = emptyEl;
         }
+        
+        // Clear message state
         loadedMessageIds.clear();
-        isInitialSnapshot = true;
         oldestMessageDoc = null;
         hasMoreMessages = true;
         isLoadingOlderMessages = false;
+        // Set isInitialSnapshot to true - will be checked when real-time listener is set up
+        // This ensures the initial snapshot from onSnapshot is ignored since loadMessages() already loaded them
+        isInitialSnapshot = true;
         
         // Remove scroll listener
         if (chatMessagesEl) {
@@ -1228,20 +1250,27 @@ async function switchToCommunity(communityId) {
         // Check if user is owner and show/hide settings button
         await updateCommunitySettingsButton(communityId);
         
-        // Reload messages for community
-        loadMessages();
-        
         // Reset offline members toggle when switching communities
         showOfflineMembers = false;
         
-        // Load community members (all members, not just online) - do this BEFORE setupPresence
-        // so presence listener doesn't override with online users only
-        loadCommunityMembers(communityId);
+        // Load messages FIRST (wait for it to complete) before setting up real-time listeners
+        // This prevents race conditions where the real-time listener fires before initial load completes
+        try {
+            await loadMessages();
+        } catch (error) {
+            console.error('Error loading messages during community switch:', error);
+            // Continue anyway - real-time listener will handle updates
+        }
         
-        // Setup real-time listeners
+        // Setup real-time listeners AFTER messages are loaded
+        // This ensures the initial snapshot is properly ignored
         setupRealtimeListeners();
         setupTypingIndicator();
         setupPresence();
+        
+        // Load community members (all members, not just online) - do this AFTER setupPresence
+        // to ensure presence is set up first
+        loadCommunityMembers(communityId);
         
         // Update presence
         updatePresence(true);
@@ -1578,7 +1607,7 @@ async function loadMessages() {
     // Debug logging disabled to prevent connection refused errors
     // #endregion
 
-    getDocs(q).then((snapshot) => {
+    return getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
         
         // Ensure loading/empty elements exist before manipulating them
