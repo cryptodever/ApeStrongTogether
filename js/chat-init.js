@@ -1809,7 +1809,7 @@ async function setupRealtimeListeners() {
             const now = Date.now();
             
             // Add current user first
-        if (currentUser && userProfile) {
+            if (currentUser && userProfile) {
             // Get current user's presence data
             const currentUserPresenceRef = doc(db, 'presence', currentUser.uid);
             const currentUserPresenceDoc = await getDoc(currentUserPresenceRef);
@@ -1824,9 +1824,9 @@ async function setupRealtimeListeners() {
                 lastSeen: currentUserPresence?.lastSeen || Timestamp.now(),
                 isOnline: true
             });
-        }
-        
-        snapshot.forEach((doc) => {
+            }
+            
+            snapshot.forEach((doc) => {
             const data = doc.data();
             if (data.userId === currentUser.uid) return; // Skip current user (already added above)
             
@@ -1859,10 +1859,10 @@ async function setupRealtimeListeners() {
                     isOnline: isOnline // Only true if explicitly online AND recently seen
                 });
             }
-        });
+            });
 
-        // Sort by online status (online first) then by last seen (most recent first)
-        onlineUsers.sort((a, b) => {
+            // Sort by online status (online first) then by last seen (most recent first)
+            onlineUsers.sort((a, b) => {
             if (a.isOnline !== b.isOnline) {
                 return a.isOnline ? -1 : 1;
             }
@@ -1880,13 +1880,13 @@ async function setupRealtimeListeners() {
                 else if (typeof b.lastSeen === 'number') bLastSeen = b.lastSeen;
             }
             return bLastSeen - aLastSeen;
-        });
+            });
 
-        currentOnlineUsers = onlineUsers; // Store for periodic updates
-        
-        // For community pages (including default), show all members (online and offline)
-        // Only show online users if no community is selected
-        if (!currentCommunityId) {
+            currentOnlineUsers = onlineUsers; // Store for periodic updates
+            
+            // For community pages (including default), show all members (online and offline)
+            // Only show online users if no community is selected
+            if (!currentCommunityId) {
             updateOnlineUsersList(onlineUsers);
             const count = onlineUsers.length;
             if (onlineCountEl) onlineCountEl.textContent = count;
