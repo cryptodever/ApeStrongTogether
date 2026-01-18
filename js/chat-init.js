@@ -632,6 +632,12 @@ async function updateCommunitySettingsButton(communityId) {
         return;
     }
     
+    // Always hide settings button for default community
+    if (communityId === DEFAULT_COMMUNITY_ID) {
+        settingsBtn.classList.add('hide');
+        return;
+    }
+    
     try {
         // Check if user is owner
         const memberRef = doc(db, 'communities', communityId, 'members', currentUser.uid);
@@ -639,16 +645,31 @@ async function updateCommunitySettingsButton(communityId) {
         
         if (memberDoc.exists()) {
             const memberData = memberDoc.data();
+            console.log(`Settings button check for community ${communityId}:`, {
+                userId: currentUser.uid,
+                role: memberData.role,
+                isOwner: memberData.role === 'owner'
+            });
+            
             if (memberData.role === 'owner') {
                 settingsBtn.classList.remove('hide');
+                console.log(`Settings button shown for community ${communityId}`);
             } else {
                 settingsBtn.classList.add('hide');
+                console.log(`Settings button hidden - user role is ${memberData.role}, not owner`);
             }
         } else {
+            console.warn(`Settings button hidden - user is not a member of community ${communityId}`);
             settingsBtn.classList.add('hide');
         }
     } catch (error) {
         console.error('Error checking owner status:', error);
+        console.error('Error details:', {
+            communityId,
+            userId: currentUser?.uid,
+            errorCode: error.code,
+            errorMessage: error.message
+        });
         settingsBtn.classList.add('hide');
     }
 }
@@ -820,15 +841,15 @@ async function updateChannelInfo() {
     }
     
     // If on a community page (not a channel), show just the community name
-    // Also check if we have a community ID that's not the default (custom communities)
-    const isCommunityPage = currentChannel === 'community' || (!currentChannel && currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID);
+    // Check if we're viewing a community page (currentChannel === 'community' or no channel but have community ID)
+    const isCommunityPage = currentChannel === 'community' || (!currentChannel && currentCommunityId);
     
-    if (isCommunityPage) {
+    if (isCommunityPage && currentCommunityId) {
         try {
             const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
             if (communityDoc.exists()) {
                 const communityData = communityDoc.data();
-                const communityName = communityData.name || 'Community';
+                const communityName = communityData.name || (currentCommunityId === DEFAULT_COMMUNITY_ID ? 'Apes Together Strong' : 'Community');
                 const communityDesc = communityData.description || 'Community chat';
                 
                 // Update desktop header
@@ -854,25 +875,37 @@ async function updateChannelInfo() {
                 if (mobileChannelNameHeaderEl) mobileChannelNameHeaderEl.textContent = communityName;
                 
                 updateMobileChannelName();
-                return;
+                return; // Exit early - don't fall through to default community logic
+            } else {
+                console.warn(`Community ${currentCommunityId} does not exist`);
             }
         } catch (error) {
             console.error('Error loading community info:', error);
+            // Don't fall through if we're explicitly viewing a community
+            if (currentChannel === 'community') {
+                // If we can't load the community, show error state
+                const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+                if (sidebarCommunityNameEl) {
+                    sidebarCommunityNameEl.textContent = 'Community';
+                }
+                return;
+            }
         }
     }
     
     // Load community and channel info (for channels)
-    try {
-        const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
-        if (communityDoc.exists()) {
-            const communityData = communityDoc.data();
-            const communityName = communityData.name || 'Community';
-            
-            // Update sidebar community name for channels too
-            const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
-            if (sidebarCommunityNameEl) {
-                sidebarCommunityNameEl.textContent = communityName;
-            }
+    if (currentCommunityId && currentChannel && currentChannel !== 'community') {
+        try {
+            const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
+            if (communityDoc.exists()) {
+                const communityData = communityDoc.data();
+                const communityName = communityData.name || (currentCommunityId === DEFAULT_COMMUNITY_ID ? 'Apes Together Strong' : 'Community');
+                
+                // Update sidebar community name for channels too
+                const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+                if (sidebarCommunityNameEl) {
+                    sidebarCommunityNameEl.textContent = communityName;
+                }
             
             // Try to load channel info
             try {
@@ -924,24 +957,29 @@ async function updateChannelInfo() {
         }
     }
     
-    // Global channel - also update sidebar for default community
-    try {
-        const defaultCommunityDoc = await getDoc(doc(db, 'communities', DEFAULT_COMMUNITY_ID));
-        if (defaultCommunityDoc.exists()) {
-            const defaultCommunityData = defaultCommunityDoc.data();
-            const defaultCommunityName = defaultCommunityData.name || 'Apes Together Strong';
-            
-            // Update sidebar community name for default community
-            const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
-            if (sidebarCommunityNameEl) {
-                sidebarCommunityNameEl.textContent = defaultCommunityName;
+    // Global channel - also update sidebar for default community (only if we're actually on default community)
+    // Don't overwrite if we're viewing a custom community
+    if (!currentCommunityId || currentCommunityId === DEFAULT_COMMUNITY_ID) {
+        try {
+            const defaultCommunityDoc = await getDoc(doc(db, 'communities', DEFAULT_COMMUNITY_ID));
+            if (defaultCommunityDoc.exists()) {
+                const defaultCommunityData = defaultCommunityDoc.data();
+                const defaultCommunityName = defaultCommunityData.name || 'Apes Together Strong';
+                
+                // Update sidebar community name for default community
+                const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+                if (sidebarCommunityNameEl) {
+                    sidebarCommunityNameEl.textContent = defaultCommunityName;
+                }
             }
-        }
-    } catch (error) {
-        // Fallback to default name
-        const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
-        if (sidebarCommunityNameEl) {
-            sidebarCommunityNameEl.textContent = 'Apes Together Strong';
+        } catch (error) {
+            // Fallback to default name only if we're on default community
+            if (!currentCommunityId || currentCommunityId === DEFAULT_COMMUNITY_ID) {
+                const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+                if (sidebarCommunityNameEl) {
+                    sidebarCommunityNameEl.textContent = 'Apes Together Strong';
+                }
+            }
         }
     }
     
