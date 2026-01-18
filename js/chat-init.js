@@ -4517,5 +4517,6 @@ function setupFollowModals() {
     }
 }
 }
+}
 
 // Chat page initialized
