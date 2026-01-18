@@ -969,7 +969,10 @@ async function updateChannelInfo() {
     }
     
     // If on a community page (not a channel), show just the community name
-    if (currentChannel === 'community' || !currentChannel) {
+    // Also check if we have a community ID that's not the default (custom communities)
+    const isCommunityPage = currentChannel === 'community' || (!currentChannel && currentCommunityId && currentCommunityId !== DEFAULT_COMMUNITY_ID);
+    
+    if (isCommunityPage) {
         try {
             const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
             if (communityDoc.exists()) {
@@ -977,8 +980,12 @@ async function updateChannelInfo() {
                 const communityName = communityData.name || 'Community';
                 const communityDesc = communityData.description || 'Community chat';
                 
-                currentChannelNameEl.textContent = communityName;
-                currentChannelDescEl.textContent = communityDesc;
+                if (currentChannelNameEl) {
+                    currentChannelNameEl.textContent = communityName;
+                }
+                if (currentChannelDescEl) {
+                    currentChannelDescEl.textContent = communityDesc;
+                }
                 
                 // Update mobile
                 const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
@@ -1261,7 +1268,8 @@ async function switchToCommunity(communityId) {
         // Update UI
         setupChannelSwitcher();
         setupMobileChannelList();
-        updateChannelInfo();
+        // Await updateChannelInfo to ensure community name is updated correctly
+        await updateChannelInfo();
         updateActiveCommunityIndicator();
         updateMobileChannelName();
         
