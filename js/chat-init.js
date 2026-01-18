@@ -86,7 +86,7 @@ async function updateCommunitySettingsButton(communityId) {
     // Forward declaration - full implementation later
 }
 
-function setupChannelSwitcher() {
+async function setupChannelSwitcher() {
     // Forward declaration - full implementation later
 }
 
