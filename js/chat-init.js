@@ -3462,6 +3462,18 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// #region agent log - Verify functions are defined after all declarations
+(() => {
+    const funcs = {
+        setupEventListeners: typeof setupEventListeners,
+        loadMessages: typeof loadMessages,
+        ensureDefaultCommunity: typeof ensureDefaultCommunity,
+        escapeHtml: typeof escapeHtml
+    };
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:after-funcs',message:'After all function declarations',data:funcs,timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'F'})}).catch(()=>{});
+})();
+// #endregion
+
 function insertTextAtCursor(textarea, text) {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -4551,6 +4563,9 @@ function setupFollowModals() {
 
 // #region agent log
 fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END',message:'Module end reached',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+setTimeout(()=>{
+    fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END+delay',message:'Module after delay',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+},1000);
 // #endregion
 
 // Chat page initialized
