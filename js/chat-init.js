@@ -58,6 +58,46 @@ async function loadCommunityMembers(communityId) {
     // Forward declaration - full implementation later
 }
 
+async function setupRealtimeListeners() {
+    // Forward declaration - full implementation later
+}
+
+function setupPresence() {
+    // Forward declaration - full implementation later
+}
+
+function setupTypingIndicator() {
+    // Forward declaration - full implementation later
+}
+
+function setupUserProfilePopup() {
+    // Forward declaration - full implementation later
+}
+
+function setupMobileSwipe() {
+    // Forward declaration - full implementation later
+}
+
+async function updateChannelInfo() {
+    // Forward declaration - full implementation later
+}
+
+async function updateCommunitySettingsButton(communityId) {
+    // Forward declaration - full implementation later
+}
+
+function setupChannelSwitcher() {
+    // Forward declaration - full implementation later
+}
+
+function setupMobileChannelList() {
+    // Forward declaration - full implementation later
+}
+
+function setupMobileDrawer() {
+    // Forward declaration - full implementation later
+}
+
 // Rate limits per channel (in seconds)
 const RATE_LIMITS = {
     'general': 15,
