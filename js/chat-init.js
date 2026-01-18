@@ -32,6 +32,15 @@ import {
 // Constants
 const MESSAGES_PER_PAGE = 30; // Reduced to load only recent messages
 const MAX_MESSAGE_LENGTH = 1000;
+
+// Forward declarations - Define critical functions early to ensure they're available
+// These will be redefined later in the file, but having them here ensures they exist
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Rate limits per channel (in seconds)
 const RATE_LIMITS = {
     'general': 15,
