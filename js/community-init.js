@@ -456,10 +456,10 @@ function handlePfpUpload(e) {
         return;
     }
     
-    // Validate file size (max 1MB = 1,048,576 bytes)
-    const maxSizeBytes = 1024 * 1024; // 1MB
+    // Validate file size (max 500KB = 512,000 bytes)
+    const maxSizeBytes = 500 * 1024; // 500KB
     const fileSizeKB = (file.size / 1024).toFixed(2);
-    const maxSizeKB = (maxSizeBytes / 1024).toFixed(2);
+    const maxSizeKB = (maxSizeBytes / 1024).toFixed(0);
     
     console.log('PFP upload validation:', {
         fileName: file.name,
@@ -473,7 +473,7 @@ function handlePfpUpload(e) {
     
     if (file.size > maxSizeBytes) {
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`Image size (${fileSizeMB} MB) must be less than 1MB (${maxSizeKB} KB). Please choose a smaller image.`);
+        alert(`Image size (${fileSizeKB} KB) must be less than ${maxSizeKB} KB. Please choose a smaller image.`);
         // Reset the input so user can try again
         if (communityPfpInput) {
             communityPfpInput.value = '';
@@ -481,14 +481,14 @@ function handlePfpUpload(e) {
         return;
     }
     
-    // Validate image dimensions (max 100x100px)
+    // Validate image dimensions (max 200x200px)
     const img = new Image();
     const reader = new FileReader();
     
     reader.onload = (event) => {
         img.onload = () => {
-            if (img.width > 100 || img.height > 100) {
-                alert(`Image dimensions (${img.width}x${img.height}px) must be 100x100px or smaller. Please resize your image.`);
+            if (img.width > 200 || img.height > 200) {
+                alert(`Image dimensions (${img.width}x${img.height}px) must be 200x200px or smaller. Please resize your image.`);
                 if (communityPfpInput) {
                     communityPfpInput.value = '';
                 }
@@ -546,14 +546,13 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
         return;
     }
     
-    // Validate file size (max 1MB = 1,048,576 bytes)
-    const maxSizeBytes = 1024 * 1024; // 1MB
+    // Validate file size (max 500KB = 512,000 bytes)
+    const maxSizeBytes = 500 * 1024; // 500KB
     const fileSizeKB = (file.size / 1024).toFixed(2);
-    const maxSizeKB = (maxSizeBytes / 1024).toFixed(2);
+    const maxSizeKB = (maxSizeBytes / 1024).toFixed(0);
     
     if (file.size > maxSizeBytes) {
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`Image size (${fileSizeMB} MB) must be less than 1MB (${maxSizeKB} KB). Please choose a smaller image.`);
+        alert(`Image size (${fileSizeKB} KB) must be less than ${maxSizeKB} KB. Please choose a smaller image.`);
         const settingsPfpInput = document.getElementById('settingsCommunityPfp');
         if (settingsPfpInput) {
             settingsPfpInput.value = '';
@@ -561,14 +560,14 @@ function handleSettingsPfpUpload(e, previewImage, placeholder, removeBtn) {
         return;
     }
     
-    // Validate image dimensions (max 100x100px)
+    // Validate image dimensions (max 200x200px)
     const img = new Image();
     const reader = new FileReader();
     
     reader.onload = (event) => {
         img.onload = () => {
-            if (img.width > 100 || img.height > 100) {
-                alert(`Image dimensions (${img.width}x${img.height}px) must be 100x100px or smaller. Please resize your image.`);
+            if (img.width > 200 || img.height > 200) {
+                alert(`Image dimensions (${img.width}x${img.height}px) must be 200x200px or smaller. Please resize your image.`);
                 const settingsPfpInput = document.getElementById('settingsCommunityPfp');
                 if (settingsPfpInput) {
                     settingsPfpInput.value = '';
