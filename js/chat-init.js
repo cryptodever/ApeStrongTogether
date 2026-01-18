@@ -4466,7 +4466,6 @@ async function showFollowingList(userId) {
         chatFollowingData = [];
     }
 }
-}
 
 // Setup modal close handlers
 function setupFollowModals() {
@@ -4516,6 +4515,7 @@ function setupFollowModals() {
             }
         });
     }
+}
 }
 
 // Chat page initialized
