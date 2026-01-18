@@ -96,6 +96,8 @@ let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_CO
 let messageContextMenuMessageId = null;
 let userCommunities = []; // Communities user is a member of
 let allCommunityMembers = []; // Store all community members (online and offline)
+let loadingMembersForCommunityId = null; // Track which community is currently loading members
+let memberLoadCancelToken = null; // Cancel token for member loading
 
 // DOM Elements
 let chatMessagesEl, chatInputEl, sendBtn, chatLoadingEl, chatEmptyEl;
@@ -2664,6 +2666,23 @@ function formatRelativeTime(timestamp) {
 async function loadCommunityMembers(communityId) {
     if (!communityId || !currentUser) return;
     
+    // Cancel any previous member loading request
+    if (memberLoadCancelToken) {
+        memberLoadCancelToken.cancelled = true;
+    }
+    
+    // Create new cancel token for this request
+    const cancelToken = { cancelled: false };
+    memberLoadCancelToken = cancelToken;
+    loadingMembersForCommunityId = communityId;
+    
+    // Small delay to allow for rapid community switching
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if cancelled during delay
+    if (cancelToken.cancelled || loadingMembersForCommunityId !== communityId) {
+        return;
+    }
     
     try {
         // Load all members from community members subcollection
@@ -2698,130 +2717,176 @@ async function loadCommunityMembers(communityId) {
             }
         }
         
-        
-        if (memberIds.length === 0) {
-            allCommunityMembers = [];
-            updateCommunityMembersList([]);
-            if (onlineCountEl) {
-                onlineCountEl.textContent = '0/0';
-            }
-            updateMobileOnlineCount();
+        // Check if cancelled after loading member IDs
+        if (cancelToken.cancelled || loadingMembersForCommunityId !== communityId) {
             return;
         }
         
+        if (memberIds.length === 0) {
+            // Only update if still loading for this community
+            if (!cancelToken.cancelled && loadingMembersForCommunityId === communityId) {
+                allCommunityMembers = [];
+                updateCommunityMembersList([]);
+                if (onlineCountEl) {
+                    onlineCountEl.textContent = '0/0';
+                }
+                updateMobileOnlineCount();
+                loadingMembersForCommunityId = null;
+            }
+            return;
+        }
         
-        // Load user profiles and presence for each member with better error handling
-        const membersWithProfiles = await Promise.allSettled(memberIds.map(async (userId, index) => {
-            // Add small delay to prevent overwhelming Firestore with too many concurrent requests
-            if (index > 0 && index % 10 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+        // Process members in batches to avoid overwhelming Firestore
+        const BATCH_SIZE = 15; // Process 15 members at a time
+        const validMembers = [];
+        
+        for (let i = 0; i < memberIds.length; i += BATCH_SIZE) {
+            // Check if cancelled before processing next batch
+            if (cancelToken.cancelled || loadingMembersForCommunityId !== communityId) {
+                return;
             }
             
-            try {
-                // Load user profile with timeout protection
-                const userDocPromise = getDoc(doc(db, 'users', userId));
-                const userDoc = await Promise.race([
-                    userDocPromise,
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Timeout loading user profile')), 5000)
-                    )
-                ]);
-                const userData = userDoc.exists() ? userDoc.data() : null;
-                
-                // Load presence data with timeout protection
-                const presenceDocPromise = getDoc(doc(db, 'presence', userId));
-                const presenceDoc = await Promise.race([
-                    presenceDocPromise,
-                    new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Timeout loading presence')), 5000)
-                    )
-                ]);
-                const presenceData = presenceDoc.exists() ? presenceDoc.data() : null;
-                
-                const now = Date.now();
-                let lastSeenMillis = 0;
-                if (presenceData?.lastSeen) {
-                    if (presenceData.lastSeen.toMillis) {
-                        lastSeenMillis = presenceData.lastSeen.toMillis();
-                    } else if (presenceData.lastSeen.toDate) {
-                        lastSeenMillis = presenceData.lastSeen.toDate().getTime();
-                    } else if (typeof presenceData.lastSeen === 'number') {
-                        lastSeenMillis = presenceData.lastSeen;
+            const batch = memberIds.slice(i, i + BATCH_SIZE);
+            
+            // Load user profiles and presence for batch with better error handling
+            const batchResults = await Promise.allSettled(batch.map(async (userId) => {
+                try {
+                    // Load user profile and presence in parallel
+                    const [userDoc, presenceDoc] = await Promise.all([
+                        Promise.race([
+                            getDoc(doc(db, 'users', userId)),
+                            new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout loading user profile')), 4000)
+                            )
+                        ]).catch(() => null),
+                        Promise.race([
+                            getDoc(doc(db, 'presence', userId)),
+                            new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout loading presence')), 4000)
+                            )
+                        ]).catch(() => null)
+                    ]);
+                    
+                    const userData = userDoc?.exists() ? userDoc.data() : null;
+                    const presenceData = presenceDoc?.exists() ? presenceDoc.data() : null;
+                    
+                    const now = Date.now();
+                    let lastSeenMillis = 0;
+                    if (presenceData?.lastSeen) {
+                        if (presenceData.lastSeen.toMillis) {
+                            lastSeenMillis = presenceData.lastSeen.toMillis();
+                        } else if (presenceData.lastSeen.toDate) {
+                            lastSeenMillis = presenceData.lastSeen.toDate().getTime();
+                        } else if (typeof presenceData.lastSeen === 'number') {
+                            lastSeenMillis = presenceData.lastSeen;
+                        }
                     }
+                    const timeSinceLastSeen = now - lastSeenMillis;
+                    const isOnline = presenceData?.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
+                    
+                    return {
+                        userId: userId,
+                        username: userData?.username || 'Anonymous',
+                        bannerImage: userData?.bannerImage || '/pfp_apes/bg1.png',
+                        xAccountVerified: userData?.xAccountVerified || false,
+                        role: memberRoles[userId] || 'member',
+                        isOnline: isOnline,
+                        lastSeen: presenceData?.lastSeen || null,
+                        timeSinceLastSeen: timeSinceLastSeen
+                    };
+                } catch (error) {
+                    // Return a minimal member object so they're not completely lost
+                    return {
+                        userId: userId,
+                        username: 'Anonymous',
+                        bannerImage: '/pfp_apes/bg1.png',
+                        xAccountVerified: false,
+                        role: memberRoles[userId] || 'member',
+                        isOnline: false,
+                        lastSeen: null,
+                        timeSinceLastSeen: Infinity,
+                        error: true
+                    };
                 }
-                const timeSinceLastSeen = now - lastSeenMillis;
-                const isOnline = presenceData?.online === true && timeSinceLastSeen < PRESENCE_TIMEOUT;
+            }));
+            
+            // Extract successful results from batch
+            const batchMembers = batchResults
+                .map(result => result.status === 'fulfilled' ? result.value : null)
+                .filter(m => m !== null);
+            
+            validMembers.push(...batchMembers);
+            
+            // Update UI incrementally after each batch (but only if not cancelled)
+            if (!cancelToken.cancelled && loadingMembersForCommunityId === communityId && validMembers.length > 0) {
+                // Sort current batch
+                validMembers.sort((a, b) => {
+                    if (a.isOnline !== b.isOnline) {
+                        return a.isOnline ? -1 : 1;
+                    }
+                    const roleOrder = { owner: 0, admin: 1, moderator: 2, member: 3 };
+                    const aRole = roleOrder[a.role] || 99;
+                    const bRole = roleOrder[b.role] || 99;
+                    if (aRole !== bRole) {
+                        return aRole - bRole;
+                    }
+                    return b.timeSinceLastSeen - a.timeSinceLastSeen;
+                });
                 
-                return {
-                    userId: userId,
-                    username: userData?.username || 'Anonymous',
-                    bannerImage: userData?.bannerImage || '/pfp_apes/bg1.png',
-                    xAccountVerified: userData?.xAccountVerified || false,
-                    role: memberRoles[userId] || 'member',
-                    isOnline: isOnline,
-                    lastSeen: presenceData?.lastSeen || null,
-                    timeSinceLastSeen: timeSinceLastSeen
-                };
-            } catch (error) {
-                console.error(`Error loading profile for user ${userId}:`, error);
-                // Return a minimal member object so they're not completely lost
-                return {
-                    userId: userId,
-                    username: 'Anonymous',
-                    bannerImage: '/pfp_apes/bg1.png',
-                    xAccountVerified: false,
-                    role: memberRoles[userId] || 'member',
-                    isOnline: false,
-                    lastSeen: null,
-                    timeSinceLastSeen: Infinity,
-                    error: true
-                };
+                allCommunityMembers = [...validMembers];
+                updateCommunityMembersList(validMembers);
+                
+                if (onlineCountEl) {
+                    const onlineCount = validMembers.filter(m => m.isOnline === true).length;
+                    onlineCountEl.textContent = `${onlineCount}/${memberIds.length}`;
+                }
+                updateMobileOnlineCount();
             }
-        }));
+            
+            // Small delay between batches
+            if (i + BATCH_SIZE < memberIds.length) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+        }
         
-        // Extract successful results (Promise.allSettled returns {status, value} objects)
-        const validMembers = membersWithProfiles
-            .map(result => result.status === 'fulfilled' ? result.value : null)
-            .filter(m => m !== null);
+        // Final check before final update
+        if (cancelToken.cancelled || loadingMembersForCommunityId !== communityId) {
+            return;
+        }
         
-        
-        // Sort: online first, then by role (owner, admin, member), then by last seen
+        // Final sort of all members
         validMembers.sort((a, b) => {
-            // Online users first
             if (a.isOnline !== b.isOnline) {
                 return a.isOnline ? -1 : 1;
             }
-            // Then by role
             const roleOrder = { owner: 0, admin: 1, moderator: 2, member: 3 };
             const aRole = roleOrder[a.role] || 99;
             const bRole = roleOrder[b.role] || 99;
             if (aRole !== bRole) {
                 return aRole - bRole;
             }
-            // Then by last seen (most recent first)
             return b.timeSinceLastSeen - a.timeSinceLastSeen;
         });
         
-        
-        // Store all members
-        allCommunityMembers = validMembers;
-        
-        // Always show all members (both online and offline)
-        const membersToShow = validMembers;
-        
-        // Update members list - show all members
-        updateCommunityMembersList(membersToShow);
-        
-        // Update member count (always show online/total format)
-        if (onlineCountEl) {
-            const onlineCount = validMembers.filter(m => m.isOnline === true).length;
-            onlineCountEl.textContent = `${onlineCount}/${validMembers.length}`;
+        // Final update only if still loading for this community
+        if (!cancelToken.cancelled && loadingMembersForCommunityId === communityId) {
+            allCommunityMembers = validMembers;
+            updateCommunityMembersList(validMembers);
+            
+            if (onlineCountEl) {
+                const onlineCount = validMembers.filter(m => m.isOnline === true).length;
+                onlineCountEl.textContent = `${onlineCount}/${validMembers.length}`;
+            }
+            updateMobileOnlineCount();
+            loadingMembersForCommunityId = null;
         }
-        
-        updateMobileOnlineCount();
         
     } catch (error) {
         console.error('Error loading community members:', error);
+        // Reset loading state on error
+        if (loadingMembersForCommunityId === communityId) {
+            loadingMembersForCommunityId = null;
+        }
     }
 }
 
