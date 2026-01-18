@@ -95,7 +95,6 @@ let currentChannel = null;
 let currentCommunityId = localStorage.getItem('selectedCommunity') || DEFAULT_COMMUNITY_ID; // Default to default community
 let messageContextMenuMessageId = null;
 let userCommunities = []; // Communities user is a member of
-let showOfflineMembers = false; // Toggle for showing offline members
 let allCommunityMembers = []; // Store all community members (online and offline)
 
 // DOM Elements
@@ -447,12 +446,6 @@ async function initializeChat() {
     rateLimitInfoEl = document.getElementById('rateLimitInfo');
     chatUserListEl = document.getElementById('chatUserList');
     onlineCountEl = document.getElementById('onlineCount');
-    
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // const sidebarRightCheck = document.getElementById('chatSidebarRight');
-    // fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:initializeChat',message:'DOM elements check',data:{chatUserListElExists:!!chatUserListEl,onlineCountElExists:!!onlineCountEl,sidebarRightExists:!!sidebarRightCheck,sidebarParent:sidebarRightCheck?.parentElement?.className,chatUserListParent:chatUserListEl?.parentElement?.className},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
     messageContextMenuEl = document.getElementById('messageContextMenu');
     reactionPickerEl = document.getElementById('reactionPicker');
     emojiPickerEl = document.getElementById('emojiPicker');
@@ -998,6 +991,7 @@ async function updateChannelInfo() {
                 const communityName = communityData.name || 'Community';
                 const communityDesc = communityData.description || 'Community chat';
                 
+                // Update desktop header
                 if (currentChannelNameEl) {
                     currentChannelNameEl.textContent = communityName;
                 }
@@ -1005,11 +999,19 @@ async function updateChannelInfo() {
                     currentChannelDescEl.textContent = communityDesc;
                 }
                 
+                // Update sidebar community name (THIS WAS MISSING!)
+                const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+                if (sidebarCommunityNameEl) {
+                    sidebarCommunityNameEl.textContent = communityName;
+                }
+                
                 // Update mobile
                 const mobileChannelNameEl = document.getElementById('currentChannelNameMobile');
                 const mobileChannelDescEl = document.getElementById('currentChannelDescMobile');
+                const mobileChannelNameHeaderEl = document.getElementById('chatMobileChannelName');
                 if (mobileChannelNameEl) mobileChannelNameEl.textContent = communityName;
                 if (mobileChannelDescEl) mobileChannelDescEl.textContent = communityDesc;
+                if (mobileChannelNameHeaderEl) mobileChannelNameHeaderEl.textContent = communityName;
                 
                 updateMobileChannelName();
                 return;
@@ -1024,6 +1026,13 @@ async function updateChannelInfo() {
         const communityDoc = await getDoc(doc(db, 'communities', currentCommunityId));
         if (communityDoc.exists()) {
             const communityData = communityDoc.data();
+            const communityName = communityData.name || 'Community';
+            
+            // Update sidebar community name for channels too
+            const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+            if (sidebarCommunityNameEl) {
+                sidebarCommunityNameEl.textContent = communityName;
+            }
             
             // Try to load channel info
             try {
@@ -1032,7 +1041,7 @@ async function updateChannelInfo() {
                 
                 if (channelDoc.exists()) {
                     const channelData = channelDoc.data();
-                    currentChannelNameEl.textContent = `${communityData.name || 'Community'} > ${channelData.name || currentChannel}`;
+                    currentChannelNameEl.textContent = `${communityName} > ${channelData.name || currentChannel}`;
                     currentChannelDescEl.textContent = channelData.description || 'Channel discussion';
                     
                     // Update mobile
@@ -1052,7 +1061,7 @@ async function updateChannelInfo() {
             // Fallback to channel name
             const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
             if (channel) {
-                currentChannelNameEl.textContent = `${communityData.name || 'Community'} > ${channel.name}`;
+                currentChannelNameEl.textContent = `${communityName} > ${channel.name}`;
                 currentChannelDescEl.textContent = getChannelDescription(currentChannel);
                 
                 // Update mobile
@@ -1075,7 +1084,27 @@ async function updateChannelInfo() {
         }
     }
     
-    // Global channel
+    // Global channel - also update sidebar for default community
+    try {
+        const defaultCommunityDoc = await getDoc(doc(db, 'communities', DEFAULT_COMMUNITY_ID));
+        if (defaultCommunityDoc.exists()) {
+            const defaultCommunityData = defaultCommunityDoc.data();
+            const defaultCommunityName = defaultCommunityData.name || 'Apes Together Strong';
+            
+            // Update sidebar community name for default community
+            const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+            if (sidebarCommunityNameEl) {
+                sidebarCommunityNameEl.textContent = defaultCommunityName;
+            }
+        }
+    } catch (error) {
+        // Fallback to default name
+        const sidebarCommunityNameEl = document.getElementById('currentCommunityName');
+        if (sidebarCommunityNameEl) {
+            sidebarCommunityNameEl.textContent = 'Apes Together Strong';
+        }
+    }
+    
     const channel = AVAILABLE_CHANNELS.find(c => c.id === currentChannel);
     if (!channel) return;
     
@@ -1147,9 +1176,6 @@ async function switchToCommunity(communityId) {
         return;
     }
     
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // #endregion
     
     // Verify membership
     const isMember = await verifyCommunityMembership(communityId);
@@ -1504,35 +1530,6 @@ function setupEventListeners() {
         });
     }
     
-    // View offline members button (with mobile touch support)
-    const viewOfflineBtn = document.getElementById('viewOfflineBtn');
-    if (viewOfflineBtn) {
-        let touchHandled = false;
-        
-        const handleViewOfflineToggle = (e) => {
-            // If touch was already handled, ignore click
-            if (e.type === 'click' && touchHandled) {
-                touchHandled = false;
-                return;
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-            toggleOfflineMembers();
-        };
-        
-        // Handle touch events on mobile
-        viewOfflineBtn.addEventListener('touchend', (e) => {
-            touchHandled = true;
-            handleViewOfflineToggle(e);
-            // Reset after a short delay
-            setTimeout(() => { touchHandled = false; }, 300);
-        }, { passive: false });
-        
-        // Handle click events (desktop and fallback for mobile)
-        viewOfflineBtn.addEventListener('click', handleViewOfflineToggle);
-    }
-    
     // Sticker button - insert ape sticker (🦍)
     const stickerBtn = document.getElementById('stickerBtn');
     if (stickerBtn) {
@@ -1601,9 +1598,6 @@ function setupEventListeners() {
 async function loadMessages() {
     if (!currentUser) return;
 
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // #endregion
 
     // Ensure default community exists and user is a member
     await ensureDefaultCommunity();
@@ -1650,9 +1644,6 @@ async function loadMessages() {
         limit(MESSAGES_PER_PAGE)
     );
 
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // #endregion
 
     return getDocs(q).then((snapshot) => {
         clearTimeout(loadingTimeout);
@@ -2043,7 +2034,6 @@ async function setupRealtimeListeners() {
             }
         } else {
             // On community page, reload members to update online status
-            // Preserve showOfflineMembers state when reloading
             if (currentCommunityId) {
                 await loadCommunityMembers(currentCommunityId);
             }
@@ -2854,9 +2844,6 @@ function formatRelativeTime(timestamp) {
 async function loadCommunityMembers(communityId) {
     if (!communityId || !currentUser) return;
     
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // #endregion
     
     try {
         // Load all members from community members subcollection
@@ -2981,7 +2968,6 @@ async function loadCommunityMembers(communityId) {
             .map(result => result.status === 'fulfilled' ? result.value : null)
             .filter(m => m !== null);
         
-        console.log(`Loaded ${validMembers.length} out of ${memberIds.length} members for community ${communityId}`);
         
         // Sort: online first, then by role (owner, admin, member), then by last seen
         validMembers.sort((a, b) => {
@@ -3029,77 +3015,8 @@ async function loadCommunityMembers(communityId) {
     }
 }
 
-// Toggle offline members visibility
-function toggleOfflineMembers() {
-    // Silently return if members haven't loaded yet
-    if (!allCommunityMembers || allCommunityMembers.length === 0) {
-        console.warn('toggleOfflineMembers: No members loaded yet');
-        return;
-    }
-    
-    // Toggle the state
-    showOfflineMembers = !showOfflineMembers;
-    
-    console.log('toggleOfflineMembers: showOfflineMembers =', showOfflineMembers, 'total members:', allCommunityMembers.length);
-    
-    // Filter members based on toggle state
-    // When showOfflineMembers is true, show ALL members (both online and offline)
-    // When showOfflineMembers is false, show only online members (isOnline must be strictly true)
-    const membersToShow = showOfflineMembers 
-        ? allCommunityMembers 
-        : allCommunityMembers.filter(m => {
-            const isOnline = m.isOnline === true;
-            return isOnline;
-        });
-    
-    console.log('toggleOfflineMembers: Showing', membersToShow.length, 'members (online:', allCommunityMembers.filter(m => m.isOnline === true).length, 'offline:', allCommunityMembers.filter(m => m.isOnline !== true).length, ')');
-    
-    // Update members list
-    updateCommunityMembersList(membersToShow);
-    
-    // Update member count
-    if (onlineCountEl) {
-        const onlineCount = allCommunityMembers.filter(m => m.isOnline === true).length;
-        onlineCountEl.textContent = showOfflineMembers ? `${onlineCount}/${allCommunityMembers.length}` : onlineCount;
-    }
-    
-    // Update button appearance (desktop)
-    const viewOfflineBtn = document.getElementById('viewOfflineBtn');
-    if (viewOfflineBtn) {
-        if (showOfflineMembers) {
-            viewOfflineBtn.textContent = '👁️‍🗨️';
-            viewOfflineBtn.title = 'Hide offline members';
-            viewOfflineBtn.classList.add('active');
-        } else {
-            viewOfflineBtn.textContent = '👁️';
-            viewOfflineBtn.title = 'Show offline members';
-            viewOfflineBtn.classList.remove('active');
-        }
-    }
-    
-    // Update mobile button appearance
-    const viewOfflineBtnMobile = document.getElementById('viewOfflineBtnMobile');
-    if (viewOfflineBtnMobile) {
-        if (showOfflineMembers) {
-            viewOfflineBtnMobile.textContent = '👁️‍🗨️';
-            viewOfflineBtnMobile.title = 'Hide offline members';
-            viewOfflineBtnMobile.classList.add('active');
-        } else {
-            viewOfflineBtnMobile.textContent = '👁️';
-            viewOfflineBtnMobile.title = 'Show offline members';
-            viewOfflineBtnMobile.classList.remove('active');
-        }
-    }
-    
-    updateMobileOnlineCount();
-}
-
 // Update community members list (all members, not just online)
 function updateCommunityMembersList(members) {
-    // #region agent log (disabled - debug endpoint not available)
-    // Debug logging disabled to prevent connection refused errors
-    // const sidebarEl = document.getElementById('chatSidebarRight');
-    // #endregion
     
     if (!chatUserListEl) {
         // #region agent log (disabled - debug endpoint not available)
