@@ -10941,6 +10941,17 @@ body.quests-body > * {
     bottom: auto;
 }
 
+/* Desktop: Make quest notification square */
+@media (min-width: 769px) {
+    .quest-notification {
+        width: 400px;
+        height: 400px;
+        max-width: 400px;
+        max-height: 400px;
+        aspect-ratio: 1 / 1;
+    }
+}
+
 .quest-notification.show {
     transform: translate(-50%, -50%) scale(1) translateX(0) !important;
     opacity: 1;
