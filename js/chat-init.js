@@ -103,7 +103,6 @@ let chatTypingEl, typingTextEl, charCountEl, rateLimitInfoEl;
 let chatUserListEl, onlineCountEl;
 let messageContextMenuEl, reactionPickerEl, emojiPickerEl;
 let userProfilePopupEl, userProfilePopupOverlayEl, userProfilePopupCloseEl;
-// Utility bar elements removed
 let currentChannelNameEl, currentChannelDescEl;
 
 // Initialize auth gate for chat page
@@ -155,9 +154,6 @@ function showMaintenanceMessage() {
         chatContainer.classList.add('hide');
     }
     
-    if (document.querySelector('.chat-utility-bar')) {
-        document.querySelector('.chat-utility-bar').classList.add('hide');
-    }
 }
 
 // Show chat interface
@@ -173,9 +169,6 @@ function showChatInterface() {
         chatContainer.classList.remove('hide');
     }
     
-    if (document.querySelector('.chat-utility-bar')) {
-        document.querySelector('.chat-utility-bar').classList.remove('hide');
-    }
     
 }
 
@@ -332,8 +325,6 @@ async function initializeChat() {
     // Setup event listeners
     setupEventListeners();
     
-    // Initialize utility bar
-    // Utility bar removed
     
     // Update channel info
     updateChannelInfo();
@@ -1042,9 +1033,6 @@ async function switchToCommunity(communityId) {
         localStorage.setItem('selectedCommunity', communityId);
         localStorage.setItem('selectedChannel', 'community');
         
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         
         // Remove old listeners - ensure they're fully cleaned up
         // This prevents BloomFilter errors from overlapping queries
@@ -1507,9 +1495,6 @@ async function loadMessages() {
             chatLoadingEl.classList.add('hide');
         }
         
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         
         if (snapshot.empty) {
             if (chatEmptyEl) {
@@ -1548,18 +1533,12 @@ async function loadMessages() {
             displayMessage(doc.id, doc.data());
         });
 
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
 
         scrollToBottom();
         setupScrollListener();
     }).catch((error) => {
         clearTimeout(loadingTimeout);
         console.error('Error loading messages:', error);
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         
         // Ensure elements exist before manipulating them
         if (!chatLoadingEl) {
@@ -1870,7 +1849,6 @@ async function setupRealtimeListeners() {
             updateOnlineUsersList(onlineUsers);
             const count = onlineUsers.length;
             if (onlineCountEl) onlineCountEl.textContent = count;
-            // Utility bar removed
             updateMobileOnlineCount();
             
             // Update last seen times every minute for real-time updates
@@ -1891,9 +1869,6 @@ async function setupRealtimeListeners() {
 // Display a message in the chat
 function displayMessage(messageId, messageData, prepend = false) {
     if (!chatMessagesEl) {
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         return;
     }
 
@@ -2285,7 +2260,6 @@ async function handleSendMessage() {
                 if (!memberDoc.exists()) {
                     throw new Error('Failed to join community - membership not created after auto-join');
                 }
-                console.log('Successfully joined community');
             } catch (joinError) {
                 console.error('Error auto-joining community:', joinError);
                 const errorMsg = joinError.code === 'permission-denied' 
@@ -2735,9 +2709,6 @@ async function loadCommunityMembers(communityId) {
             return;
         }
         
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         
         // Load user profiles and presence for each member with better error handling
         const membersWithProfiles = await Promise.allSettled(memberIds.map(async (userId, index) => {
@@ -2831,9 +2802,6 @@ async function loadCommunityMembers(communityId) {
             return b.timeSinceLastSeen - a.timeSinceLastSeen;
         });
         
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         
         // Store all members
         allCommunityMembers = validMembers;
@@ -2854,9 +2822,6 @@ async function loadCommunityMembers(communityId) {
         
     } catch (error) {
         console.error('Error loading community members:', error);
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
     }
 }
 
@@ -2864,9 +2829,6 @@ async function loadCommunityMembers(communityId) {
 function updateCommunityMembersList(members) {
     
     if (!chatUserListEl) {
-        // #region agent log (disabled - debug endpoint not available)
-        // Debug logging disabled to prevent connection refused errors
-        // #endregion
         return;
     }
 

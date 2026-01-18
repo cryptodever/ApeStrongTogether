@@ -568,11 +568,6 @@ function handlePfpUpload(e) {
                     
                     if (compressedSize <= maxSizeBytes || currentQuality <= 0.5) {
                         // Success - image is small enough or we've compressed enough
-                        console.log('Compression complete:', {
-                            finalSize: (compressedSize / 1024).toFixed(2) + ' KB',
-                            finalDimensions: `${targetWidth}x${targetHeight}`,
-                            quality: currentQuality
-                        });
                         
                         // Create a new File object from the compressed data
                         const compressedBlob = await new Promise((resolve) => {
