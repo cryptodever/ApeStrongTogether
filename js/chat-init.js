@@ -54,6 +54,10 @@ async function loadMessages() {
     // Forward declaration - full implementation later
 }
 
+async function loadCommunityMembers(communityId) {
+    // Forward declaration - full implementation later
+}
+
 // Rate limits per channel (in seconds)
 const RATE_LIMITS = {
     'general': 15,
@@ -154,7 +158,7 @@ function isOwner() {
 
 // Initialize chat when auth state changes
 // #region agent log
-fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:134',message:'Before onAuthStateChanged setup',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,initializeChat:typeof initializeChat},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:134',message:'Before onAuthStateChanged setup',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,loadCommunityMembers:typeof loadCommunityMembers,initializeChat:typeof initializeChat},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
 // #endregion
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -164,7 +168,7 @@ onAuthStateChanged(auth, async (user) => {
         // Show chat interface for all authenticated users
         showChatInterface();
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages}},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:137',message:'Before initializeChat call',data:{funcDefined:typeof initializeChat,allFuncs:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,loadCommunityMembers:typeof loadCommunityMembers}},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
         // #endregion
         initializeChat();
     } else {
@@ -375,6 +379,9 @@ async function initializeChat() {
     // Load community members for all communities (including default)
     // Do this BEFORE setupRealtimeListeners to ensure all members (including offline) are loaded
     if (currentCommunityId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:382',message:'Before loadCommunityMembers call',data:{funcDefined:typeof loadCommunityMembers,funcValue:loadCommunityMembers},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         await loadCommunityMembers(currentCommunityId);
     }
     
@@ -4584,7 +4591,7 @@ function setupFollowModals() {
 }
 
 // #region agent log
-fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END',message:'Module end reached',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END',message:'Module end reached',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages,loadCommunityMembers:typeof loadCommunityMembers},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
 setTimeout(()=>{
     fetch('http://127.0.0.1:7242/ingest/79414b03-df61-4561-af47-88cabe9e0b77',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'chat-init.js:END+delay',message:'Module after delay',data:{ensureDefaultCommunity:typeof ensureDefaultCommunity,setupEventListeners:typeof setupEventListeners,escapeHtml:typeof escapeHtml,loadMessages:typeof loadMessages},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
 },1000);
