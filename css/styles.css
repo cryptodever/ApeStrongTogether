@@ -14322,6 +14322,47 @@ body:has(.modal-overlay.show) {
     z-index: 1;
 }
 
+/* Dim feed container content when auth gate overlay is shown */
+.feed-container.blocked > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.feed-page.blocked .feed-container > *:not(.auth-gate-overlay) {
+    opacity: 0.4;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* Fix auth gate overlay for feed page - match leaderboard/other locked pages */
+.feed-container .auth-gate-overlay {
+    position: fixed !important;
+    top: 80px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 80px) !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.feed-container .auth-gate-content {
+    margin: auto !important;
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto !important;
+}
+
 .feed-header {
     display: flex;
     flex-direction: column;

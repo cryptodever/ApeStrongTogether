@@ -104,8 +104,6 @@ function createOverlay() {
         : isGamePage
         ? 'Sign up / Log in to play the game.'
         : isFeedPage
-        ? 'Sign up / Log in to view the leaderboard.'
-        : isFeedPage
         ? 'Sign up / Log in to view the feed.'
         : 'Sign up / Log in to generate your Ape.';
     
